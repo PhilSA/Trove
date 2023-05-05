@@ -66,7 +66,7 @@ The restaurant worker component (`RestaurantWorkerAI`) holds the following data:
 
 Our worker authoring would be similar to what we covered in a previous section. The AI actions/considerations are set-up during baking:
 
-[Code: restaurant worker authoring](https://github.com/PhilSA/Trove/blob/main/_Projects/TroveTests/Assets/_Restaurant/Scripts/RestaurantWorkerAI.cs)
+[Code: restaurant worker authoring](https://github.com/PhilSA/Trove/blob/main/_Projects/TroveTests/Assets/_Restaurant/Scripts/RestaurantWorkerAIAuthoring.cs)
 
 
 ### System
