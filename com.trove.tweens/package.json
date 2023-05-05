@@ -1,0 +1,21 @@
+{
+  "displayName": "Trove Tweens",
+  "description": "Trove Tweens is a simple tweening tool that allows you to create your own highly-efficient custom tweens.",
+  "dependencies": {
+    "com.unity.entities": "1.0.0-pre.65"
+  },
+  "name": "com.trove.tweens",
+  "author": {
+    "name": "Philippe St-Amand"
+  },
+  "unity": "2022.2",
+  "unityRelease": "6f1",
+  "version": "0.1.0",
+  "samples": [
+    {
+      "displayName": "Common Tweens",
+      "description": "Built-in common tweens. Remember to uncomment the systems code for the color/material-related tweens, since these depend on render pipeline.",
+      "path": "Samples~/CommonTweens"
+    }
+  ]
+}

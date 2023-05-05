@@ -1,0 +1,53 @@
+.restaurantInfoText {
+    color: rgb(255, 255, 255);
+}
+
+.restaurantInfoElement {
+    height: 25px;
+    flex-direction: row;
+}
+
+.workerStateColumn {
+    background-color: rgb(48, 48, 48);
+    border-left-color: rgb(0, 0, 0);
+    border-right-color: rgb(0, 0, 0);
+    border-top-color: rgb(0, 0, 0);
+    border-bottom-color: rgb(0, 0, 0);
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    flex-grow: 1;
+    width: 100%;
+    flex-shrink: 1;
+    min-width: 0;
+    min-height: 0;
+}
+
+.workerStateColumnHeader {
+    height: 30px;
+    background-color: rgb(79, 79, 79);
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-color: rgb(0, 0, 0);
+    border-right-color: rgb(0, 0, 0);
+    border-top-color: rgb(0, 0, 0);
+    border-bottom-color: rgb(0, 0, 0);
+    width: auto;
+    flex-shrink: 0;
+    min-width: 0;
+    min-height: 0;
+}
+
+.workerStateColumnHeaderLabel {
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: upper-center;
+    width: auto;
+    flex-shrink: 0;
+    min-width: 0;
+    min-height: 0;
+    white-space: nowrap;
+}

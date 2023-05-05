@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b98af0c6bc88d8047aa240f3f5de73ff, type: 3}
+  m_Name: StressTestAIConsiderationSetGenerator 1
+  m_EditorClassIdentifier: 
+  Namespace: 
+  ConsiderationSetName: StressTestAIConsiderationSet
+  FolderPathRelativeToAssets: _GENERATED
+  Considerations:
+  - C0
+  - C1
+  - C2
+  - C3
+  - C4

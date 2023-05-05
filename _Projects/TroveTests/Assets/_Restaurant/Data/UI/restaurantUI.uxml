@@ -1,0 +1,66 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Restaurant/Data/UI/restaurantUIStyle.uss?fileID=7433441132597879392&amp;guid=61e56a96b5dfac54db50bc5c06c7c8f5&amp;type=3#restaurantUIStyle" />
+    <ui:VisualElement name="Root" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
+        <ui:VisualElement name="RestaurantInfo" style="flex-grow: 0; background-color: rgb(26, 26, 26); height: 143px;">
+            <ui:VisualElement name="CustomersInLine" class="restaurantInfoElement">
+                <ui:Label tabindex="-1" text="Customers in line:" display-tooltip-when-elided="true" class="restaurantInfoText" />
+                <ui:Label tabindex="-1" text="00" display-tooltip-when-elided="true" name="Value" class="restaurantInfoText" />
+            </ui:VisualElement>
+            <ui:VisualElement name="PendingOrders" class="restaurantInfoElement">
+                <ui:Label tabindex="-1" text="Pending orders:" display-tooltip-when-elided="true" class="restaurantInfoText" />
+                <ui:Label tabindex="-1" text="00" display-tooltip-when-elided="true" name="Value" class="restaurantInfoText" />
+            </ui:VisualElement>
+            <ui:VisualElement name="KitchenDirtiness" class="restaurantInfoElement">
+                <ui:Label tabindex="-1" text="Kitchen dirtiness:" display-tooltip-when-elided="true" class="restaurantInfoText" />
+                <ui:Label tabindex="-1" text="00" display-tooltip-when-elided="true" name="Value" class="restaurantInfoText" />
+            </ui:VisualElement>
+            <ui:VisualElement name="CleaningSupplies" class="restaurantInfoElement">
+                <ui:Label tabindex="-1" text="Cleaning supplies:" display-tooltip-when-elided="true" class="restaurantInfoText" />
+                <ui:Label tabindex="-1" text="00" display-tooltip-when-elided="true" name="Value" class="restaurantInfoText" />
+            </ui:VisualElement>
+            <ui:VisualElement name="CompletedOrders" class="restaurantInfoElement">
+                <ui:Label tabindex="-1" text="Completed orders:" display-tooltip-when-elided="true" class="restaurantInfoText" />
+                <ui:Label tabindex="-1" text="00" display-tooltip-when-elided="true" name="Value" class="restaurantInfoText" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="WorkerStates" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: column; height: auto;">
+            <ui:VisualElement name="Header" style="flex-grow: 0; background-color: rgb(36, 36, 36); flex-shrink: 0; height: 30px;">
+                <ui:Label tabindex="-1" text="Worker States" display-tooltip-when-elided="true" style="color: rgb(255, 255, 255); -unity-font-style: bold; -unity-text-align: upper-center;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="StateColumns" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row;">
+                <ui:VisualElement name="IdleColumn" class="workerStateColumn">
+                    <ui:VisualElement name="Header" class="workerStateColumnHeader">
+                        <ui:Label tabindex="-1" text="Idle" display-tooltip-when-elided="true" class="workerStateColumnHeaderLabel" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Content" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
+                        <ui:ListView focusable="true" name="ListView" picking-mode="Ignore" show-border="false" style="flex-grow: 1;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="ServiceColumn" class="workerStateColumn">
+                    <ui:VisualElement name="Header" class="workerStateColumnHeader">
+                        <ui:Label tabindex="-1" text="Service" display-tooltip-when-elided="true" class="workerStateColumnHeaderLabel" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Content" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
+                        <ui:ListView focusable="true" name="ListView" style="flex-grow: 1;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="CookColumn" class="workerStateColumn">
+                    <ui:VisualElement name="Header" class="workerStateColumnHeader">
+                        <ui:Label tabindex="-1" text="Cook" display-tooltip-when-elided="true" class="workerStateColumnHeaderLabel" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Content" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
+                        <ui:ListView focusable="true" name="ListView" style="flex-grow: 1;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="CleanColumn" class="workerStateColumn">
+                    <ui:VisualElement name="Header" class="workerStateColumnHeader">
+                        <ui:Label tabindex="-1" text="Clean" display-tooltip-when-elided="true" class="workerStateColumnHeaderLabel" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Content" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
+                        <ui:ListView focusable="true" name="ListView" style="flex-grow: 1;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

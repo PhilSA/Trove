@@ -1,0 +1,149 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d97ce2df8f2c730419064ab0e4aebda7, type: 3}
+  m_Name: StressTestAIConsiderationSetData
+  m_EditorClassIdentifier: 
+  C0:
+    ScoreClamping:
+      Min: 0
+      Max: 1
+    ParametricCurveAuthoring:
+      ParametricCurve:
+        CurveType: 2
+        Shape: 0
+        Slope: 2.71
+        VerticalShift: 0
+        HorizontalShift: 0
+      GraphProperties:
+        GraphHeight: 200
+        GraphWidth: 200
+        BackgroundColor: {r: 0.12, g: 0.12, b: 0.12, a: 1}
+        Min: {x: 0, y: 0}
+        Max: {x: 1, y: 1}
+        CurveColor: {r: 0, g: 0.6, b: 0.25, a: 1}
+        CurveLineWidth: 2
+        MainAxisColor: {r: 1, g: 1, b: 1, a: 1}
+        MainAxisLineWidth: 0.5
+        MajorGridColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+        MinorGridColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
+        MajorGridIncrements: 0.5
+        MinorGridIncrements: 0.1
+        MajorGridLineWidth: 0.5
+        MinorGridLineWidth: 0.5
+  C1:
+    ScoreClamping:
+      Min: 0
+      Max: 1
+    ParametricCurveAuthoring:
+      ParametricCurve:
+        CurveType: 2
+        Shape: 0
+        Slope: 1
+        VerticalShift: 0
+        HorizontalShift: 0
+      GraphProperties:
+        GraphHeight: 200
+        GraphWidth: 200
+        BackgroundColor: {r: 0.12, g: 0.12, b: 0.12, a: 1}
+        Min: {x: 0, y: 0}
+        Max: {x: 1, y: 1}
+        CurveColor: {r: 0, g: 0.6, b: 0.25, a: 1}
+        CurveLineWidth: 2
+        MainAxisColor: {r: 1, g: 1, b: 1, a: 1}
+        MainAxisLineWidth: 0.5
+        MajorGridColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+        MinorGridColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
+        MajorGridIncrements: 0.5
+        MinorGridIncrements: 0.1
+        MajorGridLineWidth: 0.5
+        MinorGridLineWidth: 0.5
+  C2:
+    ScoreClamping:
+      Min: 0
+      Max: 1
+    ParametricCurveAuthoring:
+      ParametricCurve:
+        CurveType: 2
+        Shape: 0
+        Slope: 1
+        VerticalShift: 0
+        HorizontalShift: 0
+      GraphProperties:
+        GraphHeight: 200
+        GraphWidth: 200
+        BackgroundColor: {r: 0.12, g: 0.12, b: 0.12, a: 1}
+        Min: {x: 0, y: 0}
+        Max: {x: 1, y: 1}
+        CurveColor: {r: 0, g: 0.6, b: 0.25, a: 1}
+        CurveLineWidth: 2
+        MainAxisColor: {r: 1, g: 1, b: 1, a: 1}
+        MainAxisLineWidth: 0.5
+        MajorGridColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+        MinorGridColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
+        MajorGridIncrements: 0.5
+        MinorGridIncrements: 0.1
+        MajorGridLineWidth: 0.5
+        MinorGridLineWidth: 0.5
+  C3:
+    ScoreClamping:
+      Min: 0
+      Max: 1
+    ParametricCurveAuthoring:
+      ParametricCurve:
+        CurveType: 2
+        Shape: 0
+        Slope: 1
+        VerticalShift: 0
+        HorizontalShift: 0
+      GraphProperties:
+        GraphHeight: 200
+        GraphWidth: 200
+        BackgroundColor: {r: 0.12, g: 0.12, b: 0.12, a: 1}
+        Min: {x: 0, y: 0}
+        Max: {x: 1, y: 1}
+        CurveColor: {r: 0, g: 0.6, b: 0.25, a: 1}
+        CurveLineWidth: 2
+        MainAxisColor: {r: 1, g: 1, b: 1, a: 1}
+        MainAxisLineWidth: 0.5
+        MajorGridColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+        MinorGridColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
+        MajorGridIncrements: 0.5
+        MinorGridIncrements: 0.1
+        MajorGridLineWidth: 0.5
+        MinorGridLineWidth: 0.5
+  C4:
+    ScoreClamping:
+      Min: 0
+      Max: 1
+    ParametricCurveAuthoring:
+      ParametricCurve:
+        CurveType: 2
+        Shape: 0
+        Slope: 1
+        VerticalShift: 0
+        HorizontalShift: 0
+      GraphProperties:
+        GraphHeight: 200
+        GraphWidth: 200
+        BackgroundColor: {r: 0.12, g: 0.12, b: 0.12, a: 1}
+        Min: {x: 0, y: 0}
+        Max: {x: 1, y: 1}
+        CurveColor: {r: 0, g: 0.6, b: 0.25, a: 1}
+        CurveLineWidth: 2
+        MainAxisColor: {r: 1, g: 1, b: 1, a: 1}
+        MainAxisLineWidth: 0.5
+        MajorGridColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+        MinorGridColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
+        MajorGridIncrements: 0.5
+        MinorGridIncrements: 0.1
+        MajorGridLineWidth: 0.5
+        MinorGridLineWidth: 0.5
