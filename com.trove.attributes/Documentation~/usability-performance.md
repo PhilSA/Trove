@@ -1,7 +1,7 @@
 
 [Home](./index.md)
 
-# Usability and performance characteristice
+# Usability and performance characteristics
 
 No attributes solution can be the best fit for every kind of game, because different games will have different requirements, and different requirements have different optimal solutions.
 
