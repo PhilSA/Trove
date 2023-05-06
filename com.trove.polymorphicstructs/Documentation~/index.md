@@ -12,7 +12,7 @@ These can play a key role in unlocking new performance & usability opportunities
 The drawback of polymorphic structs is that they have the added cost of a switch statement and casting between struct types when calling any of their polymorphic functions. They can also have a bigger size than what they should have, if there's a big discrepency in data size between the various "child" struct types. It's up to you to consider the pros and cons and decide if this is a good fit for your problem.
 
 Common examples of where these can be useful:
-* State machines without structural changes
+* State machines without structural changes or tons of jobs
 * Ordered events
 * Certain types of AI systems
 * etc...
