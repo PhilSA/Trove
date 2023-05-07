@@ -8,10 +8,10 @@
 ## Summary
 
 #### Attributes
-An attribute is an `AttributeValues` struct in a user-created component. Users define their attribute types, getters, and setters in files that come with the [User Content](./howtoinstall.md). `AttributeValues` contains a `float BaseValue` representing the balue before any modifiers are applied, and a `float Value` representing the value after all modifiers are applied. 
+An attribute is an `AttributeValues` struct in a user-created component. Users define their attribute types, getters, and setters in files that come with the User Content. `AttributeValues` contains a `float BaseValue` representing the balue before any modifiers are applied, and a `float Value` representing the value after all modifiers are applied. 
 
 #### Attribute modifiers
-Attribute modifiers and the modifiers stack are defined in `AttributeModifier` and `AttributeModifierStack` in the [User Content](./howtoinstall.md). `AttributeModifier` is a single common struct type that can act as any of the various modifier types in your game, and `AttributeModifierStack` represents the accumulation of all modifier operations affecting a certain attribute when that attribute is being recalculated. 
+Attribute modifiers and the modifiers stack are defined in `AttributeModifier` and `AttributeModifierStack` in the User Content. `AttributeModifier` is a single common struct type that can act as any of the various modifier types in your game, and `AttributeModifierStack` represents the accumulation of all modifier operations affecting a certain attribute when that attribute is being recalculated. 
 
 An attribute modifier affects a specific attribute type on a specific entity, and is given a unique identifier when added (so it can be removed later).
 
