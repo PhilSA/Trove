@@ -6,7 +6,7 @@
 
 ## Attribute type
 
-In order to add a new type of attribute to your game, start by adding add an element to the already-existing `AttributeType` enum from the [User Content](./howtoinstall.md). This will be an identifier for the new attribute type. For example:
+In order to add a new type of attribute to your game, start by adding add an element to the already-existing `AttributeType` enum from the User Content. This will be an identifier for the new attribute type. For example:
 
 ```cs
 public enum AttributeType
@@ -60,14 +60,14 @@ public struct Character : IComponentData
 
 ## Attribute getter and setter
 
-Then, in the already-exiting `AttributeGetterSetter` struct from the [User Content](./howtoinstall.md), implement the code that knows how to get and set your attribute's value on an entity, based on the `AttributeType` :
+Then, in the already-exiting `AttributeGetterSetter` struct from the User Content, implement the code that knows how to get and set your attribute's value on an entity, based on the `AttributeType` :
 * In the `AttributeGetterSetter`, store component lookups for all of your attribute types,
 * In `AttributeGetterSetter.OnSystemCreate`, create those lookups based on a system's `SystemState`
 * In `AttributeGetterSetter.OnSystemUpdate`, update those lookups based on a system's `SystemState`
 * In `AttributeGetterSetter.GetAttributeValues`, get (read) the `AttributeValues` from your attribute component
 * In `AttributeGetterSetter.SetAttributeValues`, set (write) an `AttributeValues` in your attribute component
 s
-(Refer to the existing example `AttributeGetterSetter` implementation from the [User Content](./howtoinstall.md) for more details on how these should be implemented)
+(Refer to the existing example `AttributeGetterSetter` implementation from the User Content for more details on how these should be implemented)
 
 --------------------------------------
 
