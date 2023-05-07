@@ -51,7 +51,7 @@ Modifiers are immediately and automatically applied as soon as they are added wi
 
 ## Modifier type
 
-In order to create modifiers in your project, start by adding a new element to the `ModifierType` struct from the [User Content](./howtoinstall.md):
+In order to create modifiers in your project, start by adding a new element to the `ModifierType` struct from the User Content:
 
 ```cs
 public enum ModifierType
