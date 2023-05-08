@@ -17,7 +17,7 @@ We would define the following `Action`s and `Consideration`s for this restaurant
 * Action: `Service` (take customer orders)
     * Consideration: `CustomerLineup` (the bigger the customer lineup, the higher the score of the `Service` action will be)
 * Action: `Cook` (cook the meals that customers order)
-    * Consideration: `CustomerLineup` (the higher the amount of pending orders, the higher the score of the `Cook` action will be)
+    * Consideration: `PendingOrders` (the higher the amount of pending orders, the higher the score of the `Cook` action will be)
 * Action: `Clean` (clean the kitchen)
     * Consideration: `KitchenDirtiness` (the dirtier the kitchen is, the higher the score of the `Clean` action will be)
     * Consideration: `CleaningSupplies` (if no cleaning supplies are available, the score of the `Clean` action should be 0, because we can't clean)
