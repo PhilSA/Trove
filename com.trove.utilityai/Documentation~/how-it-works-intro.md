@@ -9,7 +9,7 @@ An AI entity consists of these main building blocks:
 * `Consideration`s: this is a dynamic buffer that represents the various considerations that affect an action's score. A consideration is given an input, and outputs a score based on that input.
 
 
-### Restaurand worker example
+### Restaurant worker example
 
 Let's imagine, for example, creating a very simple restaurant worker AI. 
 
