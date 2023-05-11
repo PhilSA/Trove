@@ -2,7 +2,7 @@
   "displayName": "Trove Utility AI",
   "description": "Trove Utility AI provides a flexible and efficient decision-making system for ECS.",
   "dependencies": {
-    "com.unity.entities": "1.0.0-pre.65"
+    "com.unity.entities": "1.0.8"
   },
   "name": "com.trove.utilityai",
   "author": {

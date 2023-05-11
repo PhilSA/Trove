@@ -5,7 +5,7 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "com.unity.entities": "1.0.0-pre.65"
+        "com.unity.entities": "1.0.8"
       }
     },
     "com.trove.common": {
@@ -13,7 +13,7 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "com.unity.entities": "1.0.0-pre.65"
+        "com.unity.entities": "1.0.8"
       }
     },
     "com.trove.polymorphicstructs": {
@@ -27,7 +27,7 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "com.unity.entities": "1.0.0-pre.65"
+        "com.unity.entities": "1.0.8"
       }
     },
     "com.trove.utilityai": {
@@ -35,11 +35,11 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "com.unity.entities": "1.0.0-pre.65"
+        "com.unity.entities": "1.0.8"
       }
     },
     "com.unity.burst": {
-      "version": "1.8.3",
+      "version": "1.8.4",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -48,32 +48,31 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
-      "version": "2.0.0",
+      "version": "2.0.3",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
     "com.unity.collections": {
-      "version": "2.1.0-pre.18",
-      "depth": 1,
+      "version": "2.1.4",
+      "depth": 2,
       "source": "registry",
       "dependencies": {
-        "com.unity.burst": "1.8.3",
+        "com.unity.burst": "1.8.4",
         "com.unity.modules.unityanalytics": "1.0.0",
-        "com.unity.nuget.mono-cecil": "1.11.4",
-        "com.unity.test-framework": "1.3.2"
+        "com.unity.nuget.mono-cecil": "1.11.4"
       },
       "url": "https://packages.unity.com"
     },
     "com.unity.entities": {
-      "version": "1.0.0-pre.65",
+      "version": "1.0.8",
       "depth": 1,
       "source": "registry",
       "dependencies": {
-        "com.unity.burst": "1.8.3",
-        "com.unity.serialization": "3.0.0-pre.1",
-        "com.unity.collections": "2.1.0-pre.18",
+        "com.unity.burst": "1.8.4",
+        "com.unity.serialization": "3.1.1",
+        "com.unity.collections": "2.1.4",
         "com.unity.mathematics": "1.2.6",
         "com.unity.modules.assetbundle": "1.0.0",
         "com.unity.modules.audio": "1.0.0",
@@ -103,7 +102,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.18",
+      "version": "3.0.20",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -112,7 +111,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.17",
+      "version": "2.0.18",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -174,7 +173,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.render-pipelines.core": {
-      "version": "14.0.6",
+      "version": "14.0.7",
       "depth": 1,
       "source": "builtin",
       "dependencies": {
@@ -185,14 +184,14 @@
       }
     },
     "com.unity.render-pipelines.universal": {
-      "version": "14.0.6",
+      "version": "14.0.7",
       "depth": 0,
       "source": "builtin",
       "dependencies": {
         "com.unity.mathematics": "1.2.1",
         "com.unity.burst": "1.8.2",
-        "com.unity.render-pipelines.core": "14.0.6",
-        "com.unity.shadergraph": "14.0.6"
+        "com.unity.render-pipelines.core": "14.0.7",
+        "com.unity.shadergraph": "14.0.7"
       }
     },
     "com.unity.scriptablebuildpipeline": {
@@ -210,22 +209,21 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.serialization": {
-      "version": "3.0.0-pre.1",
+      "version": "3.1.1",
       "depth": 2,
       "source": "registry",
       "dependencies": {
-        "com.unity.collections": "2.1.0-pre.2",
-        "com.unity.burst": "1.7.2",
-        "com.unity.test-framework.performance": "2.8.0-preview"
+        "com.unity.collections": "2.1.4",
+        "com.unity.burst": "1.7.2"
       },
       "url": "https://packages.unity.com"
     },
     "com.unity.shadergraph": {
-      "version": "14.0.6",
+      "version": "14.0.7",
       "depth": 1,
       "source": "builtin",
       "dependencies": {
-        "com.unity.render-pipelines.core": "14.0.6",
+        "com.unity.render-pipelines.core": "14.0.7",
         "com.unity.searcher": "4.9.2"
       }
     },
@@ -240,16 +238,6 @@
       },
       "url": "https://packages.unity.com"
     },
-    "com.unity.test-framework.performance": {
-      "version": "2.8.0-preview",
-      "depth": 3,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.test-framework": "1.1.0",
-        "com.unity.modules.jsonserialize": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
-    },
     "com.unity.textmeshpro": {
       "version": "3.0.6",
       "depth": 0,
@@ -260,7 +248,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.timeline": {
-      "version": "1.7.3",
+      "version": "1.7.4",
       "depth": 0,
       "source": "registry",
       "dependencies": {

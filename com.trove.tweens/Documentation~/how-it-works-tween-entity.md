@@ -57,7 +57,7 @@ public partial struct LocalPositionTargetTweenSystem : ISystem
             if (hasChanged)
             {
                 // Get the transform component on the target entity rather than on self entity
-                RefRW<LocalTransform> localTransformRW = LocalTransformLookup.GetRefRW(t.Target, false);
+                RefRW<LocalTransform> localTransformRW = LocalTransformLookup.GetRefRW(t.Target);
                 if (localTransformRW.IsValid)
                 {
                     t.Tweener.Update(timer.GetNormalizedTime(), hasStartedPlaying, ref localTransformRW.ValueRW.Position);
@@ -80,7 +80,7 @@ ecb.AddComponent(newTweenEntity, new LocalPositionTargetTween(
 ComponentLookup<LocalPositionTargetTween> localPositionTargetTweenLookup = SystemAPI.GetComponentLookup<LocalPositionTargetTween>(false);
 
 // We get the tween component on its own entity rather than on the tweened entity
-ref LocalPositionTargetTween t = ref localPositionTargetTweenLookup.GetRefRW(newTweenEntity, false).ValueRW;
+ref LocalPositionTargetTween t = ref localPositionTargetTweenLookup.GetRefRW(newTweenEntity).ValueRW;
 t.Timer.Play(true);
 ```
 

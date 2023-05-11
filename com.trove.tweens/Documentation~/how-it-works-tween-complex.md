@@ -79,6 +79,6 @@ ecb.AddComponent(myTweenedEntity, new PositionAndColorTween(
 
 ComponentLookup<PositionAndColorTween> positionAndColorTweenLookup = SystemAPI.GetComponentLookup<PositionAndColorTween>(false);
 
-ref PositionAndColorTween t = ref positionAndColorTweenLookup.GetRefRW(myTweenedEntity, false).ValueRW;
+ref PositionAndColorTween t = ref positionAndColorTweenLookup.GetRefRW(myTweenedEntity).ValueRW;
 t.Timer.Play(true);
 ```

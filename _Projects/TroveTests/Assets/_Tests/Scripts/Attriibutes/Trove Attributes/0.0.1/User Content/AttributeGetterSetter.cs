@@ -75,7 +75,7 @@ public struct AttributeGetterSetter : IAttributeGetterSetter
         {
             case AttributeType.Strength:
                 {
-                    var compRW = StrengthLookup.GetRefRW(attributeReference.Entity, false);
+                    var compRW = StrengthLookup.GetRefRW(attributeReference.Entity);
                     if (compRW.IsValid)
                     {
                         compRW.ValueRW.Values = value;
@@ -85,7 +85,7 @@ public struct AttributeGetterSetter : IAttributeGetterSetter
                 break;
             case AttributeType.Dexterity:
                 {
-                    var compRW = DexterityLookup.GetRefRW(attributeReference.Entity, false);
+                    var compRW = DexterityLookup.GetRefRW(attributeReference.Entity);
                     if (compRW.IsValid)
                     {
                         compRW.ValueRW.Values = value;
@@ -95,7 +95,7 @@ public struct AttributeGetterSetter : IAttributeGetterSetter
                 break;
             case AttributeType.Intelligence:
                 {
-                    var compRW = IntelligenceLookup.GetRefRW(attributeReference.Entity, false);
+                    var compRW = IntelligenceLookup.GetRefRW(attributeReference.Entity);
                     if (compRW.IsValid)
                     {
                         compRW.ValueRW.Values = value;

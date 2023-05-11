@@ -2,7 +2,7 @@
   "displayName": "Trove Attributes",
   "description": "Trove Attributes allows you to define identifiable \"numbers\" (Attributes) on entities, and add/remove \"rules\" (Modifiers) that affect the evaluation of these numbers' values. Modifiers are reactive, and can make the value of a certain attribute depend on the value of another. This tool can be used to effortlessly setup gameplay mechanics such as RPG character/equipment attributes, buffs, effects, roguelike-style stackable powerups and synergies, etc...",
   "dependencies": {
-    "com.unity.entities": "1.0.0-pre.65"
+    "com.unity.entities": "1.0.8"
   },
   "name": "com.trove.attributes",
   "author": {

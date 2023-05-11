@@ -75,6 +75,6 @@ ComponentLookup<LocalPositionTween> localPositionTweenLookup = SystemAPI.GetComp
 
 // Manually call "Play" on the TweenTimer, when we're ready to play
 // Note: we're getting the component by "ref", because this will change the state of the TweenTimer and we must therefore write changes to the component
-ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(myTweenedEntity, false).ValueRW;
+ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(myTweenedEntity).ValueRW;
 t.Timer.Play(true /*whether the tween should be reset from the start when playing*/);
 ```

@@ -36,7 +36,7 @@ public partial struct LocalPositionTargetTweenSystem : ISystem
             t.Timer.Update(DeltaTime, out bool hasStartedPlaying, out bool hasStoppedPlaying, out bool hasChanged);
             if (hasChanged)
             {
-                RefRW<LocalTransform> localTransformRW = LocalTransformLookup.GetRefRW(t.Target, false);
+                RefRW<LocalTransform> localTransformRW = LocalTransformLookup.GetRefRW(t.Target);
                 if (localTransformRW.IsValid)
                 {
                     t.Tweener.Update(t.Timer.GetNormalizedTime(), hasStartedPlaying, ref localTransformRW.ValueRW.Position);

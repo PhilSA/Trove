@@ -215,21 +215,21 @@ public partial struct TweensTesterSystem : ISystem
 
                 // A
                 {
-                    ref ShakeTween t = ref shakeTweenLookup.GetRefRW(tester.EntityA, false).ValueRW;
+                    ref ShakeTween t = ref shakeTweenLookup.GetRefRW(tester.EntityA).ValueRW;
                     t.AddAmplitude(100f);
                     t.Timer.Play(true);
                 }
 
                 // B
                 {
-                    ref FlashTween t = ref flashTweenLookup.GetRefRW(tester.EntityB, false).ValueRW;
+                    ref FlashTween t = ref flashTweenLookup.GetRefRW(tester.EntityB).ValueRW;
                     t.Timer.Play(true);
                 }
 
                 // C
                 {
-                    ref ShakeTween st = ref shakeTweenLookup.GetRefRW(tester.EntityC, false).ValueRW;
-                    ref FlashTween ft = ref flashTweenLookup.GetRefRW(tester.EntityC, false).ValueRW;
+                    ref ShakeTween st = ref shakeTweenLookup.GetRefRW(tester.EntityC).ValueRW;
+                    ref FlashTween ft = ref flashTweenLookup.GetRefRW(tester.EntityC).ValueRW;
                     st.AddAmplitude(10f);
                     st.Timer.Play(true);
                     ft.Timer.Play(true);
@@ -237,16 +237,16 @@ public partial struct TweensTesterSystem : ISystem
 
                 // D
                 {
-                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityD, false).ValueRW;
+                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityD).ValueRW;
                     t.Timer.Play(true);
                 }
 
                 // E
                 {
-                    ref LocalPositionTween p = ref localPositionTweenLookup.GetRefRW(tester.EntityE, false).ValueRW;
-                    ref LocalRotationTween r = ref localRotationTweenLookup.GetRefRW(tester.EntityE, false).ValueRW;
-                    ref LocalScaleTween s = ref localScaleTweenLookup.GetRefRW(tester.EntityE, false).ValueRW;
-                    ref BaseColorTween c = ref baseColorTweenLookup.GetRefRW(tester.EntityE, false).ValueRW;
+                    ref LocalPositionTween p = ref localPositionTweenLookup.GetRefRW(tester.EntityE).ValueRW;
+                    ref LocalRotationTween r = ref localRotationTweenLookup.GetRefRW(tester.EntityE).ValueRW;
+                    ref LocalScaleTween s = ref localScaleTweenLookup.GetRefRW(tester.EntityE).ValueRW;
+                    ref BaseColorTween c = ref baseColorTweenLookup.GetRefRW(tester.EntityE).ValueRW;
                     p.Timer.Play(true);
                     r.Timer.Play(true);
                     s.Timer.Play(true);
@@ -255,15 +255,15 @@ public partial struct TweensTesterSystem : ISystem
 
                 // F
                 {
-                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityF, false).ValueRW;
+                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityF).ValueRW;
                     t.Timer.SetCourse(true);
                     t.Timer.Play(false);
                 }
 
                 // G
                 {
-                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityG, false).ValueRW;
-                    ref NonUniformScaleTween n = ref nonUniformScaleTweenLookup.GetRefRW(tester.EntityG, false).ValueRW;
+                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityG).ValueRW;
+                    ref NonUniformScaleTween n = ref nonUniformScaleTweenLookup.GetRefRW(tester.EntityG).ValueRW;
                     t.Timer.SetCourse(true);
                     n.Timer.SetCourse(true);
                     t.Timer.Play(false);
@@ -272,16 +272,16 @@ public partial struct TweensTesterSystem : ISystem
 
                 // H
                 {
-                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityH, false).ValueRW;
-                    ref NonUniformScaleTween n = ref nonUniformScaleTweenLookup.GetRefRW(tester.EntityH, false).ValueRW;
-                    ref PositionToScaleSequenceTween c = ref positionToScaleComboTweenLookup.GetRefRW(tester.EntityH, false).ValueRW;
+                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityH).ValueRW;
+                    ref NonUniformScaleTween n = ref nonUniformScaleTweenLookup.GetRefRW(tester.EntityH).ValueRW;
+                    ref PositionToScaleSequenceTween c = ref positionToScaleComboTweenLookup.GetRefRW(tester.EntityH).ValueRW;
                     TweenUtilities.SetSequenceCourse(true, ref c.State, ref t.Timer, ref n.Timer);
                     TweenUtilities.PlaySequence(false, ref c.State, ref t.Timer, ref n.Timer);
                 }
 
                 // I
                 {
-                    ref LocalPositionTargetTween t = ref localPositionTargetTweenLookup.GetRefRW(entity, false).ValueRW;
+                    ref LocalPositionTargetTween t = ref localPositionTargetTweenLookup.GetRefRW(entity).ValueRW;
                     t.Timer.Play(true);
                 }
 
@@ -309,15 +309,15 @@ public partial struct TweensTesterSystem : ISystem
 
                 // F
                 {
-                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityF, false).ValueRW;
+                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityF).ValueRW;
                     t.Timer.SetCourse(false);
                     t.Timer.Play(false);
                 }
 
                 // G
                 {
-                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityG, false).ValueRW;
-                    ref NonUniformScaleTween n = ref nonUniformScaleTweenLookup.GetRefRW(tester.EntityG, false).ValueRW;
+                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityG).ValueRW;
+                    ref NonUniformScaleTween n = ref nonUniformScaleTweenLookup.GetRefRW(tester.EntityG).ValueRW;
                     t.Timer.SetCourse(false);
                     n.Timer.SetCourse(false);
                     t.Timer.Play(false);
@@ -326,9 +326,9 @@ public partial struct TweensTesterSystem : ISystem
 
                 // H
                 {
-                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityH, false).ValueRW;
-                    ref NonUniformScaleTween n = ref nonUniformScaleTweenLookup.GetRefRW(tester.EntityH, false).ValueRW;
-                    ref PositionToScaleSequenceTween c = ref positionToScaleComboTweenLookup.GetRefRW(tester.EntityH, false).ValueRW;
+                    ref LocalPositionTween t = ref localPositionTweenLookup.GetRefRW(tester.EntityH).ValueRW;
+                    ref NonUniformScaleTween n = ref nonUniformScaleTweenLookup.GetRefRW(tester.EntityH).ValueRW;
+                    ref PositionToScaleSequenceTween c = ref positionToScaleComboTweenLookup.GetRefRW(tester.EntityH).ValueRW;
                     TweenUtilities.SetSequenceCourse(false, ref c.State, ref t.Timer, ref n.Timer);
                     TweenUtilities.PlaySequence(false, ref c.State, ref t.Timer, ref n.Timer);
 
