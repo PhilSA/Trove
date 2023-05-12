@@ -17,10 +17,22 @@ All of these packages care about:
 These packages can be installed into your Unity project through the package manager:
 * In the Unity package manager window, click the `+` button in the top right.
 * Choose `Add package from git URL`.
-* Enter the URL(s) of the package(s) below and press `Add`. This should import the package(s).
+* Enter the URL(s) of the package(s) below and press `Add`. This should import the package(s). For example, enter `https://github.com/PhilSA/Trove.git?path=/com.trove.attributes` there to import the Attributes package.
+
+
+### Targeting a specific version
+
+Versions are released as branches on the repository. For example, the `v0.1.0` branch represent the 0.1.0 version of the package. In order to import a specific version of the packages, add the version branch (for example: `#v0.1.0`) at the end of the git url.
+
+So for importing the 0.1.0 version of the Attributes package, you'd enter `https://github.com/PhilSA/Trove.git?path=/com.trove.attributes#v0.1.0` as the git url.
+
+
+### Dependencies
 
 Some of the packages require you to install the dependencies manually. When this is the case, the "Install URLs" section of the table below will let you know.
 
+
+### User Content
 Moreover, be sure to check the "Samples" tab of each package's page in the Package Manager. Several of them come with "User Content" that must be installed in your project before you can use the package.
 
 ----------------------------
