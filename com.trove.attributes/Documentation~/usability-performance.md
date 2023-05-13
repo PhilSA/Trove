@@ -11,7 +11,7 @@ This solution has these main priorities:
 * No structural changes
 * No managed objects anywhere, therefore it is fully job-compatible and causes no GC allocations.
 * Simple and easy to use: you define attributes, you setup rules (modifiers) affecting these attributes, and all attributes are automatically recalculated when they need to be.
-* Very high customizability: you have full control over defining modifier types, operations, and the entire modifiers stack.
+* Very high customizability: you have full control over defining modifier types, operations, and the entire modifiers stack. Modifiers are not limited to simple pre-determined arithmetic operations; they can be as complex as you want. For example, you could decide to create a modifier type that multiplies an attribute's value by the sine function of the median value of three other attributes.
 * Attribute/modifier changes can happen instantaneously in jobs at any point in the frame.
 * Advanced modifier capabilities (attributes depending on other attributes, modifier values depending on other attributes, complex dependency networks, etc...).
 * Good fit for Netcode rollback & prediction.
