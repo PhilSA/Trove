@@ -6,7 +6,7 @@
 No attributes solution can be the best fit for every kind of game, because different games will have different requirements, and different requirements have different optimal solutions.
 
 This solution has these main priorities:
-* Prioritize attribute read performance: the final modified attribute values are just `float`s in unmanaged components of your choice. They don't need to be gotten from buffers/arrays/maps/lookups/etc...
+* Make attributes read performance as good as it can be (or almost): the final modified attribute values are just `float`s in unmanaged components of your choice. They don't need to be gotten from buffers/arrays/maps/lookups/etc..., which means they can get read with great data access patterns. Most games will need to read attributes way more often than to change them, and this is what this solution focuses on (imagine an RTS game with 5000 units reading a "MoveSpeed" and "DetectionRange" attribute every frame, but both of these attributes need to support modifiers/buffs).
 * Zero constant cost if no attributes are changing (not reliant on change-filtering jobs).
 * Simple and easy to use: you define attributes, you setup rules (modifiers) affecting these attributes, and all attributes are automatically recalculated when they need to be.
 * Very high customizability: you have full control over defining modifier types, operations, and the entire modifiers stack.
