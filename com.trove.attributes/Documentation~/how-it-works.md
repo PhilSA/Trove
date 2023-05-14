@@ -6,9 +6,10 @@
 > **IMPORTANT** When using this package, you must start by navigating to the "Samples" tab of the "Trove Attributes" package to download the "User Content" (it's a necessary part of the solution, but it's installed in your project folders because it's meant to be customized).
 
 
-Note: some example code and scenes are available in the Trove test project:
+> Note: some example code and scenes are available in the Trove test project:
 * [Scenes](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Tests/Scenes/Attributes)
 * [Scripts](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Tests/Scripts/Attriibutes)
+* [Unit Tests](https://github.com/PhilSA/Trove/tree/main/com.trove.attributes/Tests/Runtime)
 
 
 ## Summary
