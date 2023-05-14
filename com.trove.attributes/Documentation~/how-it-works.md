@@ -7,8 +7,8 @@
 
 
 Note: some example code and scenes are available in the Trove test project:
-[Scenes](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Tests/Scenes/Attributes)
-[Scripts](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Tests/Scripts/Attriibutes)
+* [Scenes](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Tests/Scenes/Attributes)
+* [Scripts](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Tests/Scripts/Attriibutes)
 
 
 ## Summary
