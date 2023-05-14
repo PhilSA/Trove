@@ -18,7 +18,7 @@ float normalizedCustomerLineupCount = math.clamp(customersInLine / 4f, 0f, 1f);
 ReasonerUtilities.SetConsiderationInput(ref worker.CustomerLineupRef, normalizedCustomerLineupCount, in reasoner, considerationsBuffer, considerationInputsBuffer);
 ```
 
-It's up to you to make sure your consideration inputs are always up to date.
+It's up to you to make sure your consideration inputs are up to date before you trigger a reasoner update
 
 ### Computing scores
 
