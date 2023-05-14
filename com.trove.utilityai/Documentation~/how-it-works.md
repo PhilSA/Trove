@@ -3,6 +3,9 @@
 
 # How it works
 
+Note: some example code and scenes are available in the Trove test project:
+[Link](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Restaurant)
+
 * [Introduction: restaurant example](./how-it-works-intro.md)
 * [Setting up reasoners, actions, and considerations](./how-it-works-setup.md)
     * [Defining possible action types](./how-it-works-setup.md#defining-possible-action-types)
