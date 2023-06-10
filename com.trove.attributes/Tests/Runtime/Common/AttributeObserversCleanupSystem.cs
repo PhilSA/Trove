@@ -51,7 +51,7 @@ namespace Trove.Attributes.Tests
                 // When a modifier observing EntityA is added on EntityB, an observer cleanup element saying EntityB observes EntityA is added on EntityA.
                 // When a modifier observing EntityA is removed on EntityB, the observer cleanup element saying EntityB observes EntityA is removed from EntityA.
                 // When an entity is destroyed, we must go through all observer cleanup elements to find out which entities have modifiers that observe this destroyed entity,
-                // and we must remove these modifiers.
+                // and we must remove these modifiers (otherwise, they wouldn't know that they need to "re-evaluate").
                 if (AttributeChanger.AttributeObserverCleanupLookup.TryGetBuffer(entity, out DynamicBuffer<AttributeObserverCleanup> cleanups))
                 {
                     for (int i = 0; i < cleanups.Length; i++)

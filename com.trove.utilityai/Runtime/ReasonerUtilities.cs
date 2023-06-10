@@ -13,14 +13,12 @@ namespace Trove.UtilityAI
     public interface IActionSelector
     {
         public bool SelectAction(DynamicBuffer<Action> actionsBuffer, out Action action);
-    }
+    } 
 
     public static class ActionSelectors
     {
-        [BurstCompile]
         public struct None : IActionSelector
         {
-            [BurstCompile]
             public bool SelectAction(DynamicBuffer<Action> actionsBuffer, out Action action)
             {
                 action = default;
@@ -28,10 +26,8 @@ namespace Trove.UtilityAI
             }
         }
 
-        [BurstCompile]
         public struct HighestScoring : IActionSelector
         {
-            [BurstCompile]
             public bool SelectAction(DynamicBuffer<Action> actionsBuffer, out Action action)
             {
                 action = default;
@@ -57,7 +53,6 @@ namespace Trove.UtilityAI
         /// The "Tolerance" is a percentage, where 0.2f would mean 20%, which would mean selecting a random action
         /// whose score is at least 80% of the highest scoring action's score (100% - 20% = 80%).
         /// </summary>
-        [BurstCompile]
         public struct RandomWithinToleranceOfHighestScoring : IActionSelector
         {
             public float Tolerance;
@@ -71,7 +66,6 @@ namespace Trove.UtilityAI
                 Random = random;
             }
 
-            [BurstCompile]
             public bool SelectAction(DynamicBuffer<Action> actionsBuffer, out Action action)
             {
                 bool foundAction = false;
@@ -126,7 +120,6 @@ namespace Trove.UtilityAI
             }
         }
 
-        [BurstCompile]
         public struct WeightedRandom : IActionSelector
         {
             public NativeList<Action> TmpActions;
@@ -138,7 +131,6 @@ namespace Trove.UtilityAI
                 Random = random;
             }
 
-            [BurstCompile]
             public bool SelectAction(DynamicBuffer<Action> actionsBuffer, out Action action)
             {
                 action = default;
@@ -234,7 +226,6 @@ namespace Trove.UtilityAI
         public const int IsCreatedBitPosition = 0;
         public const int IsEnabledBitPosition = 1;
 
-        [BurstCompile]
         public unsafe static bool UpdateScoresAndSelectAction<TActionSelector>(
             ref TActionSelector actionSelector,
             ref Reasoner reasoner,
@@ -383,7 +374,6 @@ namespace Trove.UtilityAI
             return success;
         }
 
-        [BurstCompile]
         public static void AddAction(
             ActionDefinition actionDefinition,
             bool isEnabled,
@@ -426,7 +416,6 @@ namespace Trove.UtilityAI
             }
         }
 
-        [BurstCompile]
         public static bool RemoveAction(
             ref ActionReference actionReference,
             ref Reasoner reasoner,
@@ -469,7 +458,6 @@ namespace Trove.UtilityAI
             return false;
         }
 
-        [BurstCompile]
         public static bool AddConsideration(
             BlobAssetReference<ConsiderationDefinition> definition,
             ref ActionReference affectedAction,
@@ -539,7 +527,6 @@ namespace Trove.UtilityAI
             return false;
         }
 
-        [BurstCompile]
         public static void RemoveConsideration(
             ref ConsiderationReference considerationReference,
             ref Reasoner reasoner,
@@ -559,7 +546,6 @@ namespace Trove.UtilityAI
         /// <summary>
         /// Note: Enabling/Disabling an action automatically takes care of enabling/disabling its associated considerations
         /// </summary>
-        [BurstCompile]
         public static bool SetActionData(
             ref ActionReference actionReference,
             ActionDefinition actionDefinition,
@@ -591,7 +577,6 @@ namespace Trove.UtilityAI
         /// <summary>
         /// Note: Enabling/Disabling an action automatically takes care of enabling/disabling its associated considerations
         /// </summary>
-        [BurstCompile]
         public static bool SetActionEnabled(
             ref ActionReference actionReference,
             bool isEnabled,
@@ -616,7 +601,6 @@ namespace Trove.UtilityAI
             return false;
         }
 
-        [BurstCompile]
         public static bool SetActionScoreMultiplier(
             ref ActionReference actionReference,
             float scoreMultiplier,
@@ -634,7 +618,6 @@ namespace Trove.UtilityAI
             return false;
         }
 
-        [BurstCompile]
         public static bool SetConsiderationInput(
             ref ConsiderationReference considerationReference,
             float normalizedInput,
@@ -651,7 +634,6 @@ namespace Trove.UtilityAI
             return false;
         }
 
-        [BurstCompile]
         public static bool SetConsiderationData(
             ref ConsiderationReference considerationReference,
             BlobAssetReference<ConsiderationDefinition> definition,
@@ -678,7 +660,6 @@ namespace Trove.UtilityAI
             return false;
         }
 
-        [BurstCompile]
         public static bool SetConsiderationEnabled(
             ref ConsiderationReference considerationReference,
             bool isEnabled,
@@ -703,7 +684,6 @@ namespace Trove.UtilityAI
             return false;
         }
 
-        [BurstCompile]
         public static bool FindNextEnabledAction(
             int startingIndex, 
             DynamicBuffer<Action> actionsBuffer, 
@@ -733,7 +713,6 @@ namespace Trove.UtilityAI
             return false;
         }
 
-        [BurstCompile]
         private static void SetConsiderationsEnabledForAction( 
             int actionIndex,
             bool isEnabled,
@@ -753,7 +732,6 @@ namespace Trove.UtilityAI
             reasoner.__internal__mustRecomputeHighestActionConsiderationsCount = 1;
         }
 
-        [BurstCompile]
         public static bool GetActionIndex(
             ref ActionReference actionReference,
             in Reasoner reasoner,
@@ -788,7 +766,6 @@ namespace Trove.UtilityAI
             return false;
         }
 
-        [BurstCompile]
         public static bool GetConsiderationIndex(
             ref ConsiderationReference considerationReference,
             in Reasoner reasoner,
@@ -802,7 +779,7 @@ namespace Trove.UtilityAI
                     considerationIndex = considerationReference.__internal__index;
                     return true;
                 }
-
+                 
                 // Update version
                 considerationReference.__internal__considerationsVersion = reasoner.__internal__considerationsVersion;
 
@@ -895,11 +872,11 @@ namespace Trove.UtilityAI
         public static void BeginBakeReasoner(IBaker baker, out Reasoner reasoner, out DynamicBuffer<Action> actionsBuffer, out DynamicBuffer<Consideration> considerationsBuffer, out DynamicBuffer<ConsiderationInput> considerationInputsBuffer)
         {
             reasoner = new Reasoner();
-            actionsBuffer = baker.AddBuffer<Action>();
-            considerationsBuffer = baker.AddBuffer<Consideration>();
-            considerationInputsBuffer = baker.AddBuffer<ConsiderationInput>();
+            actionsBuffer = baker.AddBuffer<Action>(baker.GetEntity(TransformUsageFlags.None));
+            considerationsBuffer = baker.AddBuffer<Consideration>(baker.GetEntity(TransformUsageFlags.None));
+            considerationInputsBuffer = baker.AddBuffer<ConsiderationInput>(baker.GetEntity(TransformUsageFlags.None));
         }
-
+         
         public static void EndBakeReasoner(IBaker baker, Reasoner reasoner)
         {
             baker.AddComponent(baker.GetEntity(TransformUsageFlags.None), reasoner);

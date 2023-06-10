@@ -14,9 +14,9 @@ namespace Trove.Attributes
         public static void MakeAttributeOwner(IBaker baker)
         {
             baker.AddComponent(baker.GetEntity(TransformUsageFlags.None), new AttributesOwner());
-            baker.AddBuffer<TAttributeModifier>();
-            baker.AddBuffer<AttributeObserver>();
-            baker.AddBuffer<AttributeObserverCleanup>();
+            baker.AddBuffer<TAttributeModifier>(baker.GetEntity(TransformUsageFlags.None));
+            baker.AddBuffer<AttributeObserver>(baker.GetEntity(TransformUsageFlags.None));
+            baker.AddBuffer<AttributeObserverCleanup>(baker.GetEntity(TransformUsageFlags.None));
         }
 
         [BurstCompile]

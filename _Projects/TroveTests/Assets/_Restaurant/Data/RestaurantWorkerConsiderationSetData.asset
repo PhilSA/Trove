@@ -38,6 +38,8 @@ MonoBehaviour:
         MinorGridIncrements: 0.1
         MajorGridLineWidth: 0.5
         MinorGridLineWidth: 0.5
+      DefaultMinY: 0
+      DefaultMaxY: 1
   PendingOrders:
     ParametricCurveAuthoring:
       ParametricCurve:
@@ -64,6 +66,8 @@ MonoBehaviour:
         MinorGridIncrements: 0.1
         MajorGridLineWidth: 0.5
         MinorGridLineWidth: 0.5
+      DefaultMinY: 0
+      DefaultMaxY: 1
   KitchenDirtiness:
     ParametricCurveAuthoring:
       ParametricCurve:
@@ -90,6 +94,8 @@ MonoBehaviour:
         MinorGridIncrements: 0.1
         MajorGridLineWidth: 0.5
         MinorGridLineWidth: 0.5
+      DefaultMinY: 0
+      DefaultMaxY: 1
   CleaningSupplies:
     ParametricCurveAuthoring:
       ParametricCurve:
@@ -116,6 +122,8 @@ MonoBehaviour:
         MinorGridIncrements: 0.1
         MajorGridLineWidth: 0.5
         MinorGridLineWidth: 0.5
+      DefaultMinY: 0
+      DefaultMaxY: 1
   Idleness:
     ParametricCurveAuthoring:
       ParametricCurve:
@@ -142,3 +150,5 @@ MonoBehaviour:
         MinorGridIncrements: 0.1
         MajorGridLineWidth: 0.5
         MinorGridLineWidth: 0.5
+      DefaultMinY: 0
+      DefaultMaxY: 1
