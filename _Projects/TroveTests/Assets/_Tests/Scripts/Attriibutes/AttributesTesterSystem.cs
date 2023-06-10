@@ -36,8 +36,7 @@ public partial struct AttributesTesterSystem : ISystem
         EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
         foreach (var (test, entity) in SystemAPI.Query<AttributesTester>().WithEntityAccess())
         {
-            Entity attributeCommandsEntity = ecb.CreateEntity();
-            ecb.AddBuffer<AttributeCommandElement>(attributeCommandsEntity);
+            Entity attributeCommandsEntity = AttributeCommandElement.CreateAttributeCommandsEntity(ecb, out DynamicBuffer<AttributeCommand> commands);
 
             // Entities with unchanging attributes
             for (int i = 0; i < test.UnchangingAttributesCount; i++)
@@ -54,7 +53,7 @@ public partial struct AttributesTesterSystem : ISystem
                 for (int c = 0; c < test.ChangingAttributesChildDepth; c++)
                 {
                     Entity newChildAttribute = CreateAttributesOwner(ecb, false, false, false);
-                    ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsEntity, AttributeCommand.Create_AddModifier(
+                    commands.Add(AttributeCommand.Create_AddModifier(
                         new AttributeReference(newChildAttribute, (int)AttributeType.Strength),
                         AttributeModifier.Create_AddFromAttribute(new AttributeReference(currentParentAttribute, (int)AttributeType.Strength))));
 
