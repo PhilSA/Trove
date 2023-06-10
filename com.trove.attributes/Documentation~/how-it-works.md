@@ -38,6 +38,6 @@ Attribute changes (either changing the value or adding/removing modifiers) must 
 * [Defining attributes](./how-it-works-defining-attributes.md)
 * [Changing attributes](./how-it-works-changing-attributes.md)
 * [Attribute modifiers](./how-it-works-attribute-modifiers.md)
-* [Destroying attribute owners](./how-it-works-destruction.md)
 * [Attribute commands](./how-it-works-attribute-commands.md)
+* [Destroying attribute owners](./how-it-works-destruction.md)
 
