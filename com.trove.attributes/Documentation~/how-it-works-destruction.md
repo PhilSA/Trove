@@ -22,7 +22,7 @@ The recommended way to solve this is to always call `AttributeUtilities.NotifyAt
 
     // Calling this will add attribute commands that will recalculate all attributes observing any attribute on this entity.
     // Here the "observersBuffer" is the buffer of AttributeObserver on the entity we are about to destroy.
-    AttributeUtilities.NotifyAttributesOwnerDestruction(ref observersBuffer, ref attributeCommands);
+    AttributeUtilities.NotifyAttributesOwnerDestruction(entity, ref observersBuffer, ref attributeCommands);
 
     // Destroy the attributes owner entity
     ecb.DestroyEntity(entity);

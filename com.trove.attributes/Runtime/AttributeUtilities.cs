@@ -82,12 +82,17 @@ namespace Trove.Attributes
         }
 
         public static void NotifyAttributesOwnerDestruction(
+            Entity destroyedEntity,
             ref DynamicBuffer<AttributeObserver> destroyedAttributesEntityObservers,
             ref DynamicBuffer<AttributeCommand<TAttributeModifier, TModifierStack, TAttributeGetterSetter>> attributeCommands)
         {
             for (int i = 0; i < destroyedAttributesEntityObservers.Length; i++)
             {
-                attributeCommands.Add(AttributeCommand<TAttributeModifier, TModifierStack, TAttributeGetterSetter>.Create_RecalculateAttributeAndAllObservers(destroyedAttributesEntityObservers[i].ObserverAttribute));
+                AttributeReference observer = destroyedAttributesEntityObservers[i].ObserverAttribute;
+                if (observer.Entity != destroyedEntity)
+                {
+                    attributeCommands.Add(AttributeCommand<TAttributeModifier, TModifierStack, TAttributeGetterSetter>.Create_RecalculateAttributeAndAllObservers(observer));
+                }
             }
         }
     }

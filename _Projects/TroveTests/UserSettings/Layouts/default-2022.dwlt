@@ -47,7 +47,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 1
-  controlID: 350
+  controlID: 239
 --- !u!114 &3
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -144,7 +144,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 351
+  controlID: 240
 --- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -164,12 +164,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1256
+    width: 1055.2
     height: 1010.80005
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 228
+  controlID: 120
 --- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -180,22 +180,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 1
   m_Script: {fileID: 12006, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: ProfilerWindow
+  m_Name: PackageManagerWindow
   m_EditorClassIdentifier: 
   m_Children: []
   m_Position:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1256
+    width: 1055.2
     height: 684
-  m_MinSize: {x: 901, y: 237}
+  m_MinSize: {x: 801, y: 271}
   m_MaxSize: {x: 4001, y: 4021}
   m_ActualView: {fileID: 14}
   m_Panes:
-  - {fileID: 15}
   - {fileID: 16}
+  - {fileID: 17}
   - {fileID: 14}
+  - {fileID: 15}
   m_Selected: 2
   m_LastSelected: 1
 --- !u!114 &9
@@ -215,13 +216,13 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 684
-    width: 1256
+    width: 1055.2
     height: 326.80005
   m_MinSize: {x: 101, y: 121}
   m_MaxSize: {x: 4001, y: 4021}
-  m_ActualView: {fileID: 17}
+  m_ActualView: {fileID: 18}
   m_Panes:
-  - {fileID: 17}
+  - {fileID: 18}
   m_Selected: 0
   m_LastSelected: 0
 --- !u!114 &10
@@ -241,14 +242,14 @@ MonoBehaviour:
   - {fileID: 12}
   m_Position:
     serializedVersion: 2
-    x: 1256
+    x: 1055.2
     y: 0
-    width: 418.40002
+    width: 389.6001
     height: 1010.80005
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 272
+  controlID: 163
 --- !u!114 &11
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -266,15 +267,15 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 418.40002
+    width: 389.6001
     height: 462.4
   m_MinSize: {x: 202, y: 221}
   m_MaxSize: {x: 4002, y: 4021}
-  m_ActualView: {fileID: 18}
+  m_ActualView: {fileID: 19}
   m_Panes:
-  - {fileID: 18}
+  - {fileID: 19}
   m_Selected: 0
-  m_LastSelected: 1
+  m_LastSelected: 0
 --- !u!114 &12
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -292,13 +293,13 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 462.4
-    width: 418.40002
+    width: 389.6001
     height: 548.4
   m_MinSize: {x: 232, y: 271}
   m_MaxSize: {x: 10002, y: 10021}
-  m_ActualView: {fileID: 19}
+  m_ActualView: {fileID: 20}
   m_Panes:
-  - {fileID: 19}
+  - {fileID: 20}
   m_Selected: 0
   m_LastSelected: 0
 --- !u!114 &13
@@ -311,24 +312,59 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 1
   m_Script: {fileID: 12006, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: InspectorWindow
+  m_Name: TestRunnerWindow
   m_EditorClassIdentifier: 
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 1674.4
+    x: 1444.8
     y: 0
-    width: 373.59998
+    width: 603.19995
     height: 1010.80005
-  m_MinSize: {x: 276, y: 71}
+  m_MinSize: {x: 101, y: 121}
   m_MaxSize: {x: 4001, y: 4021}
-  m_ActualView: {fileID: 20}
+  m_ActualView: {fileID: 22}
   m_Panes:
-  - {fileID: 20}
   - {fileID: 21}
-  m_Selected: 0
-  m_LastSelected: 1
+  - {fileID: 22}
+  m_Selected: 1
+  m_LastSelected: 0
 --- !u!114 &14
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 13953, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_MinSize: {x: 800, y: 250}
+  m_MaxSize: {x: 4000, y: 4000}
+  m_TitleContent:
+    m_Text: Package Manager
+    m_Image: {fileID: 5076950121296946556, guid: 0000000000000000d000000000000000,
+      type: 0}
+    m_Tooltip: 
+  m_Pos:
+    serializedVersion: 2
+    x: 0
+    y: 73.6
+    width: 1054.2
+    height: 663
+  m_SerializedDataModeController:
+    m_DataMode: 0
+    m_PreferredDataMode: 0
+    m_SupportedDataModes: 
+    isAutomatic: 1
+  m_ViewDataDictionary: {fileID: 0}
+  m_OverlayCanvas:
+    m_LastAppliedPresetName: Default
+    m_SaveData: []
+    m_OverlaysVisible: 1
+--- !u!114 &15
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -351,7 +387,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 73.6
-    width: 1255
+    width: 1054.2
     height: 663
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1189,7 +1225,7 @@ MonoBehaviour:
       data:
         m_SortAscending: 0
         m_SortedColumn: -1
---- !u!114 &15
+--- !u!114 &16
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1212,7 +1248,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 73.6
-    width: 1255
+    width: 1054.2
     height: 663
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1229,7 +1265,7 @@ MonoBehaviour:
       collapsed: 0
       displayed: 1
       snapOffset: {x: -156, y: -26.400024}
-      snapOffsetDelta: {x: -4, y: 0}
+      snapOffsetDelta: {x: -8.799988, y: 0}
       snapCorner: 3
       id: Tool Settings
       index: 0
@@ -1544,7 +1580,7 @@ MonoBehaviour:
   m_Rotation:
     m_Target: {x: -0.0029870174, y: 0.049189866, z: 0.00015229006, w: 0.9987899}
     speed: 2
-    m_Value: {x: -0.0029870027, y: 0.049189623, z: 0.00015228931, w: 0.998785}
+    m_Value: {x: 0.0029870174, y: -0.049189866, z: -0.00015229007, w: -0.99878997}
   m_Size:
     m_Target: 10.8531
     speed: 2
@@ -1573,7 +1609,7 @@ MonoBehaviour:
   m_SceneVisActive: 1
   m_LastLockedObject: {fileID: 0}
   m_ViewIsLockedToObject: 0
---- !u!114 &16
+--- !u!114 &17
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1596,7 +1632,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 73.6
-    width: 1255
+    width: 1054.2
     height: 663
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1650,29 +1686,29 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 1255
+      width: 1054.2
       height: 642
-    m_Scale: {x: 0.7430556, y: 0.7430556}
-    m_Translation: {x: 627.5, y: 320.99997}
+    m_Scale: {x: 0.6863281, y: 0.6863281}
+    m_Translation: {x: 527.1, y: 321}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -844.48596
-      y: -431.99994
-      width: 1688.9719
-      height: 863.99994
+      x: -768
+      y: -467.70633
+      width: 1536
+      height: 935.41266
     m_MinimalGUI: 1
-  m_defaultScale: 0.7430556
-  m_LastWindowPixelSize: {x: 1568.75, y: 828.75}
+  m_defaultScale: 0.6863281
+  m_LastWindowPixelSize: {x: 1317.75, y: 828.75}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000
   m_XRRenderMode: 0
   m_RenderTexture: {fileID: 0}
---- !u!114 &17
+--- !u!114 &18
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1695,7 +1731,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 757.60004
-    width: 1255
+    width: 1054.2
     height: 305.80005
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1707,7 +1743,7 @@ MonoBehaviour:
     m_LastAppliedPresetName: Default
     m_SaveData: []
     m_OverlaysVisible: 1
---- !u!114 &18
+--- !u!114 &19
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1728,9 +1764,9 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 1256
+    x: 1055.2001
     y: 73.6
-    width: 416.40002
+    width: 387.6001
     height: 441.4
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1745,9 +1781,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: aee3feff
+      m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: a6e3feff
+      m_ExpandedIDs: 32f7feff74f7feff3efafeff9afcfeff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1771,7 +1807,7 @@ MonoBehaviour:
       m_IsLocked: 0
     m_CurrentSortingName: TransformSorting
   m_WindowGUID: 4c969a2b90040154d917609493e03593
---- !u!114 &19
+--- !u!114 &20
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1792,9 +1828,9 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 1256
+    x: 1055.2001
     y: 536
-    width: 416.40002
+    width: 387.6001
     height: 527.4
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1818,8 +1854,7 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SkipHidden: 0
     m_SearchArea: 1
-    m_Folders:
-    - Assets/_Restaurant/Data
+    m_Folders: []
     m_Globs: []
     m_OriginalText: 
     m_ImportLogFlags: 0
@@ -1835,7 +1870,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 3af30000
     m_LastClickedID: 62266
-    m_ExpandedIDs: 0000000016a5000000ca9a3bffffff7f
+    m_ExpandedIDs: 000000000aa5000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1863,7 +1898,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: ffffffff0000000016a5000000ca9a3bffffff7f
+    m_ExpandedIDs: ffffffff000000000aa5000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1919,7 +1954,7 @@ MonoBehaviour:
     m_GridSize: 16
   m_SkipHiddenPackages: 0
   m_DirectoriesAreaWidth: 99
---- !u!114 &20
+--- !u!114 &21
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1940,9 +1975,9 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 1674.4
+    x: 1444.8
     y: 73.6
-    width: 372.59998
+    width: 602.19995
     height: 989.80005
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1967,7 +2002,7 @@ MonoBehaviour:
   m_LockTracker:
     m_IsLocked: 0
   m_PreviewWindow: {fileID: 0}
---- !u!114 &21
+--- !u!114 &22
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1987,9 +2022,9 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 1593.6
+    x: 1444.8
     y: 73.6
-    width: 453.40002
+    width: 602.19995
     height: 989.80005
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -2002,7 +2037,7 @@ MonoBehaviour:
     m_SaveData: []
     m_OverlaysVisible: 1
   m_Spl:
-    ID: 186
+    ID: 272
     splitterInitialOffset: 707
     currentActiveSplitter: -1
     realSizes:
@@ -2027,14 +2062,14 @@ MonoBehaviour:
     oldSplitSize: 0
   m_TestTypeToolbarIndex: 0
   m_PlayModeTestListGUI:
-    m_Window: {fileID: 21}
+    m_Window: {fileID: 22}
     m_NewResultList:
     - id: 1000
       uniqueId: '[TroveTests][suite]'
       name: TroveTests
       fullName: TroveTests
       resultStatus: 1
-      duration: 0.1629527
+      duration: 0.1409519
       messages: 
       output: 
       stacktrace: 
@@ -2050,7 +2085,7 @@ MonoBehaviour:
       name: com.trove.attributes.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.attributes.tests.dll
       resultStatus: 1
-      duration: 0.0696945
+      duration: 0.0638496
       messages: 
       output: 
       stacktrace: 
@@ -2066,7 +2101,7 @@ MonoBehaviour:
       name: Trove
       fullName: Trove
       resultStatus: 1
-      duration: 0.0678346
+      duration: 0.0621215
       messages: 
       output: 
       stacktrace: 
@@ -2082,7 +2117,7 @@ MonoBehaviour:
       name: Attributes
       fullName: Trove.Attributes
       resultStatus: 1
-      duration: 0.0664347
+      duration: 0.060782
       messages: 
       output: 
       stacktrace: 
@@ -2098,7 +2133,7 @@ MonoBehaviour:
       name: Tests
       fullName: Trove.Attributes.Tests
       resultStatus: 1
-      duration: 0.0649283
+      duration: 0.059474
       messages: 
       output: 
       stacktrace: 
@@ -2114,7 +2149,7 @@ MonoBehaviour:
       name: AttributeTests
       fullName: Trove.Attributes.Tests.AttributeTests
       resultStatus: 1
-      duration: 0.0628927
+      duration: 0.0569835
       messages: 
       output: 
       stacktrace: 
@@ -2130,7 +2165,7 @@ MonoBehaviour:
       name: AttributeChanger
       fullName: Trove.Attributes.Tests.AttributeTests.AttributeChanger
       resultStatus: 1
-      duration: 0.0250673
+      duration: 0.0216455
       messages: 
       output: 
       stacktrace: 
@@ -2147,7 +2182,7 @@ MonoBehaviour:
       name: ComplexTree
       fullName: Trove.Attributes.Tests.AttributeTests.ComplexTree
       resultStatus: 1
-      duration: 0.0018767
+      duration: 0.002006
       messages: 
       output: 
       stacktrace: 
@@ -2164,7 +2199,7 @@ MonoBehaviour:
       name: DestroyObservedAttribute
       fullName: Trove.Attributes.Tests.AttributeTests.DestroyObservedAttribute
       resultStatus: 1
-      duration: 0.0046798
+      duration: 0.0068553
       messages: 
       output: 
       stacktrace: 
@@ -2181,7 +2216,7 @@ MonoBehaviour:
       name: ECBCommands_Modifiers
       fullName: Trove.Attributes.Tests.AttributeTests.ECBCommands_Modifiers
       resultStatus: 1
-      duration: 0.0105156
+      duration: 0.005102
       messages: 
       output: 
       stacktrace: 
@@ -2198,7 +2233,7 @@ MonoBehaviour:
       name: ECBCommands_Values
       fullName: Trove.Attributes.Tests.AttributeTests.ECBCommands_Values
       resultStatus: 1
-      duration: 0.0006438
+      duration: 0.0014984
       messages: 
       output: 
       stacktrace: 
@@ -2215,7 +2250,7 @@ MonoBehaviour:
       name: InfiniteObserversLoopPrevention
       fullName: Trove.Attributes.Tests.AttributeTests.InfiniteObserversLoopPrevention
       resultStatus: 1
-      duration: 0.0029696
+      duration: 0.0029625
       messages: 
       output: 'WARNING: detected an infinite attribute observers loop and prevented
         adding the modifier that would''ve caused it
@@ -2235,7 +2270,7 @@ MonoBehaviour:
       name: ModifiersFiltering
       fullName: Trove.Attributes.Tests.AttributeTests.ModifiersFiltering
       resultStatus: 1
-      duration: 0.0006464
+      duration: 0.0006172
       messages: 
       output: 
       stacktrace: 
@@ -2252,7 +2287,7 @@ MonoBehaviour:
       name: ObserversFiltering
       fullName: Trove.Attributes.Tests.AttributeTests.ObserversFiltering
       resultStatus: 1
-      duration: 0.0016977
+      duration: 0.0015629
       messages: 
       output: 
       stacktrace: 
@@ -2269,7 +2304,7 @@ MonoBehaviour:
       name: SelfAttributeObserver
       fullName: Trove.Attributes.Tests.AttributeTests.SelfAttributeObserver
       resultStatus: 1
-      duration: 0.0008624
+      duration: 0.000846
       messages: 
       output: 'WARNING: detected an infinite attribute observers loop and prevented
         adding the modifier that would''ve caused it
@@ -2289,7 +2324,7 @@ MonoBehaviour:
       name: SelfEntityObserver
       fullName: Trove.Attributes.Tests.AttributeTests.SelfEntityObserver
       resultStatus: 1
-      duration: 0.0005435
+      duration: 0.0005148
       messages: 
       output: 
       stacktrace: 
@@ -2306,7 +2341,7 @@ MonoBehaviour:
       name: SelfRemoveModifierAndObserver
       fullName: Trove.Attributes.Tests.AttributeTests.SelfRemoveModifierAndObserver
       resultStatus: 1
-      duration: 0.0007759
+      duration: 0.0008097
       messages: 
       output: 
       stacktrace: 
@@ -2323,7 +2358,7 @@ MonoBehaviour:
       name: ValidateLoopDetectionTakesObservedTypeIntoAccount
       fullName: Trove.Attributes.Tests.AttributeTests.ValidateLoopDetectionTakesObservedTypeIntoAccount
       resultStatus: 1
-      duration: 0.0007007
+      duration: 0.0007291
       messages: 
       output: 
       stacktrace: 
@@ -2340,7 +2375,7 @@ MonoBehaviour:
       name: com.trove.common.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.common.tests.dll
       resultStatus: 1
-      duration: 0.0343032
+      duration: 0.0139575
       messages: 
       output: 
       stacktrace: 
@@ -2356,7 +2391,7 @@ MonoBehaviour:
       name: Trove
       fullName: Trove
       resultStatus: 1
-      duration: 0.0306766
+      duration: 0.0100993
       messages: 
       output: 
       stacktrace: 
@@ -2372,7 +2407,7 @@ MonoBehaviour:
       name: BitUtilitiesTests
       fullName: Trove.BitUtilitiesTests
       resultStatus: 1
-      duration: 0.0029087
+      duration: 0.0030003
       messages: 
       output: 'You are trying to create a MonoBehaviour using the ''new'' keyword. 
         This is not allowed.  MonoBehaviours can only be added using AddComponent().
@@ -2393,7 +2428,7 @@ MonoBehaviour:
       name: Test
       fullName: Trove.BitUtilitiesTests.Test
       resultStatus: 1
-      duration: 0.0008781
+      duration: 0.0009098
       messages: 
       output: 
       stacktrace: 
@@ -2410,7 +2445,7 @@ MonoBehaviour:
       name: ParametricCurveTests
       fullName: Trove.ParametricCurveTests
       resultStatus: 1
-      duration: 0.005493
+      duration: 0.0053722
       messages: 
       output: 
       stacktrace: 
@@ -2426,7 +2461,7 @@ MonoBehaviour:
       name: Bypass
       fullName: Trove.ParametricCurveTests.Bypass
       resultStatus: 1
-      duration: 0.000761
+      duration: 0.0006704
       messages: 
       output: 
       stacktrace: 
@@ -2443,7 +2478,7 @@ MonoBehaviour:
       name: Exponential
       fullName: Trove.ParametricCurveTests.Exponential
       resultStatus: 1
-      duration: 0.0003848
+      duration: 0.0004285
       messages: 
       output: 
       stacktrace: 
@@ -2460,7 +2495,7 @@ MonoBehaviour:
       name: Linear
       fullName: Trove.ParametricCurveTests.Linear
       resultStatus: 1
-      duration: 0.0002756
+      duration: 0.0002639
       messages: 
       output: 
       stacktrace: 
@@ -2477,7 +2512,7 @@ MonoBehaviour:
       name: Logistic
       fullName: Trove.ParametricCurveTests.Logistic
       resultStatus: 1
-      duration: 0.0003252
+      duration: 0.0003175
       messages: 
       output: 
       stacktrace: 
@@ -2494,7 +2529,7 @@ MonoBehaviour:
       name: Logit
       fullName: Trove.ParametricCurveTests.Logit
       resultStatus: 1
-      duration: 0.0002334
+      duration: 0.0002403
       messages: 
       output: 
       stacktrace: 
@@ -2511,7 +2546,7 @@ MonoBehaviour:
       name: Sine
       fullName: Trove.ParametricCurveTests.Sine
       resultStatus: 1
-      duration: 0.0003565
+      duration: 0.0003579
       messages: 
       output: 
       stacktrace: 
@@ -2528,7 +2563,7 @@ MonoBehaviour:
       name: Step
       fullName: Trove.ParametricCurveTests.Step
       resultStatus: 1
-      duration: 0.000228
+      duration: 0.0002444
       messages: 
       output: 
       stacktrace: 
@@ -2540,50 +2575,12 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1018
       parentUniqueId: com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]
-    - id: 1030
-      uniqueId: com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.TransformUtilitiesTests][suite]
-      name: TransformUtilitiesTests
-      fullName: Trove.TransformUtilitiesTests
-      resultStatus: 1
-      duration: 0.020475
-      messages: 
-      output: 'You are trying to create a MonoBehaviour using the ''new'' keyword. 
-        This is not allowed.  MonoBehaviours can only be added using AddComponent().
-        Alternatively, your script can inherit from ScriptableObject or no base class
-        at all
-
-'
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1033
-      parentUniqueId: com.trove.common.tests.dll/[com.trove.common.tests][Trove][suite]
-    - id: 1031
-      uniqueId: com.trove.common.tests.dll/Trove/TransformUtilitiesTests/[com.trove.common.tests][Trove.TransformUtilitiesTests.GetWorldTransform]
-      name: GetWorldTransform
-      fullName: Trove.TransformUtilitiesTests.GetWorldTransform
-      resultStatus: 1
-      duration: 0.0166207
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1030
-      parentUniqueId: com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.TransformUtilitiesTests][suite]
     - id: 1032
       uniqueId: '[com.trove.polymorphicstructs.tests.dll][suite]'
       name: com.trove.polymorphicstructs.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.polymorphicstructs.tests.dll
       resultStatus: 1
-      duration: 0.0137753
+      duration: 0.014222
       messages: 
       output: 
       stacktrace: 
@@ -2599,7 +2596,7 @@ MonoBehaviour:
       name: Trove
       fullName: Trove
       resultStatus: 1
-      duration: 0.0106243
+      duration: 0.011315
       messages: 
       output: 
       stacktrace: 
@@ -2615,7 +2612,7 @@ MonoBehaviour:
       name: PolymorphicStructs
       fullName: Trove.PolymorphicStructs
       resultStatus: 1
-      duration: 0.0091894
+      duration: 0.009969
       messages: 
       output: 
       stacktrace: 
@@ -2631,7 +2628,7 @@ MonoBehaviour:
       name: Tests
       fullName: Trove.PolymorphicStructs.Tests
       resultStatus: 1
-      duration: 0.0080666
+      duration: 0.0085802
       messages: 
       output: 
       stacktrace: 
@@ -2647,7 +2644,7 @@ MonoBehaviour:
       name: PolymorphicStructsTests
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests
       resultStatus: 1
-      duration: 0.006929
+      duration: 0.0072451
       messages: 
       output: 
       stacktrace: 
@@ -2663,7 +2660,7 @@ MonoBehaviour:
       name: AddToGeneric
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.AddToGeneric
       resultStatus: 1
-      duration: 0.0011185
+      duration: 0.0010822
       messages: 
       output: 
       stacktrace: 
@@ -2680,7 +2677,7 @@ MonoBehaviour:
       name: CastingAndVariables
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.CastingAndVariables
       resultStatus: 1
-      duration: 0.0008717
+      duration: 0.0009825
       messages: 
       output: 
       stacktrace: 
@@ -2697,7 +2694,7 @@ MonoBehaviour:
       name: ChangeByRef
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ChangeByRef
       resultStatus: 1
-      duration: 0.0003595
+      duration: 0.000364
       messages: 
       output: 
       stacktrace: 
@@ -2714,7 +2711,7 @@ MonoBehaviour:
       name: EmptyPolymorphicStructs
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.EmptyPolymorphicStructs
       resultStatus: 1
-      duration: 0.0001297
+      duration: 0.0001348
       messages: 
       output: 
       stacktrace: 
@@ -2731,7 +2728,7 @@ MonoBehaviour:
       name: GetResult
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.GetResult
       resultStatus: 1
-      duration: 0.0003247
+      duration: 0.0003129
       messages: 
       output: 
       stacktrace: 
@@ -2748,7 +2745,7 @@ MonoBehaviour:
       name: GetResultFromInData
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.GetResultFromInData
       resultStatus: 1
-      duration: 0.0003204
+      duration: 0.0003612
       messages: 
       output: 
       stacktrace: 
@@ -2765,7 +2762,7 @@ MonoBehaviour:
       name: ModifySelf
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ModifySelf
       resultStatus: 1
-      duration: 0.0003482
+      duration: 0.0003628
       messages: 
       output: 
       stacktrace: 
@@ -2782,7 +2779,7 @@ MonoBehaviour:
       name: Properties
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.Properties
       resultStatus: 1
-      duration: 0.0004804
+      duration: 0.0004899
       messages: 
       output: 
       stacktrace: 
@@ -2799,7 +2796,7 @@ MonoBehaviour:
       name: ReturnOutParam
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ReturnOutParam
       resultStatus: 1
-      duration: 0.0004451
+      duration: 0.0004593
       messages: 
       output: 
       stacktrace: 
@@ -2816,7 +2813,7 @@ MonoBehaviour:
       name: ReturnUniqueOperationResult
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ReturnUniqueOperationResult
       resultStatus: 1
-      duration: 0.0003297
+      duration: 0.0003238
       messages: 
       output: 
       stacktrace: 
@@ -2833,7 +2830,7 @@ MonoBehaviour:
       name: com.trove.tweens.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.tweens.tests.dll
       resultStatus: 1
-      duration: 0.0084544
+      duration: 0.0094404
       messages: 
       output: 
       stacktrace: 
@@ -2849,7 +2846,7 @@ MonoBehaviour:
       name: Trove
       fullName: Trove
       resultStatus: 1
-      duration: 0.006189
+      duration: 0.0064665
       messages: 
       output: 
       stacktrace: 
@@ -2865,7 +2862,7 @@ MonoBehaviour:
       name: Tweens
       fullName: Trove.Tweens
       resultStatus: 1
-      duration: 0.0049766
+      duration: 0.0052284
       messages: 
       output: 
       stacktrace: 
@@ -2881,7 +2878,7 @@ MonoBehaviour:
       name: Tests
       fullName: Trove.Tweens.Tests
       resultStatus: 1
-      duration: 0.003898
+      duration: 0.0039269
       messages: 
       output: 
       stacktrace: 
@@ -2897,7 +2894,7 @@ MonoBehaviour:
       name: TweenTests
       fullName: Trove.Tweens.Tests.TweenTests
       resultStatus: 1
-      duration: 0.0027376
+      duration: 0.0028944
       messages: 
       output: 
       stacktrace: 
@@ -2913,7 +2910,7 @@ MonoBehaviour:
       name: Test
       fullName: Trove.Tweens.Tests.TweenTests.Test
       resultStatus: 1
-      duration: 0.0010732
+      duration: 0.0011659
       messages: 
       output: 
       stacktrace: 
@@ -2930,7 +2927,7 @@ MonoBehaviour:
       name: com.trove.utilityai.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.utilityai.tests.dll
       resultStatus: 1
-      duration: 0.030289
+      duration: 0.030973
       messages: 
       output: 
       stacktrace: 
@@ -2946,7 +2943,7 @@ MonoBehaviour:
       name: Trove
       fullName: Trove
       resultStatus: 1
-      duration: 0.0281578
+      duration: 0.028774
       messages: 
       output: 
       stacktrace: 
@@ -2962,7 +2959,7 @@ MonoBehaviour:
       name: UtilityAI
       fullName: Trove.UtilityAI
       resultStatus: 1
-      duration: 0.0269938
+      duration: 0.0275866
       messages: 
       output: 
       stacktrace: 
@@ -2978,7 +2975,7 @@ MonoBehaviour:
       name: Tests
       fullName: Trove.UtilityAI.Tests
       resultStatus: 1
-      duration: 0.0258996
+      duration: 0.0266121
       messages: 
       output: 
       stacktrace: 
@@ -2994,7 +2991,7 @@ MonoBehaviour:
       name: ReasonerTests
       fullName: Trove.UtilityAI.Tests.ReasonerTests
       resultStatus: 1
-      duration: 0.0247892
+      duration: 0.0254584
       messages: 
       output: 
       stacktrace: 
@@ -3010,7 +3007,7 @@ MonoBehaviour:
       name: ActionSelectors
       fullName: Trove.UtilityAI.Tests.ReasonerTests.ActionSelectors
       resultStatus: 1
-      duration: 0.0163792
+      duration: 0.0173799
       messages: 
       output: 
       stacktrace: 
@@ -3027,7 +3024,7 @@ MonoBehaviour:
       name: ActionVersions
       fullName: Trove.UtilityAI.Tests.ReasonerTests.ActionVersions
       resultStatus: 1
-      duration: 0.0008821
+      duration: 0.0008736
       messages: 
       output: 
       stacktrace: 
@@ -3044,7 +3041,7 @@ MonoBehaviour:
       name: ActionWithoutConsiderations
       fullName: Trove.UtilityAI.Tests.ReasonerTests.ActionWithoutConsiderations
       resultStatus: 1
-      duration: 0.0005932
+      duration: 0.0005479
       messages: 
       output: 
       stacktrace: 
@@ -3061,7 +3058,7 @@ MonoBehaviour:
       name: ConsiderationVersions
       fullName: Trove.UtilityAI.Tests.ReasonerTests.ConsiderationVersions
       resultStatus: 1
-      duration: 0.0007941
+      duration: 0.0007978
       messages: 
       output: 
       stacktrace: 
@@ -3078,7 +3075,7 @@ MonoBehaviour:
       name: FullWorkflow
       fullName: Trove.UtilityAI.Tests.ReasonerTests.FullWorkflow
       resultStatus: 1
-      duration: 0.0032252
+      duration: 0.0030862
       messages: 
       output: 
       stacktrace: 
@@ -3095,7 +3092,7 @@ MonoBehaviour:
       name: ScoreCompensation
       fullName: Trove.UtilityAI.Tests.ReasonerTests.ScoreCompensation
       resultStatus: 1
-      duration: 0.0009497
+      duration: 0.0007603
       messages: 
       output: 
       stacktrace: 
@@ -3107,10 +3104,10 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1042
       parentUniqueId: com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]
-    m_ResultText: TroveTests (0.163s)
+    m_ResultText: TroveTests (0.141s)
     m_ResultStacktrace: 
     m_TestListState:
-      scrollPos: {x: 0, y: 338}
+      scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 511b1645
       m_LastClickedID: 1159076689
       m_ExpandedIDs: fff26d8bcedba58d393fb88f98dabd976be474a79e4cb5abde18d9b95e9f80ba58f5b9c40133dfc5f08570cf7e71fae0925af8e25f6e63f139b52cfc59570f0406336806c4c4770afc38c30c8367950e9e389a1006dd1d1503faa4154760891f48821f2e6ac61a37511b16450759845a5753d05cd5188c5dd6061c641844d16c05ca4e74b95d5c76ffffff7f
@@ -3141,7 +3138,7 @@ MonoBehaviour:
       - Uncategorized
     m_SelectedOption: 0
   m_EditModeTestListGUI:
-    m_Window: {fileID: 21}
+    m_Window: {fileID: 22}
     m_NewResultList:
     - id: 1020
       uniqueId: '[TroveTests][suite]'

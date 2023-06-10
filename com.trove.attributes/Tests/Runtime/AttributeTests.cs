@@ -978,7 +978,7 @@ namespace Trove.Attributes.Tests
                 Entity commandsEntity = AttributeCommandElement.CreateAttributeCommandsEntity(ecb, out DynamicBuffer<AttributeCommand> attributeCommands);
                 MakeTestEntity(ref ecb, commandsEntity);
 
-                AttributeUtilities.NotifyAttributesOwnerDestruction(ref observers2, ref attributeCommands);
+                AttributeUtilities.NotifyAttributesOwnerDestruction(entity2, ref observers2, ref attributeCommands);
                  
                 ecb.DestroyEntity(entity2);
                 ecb.Playback(EntityManager);
