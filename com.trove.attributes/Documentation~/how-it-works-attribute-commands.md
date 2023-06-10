@@ -7,7 +7,7 @@
 
 ## Writing and executing commands
 
-In order to write commands for later execution, first you must get an entity that has a `DynamicBuffer<AttributeCommandElement>`. Then use an `EntityCommandBuffer` to append to the `AttributeCommandElement` buffer on that entity. For example:
+In order to write commands for later execution, first you must create an entity that stores these commands in a dynamic buffer. You can do this using `AttributeCommandElement.CreateAttributeCommandsEntity`. Then, add commands to the returned buffer of commands. For example:
 
 ```cs
 using AttributeCommand = Trove.Attributes.AttributeCommand<AttributeModifier, AttributeModifierStack, AttributeGetterSetter>;
@@ -21,16 +21,16 @@ public partial struct MyAttributeCommandJob : IJobEntity
 
     void Execute(Entity entity, in StrengthChanger strengthChanger)
     {
-        ECB.AppendToBuffer<AttributeCommandElement>(CommandsEntity, AttributeCommand.Create_AddBaseValue(new AttributeReference(entity, (int)AttributeType.Strength), strengthChanger.ChangeRate * DeltaTime));
+        // Create an entity that will hold our commands
+        AttributeCommandElement.CreateAttributeCommandsEntity(ecb, out DynamicBuffer<AttributeCommand> commands);
+
+        // Add a command to be executed later
+        commands.Add(AttributeCommand.Create_AddBaseValue(new AttributeReference(entity, (int)AttributeType.Strength), strengthChanger.ChangeRate * DeltaTime));
     }
 }
 ```
 
->Notice that the `AttributeCommand` that we create is implicitly casted to the `AttributeCommandElement` type, which is just the buffer element type containing the `AttributeCommand`. 
-
-While nothing is stopping you from adding `AttributeCommandElement`s to multiple entities, keep in mind that if the order of commands matters for your use case, you should add them all to the same entity (a singleton entity for all commands would be good for this). This ensures that they will get processed in the exact order they were created.
-
-In order to execute those commands, you must either wait for the `ProcessAttributeChangerCommandsSystem` to update, or create a system that will update the `ProcessAttributeChangerCommandsSystem` manually at a different point in the frame, after the ECB used to write commands has played back. The `ProcessAttributeChangerCommandsSystem` schedules a single-threaded job that makes an `AttributeChanger` execute all written commands one by one.
+In order to execute those commands, you must either wait for the `ProcessAttributeChangerCommandsSystem` to update, or create a system that will update the `ProcessAttributeChangerCommandsSystem` manually at a different point in the frame, after the ECB used to write commands has played back. The `ProcessAttributeChangerCommandsSystem` schedules a single-threaded job that makes an `AttributeChanger` execute all written commands one by one, and then destroys that commands entity once all of its commands were processed.
 
 --------------------------------------
 

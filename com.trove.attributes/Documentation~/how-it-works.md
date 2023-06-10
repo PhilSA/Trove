@@ -36,20 +36,8 @@ Attribute changes (either changing the value or adding/removing modifiers) must 
 ## Table of contents
 
 * [Defining attributes](./how-it-works-defining-attributes.md)
-    * [Attribute type](./how-it-works-defining-attributes.md#attribute-type)
-    * [Attribute component](./how-it-works-defining-attributes.md#attribute-component)
-    * [Attribute getter and setter](./how-it-works-defining-attributes.md#attribute-getter-and-setter)
-    * [Attribute owner](./how-it-works-defining-attributes.md#attribute-owner)
 * [Changing attributes](./how-it-works-changing-attributes.md)
 * [Attribute modifiers](./how-it-works-attribute-modifiers.md)
-    * [Creating, adding and removing modifiers](./how-it-works-attribute-modifiers.md#creating-adding-and-removing-modifiers)
-    * [Modifier type](./how-it-works-attribute-modifiers.md#modifier-type)
-    * [Applying modifiers to a stack](./how-it-works-attribute-modifiers.md#applying-modifiers-to-a-stack)
-    * [Modifier data](./how-it-works-attribute-modifiers.md#modifier-data)
-    * [Modifiers accessing attribute values](./how-it-works-attribute-modifiers.md#modifiers-accessing-attribute-values)
+* [Destroying attribute owners](./how-it-works-destruction.md)
 * [Attribute commands](./how-it-works-attribute-commands.md)
-    * [Writing and executing commands](./how-it-works-attribute-commands.md#writing-and-executing-commands)
-    * [Adding modifiers with commands](./how-it-works-attribute-commands.md#adding-modifiers-with-commands)
-    * [Why use commands](./how-it-works-attribute-commands.md#why-use-commands)
-    * [Commands and NativeStream](./how-it-works-attribute-commands.md#commands-and-nativestream)
 
