@@ -17,7 +17,6 @@ namespace Trove.Attributes
         public TAttributeGetterSetter AttributeGetterSetter;
         public ComponentLookup<AttributesOwner> AttributesOwnerLookup;
         public BufferLookup<AttributeObserver> AttributeObserverLookup;
-        public BufferLookup<AttributeObserverCleanup> AttributeObserverCleanupLookup;
         public BufferLookup<TAttributeModifier> AttributeModifierLookup;
         public FixedList512Bytes<AttributeReference> AttributesOnbservedByModifier; // Allow a modifier to observe up to 42 attributes
 
@@ -27,7 +26,6 @@ namespace Trove.Attributes
             AttributeGetterSetter.OnSystemCreate(ref state);
             AttributesOwnerLookup = state.GetComponentLookup<AttributesOwner>(false);
             AttributeObserverLookup = state.GetBufferLookup<AttributeObserver>(false);
-            AttributeObserverCleanupLookup = state.GetBufferLookup<AttributeObserverCleanup>(false);
             AttributeModifierLookup = state.GetBufferLookup<TAttributeModifier>(false);
             AttributesOnbservedByModifier = new FixedList512Bytes<AttributeReference>();
         }
@@ -38,7 +36,6 @@ namespace Trove.Attributes
             AttributeGetterSetter.OnSystemUpdate(ref state);
             AttributesOwnerLookup.Update(ref state);
             AttributeObserverLookup.Update(ref state);
-            AttributeObserverCleanupLookup.Update(ref state);
             AttributeModifierLookup.Update(ref state);
         }
 
@@ -479,11 +476,10 @@ namespace Trove.Attributes
                 else
                 {
                     // Get the observers buffer on the entity of the attribute that the modifier observes
-                    if (AttributeObserverLookup.TryGetBuffer(attributeObservedByModifier.Entity, out DynamicBuffer<AttributeObserver> attributeObserversBufferOnTheEntityOfTheObservedAttribute) &&
-                        AttributeObserverCleanupLookup.TryGetBuffer(attributeObservedByModifier.Entity, out DynamicBuffer<AttributeObserverCleanup> attributeObserversCleanupBufferOnTheEntityOfTheObservedAttribute))
+                    if (AttributeObserverLookup.TryGetBuffer(attributeObservedByModifier.Entity, out DynamicBuffer<AttributeObserver> attributeObserversBufferOnTheEntityOfTheObservedAttribute))
                     {
                         // ...and add this attrite as an observer of the modifier's observed attribute
-                        AddOrIncrementObserver(attribute, attributeObservedByModifier.AttributeType, attributeObservedByModifier.Entity, ref attributeObserversBufferOnTheEntityOfTheObservedAttribute, ref attributeObserversCleanupBufferOnTheEntityOfTheObservedAttribute);
+                        AddOrIncrementObserver(attribute, attributeObservedByModifier.AttributeType, ref attributeObserversBufferOnTheEntityOfTheObservedAttribute);
                     }
                     else
                     {
@@ -510,11 +506,10 @@ namespace Trove.Attributes
             {
                 // Get the observers buffer on the entity of the attribute that the modifier observes
                 AttributeReference attributeObservedByModifier = AttributesOnbservedByModifier[i];
-                if (AttributeObserverLookup.TryGetBuffer(attributeObservedByModifier.Entity, out DynamicBuffer<AttributeObserver> attributeObserversBufferOnTheEntityOfTheObservedAttribute) &&
-                    AttributeObserverCleanupLookup.TryGetBuffer(attributeObservedByModifier.Entity, out DynamicBuffer<AttributeObserverCleanup> attributeObserversCleanupBufferOnTheEntityOfTheObservedAttribute))
+                if (AttributeObserverLookup.TryGetBuffer(attributeObservedByModifier.Entity, out DynamicBuffer<AttributeObserver> attributeObserversBufferOnTheEntityOfTheObservedAttribute))
                 {
                     // ...and remove this attrite as an observer of the modifier's observed attribute
-                    RemoveOrDecrementObserver(attribute, attributeObservedByModifier.AttributeType, ref attributeObserversBufferOnTheEntityOfTheObservedAttribute, ref attributeObserversCleanupBufferOnTheEntityOfTheObservedAttribute);
+                    RemoveOrDecrementObserver(attribute, attributeObservedByModifier.AttributeType, ref attributeObserversBufferOnTheEntityOfTheObservedAttribute);
                 }
             }
         }
@@ -523,8 +518,7 @@ namespace Trove.Attributes
         private void RemoveOrDecrementObserver(
             AttributeReference observer, 
             int observedAttributeType, 
-            ref DynamicBuffer<AttributeObserver> attributeObserversBufferOnTheEntityOfTheObservedAttribute,
-            ref DynamicBuffer<AttributeObserverCleanup> attributeObserversCleanupBufferOnTheEntityOfTheObservedAttribute)
+            ref DynamicBuffer<AttributeObserver> attributeObserversBufferOnTheEntityOfTheObservedAttribute)
         {
             // Iterate the observers in buffer and try to find self
             for (int o = attributeObserversBufferOnTheEntityOfTheObservedAttribute.Length - 1; o >= 0; o--)
@@ -539,15 +533,6 @@ namespace Trove.Attributes
                     {
                         // If 0, remove completely
                         attributeObserversBufferOnTheEntityOfTheObservedAttribute.RemoveAtSwapBack(o);
-
-                        // ...and remove from cleanup
-                        for (int c = attributeObserversCleanupBufferOnTheEntityOfTheObservedAttribute.Length - 1; c >= 0; c--)
-                        {
-                            if(attributeObserversCleanupBufferOnTheEntityOfTheObservedAttribute[c].ObserverEntity == iteratedObserver.ObserverAttribute.Entity)
-                            {
-                                attributeObserversCleanupBufferOnTheEntityOfTheObservedAttribute.RemoveAtSwapBack(c);
-                            }
-                        }
                     }
                     else
                     {
@@ -564,9 +549,7 @@ namespace Trove.Attributes
         private void AddOrIncrementObserver(
             AttributeReference observer, 
             int observedAttributeType, 
-            Entity entityOfObserverBuffers,
-            ref DynamicBuffer<AttributeObserver> attributeObserversBufferOnTheEntityOfTheObservedAttribute, 
-            ref DynamicBuffer<AttributeObserverCleanup> attributeObserversCleanupBufferOnTheEntityOfTheObservedAttribute)
+            ref DynamicBuffer<AttributeObserver> attributeObserversBufferOnTheEntityOfTheObservedAttribute)
         {
             // Try to see if the attribute is already an observer in the buffer
             for (int o = attributeObserversBufferOnTheEntityOfTheObservedAttribute.Length - 1; o >= 0; o--)
@@ -589,26 +572,6 @@ namespace Trove.Attributes
                 ObservedAttributeType = observedAttributeType,
                 Count = 1,
             });
-
-            // ...and add to cleanup if not already present and if not self entity
-            {
-                bool shouldAddToCleanup = observer.Entity != entityOfObserverBuffers;
-                for (int i = 0; i < attributeObserversCleanupBufferOnTheEntityOfTheObservedAttribute.Length; i++)
-                {
-                    if (attributeObserversCleanupBufferOnTheEntityOfTheObservedAttribute[i].ObserverEntity == observer.Entity)
-                    {
-                        shouldAddToCleanup = false;
-                        break;
-                    }
-                }
-                if (shouldAddToCleanup)
-                {
-                    attributeObserversCleanupBufferOnTheEntityOfTheObservedAttribute.Add(new AttributeObserverCleanup
-                    {
-                        ObserverEntity = observer.Entity,
-                    });
-                }
-            }
         }
 
         /// <summary>

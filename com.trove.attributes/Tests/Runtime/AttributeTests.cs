@@ -64,6 +64,23 @@ namespace Trove.Attributes.Tests
             return entity;
         }
 
+        public Entity CreateECBTestEntity(ref EntityCommandBuffer ecb, int id = 0)
+        {
+            Entity entity = ecb.CreateEntity();
+            ecb.AddComponent(entity, new TestEntity { ID = id });
+            return entity;
+        }
+
+        public void MakeTestEntity(Entity entity, int id = 0)
+        {
+            EntityManager.AddComponentData(entity, new TestEntity { ID = id });
+        }
+
+        public void MakeTestEntity(ref EntityCommandBuffer ecb, Entity entity, int id = 0)
+        {
+            ecb.AddComponent(entity, new TestEntity { ID = id });
+        }
+
         public Entity CreateAttributesEntity(bool hasA, bool hasB, bool hasC, int id = 0)
         {
             Entity entity = CreateTestEntity(id);
@@ -93,13 +110,6 @@ namespace Trove.Attributes.Tests
                 });
             }
 
-            return entity;
-        }
-
-        public Entity CreateECBTestEntity(ref EntityCommandBuffer ecb, int id = 0)
-        {
-            Entity entity = ecb.CreateEntity();
-            ecb.AddComponent(entity, new TestEntity { ID = id });
             return entity;
         }
 
@@ -291,15 +301,15 @@ namespace Trove.Attributes.Tests
         [Test]
         public void ECBCommands_Values()
         {
-            Entity attributeCommandsSingleton = CreateTestEntity();
             EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
 
             Entity entity1 = CreateECBAttributesEntity(true, false, false, ref ecb, 1);
             AttributeReference attribute1A = new AttributeReference(entity1, (int)AttributeType.A);
 
-            ecb.AddBuffer<AttributeCommandElement>(attributeCommandsSingleton);
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_SetBaseValue(attribute1A, 2f));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddBaseValue(attribute1A, 1f));
+            Entity commandsEntity = AttributeCommandElement.CreateAttributeCommandsEntity(ecb, out DynamicBuffer<AttributeCommand> attributeCommands);
+            MakeTestEntity(ref ecb, commandsEntity);
+            attributeCommands.Add(AttributeCommand.Create_SetBaseValue(attribute1A, 2f));
+            attributeCommands.Add(AttributeCommand.Create_AddBaseValue(attribute1A, 1f));
 
             ecb.Playback(EntityManager);
             ecb.Dispose();
@@ -314,32 +324,36 @@ namespace Trove.Attributes.Tests
         [Test]
         public void ECBCommands_Modifiers()
         {
-            Entity attributeCommandsSingleton = CreateTestEntity();
             Entity notificationsEntity = CreateTestEntity();
             EntityManager.AddBuffer<ModifierReferenceNotification>(notificationsEntity);
 
-            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
-
-            Entity entity1 = CreateECBAttributesEntity(true, true, true, ref ecb, 1);
-            Entity entity2 = CreateECBAttributesEntity(true, true, true, ref ecb, 2);
-            Entity entity3 = CreateECBAttributesEntity(true, true, true, ref ecb, 3);
+            Entity entity1 = CreateAttributesEntity(true, true, true, 1);
+            Entity entity2 = CreateAttributesEntity(true, true, true, 2);
+            Entity entity3 = CreateAttributesEntity(true, true, true, 3);
             AttributeReference attribute1A = new AttributeReference(entity1, (int)AttributeType.A);
             AttributeReference attribute1B = new AttributeReference(entity1, (int)AttributeType.B);
             AttributeReference attribute1C = new AttributeReference(entity1, (int)AttributeType.C);
             AttributeReference attribute2A = new AttributeReference(entity2, (int)AttributeType.A);
             AttributeReference attribute3A = new AttributeReference(entity3, (int)AttributeType.A);
 
+            EntityCommandBuffer ecb = default;
+            DynamicBuffer<AttributeCommand> attributeCommands = default;
+
             // ----------------------------------------------------------
 
-            ecb.AddBuffer<AttributeCommandElement>(attributeCommandsSingleton);
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
+            {
+                ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
-            UpdateProcessCommandsSystem();
-            World.Update();
-             
+                Entity commandsEntity = AttributeCommandElement.CreateAttributeCommandsEntity(ecb, out attributeCommands);
+                MakeTestEntity(ref ecb, commandsEntity);
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
+
+                ecb.Playback(EntityManager);
+                ecb.Dispose();
+                UpdateProcessCommandsSystem();
+            }
+            
             FindEntityWithID(1, out entity1);
             attribute1A.Entity = entity1;
             attribute1B.Entity = entity1;
@@ -362,10 +376,10 @@ namespace Trove.Attributes.Tests
             DynamicBuffer<AttributeObserver> observers3 = EntityManager.GetBuffer<AttributeObserver>(entity3);
             DynamicBuffer<ModifierReferenceNotification> modifierNotifications = EntityManager.GetBuffer<ModifierReferenceNotification>(notificationsEntity);
 
-            Assert.IsTrue(values1A.BaseValue.IsRoughlyEqual(10f));
-            Assert.IsTrue(values1A.Value.IsRoughlyEqual(30f));
             Assert.AreEqual(2, modifiers1.Length);
             Assert.AreEqual(0, observers1.Length);
+            Assert.IsTrue(values1A.BaseValue.IsRoughlyEqual(10f));
+            Assert.IsTrue(values1A.Value.IsRoughlyEqual(30f));
             Assert.AreEqual(2, modifierNotifications.Length);
             Assert.IsTrue(new AttributeReference(entity1, (int)AttributeType.A).IsSame(modifierNotifications[0].ModifierReference.AffectedAttribute));
             Assert.AreEqual(1, modifierNotifications[0].ModifierReference.ID);
@@ -373,13 +387,17 @@ namespace Trove.Attributes.Tests
 
             // ----------------------------------------------------------
 
-            ecb = new EntityCommandBuffer(Allocator.Temp);
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveModifier(modifierNotifications[0].ModifierReference));
+            {
+                ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
-            UpdateProcessCommandsSystem();
-            World.Update();
+                Entity commandsEntity = AttributeCommandElement.CreateAttributeCommandsEntity(ecb, out attributeCommands);
+                MakeTestEntity(ref ecb, commandsEntity);
+                attributeCommands.Add(AttributeCommand.Create_RemoveModifier(modifierNotifications[0].ModifierReference));
+
+                ecb.Playback(EntityManager);
+                ecb.Dispose();
+                UpdateProcessCommandsSystem();
+            }
 
             values1A = EntityManager.GetComponentData<AttributeA>(entity1).Values;
             modifiers1 = EntityManager.GetBuffer<AttributeModifier>(entity1);
@@ -392,16 +410,20 @@ namespace Trove.Attributes.Tests
 
             // ----------------------------------------------------------
 
-            ecb = new EntityCommandBuffer(Allocator.Temp);
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiers(entity1));
+            {
+                ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
-            UpdateProcessCommandsSystem();
-            World.Update();
+                Entity commandsEntity = AttributeCommandElement.CreateAttributeCommandsEntity(ecb, out attributeCommands);
+                MakeTestEntity(ref ecb, commandsEntity);
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiers(entity1));
+
+                ecb.Playback(EntityManager);
+                ecb.Dispose();
+                UpdateProcessCommandsSystem();
+            }
 
             values1A = EntityManager.GetComponentData<AttributeA>(entity1).Values;
             modifiers1 = EntityManager.GetBuffer<AttributeModifier>(entity1);
@@ -414,19 +436,23 @@ namespace Trove.Attributes.Tests
 
             // ----------------------------------------------------------
 
-            ecb = new EntityCommandBuffer(Allocator.Temp);
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiers(entity1));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiers(entity2));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiers(entity3));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute1B), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1B, AttributeModifier.Create_AddFromAttribute(attribute1C), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiersAffectingAttribute(attribute1A));
+            {
+                ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
-            UpdateProcessCommandsSystem();
-            World.Update();
+                Entity commandsEntity = AttributeCommandElement.CreateAttributeCommandsEntity(ecb, out attributeCommands);
+                MakeTestEntity(ref ecb, commandsEntity);
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiers(entity1));
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiers(entity2));
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiers(entity3));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute1B), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1B, AttributeModifier.Create_AddFromAttribute(attribute1C), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiersAffectingAttribute(attribute1A));
+
+                ecb.Playback(EntityManager);
+                ecb.Dispose();
+                UpdateProcessCommandsSystem();
+            }
 
             values1A = EntityManager.GetComponentData<AttributeA>(entity1).Values;
             values1B = EntityManager.GetComponentData<AttributeB>(entity1).Values;
@@ -442,20 +468,24 @@ namespace Trove.Attributes.Tests
 
             // ----------------------------------------------------------
 
-            ecb = new EntityCommandBuffer(Allocator.Temp);
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiers(entity1));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiers(entity2));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiers(entity3));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute3A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_Add(5f), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_Add(5f), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiersObservingAttribute(attribute2A));
+            {
+                ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
-            UpdateProcessCommandsSystem();
-            World.Update();
+                Entity commandsEntity = AttributeCommandElement.CreateAttributeCommandsEntity(ecb, out attributeCommands);
+                MakeTestEntity(ref ecb, commandsEntity);
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiers(entity1));
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiers(entity2));
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiers(entity3));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute3A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_Add(5f), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_Add(5f), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiersObservingAttribute(attribute2A));
+
+                ecb.Playback(EntityManager);
+                ecb.Dispose();
+                UpdateProcessCommandsSystem();
+            }
 
             values1A = EntityManager.GetComponentData<AttributeA>(entity1).Values;
             values3A = EntityManager.GetComponentData<AttributeA>(entity3).Values;
@@ -476,20 +506,24 @@ namespace Trove.Attributes.Tests
 
             // ----------------------------------------------------------
 
-            ecb = new EntityCommandBuffer(Allocator.Temp);
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiers(entity1));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiers(entity2));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiers(entity3));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute3A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_Add(5f), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_Add(5f), notificationsEntity));
-            ecb.AppendToBuffer<AttributeCommandElement>(attributeCommandsSingleton, AttributeCommand.Create_RemoveAllModifiersObservingAttributeOnEntity(entity1, attribute2A));
+            {
+                ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
-            UpdateProcessCommandsSystem();
-            World.Update();
+                Entity commandsEntity = AttributeCommandElement.CreateAttributeCommandsEntity(ecb, out attributeCommands);
+                MakeTestEntity(ref ecb, commandsEntity);
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiers(entity1));
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiers(entity2));
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiers(entity3));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute3A, AttributeModifier.Create_AddFromAttribute(attribute2A), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_Add(5f), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_AddModifier(attribute1A, AttributeModifier.Create_Add(5f), notificationsEntity));
+                attributeCommands.Add(AttributeCommand.Create_RemoveAllModifiersObservingAttributeOnEntity(entity1, attribute2A));
+
+                ecb.Playback(EntityManager);
+                ecb.Dispose();
+                UpdateProcessCommandsSystem();
+            }
 
             values1A = EntityManager.GetComponentData<AttributeA>(entity1).Values;
             values3A = EntityManager.GetComponentData<AttributeA>(entity3).Values;
@@ -880,13 +914,10 @@ namespace Trove.Attributes.Tests
             AttributeValues values3C = EntityManager.GetComponentData<AttributeC>(entity3).Values;
             DynamicBuffer<AttributeModifier> modifiers1 = EntityManager.GetBuffer<AttributeModifier>(entity1);
             DynamicBuffer<AttributeObserver> observers1 = EntityManager.GetBuffer<AttributeObserver>(entity1);
-            DynamicBuffer<AttributeObserverCleanup> observerCleanups1 = EntityManager.GetBuffer<AttributeObserverCleanup>(entity1);
             DynamicBuffer<AttributeModifier> modifiers2 = EntityManager.GetBuffer<AttributeModifier>(entity2);
             DynamicBuffer<AttributeObserver> observers2 = EntityManager.GetBuffer<AttributeObserver>(entity2);
-            DynamicBuffer<AttributeObserverCleanup> observerCleanups2 = EntityManager.GetBuffer<AttributeObserverCleanup>(entity2);
             DynamicBuffer<AttributeModifier> modifiers3 = EntityManager.GetBuffer<AttributeModifier>(entity3);
             DynamicBuffer<AttributeObserver> observers3 = EntityManager.GetBuffer<AttributeObserver>(entity3);
-            DynamicBuffer<AttributeObserverCleanup> observerCleanups3 = EntityManager.GetBuffer<AttributeObserverCleanup>(entity3);
 
             ModifierReference modifierReference = default;
             attributeChanger.AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), out modifierReference);
@@ -910,13 +941,10 @@ namespace Trove.Attributes.Tests
             values3C = EntityManager.GetComponentData<AttributeC>(entity3).Values;
             modifiers1 = EntityManager.GetBuffer<AttributeModifier>(entity1);
             observers1 = EntityManager.GetBuffer<AttributeObserver>(entity1);
-            observerCleanups1 = EntityManager.GetBuffer<AttributeObserverCleanup>(entity1);
             modifiers2 = EntityManager.GetBuffer<AttributeModifier>(entity2);
             observers2 = EntityManager.GetBuffer<AttributeObserver>(entity2);
-            observerCleanups2 = EntityManager.GetBuffer<AttributeObserverCleanup>(entity2);
             modifiers3 = EntityManager.GetBuffer<AttributeModifier>(entity3);
             observers3 = EntityManager.GetBuffer<AttributeObserver>(entity3);
-            observerCleanups3 = EntityManager.GetBuffer<AttributeObserverCleanup>(entity3);
 
             Assert.IsTrue(values1A.BaseValue.IsRoughlyEqual(10f));
             Assert.IsTrue(values1A.Value.IsRoughlyEqual(70f));
@@ -938,16 +966,27 @@ namespace Trove.Attributes.Tests
             Assert.IsTrue(values3C.Value.IsRoughlyEqual(80f));
             Assert.AreEqual(4, modifiers1.Length);
             Assert.AreEqual(2, observers1.Length);
-            Assert.AreEqual(2, observerCleanups1.Length);
             Assert.AreEqual(3, modifiers2.Length);
             Assert.AreEqual(5, observers2.Length);
-            Assert.AreEqual(2, observerCleanups2.Length);
             Assert.AreEqual(2, modifiers3.Length);
             Assert.AreEqual(1, observers3.Length);
-            Assert.AreEqual(1, observerCleanups3.Length);
 
-            EntityManager.DestroyEntity(entity2);
-            World.Update();
+            // Destroy entity and prepare attributes owner for destruction
+            {
+                EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
+
+                Entity commandsEntity = AttributeCommandElement.CreateAttributeCommandsEntity(ecb, out DynamicBuffer<AttributeCommand> attributeCommands);
+                MakeTestEntity(ref ecb, commandsEntity);
+
+                AttributeUtilities.NotifyAttributesOwnerDestruction(ref observers2, ref attributeCommands);
+                 
+                ecb.DestroyEntity(entity2);
+                ecb.Playback(EntityManager);
+                ecb.Dispose();
+
+                // After ecb playback, process commands to recalculate
+                UpdateProcessCommandsSystem();
+            }
 
             values1A = EntityManager.GetComponentData<AttributeA>(entity1).Values;
             values1B = EntityManager.GetComponentData<AttributeB>(entity1).Values;
@@ -957,10 +996,8 @@ namespace Trove.Attributes.Tests
             values3C = EntityManager.GetComponentData<AttributeC>(entity3).Values;
             modifiers1 = EntityManager.GetBuffer<AttributeModifier>(entity1);
             observers1 = EntityManager.GetBuffer<AttributeObserver>(entity1);
-            observerCleanups1 = EntityManager.GetBuffer<AttributeObserverCleanup>(entity1);
             modifiers3 = EntityManager.GetBuffer<AttributeModifier>(entity3);
             observers3 = EntityManager.GetBuffer<AttributeObserver>(entity3);
-            observerCleanups3 = EntityManager.GetBuffer<AttributeObserverCleanup>(entity3);
 
             Assert.IsTrue(values1A.BaseValue.IsRoughlyEqual(10f));
             Assert.IsTrue(values1A.Value.IsRoughlyEqual(10f));
@@ -976,10 +1013,8 @@ namespace Trove.Attributes.Tests
             Assert.IsTrue(values3C.Value.IsRoughlyEqual(20f));
             Assert.AreEqual(0, modifiers1.Length);
             Assert.AreEqual(1, observers1.Length);
-            Assert.AreEqual(2, observerCleanups1.Length);
             Assert.AreEqual(1, modifiers3.Length);
             Assert.AreEqual(1, observers3.Length);
-            Assert.AreEqual(1, observerCleanups3.Length);
         }
 
         [Test]

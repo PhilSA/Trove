@@ -75,30 +75,30 @@ public struct AttributeGetterSetter : IAttributeGetterSetter
         {
             case AttributeType.Strength:
                 {
-                    if (StrengthLookup.TryGetComponent(attributeReference.Entity, out Strength comp))
+                    var compRW = StrengthLookup.GetRefRW(attributeReference.Entity);
+                    if (compRW.IsValid)
                     {
-                        comp.Values = value;
-                        StrengthLookup[attributeReference.Entity] = comp;
+                        compRW.ValueRW.Values = value;
                         return true;
                     }
                 }
                 break;
             case AttributeType.Dexterity:
                 {
-                    if (DexterityLookup.TryGetComponent(attributeReference.Entity, out Dexterity comp))
+                    var compRW = DexterityLookup.GetRefRW(attributeReference.Entity);
+                    if (compRW.IsValid)
                     {
-                        comp.Values = value;
-                        DexterityLookup[attributeReference.Entity] = comp;
+                        compRW.ValueRW.Values = value;
                         return true;
                     }
                 }
                 break;
             case AttributeType.Intelligence:
                 {
-                    if (IntelligenceLookup.TryGetComponent(attributeReference.Entity, out Intelligence comp))
+                    var compRW = IntelligenceLookup.GetRefRW(attributeReference.Entity);
+                    if (compRW.IsValid)
                     {
-                        comp.Values = value;
-                        IntelligenceLookup[attributeReference.Entity] = comp;
+                        compRW.ValueRW.Values = value;
                         return true;
                     }
                 }

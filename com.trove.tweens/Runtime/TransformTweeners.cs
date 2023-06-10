@@ -534,13 +534,13 @@ namespace Trove.Tweens
                         Initial = tweenedStruct.Value.Scale();
                         break;
                     case Type.ScaleX:
-                        Initial.x = tweenedStruct.Value.ScaleX();
+                        Initial.x = tweenedStruct.Value.Scale().x;
                         break;
                     case Type.ScaleY:
-                        Initial.y = tweenedStruct.Value.ScaleY();
+                        Initial.y = tweenedStruct.Value.Scale().y;
                         break;
                     case Type.ScaleZ:
-                        Initial.z = tweenedStruct.Value.ScaleZ();
+                        Initial.z = tweenedStruct.Value.Scale().z;
                         break;
                 }
             }

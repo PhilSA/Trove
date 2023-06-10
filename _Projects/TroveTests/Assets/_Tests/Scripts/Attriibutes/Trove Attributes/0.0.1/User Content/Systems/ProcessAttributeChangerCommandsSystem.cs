@@ -33,45 +33,30 @@ public partial struct ProcessAttributeChangerCommandsSystem : ISystem
 
         state.Dependency = new AttributeChangerCommandsJob
         {
+            ECB = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged),
             AttributeChanger = _attributeChanger,
             modifierNotificationsLookup = SystemAPI.GetBufferLookup<ModifierReferenceNotification>(false),
         }.Schedule(state.Dependency);
-
-        state.Dependency = new RemoveAttributeCommandsJob
-        {
-            ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged),
-        }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    [WithChangeFilter(typeof(AttributeCommandElement))]
     public partial struct AttributeChangerCommandsJob : IJobEntity
     {
+        public EntityCommandBuffer ECB;
         public AttributeChanger AttributeChanger;
         public BufferLookup<ModifierReferenceNotification> modifierNotificationsLookup;
 
-        void Execute(ref DynamicBuffer<AttributeCommandElement> changerCommands)
+        void Execute(Entity entity, ref AttributeCommandsProcessing commandProcessing, ref DynamicBuffer<AttributeCommandElement> changerCommands)
         {
-            for (int i = 0; i < changerCommands.Length; i++)
+            if (commandProcessing.WasProcessed == 0)
             {
-                changerCommands[i].Command.Process(ref AttributeChanger, ref modifierNotificationsLookup);
+                for (int i = 0; i < changerCommands.Length; i++)
+                {
+                    changerCommands[i].Command.Process(ref AttributeChanger, ref modifierNotificationsLookup);
+                }
+                commandProcessing.WasProcessed = 1;
+                ECB.DestroyEntity(entity);
             }
-            changerCommands.Clear();
-        }
-    }
-
-    [BurstCompile]
-    [WithChangeFilter(typeof(AttributeCommandElement))]
-    [WithAll(typeof(AttributeCommandElement))]
-    [WithAll(typeof(RemoveAttributeCommands))]
-    public partial struct RemoveAttributeCommandsJob : IJobEntity
-    {
-        public EntityCommandBuffer ecb;
-
-        void Execute(Entity entity)
-        {
-            ecb.RemoveComponent<AttributeCommandElement>(entity);
-            ecb.RemoveComponent<RemoveAttributeCommands>(entity);
         }
     }
 }

@@ -10,21 +10,11 @@ namespace Trove.Attributes
     }
 
     [Serializable]
-    public struct RemoveAttributeCommands : IComponentData
-    { }
-
-    [Serializable]
     public partial struct AttributeObserver : IBufferElementData
     {
         public AttributeReference ObserverAttribute;
         public int ObservedAttributeType;
         public uint Count;
-    }
-
-    [Serializable]
-    public struct AttributeObserverCleanup : ICleanupBufferElementData
-    {
-        public Entity ObserverEntity;
     }
 
     [Serializable]

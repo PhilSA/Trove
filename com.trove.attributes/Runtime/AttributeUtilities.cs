@@ -16,10 +16,8 @@ namespace Trove.Attributes
             baker.AddComponent(baker.GetEntity(TransformUsageFlags.None), new AttributesOwner());
             baker.AddBuffer<TAttributeModifier>(baker.GetEntity(TransformUsageFlags.None));
             baker.AddBuffer<AttributeObserver>(baker.GetEntity(TransformUsageFlags.None));
-            baker.AddBuffer<AttributeObserverCleanup>(baker.GetEntity(TransformUsageFlags.None));
         }
 
-        [BurstCompile]
         public static void MakeAttributeOwner(EntityManager entityManager, Entity entity)
         {
             if(!entityManager.HasComponent<AttributesOwner>(entity))
@@ -34,31 +32,22 @@ namespace Trove.Attributes
             {
                 entityManager.AddBuffer<AttributeObserver>(entity);
             }
-            if (!entityManager.HasBuffer<AttributeObserverCleanup>(entity))
-            {
-                entityManager.AddBuffer<AttributeObserverCleanup>(entity);
-            }
         }
 
-        [BurstCompile]
         public static void MakeAttributeOwner(EntityCommandBuffer ecb, Entity entity)
         {
             ecb.AddComponent(entity, new AttributesOwner());
             ecb.AddBuffer<TAttributeModifier>(entity);
             ecb.AddBuffer<AttributeObserver>(entity);
-            ecb.AddBuffer<AttributeObserverCleanup>(entity);
         }
 
-        [BurstCompile]
         public static void MakeAttributeOwner(EntityCommandBuffer.ParallelWriter ecb, int sortKey, Entity entity)
         {
             ecb.AddComponent(sortKey, entity, new AttributesOwner());
             ecb.AddBuffer<TAttributeModifier>(sortKey, entity);
             ecb.AddBuffer<AttributeObserver>(sortKey, entity);
-            ecb.AddBuffer<AttributeObserverCleanup>(sortKey, entity);
         }
 
-        [BurstCompile]
         public static bool GetNewModifierID(Entity ownerEntity, ref ComponentLookup<AttributesOwner> attributesOwnerLookup, out uint newID)
         {
             if (attributesOwnerLookup.TryGetComponent(ownerEntity, out AttributesOwner attributesOwner))
@@ -74,7 +63,6 @@ namespace Trove.Attributes
             return false;
         }
 
-        [BurstCompile]
         public static bool GetModifier(ModifierReference modifierReference, DynamicBuffer<TAttributeModifier> modifiersBuffer, out TAttributeModifier modifier, out int modifierIndex)
         {
             for (int i = 0; i < modifiersBuffer.Length; i++)
@@ -91,6 +79,16 @@ namespace Trove.Attributes
             modifier = default;
             modifierIndex = -1;
             return false;
+        }
+
+        public static void NotifyAttributesOwnerDestruction(
+            ref DynamicBuffer<AttributeObserver> destroyedAttributesEntityObservers,
+            ref DynamicBuffer<AttributeCommand<TAttributeModifier, TModifierStack, TAttributeGetterSetter>> attributeCommands)
+        {
+            for (int i = 0; i < destroyedAttributesEntityObservers.Length; i++)
+            {
+                attributeCommands.Add(AttributeCommand<TAttributeModifier, TModifierStack, TAttributeGetterSetter>.Create_RecalculateAttributeAndAllObservers(destroyedAttributesEntityObservers[i].ObserverAttribute));
+            }
         }
     }
 

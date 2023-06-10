@@ -8,8 +8,13 @@ using UnityEngine;
 
 namespace Trove.Attributes
 {
+    public struct AttributeCommandsProcessing : IComponentData
+    {
+        public byte WasProcessed;
+    }
+
     [Serializable]
-    public struct AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter>
+    public struct AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter> 
         where TAttributeModifier : unmanaged, IBufferElementData, IAttributeModifier<TAttributeModifierStack, TAttributeGetterSetter>
         where TAttributeModifierStack : unmanaged, IAttributeModifierStack
         where TAttributeGetterSetter : unmanaged, IAttributeGetterSetter
