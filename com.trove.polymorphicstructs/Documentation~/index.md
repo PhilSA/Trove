@@ -3,19 +3,11 @@
 
 Trove Polymorphic Structs provides a codegen tool for polymorphic behaviour in burstable unmanaged code. Based on several "child" structs in your project implementing the same interface, a "parent" union struct can be generated. The "parent" struct has all the methods of the interface, can be constructed from a "child" struct, and will automatically call the "child" struct implementation of that method.
 
-These can play a key role in unlocking new performance & usability opportunities in some situations. They can allow you to avoid:
-* Structural changes / sync points
-* Component Lookups
-* Scheduling a very large amount of different jobs
-* Bad chunk utilization (due to each entity having one small archetype difference compared to others)
-
-The drawback of polymorphic structs is that they have the added cost of a switch statement and casting between struct types when calling any of their polymorphic functions. They can also have a bigger size than what they should have, if there's a big discrepency in data size between the various "child" struct types. It's up to you to consider the pros and cons and decide if this is a good fit for your problem.
-
-Common examples of where these can be useful:
-* State machines without structural changes or tons of jobs
-* Ordered events
-* Certain types of AI systems
-* etc...
+Good memory access patterns are key in data-oriented programming. However, there are situations where the cost of arranging your data for great memory access patterns from frame to frame will largely outweigh the performance savings of that memory access pattern. It's in these situations that Polymorphic Structs will often be a better alternative. Examples of situations where this might happen:
+* You rely on lots of structural changes to change the behaviour of entities. This gives you great data access patterns when you update these behaviours, but it is only made possible because you are paying an enormous performance cost with structural changes.
+* You rely on many enabled components to handle entity behaviour changes. Enabled components inflate the size of the archetype in the chunk, and adds the cost of constantly checking for enabled bits during entity iteration. This can add a lot of overhead to your jobs, and in several cases this performs much worse than handling the different behaviours with one job doing a simple switch statement. Relying on enabled components for behaviour changes will often also mean requiring many jobs to handle these behaviours, which brings us to the next point...
+* You rely on scheduling tons of jobs because of all the different behaviours you need. Each job you schedule has an overhead, and there is always a point where this overhead will start to outweigh the benefits of tackling the problem with 1 job for each different type of behaviour. 
+    * A situation like this will often also mean that you have tons of different archetypes in your game, because of one small behaviour difference between your entities. And when you have lots of different archetypes, you are also at risk of having poor chunk utilization because there will be plenty of chunks with very few entities in them. This means wasted memory and wasted performance.
 
 ---------------------------------------------------
 
