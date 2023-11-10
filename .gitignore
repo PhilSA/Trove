@@ -34,3 +34,6 @@ sysinfo.txt
 
 # Builds
 *.apk
+
+com.trove.polymorphicelements/Runtime/SourceGenerators/Sources~/PolymorphicElementsSourceGenerators/bin/
+com.trove.polymorphicelements/Runtime/SourceGenerators/Sources~/PolymorphicElementsSourceGenerators/obj/
