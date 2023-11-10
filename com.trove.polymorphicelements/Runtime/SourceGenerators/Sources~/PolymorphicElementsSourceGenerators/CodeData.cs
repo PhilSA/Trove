@@ -14,6 +14,11 @@ namespace PolymorphicElementsSourceGenerators
         public List<string> Usings = new List<string>();
         public List<FunctionData> FunctionDatas = new List<FunctionData>();
         public List<ElementData> ElementDatas = new List<ElementData>();
+
+        public string GetGeneratedGroupName()
+        {
+            return $"{Name}{PESourceGenerator.GeneratedGroupSuffix}"; 
+        }
     }
 
     public class FunctionData

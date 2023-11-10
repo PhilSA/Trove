@@ -15,11 +15,11 @@ MonoBehaviour:
   m_PixelRect:
     serializedVersion: 2
     x: 0
-    y: 43
-    width: 1920
-    height: 989
+    y: 43.2
+    width: 2048
+    height: 1060.8
   m_ShowMode: 4
-  m_Title: Project
+  m_Title: Console
   m_RootView: {fileID: 3}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -42,12 +42,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 30
-    width: 1920
-    height: 939
+    width: 2048
+    height: 1010.80005
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 1
-  controlID: 98
+  controlID: 272
 --- !u!114 &3
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -68,8 +68,8 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1920
-    height: 989
+    width: 2048
+    height: 1060.8
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
   m_UseTopView: 1
@@ -93,7 +93,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1920
+    width: 2048
     height: 30
   m_MinSize: {x: 0, y: 0}
   m_MaxSize: {x: 0, y: 0}
@@ -114,8 +114,8 @@ MonoBehaviour:
   m_Position:
     serializedVersion: 2
     x: 0
-    y: 969
-    width: 1920
+    y: 1040.8
+    width: 2048
     height: 20
   m_MinSize: {x: 0, y: 0}
   m_MaxSize: {x: 0, y: 0}
@@ -139,12 +139,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1920
-    height: 939
+    width: 2048
+    height: 1010.80005
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 99
+  controlID: 273
 --- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -164,12 +164,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 989
-    height: 939
+    width: 1235.2
+    height: 1010.80005
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 17
+  controlID: 157
 --- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -187,8 +187,8 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 989
-    height: 636
+    width: 1235.2
+    height: 684
   m_MinSize: {x: 200, y: 200}
   m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 15}
@@ -213,11 +213,11 @@ MonoBehaviour:
   m_Position:
     serializedVersion: 2
     x: 0
-    y: 636
-    width: 989
-    height: 303
-  m_MinSize: {x: 101, y: 121}
-  m_MaxSize: {x: 4001, y: 4021}
+    y: 684
+    width: 1235.2
+    height: 326.80005
+  m_MinSize: {x: 100, y: 100}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 16}
   m_Panes:
   - {fileID: 16}
@@ -240,14 +240,14 @@ MonoBehaviour:
   - {fileID: 12}
   m_Position:
     serializedVersion: 2
-    x: 989
+    x: 1235.2
     y: 0
-    width: 366
-    height: 939
+    width: 236.80005
+    height: 1010.80005
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 100
+  controlID: 216
 --- !u!114 &11
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -265,8 +265,8 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 366
-    height: 430
+    width: 236.80005
+    height: 463.2
   m_MinSize: {x: 200, y: 200}
   m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 17}
@@ -290,9 +290,9 @@ MonoBehaviour:
   m_Position:
     serializedVersion: 2
     x: 0
-    y: 430
-    width: 366
-    height: 509
+    y: 463.2
+    width: 236.80005
+    height: 547.60004
   m_MinSize: {x: 232, y: 271}
   m_MaxSize: {x: 10002, y: 10021}
   m_ActualView: {fileID: 18}
@@ -315,12 +315,12 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 1355
+    x: 1472
     y: 0
-    width: 565
-    height: 939
-  m_MinSize: {x: 276, y: 71}
-  m_MaxSize: {x: 4001, y: 4021}
+    width: 576
+    height: 1010.80005
+  m_MinSize: {x: 275, y: 50}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 19}
   m_Panes:
   - {fileID: 19}
@@ -343,7 +343,7 @@ MonoBehaviour:
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
     m_Text: Scene
-    m_Image: {fileID: 2593428753322112591, guid: 0000000000000000d000000000000000,
+    m_Image: {fileID: 8634526014445323508, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 
   m_Pos:
@@ -727,15 +727,15 @@ MonoBehaviour:
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
     m_Text: Game
-    m_Image: {fileID: -6423792434712278376, guid: 0000000000000000d000000000000000,
+    m_Image: {fileID: 4621777727084837110, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
     x: 0
-    y: 73
-    width: 988
-    height: 615
+    y: 73.6
+    width: 1234.2
+    height: 663
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -767,17 +767,17 @@ MonoBehaviour:
     m_VRangeLocked: 0
     hZoomLockedByDefault: 0
     vZoomLockedByDefault: 0
-    m_HBaseRangeMin: -960
-    m_HBaseRangeMax: 960
-    m_VBaseRangeMin: -540
-    m_VBaseRangeMax: 540
+    m_HBaseRangeMin: -768
+    m_HBaseRangeMax: 768
+    m_VBaseRangeMin: -432
+    m_VBaseRangeMax: 432
     m_HAllowExceedBaseRangeMin: 1
     m_HAllowExceedBaseRangeMax: 1
     m_VAllowExceedBaseRangeMin: 1
     m_VAllowExceedBaseRangeMax: 1
     m_ScaleWithWindow: 0
-    m_HSlider: 0
-    m_VSlider: 0
+    m_HSlider: 1
+    m_VSlider: 1
     m_IgnoreScrollWheelUntilClicked: 0
     m_EnableMouseInput: 1
     m_EnableSliderZoomHorizontal: 0
@@ -788,23 +788,23 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 988
-      height: 594
-    m_Scale: {x: 0.51458335, y: 0.51458335}
-    m_Translation: {x: 494, y: 297}
+      width: 1234.2
+      height: 642
+    m_Scale: {x: 0.8363164, y: 0.8363156}
+    m_Translation: {x: 617.1, y: 286.78064}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -960
-      y: -577.16595
-      width: 1920
-      height: 1154.3319
+      x: -737.8786
+      y: -342.9096
+      width: 1475.7572
+      height: 767.65283
     m_MinimalGUI: 1
-  m_defaultScale: 0.51458335
-  m_LastWindowPixelSize: {x: 988, y: 615}
+  m_defaultScale: 0.7430556
+  m_LastWindowPixelSize: {x: 1542.75, y: 828.75}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000
@@ -826,15 +826,15 @@ MonoBehaviour:
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
     m_Text: Console
-    m_Image: {fileID: -4327648978806127646, guid: 0000000000000000d000000000000000,
+    m_Image: {fileID: -4950941429401207979, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
     x: 0
-    y: 709
-    width: 988
-    height: 282
+    y: 757.60004
+    width: 1234.2
+    height: 305.80005
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -861,15 +861,15 @@ MonoBehaviour:
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
     m_Text: Hierarchy
-    m_Image: {fileID: 7966133145522015247, guid: 0000000000000000d000000000000000,
+    m_Image: {fileID: -3734745235275155857, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 989
-    y: 73
-    width: 364
-    height: 409
+    x: 1235.2001
+    y: 73.6
+    width: 234.80005
+    height: 442.2
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -883,9 +883,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 383e0000
+      m_SelectedIDs: 30c30000
       m_LastClickedID: 0
-      m_ExpandedIDs: 20fbffff
+      m_ExpandedIDs: 36a4feffbaa4feff04a7feff0caefeff74aefefffaaefeff0aaffeff46c6feffead2feff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -901,7 +901,7 @@ MonoBehaviour:
         m_IsRenaming: 0
         m_OriginalEventType: 11
         m_IsRenamingFilename: 0
-        m_ClientGUIView: {fileID: 8}
+        m_ClientGUIView: {fileID: 11}
       m_SearchString: 
     m_ExpandedScenes: []
     m_CurrenRootInstanceID: 0
@@ -925,15 +925,15 @@ MonoBehaviour:
   m_MaxSize: {x: 10000, y: 10000}
   m_TitleContent:
     m_Text: Project
-    m_Image: {fileID: -5467254957812901981, guid: 0000000000000000d000000000000000,
+    m_Image: {fileID: -5179483145760003458, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 989
-    y: 503
-    width: 364
-    height: 488
+    x: 1235.2001
+    y: 536.8
+    width: 234.80005
+    height: 526.60004
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -949,15 +949,13 @@ MonoBehaviour:
     m_ClassNames: []
     m_AssetLabels: []
     m_AssetBundleNames: []
-    m_VersionControlStates: []
-    m_SoftLockControlStates: []
     m_ReferencingInstanceIDs: 
     m_SceneHandles: 
     m_ShowAllHits: 0
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/_Tests/Scripts/PolymorphicStructs/AssemblyB
+    - Packages/com.trove.polymorphicelements
     m_Globs: []
     m_OriginalText: 
     m_ImportLogFlags: 0
@@ -973,7 +971,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 3af30000
     m_LastClickedID: 62266
-    m_ExpandedIDs: 000000005a7c00005c7c00005e7c0000607c0000627c0000647c0000
+    m_ExpandedIDs: 0000000002a7000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -998,21 +996,21 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 54}
+    scrollPos: {x: 0, y: 187.39996}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: ffffffff000000005a7c00005c7c00005e7c0000607c0000627c0000647c0000
+    m_ExpandedIDs: ffffffff000000005c1200007c12000002a7000004a7000006a7000008a700000aa700000ca7000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
-      m_Name: ITestPolyStruct
-      m_OriginalName: ITestPolyStruct
+      m_Name: PolymorphicElementsTestsAuthoring
+      m_OriginalName: PolymorphicElementsTestsAuthoring
       m_EditFieldRect:
         serializedVersion: 2
         x: 0
         y: 0
         width: 0
         height: 0
-      m_UserData: 15928
+      m_UserData: 50060
       m_IsWaitingForDelay: 0
       m_IsRenaming: 0
       m_OriginalEventType: 0
@@ -1073,15 +1071,15 @@ MonoBehaviour:
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
     m_Text: Inspector
-    m_Image: {fileID: -2667387946076563598, guid: 0000000000000000d000000000000000,
+    m_Image: {fileID: -440750813802333266, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 1355
-    y: 73
-    width: 564
-    height: 918
+    x: 1472
+    y: 73.6
+    width: 575
+    height: 989.80005
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1125,10 +1123,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 1355
-    y: 73
-    width: 564
-    height: 918
+    x: 1473.6
+    y: 73.6
+    width: 573.4
+    height: 989.80005
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1140,12 +1138,12 @@ MonoBehaviour:
     m_SaveData: []
     m_OverlaysVisible: 1
   m_Spl:
-    ID: 134
+    ID: 701
     splitterInitialOffset: 707
     currentActiveSplitter: -1
     realSizes:
-    - 636
-    - 212
+    - 689.6
+    - 230.40002
     relativeSizes:
     - 0.75
     - 0.25
@@ -1155,7 +1153,7 @@ MonoBehaviour:
     maxSizes:
     - 0
     - 0
-    lastTotalSize: 848
+    lastTotalSize: 920
     splitSize: 6
     xOffset: 0
     m_Version: 1
@@ -1678,256 +1676,6 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1018
       parentUniqueId: com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]
-    - id: 1032
-      uniqueId: '[com.trove.polymorphicstructs.tests.dll][suite]'
-      name: com.trove.polymorphicstructs.tests.dll
-      fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.polymorphicstructs.tests.dll
-      resultStatus: 1
-      duration: 0.014222
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1000
-      parentUniqueId: '[TroveTests][suite]'
-    - id: 1033
-      uniqueId: com.trove.polymorphicstructs.tests.dll/[Trove][suite]
-      name: Trove
-      fullName: Trove
-      resultStatus: 1
-      duration: 0.011315
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1032
-      parentUniqueId: '[com.trove.polymorphicstructs.tests.dll][suite]'
-    - id: 1034
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/[PolymorphicStructs][suite]
-      name: PolymorphicStructs
-      fullName: Trove.PolymorphicStructs
-      resultStatus: 1
-      duration: 0.009969
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1033
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/[Trove][suite]
-    - id: 1035
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests][suite]
-      name: Tests
-      fullName: Trove.PolymorphicStructs.Tests
-      resultStatus: 1
-      duration: 0.0085802
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1034
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/Trove/[PolymorphicStructs][suite]
-    - id: 1028
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]
-      name: PolymorphicStructsTests
-      fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests
-      resultStatus: 1
-      duration: 0.0072451
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1035
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests][suite]
-    - id: 1036
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/PolymorphicStructsTests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.AddToGeneric]
-      name: AddToGeneric
-      fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.AddToGeneric
-      resultStatus: 1
-      duration: 0.0010822
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1028
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]
-    - id: 1029
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/PolymorphicStructsTests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.CastingAndVariables]
-      name: CastingAndVariables
-      fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.CastingAndVariables
-      resultStatus: 1
-      duration: 0.0009825
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1028
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]
-    - id: 1032
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/PolymorphicStructsTests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ChangeByRef]
-      name: ChangeByRef
-      fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ChangeByRef
-      resultStatus: 1
-      duration: 0.000364
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1028
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]
-    - id: 1029
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/PolymorphicStructsTests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.EmptyPolymorphicStructs]
-      name: EmptyPolymorphicStructs
-      fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.EmptyPolymorphicStructs
-      resultStatus: 1
-      duration: 0.0001348
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1028
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]
-    - id: 1030
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/PolymorphicStructsTests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.GetResult]
-      name: GetResult
-      fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.GetResult
-      resultStatus: 1
-      duration: 0.0003129
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1028
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]
-    - id: 1031
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/PolymorphicStructsTests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.GetResultFromInData]
-      name: GetResultFromInData
-      fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.GetResultFromInData
-      resultStatus: 1
-      duration: 0.0003612
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1028
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]
-    - id: 1035
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/PolymorphicStructsTests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ModifySelf]
-      name: ModifySelf
-      fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ModifySelf
-      resultStatus: 1
-      duration: 0.0003628
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1028
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]
-    - id: 1031
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/PolymorphicStructsTests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.Properties]
-      name: Properties
-      fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.Properties
-      resultStatus: 1
-      duration: 0.0004899
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1028
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]
-    - id: 1034
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/PolymorphicStructsTests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ReturnOutParam]
-      name: ReturnOutParam
-      fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ReturnOutParam
-      resultStatus: 1
-      duration: 0.0004593
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1028
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]
-    - id: 1033
-      uniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/PolymorphicStructsTests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ReturnUniqueOperationResult]
-      name: ReturnUniqueOperationResult
-      fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ReturnUniqueOperationResult
-      resultStatus: 1
-      duration: 0.0003238
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1028
-      parentUniqueId: com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]
     - id: 1044
       uniqueId: '[com.trove.tweens.tests.dll][suite]'
       name: com.trove.tweens.tests.dll
@@ -2207,13 +1955,13 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1042
       parentUniqueId: com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]
-    m_ResultText: TroveTests (0.141s)
+    m_ResultText: com.trove.utilityai.tests.dll (0.031s)
     m_ResultStacktrace: 
     m_TestListState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 511b1645
-      m_LastClickedID: 1159076689
-      m_ExpandedIDs: fff26d8bcedba58d393fb88f98dabd976be474a79e4cb5abde18d9b95e9f80ba58f5b9c40133dfc5f08570cf7e71fae0925af8e25f6e63f139b52cfc59570f0406336806c4c4770afc38c30c8367950e9e389a1006dd1d1503faa4154760891f48821f2e6ac61a37511b16450759845a5753d05cd5188c5dd6061c641844d16c05ca4e74b95d5c76ffffff7f
+      m_SelectedIDs: 9e4cb5ab
+      m_LastClickedID: -1414181730
+      m_ExpandedIDs: fff26d8bcedba58d393fb88fde18d9b95e9f80ba58f5b9c40133dfc5f08570cf7e71fae0925af8e25f6e63f139b52cfc59570f0406336806c4c4770afc38c30c8367950e9e389a1006dd1d1503faa4154760891f48821f2e6ac61a37511b16450759845a5753d05cd5188c5dd6061c641844d16c05ca4e74ffffff7f
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 

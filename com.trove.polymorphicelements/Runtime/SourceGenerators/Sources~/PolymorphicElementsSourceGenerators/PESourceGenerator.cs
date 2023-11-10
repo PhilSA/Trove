@@ -11,7 +11,7 @@ namespace PolymorphicElementsSourceGenerators
     [Generator]
     public class PESourceGenerator : ISourceGenerator
     {
-        private const string GeneratedGroupSuffix = "_Handler";
+        public const string GeneratedGroupSuffix = "Manager";
         private const string PolymorphicElementsUtility = "PolymorphicElementsUtility";
         private const string ElementTypeEnumName = "ElementType";
         private const string PolymorphicElementMetaData = "PolymorphicElementMetaData";
@@ -20,10 +20,10 @@ namespace PolymorphicElementsSourceGenerators
         private const string GetLargestElementSizeWithTypeId = "GetLargestElementSizeWithTypeId";
         private const string SizeOfElementTypeId = "SizeOfElementTypeId";
         private const string GetNextElementMetaData = "GetNextElementMetaData";
-        private const string WriteElement = "WriteElement";
-        private const string ReadAndExecuteElementAt = "ReadAndExecuteElementAt";
+        private const string AddElement = "AddElement";
+        private const string ExecuteElement = "ExecuteElement";
         private const string UnsafeUtility = "UnsafeUtility";
-        private const string FixedElement = "FixedElement";
+        private const string UnionElement = "UnionElement";
 
         public void Initialize(GeneratorInitializationContext context)
         {
@@ -45,14 +45,16 @@ namespace PolymorphicElementsSourceGenerators
             foreach (InterfaceDeclarationSyntax groupInterface in syntaxReceiver.PolymorphicElementsGroupInterfaces)
             {
                 GroupInterfaceData groupData = new GroupInterfaceData();
-                groupData.Name = groupInterface.Identifier.Text + GeneratedGroupSuffix;
+                groupData.Name = groupInterface.Identifier.Text;
                 groupData.Namespace = SourceGenUtils.GetNamespace(groupInterface);
 
                 // Usings
                 groupData.Usings = new List<string>()
                 {
                     "System",
+                    "System.Runtime.InteropServices",
                     "Unity.Entities",
+                    "Unity.Mathematics",
                     "Unity.Collections",
                     "Unity.Collections.LowLevel.Unsafe",
                 };
@@ -128,7 +130,7 @@ namespace PolymorphicElementsSourceGenerators
                 writer.WriteInNamespace(groupData.Namespace, () =>
                 {
                     // Handler
-                    writer.WriteLine($"public struct {groupData.Name}");
+                    writer.WriteLine($"public static class {groupData.GetGeneratedGroupName()}");
                     writer.WriteInScope(() =>
                     {
                         // Type enum
@@ -145,7 +147,7 @@ namespace PolymorphicElementsSourceGenerators
 
                         // Union struct of all elements
                         writer.WriteLine($"[StructLayout(LayoutKind.Explicit)]");
-                        writer.WriteLine($"public struct {FixedElement}");
+                        writer.WriteLine($"public struct {UnionElement}");
                         writer.WriteInScope(() =>
                         {
                             // Data payload
@@ -174,7 +176,7 @@ namespace PolymorphicElementsSourceGenerators
                             // Constructors
                             foreach (ElementData elementData in groupData.ElementDatas)
                             {
-                                writer.WriteLine($"public {FixedElement}({elementData.Type} e)");
+                                writer.WriteLine($"public {UnionElement}({elementData.Type} e)");
                                 writer.WriteInScope(() =>
                                 {
                                     writer.WriteLine($"TypeId = {elementData.Id};");
@@ -248,7 +250,7 @@ namespace PolymorphicElementsSourceGenerators
                             }
 
                             // GetElementType
-                            writer.WriteLine($"public {ElementTypeEnumName} {GetElementType}(ushort elementId)");
+                            writer.WriteLine($"public static {ElementTypeEnumName} {GetElementType}(ushort elementId)");
                             writer.WriteInScope(() => 
                             { 
                                 writer.WriteLine($"return ({ElementTypeEnumName})elementId;"); 
@@ -257,7 +259,7 @@ namespace PolymorphicElementsSourceGenerators
                             writer.WriteLine($"");
 
                             // GetElementSizeWithoutTypeId
-                            writer.WriteLine($"public int {GetElementSizeWithoutTypeId}(ushort elementId)");
+                            writer.WriteLine($"public static int {GetElementSizeWithoutTypeId}(ushort elementId)");
                             writer.WriteInScope(() =>
                             {
                                 writer.WriteLine($"switch (elementId)");
@@ -275,7 +277,7 @@ namespace PolymorphicElementsSourceGenerators
                             writer.WriteLine($"");
 
                             // Get largest element size
-                            writer.WriteLine($"public int {GetLargestElementSizeWithTypeId}()");
+                            writer.WriteLine($"public static int {GetLargestElementSizeWithTypeId}()");
                             writer.WriteInScope(() =>
                             {
                                 writer.WriteLine($"int largestSize = 0;");
@@ -289,13 +291,13 @@ namespace PolymorphicElementsSourceGenerators
                     });
                 });
 
-                context.AddSource(groupData.Name, SourceText.From(writer.FileContents, Encoding.UTF8));
+                context.AddSource(groupData.GetGeneratedGroupName(), SourceText.From(writer.FileContents, Encoding.UTF8));
             }
         }
 
         private void GenerateWriteFunction(FileWriter writer, string collectionType, string collectionName, string elementType, ushort elementId)
         {
-            writer.WriteLine($"public void {WriteElement}(ref {collectionType} {collectionName}, {elementType} e)");
+            writer.WriteLine($"public static void {AddElement}(ref {collectionType} {collectionName}, {elementType} e)");
             writer.WriteInScope(() =>
             {
                 writer.WriteLine($"{PolymorphicElementsUtility}.Write((ushort){elementId}, ref {collectionName});");
@@ -305,7 +307,7 @@ namespace PolymorphicElementsSourceGenerators
 
         private void GenerateReadFunction(FileWriter writer, GroupInterfaceData groupData, string functionName, string collectionType, string collectionName, bool requiresIndex, string parametersDeclaration, string parametersInvocation)
         {
-            writer.WriteLine($"public bool {ReadAndExecuteElementAt}_{functionName}(ref {collectionType} {collectionName}{(requiresIndex ? ", ref int index" : "")}{parametersDeclaration})");
+            writer.WriteLine($"public static bool {ExecuteElement}_{functionName}(ref {collectionType} {collectionName}{(requiresIndex ? ", ref int index" : "")}{parametersDeclaration})");
             writer.WriteInScope(() =>
             {
                 writer.WriteLine($"if ({PolymorphicElementsUtility}.Read(ref {collectionName}, {(requiresIndex ? "ref index," : "")} out ushort elementId))");
@@ -336,7 +338,7 @@ namespace PolymorphicElementsSourceGenerators
 
         private void GenerateGetNextElementMetaDataFunction(FileWriter writer, string collectionType, string collectionName)
         {
-            writer.WriteLine($"public bool {GetNextElementMetaData}(ref {collectionType} {collectionName}, ref int index, out {PolymorphicElementMetaData} elementMetaData)");
+            writer.WriteLine($"public static bool {GetNextElementMetaData}(ref {collectionType} {collectionName}, ref int index, out {PolymorphicElementMetaData} elementMetaData)");
             writer.WriteInScope(() =>
             {
                 writer.WriteLine($"if ({PolymorphicElementsUtility}.Read(ref {collectionName}, ref index, out ushort elementId))");
