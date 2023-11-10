@@ -1,0 +1,1 @@
+An event that includes a dynamic-size payload (a list of things)
