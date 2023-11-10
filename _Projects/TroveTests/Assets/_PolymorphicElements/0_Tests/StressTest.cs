@@ -7,12 +7,6 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 
-[Serializable]
-public struct PolymorphicElementsTests : IComponentData
-{
-    public int StresTestBatches;
-
-}
 
 public struct TestPolyGroupAData
 {
@@ -106,7 +100,7 @@ public struct TestElementC : ITestPolyGroupA
 
 [BurstCompile]
 [UpdateBefore(typeof(EndFrameSystem))]
-public partial struct TestSystem : ISystem
+public partial struct StressTestSystem : ISystem
 {
     private NativeList<byte> _elementsList;
 
@@ -127,6 +121,9 @@ public partial struct TestSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         PolymorphicElementsTests singleton = SystemAPI.GetSingleton<PolymorphicElementsTests>();
+        if (!singleton.EnableStressTest)
+            return;
+
         TestPolyGroupAData data = new TestPolyGroupAData
         {
             A = 0,
@@ -155,11 +152,13 @@ public partial struct TestSystem : ISystem
 
         public void Execute()
         {
+            int instanceIdCounter = 0;
+            PolymorphicElementMetaData metaData = default;
             for (int i = 0; i < Singleton.StresTestBatches; i++)
             {
-                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementA { });
-                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementB { });
-                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementC { });
+                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementA { }, instanceIdCounter++, out metaData);
+                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementB { }, instanceIdCounter++, out metaData);
+                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementC { }, instanceIdCounter++, out metaData);
             }
         }
     }
@@ -173,7 +172,7 @@ public partial struct TestSystem : ISystem
         public void Execute()
         {
             int index = 0;
-            while (ITestPolyGroupAManager.ExecuteElement_Execute(ref ElementsList, ref index, ref Data))
+            while (ITestPolyGroupAManager.Execute_Execute(ref ElementsList, ref index, ref Data))
             { }
             ElementsList.Clear();
         }
@@ -182,7 +181,7 @@ public partial struct TestSystem : ISystem
 
 [BurstCompile]
 [UpdateBefore(typeof(EndFrameSystem))]
-public partial struct TestFixedSystem : ISystem
+public partial struct StressTestUnionSystem : ISystem
 {
     private NativeList<ITestPolyGroupAManager.UnionElement> _fixedElementsList;
 
@@ -203,6 +202,9 @@ public partial struct TestFixedSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         PolymorphicElementsTests singleton = SystemAPI.GetSingleton<PolymorphicElementsTests>();
+        if(!singleton.EnableStressTest)
+            return;
+
         TestPolyGroupAData data = new TestPolyGroupAData
         {
             A = 0,

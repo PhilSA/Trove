@@ -153,7 +153,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Params:
+    EnableStressTest: 0
     StresTestBatches: 333333
+    EnableStateMachineTest: 1
+    StateMachinesCount: 500000
+  StateMachinePrefab: {fileID: 1984675103061595673, guid: 23489498c8b7d674fb84fa5577d8c398,
+    type: 3}
 --- !u!4 &791308650
 Transform:
   m_ObjectHideFlags: 0
