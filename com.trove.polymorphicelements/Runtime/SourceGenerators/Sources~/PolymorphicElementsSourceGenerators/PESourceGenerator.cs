@@ -24,6 +24,9 @@ namespace PolymorphicElementsSourceGenerators
         private const string ExecuteFunction = "Execute";
         private const string ReferenceOf = "ReferenceOf";
         private const string UnionElement = "UnionElement";
+        private const string InternalUse = "InternalUse";
+        private const string ReadAny = "ReadAny";
+        private const string ReadAnyAsRef = "ReadAnyAsRef";
 
         public void Initialize(GeneratorInitializationContext context)
         {
@@ -255,21 +258,21 @@ namespace PolymorphicElementsSourceGenerators
             }
         }
 
-        private void GenerateAddFunction(FileWriter writer, string collectionType, string collectionName, string elementType, ushort elementId, bool usesMetaData)
+        private void GenerateAddFunction(FileWriter writer, string collectionType, string collectionName, string elementType, ushort elementId, bool supportElementAccess)
         {
-            writer.WriteLine($"public static void {AddElement}(ref {collectionType} {collectionName}, {elementType} element{(usesMetaData ? $", int instanceId, out {PolymorphicElementMetaData} metaData" : "")})");
+            writer.WriteLine($"public static {(supportElementAccess ? $"ref {elementType}" : "void")} {AddElement}(ref {collectionType} {collectionName}, {elementType} element{(supportElementAccess ? $", out {PolymorphicElementMetaData} metaData" : "")})");
             writer.WriteInScope(() =>
             {
-                writer.WriteLine($"{PolymorphicElementsUtility}.AddElement(ref {collectionName}, {elementId}, element{(usesMetaData ? $", instanceId, out metaData" : "")});");
+                writer.WriteLine($"{(supportElementAccess ? $"return ref " : "")}{PolymorphicElementsUtility}.{AddElement}(ref {collectionName}, {elementId}, element{(supportElementAccess ? $", out metaData" : "")});");
             });
         }
 
         private void GenerateExecuteFunction(FileWriter writer, GroupInterfaceData groupData, string functionName, string collectionType, string collectionName, bool requiresIndex, bool useReadRef, string parametersDeclaration, string parametersInvocation)
         {
-            writer.WriteLine($"public static bool {ExecuteFunction}_{functionName}(ref {collectionType} {collectionName}{(requiresIndex ? ", ref int startByteIndex" : "")}{parametersDeclaration})");
+            writer.WriteLine($"public static bool {ExecuteFunction}_{functionName}(ref {collectionType} {collectionName}{(requiresIndex ? ", int startByteIndex, out int newStartByteIndex" : "")}{parametersDeclaration})");
             writer.WriteInScope(() =>
             {
-                writer.WriteLine($"if ({PolymorphicElementsUtility}.Read(ref {collectionName}, {(requiresIndex ? "ref startByteIndex," : "")} out ushort elementId))");
+                writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(requiresIndex ? "startByteIndex, out startByteIndex," : "")} out ushort elementId))");
                 writer.WriteInScope(() =>
                 {
                     writer.WriteLine($"switch (elementId)");
@@ -282,16 +285,17 @@ namespace PolymorphicElementsSourceGenerators
                             {
                                 if(useReadRef)
                                 {
-                                    writer.WriteLine($"if ({PolymorphicElementsUtility}.ReadAsRef(ref {collectionName}, {(requiresIndex ? "ref startByteIndex," : "")} out {ReferenceOf}<{elementData.Type}> e))");
+                                    writer.WriteLine($"ref {elementData.Type} e = ref {PolymorphicElementsUtility}.{InternalUse}.{ReadAnyAsRef}<{elementData.Type}>(ref {collectionName}, {(requiresIndex ? "startByteIndex, out newStartByteIndex," : "")} out bool success);");
+                                    writer.WriteLine($"if(success)");
                                     writer.WriteInScope(() =>
                                     {
-                                        writer.WriteLine($"e.Value.{functionName}({parametersInvocation});");
+                                        writer.WriteLine($"e.{functionName}({parametersInvocation});");
                                         writer.WriteLine($"return true;");
                                     });
                                 }
                                 else
                                 {
-                                    writer.WriteLine($"if ({PolymorphicElementsUtility}.Read(ref {collectionName}, {(requiresIndex ? "ref startByteIndex," : "")} out {elementData.Type} e))");
+                                    writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(requiresIndex ? "startByteIndex, out newStarByteIndex," : "")} out {elementData.Type} e))");
                                     writer.WriteInScope(() =>
                                     {
                                         writer.WriteLine($"e.{functionName}({parametersInvocation});");
@@ -303,6 +307,10 @@ namespace PolymorphicElementsSourceGenerators
                         }
                     });
                 });
+                if(requiresIndex)
+                {
+                    writer.WriteLine($"newStartByteIndex = default;");
+                }
                 writer.WriteLine($"return false;");
             });
         }

@@ -152,13 +152,11 @@ public partial struct StressTestSystem : ISystem
 
         public void Execute()
         {
-            int instanceIdCounter = 0;
-            PolymorphicElementMetaData metaData = default;
             for (int i = 0; i < Singleton.StresTestBatches; i++)
             {
-                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementA { }, instanceIdCounter++, out metaData);
-                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementB { }, instanceIdCounter++, out metaData);
-                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementC { }, instanceIdCounter++, out metaData);
+                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementA { }, out _);
+                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementB { }, out _);
+                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementC { }, out _);
             }
         }
     }
@@ -172,7 +170,7 @@ public partial struct StressTestSystem : ISystem
         public void Execute()
         {
             int index = 0;
-            while (ITestPolyGroupAManager.Execute_Execute(ref ElementsList, ref index, ref Data))
+            while (ITestPolyGroupAManager.Execute_Execute(ref ElementsList, index, out index, ref Data))
             { }
             ElementsList.Clear();
         }

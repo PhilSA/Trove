@@ -6,6 +6,7 @@ using Unity.Mathematics;
 [PolymorphicElement]
 public struct MoveState : IState
 {
+    public int NextStateStartIndex;
     public int UpdateCounter;
     public float StartTime;
     public float Duration;
@@ -31,7 +32,7 @@ public struct MoveState : IState
 
         if (normTime >= 1f)
         {
-            MyStateMachine.TransitionToState(1, ref data);
+            MyStateMachine.TransitionToState(NextStateStartIndex, ref data);
         }
     }
 }
@@ -39,6 +40,7 @@ public struct MoveState : IState
 [PolymorphicElement]
 public struct RotateState : IState
 {
+    public int NextStateStartIndex;
     public int UpdateCounter;
     public float Duration;
     public float Timer;
@@ -61,7 +63,7 @@ public struct RotateState : IState
 
         if (Timer >= Duration)
         {
-            MyStateMachine.TransitionToState(2, ref data);
+            MyStateMachine.TransitionToState(NextStateStartIndex, ref data);
         }
     }
 }
@@ -69,6 +71,7 @@ public struct RotateState : IState
 [PolymorphicElement]
 public struct ScaleState : IState
 {
+    public int NextStateStartIndex;
     public int UpdateCounter;
     public float StartTime;
     public float Duration;
@@ -94,7 +97,7 @@ public struct ScaleState : IState
 
         if (normTime >= 1f)
         {
-            MyStateMachine.TransitionToState(0, ref data);
+            MyStateMachine.TransitionToState(NextStateStartIndex, ref data);
         }
     }
 }
