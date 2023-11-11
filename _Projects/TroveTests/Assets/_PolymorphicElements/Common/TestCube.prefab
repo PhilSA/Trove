@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: -6070659283575424605}
   - component: {fileID: 6415119218649045412}
   m_Layer: 0
-  m_Name: StateMachineCube
+  m_Name: TestCube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
