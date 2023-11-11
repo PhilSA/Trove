@@ -4,6 +4,7 @@ using Unity.Core;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
+using Unity.Rendering;
 
 [BurstCompile]
 [UpdateBefore(typeof(EndFrameSystem))]
@@ -27,7 +28,7 @@ public partial struct StateMachineSystem : ISystem
         // Create state machines
         if(!HasInitialized)
         {
-            const float spacing = 3f;
+            const float spacing = 2f;
             Random random = Random.CreateFromIndex(1);
             int resolution = (int)math.ceil(math.sqrt(singleton.StateMachinesCount));
 
@@ -45,27 +46,22 @@ public partial struct StateMachineSystem : ISystem
                 sm.Speed = random.NextFloat(0.5f, 3f);
                 state.EntityManager.SetComponentData(entity, sm);
 
-                // Randomize states
+                // Initialize State Machine
                 {
-                    var statesBuffer = SystemAPI.GetBuffer<StateElement>(entity).Reinterpret<byte>();
-
-                    ref MoveState moveState = ref PolymorphicElementsUtility.ReadElementAsRef<MoveState>(ref statesBuffer, sm.MoveStateData.StartByteIndex, out _, out bool success);
-                    if (success)
+                    ref MyStateMachine stateMachine = ref SystemAPI.GetComponentLookup<MyStateMachine>(false).GetRefRW(entity).ValueRW;
+                    StateMachineData data = new StateMachineData
                     {
-                        moveState.Movement = random.NextFloat3(new float3(3f));
-                    }
-
-                    ref RotateState rotateState = ref PolymorphicElementsUtility.ReadElementAsRef<RotateState>(ref statesBuffer, sm.RotateStateData.StartByteIndex, out _, out success);
-                    if (success)
+                        Time = SystemAPI.Time,
+                        LocalTransform = SystemAPI.GetComponentLookup<LocalTransform>(false).GetRefRW(entity),
+                        EmissionColor = SystemAPI.GetComponentLookup<URPMaterialPropertyEmissionColor>(false).GetRefRW(entity),
+                        StateElementBuffer = SystemAPI.GetBuffer<StateElement>(entity).Reinterpret<byte>(),
+                        StateMetaDataBuffer = SystemAPI.GetBuffer<StateMetaData>(entity),
+                    };
+                    for (int s = 0; s < data.StateMetaDataBuffer.Length; s++)
                     {
-                        rotateState.RotationSpeed = random.NextFloat3(new float3(1f));
+                        IStateManager.Execute_OnStateMachineInitialize(ref data.StateElementBuffer, data.StateMetaDataBuffer[s].Value.StartByteIndex, out _, ref random, ref stateMachine, ref data);
                     }
-
-                    ref ScaleState scaleState = ref PolymorphicElementsUtility.ReadElementAsRef<ScaleState>(ref statesBuffer, sm.ScaleStateData.StartByteIndex, out _, out success);
-                    if (success)
-                    {
-                        scaleState.AddedScale = random.NextFloat(3f);
-                    }
+                    MyStateMachine.TransitionToState(sm.StartStateIndex, ref sm, ref data);
                 }
             }
 
@@ -88,19 +84,22 @@ public partial struct StateMachineSystem : ISystem
         public void Execute(
             RefRW<MyStateMachine> sm, 
             RefRW<LocalTransform> localTransform, 
-            DynamicBuffer<StateElement> stateElementBuffer)
+            RefRW<URPMaterialPropertyEmissionColor> emissionColor,
+            DynamicBuffer<StateElement> stateElementBuffer,
+            DynamicBuffer<StateMetaData> stateMetaDataBuffer)
         {
             // Build data
             StateMachineData data = new StateMachineData
             {
                 Time = TimeData,
                 LocalTransform = localTransform,
-                MyStateMachine = sm,
+                EmissionColor = emissionColor,
                 StateElementBuffer = stateElementBuffer.Reinterpret<byte>(),
+                StateMetaDataBuffer = stateMetaDataBuffer,
             };
 
             // Update current state
-            MyStateMachine.Update(ref data);
+            IStateManager.Execute_OnUpdate(ref data.StateElementBuffer, sm.ValueRW.CurrentStateByteStartIndex, out _, ref sm.ValueRW, ref data);
         }
     }
 }

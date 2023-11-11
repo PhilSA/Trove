@@ -154,9 +154,9 @@ public partial struct StressTestSystem : ISystem
         {
             for (int i = 0; i < Singleton.StresTestBatches; i++)
             {
-                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementA { }, out _);
-                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementB { }, out _);
-                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementC { }, out _);
+                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementA { });
+                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementB { });
+                ITestPolyGroupAManager.AddElement(ref ElementsList, new TestElementC { });
             }
         }
     }
