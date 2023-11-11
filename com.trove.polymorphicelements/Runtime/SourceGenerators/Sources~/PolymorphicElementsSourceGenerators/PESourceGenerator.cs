@@ -20,6 +20,7 @@ namespace PolymorphicElementsSourceGenerators
         private const string GetLargestElementSizeWithTypeId = "GetLargestElementSizeWithTypeId";
         private const string SizeOfElementTypeId = "SizeOfElementTypeId";
         private const string GetNextElementMetaData = "GetNextElementMetaData";
+        private const string AppendElement = "AppendElement";
         private const string AddElement = "AddElement";
         private const string ExecuteFunction = "Execute";
         private const string ReferenceOf = "ReferenceOf";
@@ -219,13 +220,17 @@ namespace PolymorphicElementsSourceGenerators
                         // Add functions
                         foreach (ElementData elementData in groupData.ElementDatas)
                         {
-                            GenerateAddFunction(writer, "NativeStream.Writer", "streamWriter", elementData.Type, elementData.Id, false);
+                            GenerateAddFunction(writer, "NativeStream.Writer", "streamWriter", elementData.Type, elementData.Id, false, false, "");
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "DynamicBuffer<byte>", "buffer", elementData.Type, elementData.Id, true);
+                            GenerateAddFunction(writer, "S", "streamWriter", elementData.Type, elementData.Id, false, true, "where S : unmanaged, IPolymorphicStreamWriter");
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "NativeList<byte>", "list", elementData.Type, elementData.Id, true);
+                            GenerateAddFunction(writer, "DynamicBuffer<byte>", "buffer", elementData.Type, elementData.Id, true, false, "");
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "UnsafeList<byte>", "list", elementData.Type, elementData.Id, true);
+                            GenerateAddFunction(writer, "NativeList<byte>", "list", elementData.Type, elementData.Id, true, false, "");
+                            writer.WriteLine($"");
+                            GenerateAddFunction(writer, "UnsafeList<byte>", "list", elementData.Type, elementData.Id, true, false, "");
+                            writer.WriteLine($"");
+                            GenerateAddFunction(writer, "L", "list", elementData.Type, elementData.Id, true, true, "where L : unmanaged, IPolymorphicList");
                             writer.WriteLine($"");
                         }
 
@@ -234,13 +239,17 @@ namespace PolymorphicElementsSourceGenerators
                         {
                             functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, true);
 
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, "NativeStream.Reader", "streamReader", false, false, parametersStringDeclaration, parametersStringInvocation);
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, "NativeStream.Reader", "streamReader", false, false, parametersStringDeclaration, parametersStringInvocation, false, "");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, "DynamicBuffer<byte>", "buffer", true, true, parametersStringDeclaration, parametersStringInvocation);
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, "S", "streamReader", false, false, parametersStringDeclaration, parametersStringInvocation, true, "where S : unmanaged, IPolymorphicStreamReader");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, "NativeList<byte>", "list", true, true, parametersStringDeclaration, parametersStringInvocation);
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, "DynamicBuffer<byte>", "buffer", true, true, parametersStringDeclaration, parametersStringInvocation, false, "");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, "UnsafeList<byte>", "list", true, true, parametersStringDeclaration, parametersStringInvocation);
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, "NativeList<byte>", "list", true, true, parametersStringDeclaration, parametersStringInvocation, false, "");
+                            writer.WriteLine($"");
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, "UnsafeList<byte>", "list", true, true, parametersStringDeclaration, parametersStringInvocation, false, "");
+                            writer.WriteLine($"");
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, "L", "list", true, true, parametersStringDeclaration, parametersStringInvocation, true, "where L : unmanaged, IPolymorphicList");
                             writer.WriteLine($"");
                         }
 
@@ -257,18 +266,42 @@ namespace PolymorphicElementsSourceGenerators
             }
         }
 
-        private void GenerateAddFunction(FileWriter writer, string collectionType, string collectionName, string elementType, ushort elementId, bool supportElementAccess)
+        private void GenerateAddFunction(
+            FileWriter writer, 
+            string collectionType, 
+            string collectionName, 
+            string elementType, 
+            ushort elementId, 
+            bool supportElementAccess,
+            bool collectionTypeIsGeneric,
+            string collectionGenericTypeConstraint)
         {
-            writer.WriteLine($"public static {(supportElementAccess ? $"{PolymorphicElementMetaData}" : "void")} {AddElement}(ref {collectionType} {collectionName}, {elementType} element)");
+            string methodName = supportElementAccess ? AddElement : AppendElement;
+            string genericType = collectionTypeIsGeneric ? $"<{collectionType}>" : "";
+            string genericConstraint = collectionTypeIsGeneric ? $" {collectionGenericTypeConstraint}" : "";
+            writer.WriteLine($"public static {(supportElementAccess ? $"{PolymorphicElementMetaData}" : "void")} {methodName}{genericType}(ref {collectionType} {collectionName}, {elementType} element){genericConstraint}");
             writer.WriteInScope(() =>
             {
-                writer.WriteLine($"{(supportElementAccess ? $"return " : "")}{PolymorphicElementsUtility}.{AddElement}(ref {collectionName}, {elementId}, element);");
+                writer.WriteLine($"{(supportElementAccess ? $"return " : "")}{PolymorphicElementsUtility}.{methodName}(ref {collectionName}, {elementId}, element);");
             });
         }
 
-        private void GenerateExecuteFunction(FileWriter writer, GroupInterfaceData groupData, string functionName, string collectionType, string collectionName, bool requiresIndex, bool supportWriteback, string parametersDeclaration, string parametersInvocation)
+        private void GenerateExecuteFunction(
+            FileWriter writer, 
+            GroupInterfaceData groupData, 
+            string functionName, 
+            string collectionType, 
+            string collectionName, 
+            bool requiresIndex, 
+            bool supportWriteback, 
+            string parametersDeclaration, 
+            string parametersInvocation,
+            bool collectionTypeIsGeneric,
+            string collectionGenericTypeConstraint)
         {
-            writer.WriteLine($"public static bool {ExecuteFunction}_{functionName}(ref {collectionType} {collectionName}{(requiresIndex ? ", int startByteIndex, out int newStartByteIndex" : "")}{parametersDeclaration})");
+            string genericType = collectionTypeIsGeneric ? $"<{collectionType}>" : "";
+            string genericConstraint = collectionTypeIsGeneric ? $" {collectionGenericTypeConstraint}" : "";
+            writer.WriteLine($"public static bool {ExecuteFunction}_{functionName}{genericType}(ref {collectionType} {collectionName}{(requiresIndex ? ", int startByteIndex, out int newStartByteIndex" : "")}{parametersDeclaration}){genericConstraint}");
             writer.WriteInScope(() =>
             {
                 writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(requiresIndex ? "startByteIndex, out startByteIndex," : "")} out ushort elementId))");
