@@ -17,9 +17,9 @@ public struct TimedState
         Timer = default;
     }
 
-    public void OnStateEnter(TimeData time)
+    public void OnStateEnter(TimeData time, ref StateMachineData data)
     {
-        Timer = 0f;
+        Timer = 0f + data.ExtraTime;
     }
 
     public void OnStateUpdate(TimeData time, float speed)
@@ -53,7 +53,7 @@ public struct MoveState : IState
 
     public void OnStateEnter(ref MyStateMachine parentStateMachine, ref StateMachineData data)
     {
-        TimedState.OnStateEnter(data.Time);
+        TimedState.OnStateEnter(data.Time, ref data);
         StartPosition = data.LocalTransform.ValueRW.Position;
     }
 
@@ -85,7 +85,7 @@ public struct RotateState : IState
 
     public void OnStateEnter(ref MyStateMachine parentStateMachine, ref StateMachineData data)
     {
-        TimedState.OnStateEnter(data.Time);
+        TimedState.OnStateEnter(data.Time, ref data);
     }
 
     public void OnStateExit(ref MyStateMachine parentStateMachine, ref StateMachineData data)
@@ -117,7 +117,7 @@ public struct ScaleState : IState
 
     public void OnStateEnter(ref MyStateMachine parentStateMachine, ref StateMachineData data)
     {
-        TimedState.OnStateEnter(data.Time);
+        TimedState.OnStateEnter(data.Time, ref data);
         StartScale = data.LocalTransform.ValueRW.Scale;
 
         if (SubStateMachine.CurrentStateIndex < 0)
@@ -161,7 +161,7 @@ public struct ColorState : IState
 
     public void OnStateEnter(ref MyStateMachine parentStateMachine, ref StateMachineData data)
     {
-        TimedState.OnStateEnter(data.Time);
+        TimedState.OnStateEnter(data.Time, ref data);
         data.EmissionColor.ValueRW.Value = Color;
     }
 
