@@ -5,6 +5,8 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Rendering;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Collections;
 
 [BurstCompile]
 [UpdateBefore(typeof(EndFrameSystem))]
@@ -15,15 +17,13 @@ public partial struct StateMachineSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<PolymorphicElementsTests>();
+        state.RequireForUpdate<StateMachineTests>();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        PolymorphicElementsTests singleton = SystemAPI.GetSingleton<PolymorphicElementsTests>();
-        if (!singleton.EnableStateMachineTest)
-            return;
+        StateMachineTests singleton = SystemAPI.GetSingleton<StateMachineTests>();
 
         // Create state machines
         if(!HasInitialized)

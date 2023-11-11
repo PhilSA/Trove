@@ -7,13 +7,7 @@ using UnityEngine;
 [Serializable]
 public struct PolymorphicElementsTests : IComponentData
 {
-    public bool EnableStressTest;
     public int StresTestBatches;
-
-    public bool EnableStateMachineTest;
-    public int StateMachinesCount;
-    public Entity StateMachinePrefab;
-
 }
 
 public class PolymorphicElementsTestsAuthoring : MonoBehaviour
@@ -26,9 +20,6 @@ public class PolymorphicElementsTestsAuthoring : MonoBehaviour
         public override void Bake(PolymorphicElementsTestsAuthoring authoring)
         {
             Entity entity = GetEntity(authoring, TransformUsageFlags.Dynamic);
-
-            authoring.Params.StateMachinePrefab = GetEntity(authoring.StateMachinePrefab, TransformUsageFlags.Dynamic);
-
             AddComponent(entity, authoring.Params);
         }
     }

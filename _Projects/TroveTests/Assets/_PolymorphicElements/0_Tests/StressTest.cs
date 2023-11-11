@@ -121,8 +121,6 @@ public partial struct StressTestSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         PolymorphicElementsTests singleton = SystemAPI.GetSingleton<PolymorphicElementsTests>();
-        if (!singleton.EnableStressTest)
-            return;
 
         TestPolyGroupAData data = new TestPolyGroupAData
         {
@@ -200,8 +198,6 @@ public partial struct StressTestUnionSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         PolymorphicElementsTests singleton = SystemAPI.GetSingleton<PolymorphicElementsTests>();
-        if(!singleton.EnableStressTest)
-            return;
 
         TestPolyGroupAData data = new TestPolyGroupAData
         {
