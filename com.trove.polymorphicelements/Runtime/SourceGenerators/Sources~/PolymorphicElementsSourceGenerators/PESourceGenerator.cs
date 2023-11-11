@@ -225,6 +225,8 @@ namespace PolymorphicElementsSourceGenerators
                             writer.WriteLine($"");
                             GenerateAddFunction(writer, "NativeList<byte>", "list", elementData.Type, elementData.Id, true);
                             writer.WriteLine($"");
+                            GenerateAddFunction(writer, "UnsafeList<byte>", "list", elementData.Type, elementData.Id, true);
+                            writer.WriteLine($"");
                         }
 
                         // Execute functions
@@ -237,6 +239,8 @@ namespace PolymorphicElementsSourceGenerators
                             GenerateExecuteFunction(writer, groupData, functionData.Name, "DynamicBuffer<byte>", "buffer", true, true, parametersStringDeclaration, parametersStringInvocation);
                             writer.WriteLine($"");
                             GenerateExecuteFunction(writer, groupData, functionData.Name, "NativeList<byte>", "list", true, true, parametersStringDeclaration, parametersStringInvocation);
+                            writer.WriteLine($"");
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, "UnsafeList<byte>", "list", true, true, parametersStringDeclaration, parametersStringInvocation);
                             writer.WriteLine($"");
                         }
 
