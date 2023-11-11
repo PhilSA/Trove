@@ -27,41 +27,52 @@ public partial struct CoroutineSystem : ISystem
 
         if (!HasInitialized)
         {
-            Entity cube = state.EntityManager.Instantiate(singleton.CubePrefab);
+            const float spacing = 2f;
+            int resolution = (int)math.ceil(math.sqrt(singleton.RoutinesCount));
 
-            // Build a test coroutine
+            for (int i = 0; i < singleton.RoutinesCount; i++)
             {
-                // Basics
-                Entity coroutineEntity = state.EntityManager.CreateEntity();
-                state.EntityManager.AddComponentData(coroutineEntity, new Coroutine());
-                state.EntityManager.AddBuffer<CoroutineState>(coroutineEntity).Reinterpret<byte>();
-                state.EntityManager.AddBuffer<CoroutineMetaData>(coroutineEntity).Reinterpret<PolymorphicElementMetaData>();
+                Entity cube = state.EntityManager.Instantiate(singleton.CubePrefab);
 
-                DynamicBuffer<byte> coroutineStatesBuffer = state.EntityManager.GetBuffer<CoroutineState>(coroutineEntity).Reinterpret<byte>();
-                DynamicBuffer <PolymorphicElementMetaData> coroutineMetaDatasBuffer = state.EntityManager.GetBuffer<CoroutineMetaData>(coroutineEntity).Reinterpret<PolymorphicElementMetaData>();
+                // Transform
+                int row = i / resolution;
+                int column = i % resolution;
+                state.EntityManager.SetComponentData(cube, LocalTransform.FromPosition(new float3(column * spacing, row * spacing, 0f)));
 
-                // Add sequence of states
-                coroutineMetaDatasBuffer.Add(ICoroutineStateManager.AddElement(ref coroutineStatesBuffer, new Coroutine_MoveTo
+                // Build a test coroutine
                 {
-                    Entity = cube,
-                    Target = math.up() * 5f,
-                    Speed = 1f,
-                }));
-                coroutineMetaDatasBuffer.Add(ICoroutineStateManager.AddElement(ref coroutineStatesBuffer, new Coroutine_Wait
-                {
-                    Time = 2f,
-                }));
-                coroutineMetaDatasBuffer.Add(ICoroutineStateManager.AddElement(ref coroutineStatesBuffer, new Coroutine_SetColor
-                {
-                    Entity = cube,
-                    Target = new float4(10f, 0f, 0f, 1f),
-                }));
-                coroutineMetaDatasBuffer.Add(ICoroutineStateManager.AddElement(ref coroutineStatesBuffer, new Coroutine_MoveTo
-                {
-                    Entity = cube,
-                    Target = math.up() * 5f + math.right() * 6f,
-                    Speed = 2f,
-                }));
+                    // Basics
+                    Entity coroutineEntity = state.EntityManager.CreateEntity();
+                    state.EntityManager.AddComponentData(coroutineEntity, new Coroutine());
+                    state.EntityManager.AddBuffer<CoroutineState>(coroutineEntity).Reinterpret<byte>();
+                    state.EntityManager.AddBuffer<CoroutineMetaData>(coroutineEntity).Reinterpret<PolymorphicElementMetaData>();
+
+                    DynamicBuffer<byte> coroutineStatesBuffer = state.EntityManager.GetBuffer<CoroutineState>(coroutineEntity).Reinterpret<byte>();
+                    DynamicBuffer<PolymorphicElementMetaData> coroutineMetaDatasBuffer = state.EntityManager.GetBuffer<CoroutineMetaData>(coroutineEntity).Reinterpret<PolymorphicElementMetaData>();
+
+                    // Add sequence of states
+                    coroutineMetaDatasBuffer.Add(ICoroutineStateManager.AddElement(ref coroutineStatesBuffer, new Coroutine_MoveTo
+                    {
+                        Entity = cube,
+                        Target = math.up() * 5f,
+                        Speed = 1f,
+                    }));
+                    coroutineMetaDatasBuffer.Add(ICoroutineStateManager.AddElement(ref coroutineStatesBuffer, new Coroutine_Wait
+                    {
+                        Time = 2f,
+                    }));
+                    coroutineMetaDatasBuffer.Add(ICoroutineStateManager.AddElement(ref coroutineStatesBuffer, new Coroutine_SetColor
+                    {
+                        Entity = cube,
+                        Target = new float4(10f, 0f, 0f, 1f),
+                    }));
+                    coroutineMetaDatasBuffer.Add(ICoroutineStateManager.AddElement(ref coroutineStatesBuffer, new Coroutine_MoveTo
+                    {
+                        Entity = cube,
+                        Target = math.up() * 5f + math.right() * 6f,
+                        Speed = 2f,
+                    }));
+                }
             }
 
             HasInitialized = true;
