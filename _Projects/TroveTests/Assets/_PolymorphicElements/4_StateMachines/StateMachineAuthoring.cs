@@ -19,6 +19,7 @@ public class StateMachineAuthoring : MonoBehaviour
                 Speed = 1f,
                 StartStateIndex = 0,
                 CurrentStateIndex = -1,
+                CurrentStateByteStartIndex = -1,
                 PreviousStateIndex = -1,
             });
             DynamicBuffer<byte> stateElements = AddBuffer<StateElement>(entity).Reinterpret<byte>();
@@ -93,6 +94,7 @@ public class StateMachineAuthoring : MonoBehaviour
                             Speed = 1f,
                             StartStateIndex = redStateIndex,
                             CurrentStateIndex = -1,
+                            CurrentStateByteStartIndex = -1,
                             PreviousStateIndex = -1,
                         };
 

@@ -41,14 +41,13 @@ public partial struct StateMachineSystem : ISystem
                 int column = i % resolution;
                 state.EntityManager.SetComponentData(entity, LocalTransform.FromPosition(new float3(column * spacing, row * spacing, 0f)));
 
-                // Randomize state machine
-                MyStateMachine sm = state.EntityManager.GetComponentData<MyStateMachine>(entity);
-                sm.Speed = random.NextFloat(0.5f, 3f);
-                state.EntityManager.SetComponentData(entity, sm);
-
                 // Initialize State Machine
                 {
                     ref MyStateMachine stateMachine = ref SystemAPI.GetComponentLookup<MyStateMachine>(false).GetRefRW(entity).ValueRW;
+
+                    // Randomize state machine
+                    stateMachine.Speed = random.NextFloat(0.5f, 3f);
+
                     StateMachineData data = new StateMachineData
                     {
                         Time = SystemAPI.Time,
@@ -61,8 +60,9 @@ public partial struct StateMachineSystem : ISystem
                     {
                         IStateManager.Execute_OnStateMachineInitialize(ref data.StateElementBuffer, data.StateMetaDataBuffer[s].Value.StartByteIndex, out _, ref random, ref stateMachine, ref data);
                     }
-                    MyStateMachine.TransitionToState(sm.StartStateIndex, ref sm, ref data);
+                    MyStateMachine.TransitionToState(stateMachine.StartStateIndex, ref stateMachine, ref data);
                 }
+
             }
 
             HasInitialized = true;
@@ -99,7 +99,7 @@ public partial struct StateMachineSystem : ISystem
             };
 
             // Update current state
-            IStateManager.Execute_OnUpdate(ref data.StateElementBuffer, sm.ValueRW.CurrentStateByteStartIndex, out _, ref sm.ValueRW, ref data);
+            IStateManager.Execute_OnUpdate(ref data.StateElementBuffer, sm.ValueRW.CurrentStateByteStartIndex, out _, sm.ValueRO.Speed, ref sm.ValueRW, ref data);
         }
     }
 }

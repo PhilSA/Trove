@@ -26,6 +26,16 @@ public struct TimedState
     {
         Timer += time.DeltaTime * speed;
     }
+
+    public void TransitionToStateIfEnded(int stateIndex, ref MyStateMachine parentStateMachine, ref StateMachineData data)
+    {
+        float extraTime = Timer - Duration;
+        if(extraTime >= 0f)
+        {
+            data.ExtraTime = extraTime;
+            MyStateMachine.TransitionToState(stateIndex, ref parentStateMachine, ref data);
+        }
+    }
 }
 
 [PolymorphicElement]
@@ -52,15 +62,12 @@ public struct MoveState : IState
         data.LocalTransform.ValueRW.Position = StartPosition;
     }
 
-    public void OnUpdate(ref MyStateMachine parentStateMachine, ref StateMachineData data)
+    public void OnUpdate(float cummulativeSpeed, ref MyStateMachine parentStateMachine, ref StateMachineData data)
     {
         TimedState.OnStateUpdate(data.Time, parentStateMachine.Speed);
         data.LocalTransform.ValueRW.Position = StartPosition + (math.sin(TimedState.NormalizedTime * math.PI) * Movement);
 
-        if (TimedState.MustExit)
-        {
-            MyStateMachine.TransitionToState(NextStateIndex, ref parentStateMachine, ref data);
-        }
+        TimedState.TransitionToStateIfEnded(NextStateIndex, ref parentStateMachine, ref data);
     }
 }
 
@@ -85,15 +92,12 @@ public struct RotateState : IState
     {
     }
 
-    public void OnUpdate(ref MyStateMachine parentStateMachine, ref StateMachineData data)
+    public void OnUpdate(float cummulativeSpeed, ref MyStateMachine parentStateMachine, ref StateMachineData data)
     {
         TimedState.OnStateUpdate(data.Time, parentStateMachine.Speed);
         data.LocalTransform.ValueRW.Rotation = math.mul(quaternion.Euler(RotationSpeed * data.Time.DeltaTime * parentStateMachine.Speed), data.LocalTransform.ValueRW.Rotation);
 
-        if (TimedState.MustExit)
-        {
-            MyStateMachine.TransitionToState(NextStateIndex, ref parentStateMachine, ref data);
-        }
+        TimedState.TransitionToStateIfEnded(NextStateIndex, ref parentStateMachine, ref data);
     }
 }
 
@@ -108,7 +112,7 @@ public struct ScaleState : IState
 
     public void OnStateMachineInitialize(ref Random random, ref MyStateMachine parentStateMachine, ref StateMachineData data)
     {
-        AddedScale = random.NextFloat(3f);
+        AddedScale = random.NextFloat(2f);
     }
 
     public void OnStateEnter(ref MyStateMachine parentStateMachine, ref StateMachineData data)
@@ -133,17 +137,14 @@ public struct ScaleState : IState
         IStateManager.Execute_OnStateExit(ref data.StateElementBuffer, SubStateMachine.CurrentStateByteStartIndex, out _, ref SubStateMachine, ref data);
     }
 
-    public void OnUpdate(ref MyStateMachine parentStateMachine, ref StateMachineData data)
+    public void OnUpdate(float cummulativeSpeed, ref MyStateMachine parentStateMachine, ref StateMachineData data)
     {
         TimedState.OnStateUpdate(data.Time, parentStateMachine.Speed);
         data.LocalTransform.ValueRW.Scale = StartScale * (1f + (math.sin(TimedState.NormalizedTime * math.PI) * AddedScale));
 
-        IStateManager.Execute_OnUpdate(ref data.StateElementBuffer, SubStateMachine.CurrentStateByteStartIndex, out _, ref SubStateMachine, ref data);
+        IStateManager.Execute_OnUpdate(ref data.StateElementBuffer, SubStateMachine.CurrentStateByteStartIndex, out _, cummulativeSpeed * SubStateMachine.Speed, ref SubStateMachine, ref data);
 
-        if (TimedState.MustExit)
-        {
-            MyStateMachine.TransitionToState(NextStateIndex, ref parentStateMachine, ref data);
-        }
+        TimedState.TransitionToStateIfEnded(NextStateIndex, ref parentStateMachine, ref data);
     }
 }
 
@@ -169,12 +170,9 @@ public struct ColorState : IState
         data.EmissionColor.ValueRW.Value = new float4(0f, 0f, 0f, 1f);
     }
 
-    public void OnUpdate(ref MyStateMachine parentStateMachine, ref StateMachineData data)
+    public void OnUpdate(float cummulativeSpeed, ref MyStateMachine parentStateMachine, ref StateMachineData data)
     {
         TimedState.OnStateUpdate(data.Time, parentStateMachine.Speed);
-        if (TimedState.MustExit)
-        {
-            MyStateMachine.TransitionToState(NextStateIndex, ref parentStateMachine, ref data);
-        }
+        TimedState.TransitionToStateIfEnded(NextStateIndex, ref parentStateMachine, ref data);
     }
 }

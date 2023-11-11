@@ -13,6 +13,8 @@ public struct StateMachineData
     public RefRW<URPMaterialPropertyEmissionColor> EmissionColor;
     public DynamicBuffer<byte> StateElementBuffer;
     public DynamicBuffer<StateMetaData> StateMetaDataBuffer;
+
+    public float ExtraTime;
 }
 
 [PolymorphicElementsGroup]
@@ -21,7 +23,7 @@ public interface IState
     void OnStateMachineInitialize(ref Unity.Mathematics.Random random, ref MyStateMachine parentStateMachine, ref StateMachineData data);
     void OnStateEnter(ref MyStateMachine parentStateMachine, ref StateMachineData data);
     void OnStateExit(ref MyStateMachine parentStateMachine, ref StateMachineData data);
-    void OnUpdate(ref MyStateMachine parentStateMachine, ref StateMachineData data);
+    void OnUpdate(float cummulativeSpeed, ref MyStateMachine parentStateMachine, ref StateMachineData data);
 }
 
 public struct MyStateMachine : IComponentData
