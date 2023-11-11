@@ -24,6 +24,7 @@ namespace PolymorphicElementsSourceGenerators
     public class FunctionData
     {
         public string Name;
+        public MethodWriteBackType WriteBackType;
         public List<ParameterData> ParameterDatas = new List<ParameterData>();
 
         public void GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, bool includeStartingComma)
@@ -59,5 +60,12 @@ namespace PolymorphicElementsSourceGenerators
     {
         public ushort Id;
         public string Type;
+    }
+
+    public enum MethodWriteBackType
+    {
+        None,
+        Write,
+        RefModify,
     }
 }

@@ -20,9 +20,13 @@ public struct StateMachineData
 [PolymorphicElementsGroup]
 public interface IState
 {
+    [AllowElementModification]
     void OnStateMachineInitialize(ref Unity.Mathematics.Random random, ref MyStateMachine parentStateMachine, ref StateMachineData data);
+    [AllowElementModification]
     void OnStateEnter(ref MyStateMachine parentStateMachine, ref StateMachineData data);
+    [AllowElementModification]
     void OnStateExit(ref MyStateMachine parentStateMachine, ref StateMachineData data);
+    [AllowElementModification]
     void OnUpdate(float cummulativeSpeed, ref MyStateMachine parentStateMachine, ref StateMachineData data);
 }
 

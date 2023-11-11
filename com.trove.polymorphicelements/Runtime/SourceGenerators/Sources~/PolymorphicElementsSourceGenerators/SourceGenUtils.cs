@@ -24,6 +24,25 @@ namespace PolymorphicElementsSourceGenerators
             return false;
         }
 
+        public static bool HasAttribute(BaseMethodDeclarationSyntax methodSyntax, string attributeName)
+        {
+            if (methodSyntax.AttributeLists != null)
+            {
+                foreach (AttributeListSyntax attributeList in methodSyntax.AttributeLists)
+                {
+                    foreach (AttributeSyntax attribute in attributeList.Attributes)
+                    {
+                        if (attribute.Name.ToString() == attributeName)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public static bool ImplementsInterface(BaseTypeDeclarationSyntax typeSyntax, string interfaceName)
         {
             if (typeSyntax.BaseList != null)

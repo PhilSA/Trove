@@ -9,7 +9,7 @@ using System.Collections.Generic;
 public struct EventsTest : IComponentData
 {
     public Entity CubePrefab;
-    public Entity CubeInstance;
+    public Entity MainCubeInstance;
 
     public bool EnableStressTestEventsTest;
     public int TransformEventsJobThreads;

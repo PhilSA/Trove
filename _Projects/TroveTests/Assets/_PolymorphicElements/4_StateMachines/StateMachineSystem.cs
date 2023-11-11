@@ -9,7 +9,6 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Collections;
 
 [BurstCompile]
-[UpdateBefore(typeof(EndFrameSystem))]
 public partial struct StateMachineSystem : ISystem
 {
     private bool HasInitialized;
@@ -57,7 +56,7 @@ public partial struct StateMachineSystem : ISystem
                         StateMetaDataBuffer = SystemAPI.GetBuffer<StateMetaData>(entity),
                     };
                     for (int s = 0; s < data.StateMetaDataBuffer.Length; s++)
-                    {
+                    { 
                         IStateManager.Execute_OnStateMachineInitialize(ref data.StateElementBuffer, data.StateMetaDataBuffer[s].Value.StartByteIndex, out _, ref random, ref stateMachine, ref data);
                     }
                     MyStateMachine.TransitionToState(stateMachine.StartStateIndex, ref stateMachine, ref data);

@@ -55,7 +55,7 @@ public partial struct CoroutineSystem : ISystem
                     {
                         Entity = cube,
                         Target = math.up() * 5f,
-                        Speed = 1f,
+                        Speed = 5f,
                     }));
                     coroutineMetaDatasBuffer.Add(ICoroutineStateManager.AddElement(ref coroutineStatesBuffer, new Coroutine_Wait
                     {

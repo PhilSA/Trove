@@ -113,7 +113,7 @@ public partial struct StressTestEventSetupSystem : ISystem
         if(!HasInitialized)
         {
             Entity cubeEntity = state.EntityManager.Instantiate(singleton.CubePrefab);
-            singleton.CubeInstance = cubeEntity;
+            singleton.MainCubeInstance = cubeEntity;
 
             HasInitialized = true;
         }
@@ -172,21 +172,21 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
                     case 0:
                         IStressTestEventManager.AppendElement(ref EventStreamWriter, new StressTestEvent_SetPosition
                         {
-                            Entity = Singleton.CubeInstance,
+                            Entity = Singleton.MainCubeInstance,
                             Position = random.NextFloat3(new float3(-3f), new float3(3f)),
                         });
                         break;
                     case 1:
                         IStressTestEventManager.AppendElement(ref EventStreamWriter, new StressTestEvent_SetRotation
                         {
-                            Entity = Singleton.CubeInstance,
+                            Entity = Singleton.MainCubeInstance,
                             Rotation = random.NextQuaternionRotation(),
                         });
                         break;
                     case 2:
                         IStressTestEventManager.AppendElement(ref EventStreamWriter, new StressTestEvent_SetScale
                         {
-                            Entity = Singleton.CubeInstance,
+                            Entity = Singleton.MainCubeInstance,
                             Scale = random.NextFloat(0.5f, 2f),
                         });
                         break;
@@ -249,7 +249,7 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
             {
                 IStressTestEventManager.AppendElement(ref EventStreamWriter, new StressTestEvent_SetColor
                 {
-                    Entity = Singleton.CubeInstance,
+                    Entity = Singleton.MainCubeInstance,
                     Color = new float4(random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), 1f),
                 });
             }

@@ -12,6 +12,8 @@ namespace PolymorphicElementsSourceGenerators
     public class PESourceGenerator : ISourceGenerator
     {
         public const string GeneratedGroupSuffix = "Manager";
+        private const string MethodWriteBackAttributeName = "AllowElementModification";
+        private const string MethodRefWriteBackAttributeName = "AllowElementModificationByRefUnsafe";
         private const string PolymorphicElementsUtility = "PolymorphicElementsUtility";
         private const string ElementTypeEnumName = "ElementType";
         private const string PolymorphicElementMetaData = "PolymorphicElementMetaData";
@@ -27,6 +29,7 @@ namespace PolymorphicElementsSourceGenerators
         private const string UnionElement = "UnionElement";
         private const string InternalUse = "InternalUse";
         private const string ReadAny = "ReadAny";
+        private const string ReadAnyAsRef = "ReadAnyAsRef";
         private const string WriteAny = "WriteAny";
 
         public void Initialize(GeneratorInitializationContext context)
@@ -74,6 +77,15 @@ namespace PolymorphicElementsSourceGenerators
                     {
                         FunctionData functionData = new FunctionData();
                         functionData.Name = methodSyntax.Identifier.Text;
+                        functionData.WriteBackType = MethodWriteBackType.None;
+                        if(SourceGenUtils.HasAttribute(methodSyntax, MethodRefWriteBackAttributeName))
+                        {
+                            functionData.WriteBackType = MethodWriteBackType.RefModify;
+                        }
+                        else if(SourceGenUtils.HasAttribute(methodSyntax, MethodWriteBackAttributeName))
+                        {
+                            functionData.WriteBackType = MethodWriteBackType.Write;
+                        }
 
                         // Parameters
                         foreach (ParameterSyntax parameter in methodSyntax.ParameterList.Parameters)
@@ -239,17 +251,17 @@ namespace PolymorphicElementsSourceGenerators
                         {
                             functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, true);
 
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, "NativeStream.Reader", "streamReader", false, false, parametersStringDeclaration, parametersStringInvocation, false, "");
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, functionData.WriteBackType, "NativeStream.Reader", "streamReader", false, parametersStringDeclaration, parametersStringInvocation, false, "");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, "S", "streamReader", false, false, parametersStringDeclaration, parametersStringInvocation, true, "where S : unmanaged, IPolymorphicStreamReader");
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, functionData.WriteBackType, "S", "streamReader", false, parametersStringDeclaration, parametersStringInvocation, true, "where S : unmanaged, IPolymorphicStreamReader");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, "DynamicBuffer<byte>", "buffer", true, true, parametersStringDeclaration, parametersStringInvocation, false, "");
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, functionData.WriteBackType, "DynamicBuffer<byte>", "buffer", true, parametersStringDeclaration, parametersStringInvocation, false, "");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, "NativeList<byte>", "list", true, true, parametersStringDeclaration, parametersStringInvocation, false, "");
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, functionData.WriteBackType, "NativeList<byte>", "list", true, parametersStringDeclaration, parametersStringInvocation, false, "");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, "UnsafeList<byte>", "list", true, true, parametersStringDeclaration, parametersStringInvocation, false, "");
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, functionData.WriteBackType, "UnsafeList<byte>", "list", true, parametersStringDeclaration, parametersStringInvocation, false, "");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, "L", "list", true, true, parametersStringDeclaration, parametersStringInvocation, true, "where L : unmanaged, IPolymorphicList");
+                            GenerateExecuteFunction(writer, groupData, functionData.Name, functionData.WriteBackType, "L", "list", true, parametersStringDeclaration, parametersStringInvocation, true, "where L : unmanaged, IPolymorphicList");
                             writer.WriteLine($"");
                         }
 
@@ -290,10 +302,10 @@ namespace PolymorphicElementsSourceGenerators
             FileWriter writer, 
             GroupInterfaceData groupData, 
             string functionName, 
+            MethodWriteBackType writeBackType,
             string collectionType, 
             string collectionName, 
-            bool requiresIndex, 
-            bool supportWriteback, 
+            bool supportIndexing, 
             string parametersDeclaration, 
             string parametersInvocation,
             bool collectionTypeIsGeneric,
@@ -301,10 +313,10 @@ namespace PolymorphicElementsSourceGenerators
         {
             string genericType = collectionTypeIsGeneric ? $"<{collectionType}>" : "";
             string genericConstraint = collectionTypeIsGeneric ? $" {collectionGenericTypeConstraint}" : "";
-            writer.WriteLine($"public static bool {ExecuteFunction}_{functionName}{genericType}(ref {collectionType} {collectionName}{(requiresIndex ? ", int startByteIndex, out int newStartByteIndex" : "")}{parametersDeclaration}){genericConstraint}");
+            writer.WriteLine($"public static bool {ExecuteFunction}_{functionName}{genericType}(ref {collectionType} {collectionName}{(supportIndexing ? ", int startByteIndex, out int newStartByteIndex" : "")}{parametersDeclaration}){genericConstraint}");
             writer.WriteInScope(() =>
             {
-                writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(requiresIndex ? "startByteIndex, out startByteIndex," : "")} out ushort elementId))");
+                writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? "startByteIndex, out startByteIndex," : "")} out ushort elementId))");
                 writer.WriteInScope(() =>
                 {
                     writer.WriteLine($"switch (elementId)");
@@ -315,24 +327,37 @@ namespace PolymorphicElementsSourceGenerators
                             writer.WriteLine($"case {elementData.Id}:");
                             writer.WriteInScope(() =>
                             {
-                                writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(requiresIndex ? "startByteIndex, out newStartByteIndex," : "")} out {elementData.Type} e))");
-                                writer.WriteInScope(() =>
+                                if(supportIndexing && writeBackType == MethodWriteBackType.RefModify)
                                 {
-                                    writer.WriteLine($"e.{functionName}({parametersInvocation});");
-                                    if(supportWriteback)
+                                    writer.WriteLine($"ref {elementData.Type} e = ref {PolymorphicElementsUtility}.{InternalUse}.{ReadAnyAsRef}<{elementData.Type}{(collectionTypeIsGeneric ? $", {collectionType}" : "")}>(ref {collectionName}, {(supportIndexing ? "startByteIndex, out newStartByteIndex," : "")} out bool success);");
+                                    writer.WriteLine($"if(success)");
+                                    writer.WriteInScope(() =>
                                     {
-                                        writer.WriteLine($"{PolymorphicElementsUtility}.{InternalUse}.{WriteAny}(ref {collectionName}, startByteIndex, e);");
-                                    }
-                                    writer.WriteLine($"return true;");
-                                });
+                                        writer.WriteLine($"e.{functionName}({parametersInvocation});");
+                                        writer.WriteLine($"return true;");
+                                    });
+                                }
+                                else
+                                {
+                                    writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? "startByteIndex, out newStartByteIndex," : "")} out {elementData.Type} e))");
+                                    writer.WriteInScope(() =>
+                                    {
+                                        writer.WriteLine($"e.{functionName}({parametersInvocation});");
+                                        if(supportIndexing && writeBackType == MethodWriteBackType.Write)
+                                        {
+                                            writer.WriteLine($"{PolymorphicElementsUtility}.{InternalUse}.{WriteAny}(ref {collectionName}, startByteIndex, e);");
+                                        }
+                                        writer.WriteLine($"return true;");
+                                    });
+                                }
                                 writer.WriteLine($"break;");
                             });
                         }
                     });
                 });
-                if(requiresIndex)
+                if(supportIndexing)
                 {
-                    writer.WriteLine($"newStartByteIndex = default;");
+                    writer.WriteLine($"newStartByteIndex = startByteIndex;");
                 }
                 writer.WriteLine($"return false;");
             });

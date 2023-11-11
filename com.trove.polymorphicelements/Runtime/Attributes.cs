@@ -11,4 +11,20 @@ namespace Trove.PolymorphicElements
     public class PolymorphicElement : System.Attribute
     {
     }
+
+    [AttributeUsage(AttributeTargets.Method)]
+    public class AllowElementModification : System.Attribute
+    {
+    }
+
+    /// <summary>
+    /// Slightly faster than the alternative [AllowElementModification], but potentially unsafe.
+    /// If the method execution adds elements to the byte array that the polymorphic elements are stored in,
+    /// and this operation causes the array memory to be moved elsewhere, the polymorphic element struct will be 
+    /// modifying invalid memory.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method)]
+    public class AllowElementModificationByRefUnsafe : System.Attribute
+    {
+    }
 }

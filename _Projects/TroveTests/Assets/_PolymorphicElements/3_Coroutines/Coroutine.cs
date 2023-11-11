@@ -39,7 +39,9 @@ public struct CoroutineUpdateData
 [PolymorphicElementsGroup]
 public interface ICoroutineState
 {
+    [AllowElementModification]
     void Begin(ref CoroutineUpdateData data);
+    [AllowElementModification]
     void Update(ref CoroutineUpdateData data);
 }
 

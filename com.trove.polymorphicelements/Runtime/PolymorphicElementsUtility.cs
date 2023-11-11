@@ -514,6 +514,83 @@ namespace Trove.PolymorphicElements
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ref T ReadAnyAsRef<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, out int newStartByteIndex, out bool success)
+                where T : unmanaged
+            {
+                int sizeOfT = UnsafeUtility.SizeOf<T>();
+                if (startByteIndex >= 0 && sizeOfT <= buffer.Length - startByteIndex)
+                {
+                    byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
+                    startByteIndex += sizeOfT;
+                    newStartByteIndex = startByteIndex;
+                    success = true;
+                    return ref *(T*)startPtr;
+                }
+
+                success = false;
+                newStartByteIndex = startByteIndex;
+                return ref *(T*)buffer.GetUnsafePtr();
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ref T ReadAnyAsRef<T>(ref NativeList<byte> list, int startByteIndex, out int newStartByteIndex, out bool success)
+                where T : unmanaged
+            {
+                int sizeOfT = UnsafeUtility.SizeOf<T>();
+                if (startByteIndex >= 0 && sizeOfT <= list.Length - startByteIndex)
+                {
+                    byte* startPtr = list.GetUnsafePtr() + (long)startByteIndex;
+                    startByteIndex += sizeOfT;
+                    newStartByteIndex = startByteIndex;
+                    success = true;
+                    return ref *(T*)startPtr;
+                }
+
+                success = false;
+                newStartByteIndex = startByteIndex;
+                return ref *(T*)list.GetUnsafePtr();
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ref T ReadAnyAsRef<T>(ref UnsafeList<byte> list, int startByteIndex, out int newStartByteIndex, out bool success)
+                where T : unmanaged
+            {
+                int sizeOfT = UnsafeUtility.SizeOf<T>();
+                if (startByteIndex >= 0 && sizeOfT <= list.Length - startByteIndex)
+                {
+                    byte* startPtr = list.Ptr + (long)startByteIndex;
+                    startByteIndex += sizeOfT;
+                    newStartByteIndex = startByteIndex;
+                    success = true;
+                    return ref *(T*)startPtr;
+                }
+
+                success = false;
+                newStartByteIndex = startByteIndex;
+                return ref *(T*)list.Ptr;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ref T ReadAnyAsRef<T, L>(ref L list, int startByteIndex, out int newStartByteIndex, out bool success)
+                where T : unmanaged
+                where L : unmanaged, IPolymorphicList
+            {
+                int sizeOfT = UnsafeUtility.SizeOf<T>();
+                if (startByteIndex >= 0 && sizeOfT <= list.Length - startByteIndex)
+                {
+                    byte* startPtr = list.Ptr + (long)startByteIndex;
+                    startByteIndex += sizeOfT;
+                    newStartByteIndex = startByteIndex;
+                    success = true;
+                    return ref *(T*)startPtr;
+                }
+
+                success = false;
+                newStartByteIndex = startByteIndex;
+                return ref *(T*)list.Ptr;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static void WriteAny<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, T t)
                 where T : unmanaged
             {
