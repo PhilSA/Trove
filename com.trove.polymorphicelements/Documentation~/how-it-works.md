@@ -315,6 +315,11 @@ public partial struct EventTestSystem : ISystem
             int elementStartByteIndex = 0;
             while (IMyEventManager.Execute_Process(ref eventsByteBuffer, elementStartByteIndex, out elementStartByteIndex, ref data))
             { }
+
+            // Clear the buffer of events once we're done processing.
+            // Note: if you wanted the events to stay there as a "stack of ordered actions to execute later",
+            // you could choose to not clear the buffer.
+            eventsByteBuffer.Clear();
         }
     }
 }
