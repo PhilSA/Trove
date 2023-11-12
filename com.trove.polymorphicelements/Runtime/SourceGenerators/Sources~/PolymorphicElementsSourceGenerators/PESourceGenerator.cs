@@ -20,14 +20,9 @@ namespace PolymorphicElementsSourceGenerators
         private const string ElementTypeEnumName = "ElementType";
         private const string PolymorphicElementMetaData = "PolymorphicElementMetaData";
         private const string GetElementType = "GetElementType";
-        private const string GetElementSizeWithoutTypeId = "GetElementSizeWithoutTypeId";
-        private const string GetLargestElementSizeWithTypeId = "GetLargestElementSizeWithTypeId";
         private const string SizeOfElementTypeId = "SizeOfElementTypeId";
-        private const string GetNextElementMetaData = "GetNextElementMetaData";
         private const string AppendElement = "AppendElement";
         private const string AddElement = "AddElement";
-        private const string ExecuteFunction = "Execute";
-        private const string ReferenceOf = "ReferenceOf";
         private const string UnionElement = "UnionElement";
         private const string InternalUse = "InternalUse";
         private const string ReadAny = "ReadAny";
