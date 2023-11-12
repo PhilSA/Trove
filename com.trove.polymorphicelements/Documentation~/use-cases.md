@@ -16,7 +16,7 @@ Polymorphic Elements can therefore provide a better-performing alternative when 
 * Poor chunk utilization
 
 Often, these problems are a consequence of one of these requirements:
-* The need for ordering, where order cannon be defined by type.
+* The need for ordering, where order cannot be determined by type.
 * The need for conditional behaviour or frequent behaviour changes.
 * The need to a wide variety of different possible behaviours.
 
