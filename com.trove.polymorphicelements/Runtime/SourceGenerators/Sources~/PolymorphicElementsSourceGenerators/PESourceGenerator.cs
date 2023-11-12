@@ -31,6 +31,8 @@ namespace PolymorphicElementsSourceGenerators
         private const string GetAdditionalPayloadByteSize = "GetAdditionalPayloadByteSize";
         private const string StartByteIndex = "startByteIndex";
         private const string NextStartByteIndex = "nextStartByteIndex";
+        private const string StartByteIndexOfElementValue = "startByteIndexOfElementValue";
+        
 
         public void Initialize(GeneratorInitializationContext context)
         {
@@ -361,7 +363,11 @@ namespace PolymorphicElementsSourceGenerators
                                 }
                                 else
                                 {
-                                    writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? $"{NextStartByteIndex}, out {NextStartByteIndex}," : "")} out {elementData.Type} e))");
+                                    if(supportIndexing)                                    
+                                    {
+                                    writer.WriteLine($"int {StartByteIndexOfElementValue} = {NextStartByteIndex};");
+                                    }
+                                    writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? $"{StartByteIndexOfElementValue}, out {NextStartByteIndex}," : "")} out {elementData.Type} e))");
                                     writer.WriteInScope(() =>
                                     {
                                         if(supportIndexing && elementData.HasAdditionalPayload)
@@ -371,7 +377,7 @@ namespace PolymorphicElementsSourceGenerators
                                         writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : $"{functionData.ReturnType} returnValue = ")}e.{functionData.Name}({parametersStringInvocation});");
                                         if(supportIndexing && functionData.WriteBackType == MethodWriteBackType.Write)
                                         {
-                                            writer.WriteLine($"{PolymorphicElementsUtility}.{InternalUse}.{WriteAny}(ref {collectionName}, {StartByteIndex}, e);");
+                                            writer.WriteLine($"{PolymorphicElementsUtility}.{InternalUse}.{WriteAny}(ref {collectionName}, {StartByteIndexOfElementValue}, e);");
                                         }
                                         writer.WriteLine($"success = true;");
                                         if(!functionData.ReturnTypeIsVoid)

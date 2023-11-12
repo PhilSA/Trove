@@ -255,7 +255,6 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
 [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
 public partial struct StressTestEventExecutorSystem : ISystem
 {
-    // Store collections in the system
     private NativeList<byte> _internalEventList;
 
     public struct Singleton : IComponentData
@@ -268,9 +267,8 @@ public partial struct StressTestEventExecutorSystem : ISystem
     {
         state.RequireForUpdate<EventsTest>();
 
-        _internalEventList = new NativeList<byte>(100000, Allocator.Persistent);
-
         // Create singleton
+        _internalEventList = new NativeList<byte>(100000, Allocator.Persistent);
         Entity singletonEntity = state.EntityManager.CreateEntity();
         state.EntityManager.AddComponentData(singletonEntity, new Singleton
         {
@@ -281,7 +279,6 @@ public partial struct StressTestEventExecutorSystem : ISystem
     [BurstCompile]
     void OnDestroy(ref SystemState state)
     {
-        // Dispose events manager
         if (_internalEventList.IsCreated)
         {
             _internalEventList.Dispose();
