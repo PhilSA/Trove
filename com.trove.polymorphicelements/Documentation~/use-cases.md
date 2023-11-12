@@ -1,5 +1,7 @@
 
-# When to use Elements Structs
+# Polymorphic Elements Use Cases
+
+## When to use
 
 Good memory access patterns are key in data-oriented programming. However, there are situations where the cost of arranging your data for great memory access patterns from frame to frame will largely outweigh the performance savings of that memory access pattern. It's in these situations that Polymorphic Structs will often be a better alternative. Examples of situations where this might happen:
 * You rely on lots of structural changes to change the behaviour of entities. This gives you great data access patterns when you update these behaviours, but it is only made possible because you are frequently paying an enormous performance cost with structural changes. Overall, in your quest to reach perfect data access patterns at all costs during your behaviour updates, you've actually just made things worse by adding a very high cost outside of the behaviour updates.
@@ -12,3 +14,24 @@ Polymorphic Elements can therefore provide a better-performing alternative when 
 * Overhead of enabled components or change-filtering
 * Overhead of many jobs
 * Poor chunk utilization
+
+
+## Events
+
+### Jobified events
+
+### EntityManager events
+
+### Managed events
+
+
+## Delegates
+
+
+## Coroutines
+
+
+## State machines
+
+
+## Behaviour trees
