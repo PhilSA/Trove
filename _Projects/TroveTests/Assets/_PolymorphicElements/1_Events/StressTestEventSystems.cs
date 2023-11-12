@@ -17,7 +17,7 @@ public struct StressTestEventsData
 }
 
 [PolymorphicElementsGroup]
-public interface IStressTestEvent
+public interface IStressTestEvent 
 {
     void Execute(ref StressTestEventsData data);
 }
@@ -332,11 +332,14 @@ public partial struct StressTestEventExecutorSystem : ISystem
             bool success = true;
             while (success)
             {
-                eventsCounter++;
                 IStressTestEventManager.Execute(ref EventList, elementStartByteIndex, out elementStartByteIndex, ref data, out success);
+                if(success)
+                {
+                    eventsCounter++;
+                }
             }
 
-            UnityEngine.Debug.Log($"Executed {eventsCounter} events");
+            //UnityEngine.Debug.Log($"Executed {eventsCounter} events");
 
             // Clear events
             EventList.Clear();

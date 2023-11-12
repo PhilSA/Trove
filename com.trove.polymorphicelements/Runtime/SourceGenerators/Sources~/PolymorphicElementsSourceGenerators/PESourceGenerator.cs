@@ -333,9 +333,9 @@ namespace PolymorphicElementsSourceGenerators
             string genericConstraint = collectionTypeIsGeneric ? $" {collectionGenericTypeConstraint}" : "";
             writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{genericType}(ref {collectionType} {collectionName}{(supportIndexing ? $", int {StartByteIndex}, out int {NextStartByteIndex}" : "")}{parametersStringDeclaration}, out bool success){genericConstraint}");
             writer.WriteInScope(() =>
-            {
+            {         
                 writer.WriteLine($"success = false;");
-                writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? $"{StartByteIndex}, out {StartByteIndex}," : "")} out ushort elementId))");
+                writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? $"{StartByteIndex}, out {NextStartByteIndex}," : "")} out ushort elementId))");
                 writer.WriteInScope(() =>
                 {
                     writer.WriteLine($"switch (elementId)");
@@ -348,7 +348,7 @@ namespace PolymorphicElementsSourceGenerators
                             {
                                 if(supportIndexing && functionData.WriteBackType == MethodWriteBackType.RefModify)
                                 {
-                                    writer.WriteLine($"ref {elementData.Type} e = ref {PolymorphicElementsUtility}.{InternalUse}.{ReadAnyAsRef}<{elementData.Type}{(collectionTypeIsGeneric ? $", {collectionType}" : "")}>(ref {collectionName}, {(supportIndexing ? "{startByteIndex}, out {nextStartByteIndex}," : "")} out success);");
+                                    writer.WriteLine($"ref {elementData.Type} e = ref {PolymorphicElementsUtility}.{InternalUse}.{ReadAnyAsRef}<{elementData.Type}{(collectionTypeIsGeneric ? $", {collectionType}" : "")}>(ref {collectionName}, {(supportIndexing ? $"{NextStartByteIndex}, out {NextStartByteIndex}," : "")} out success);");
                                     writer.WriteLine($"if(success)");
                                     writer.WriteInScope(() =>
                                     {
@@ -361,7 +361,7 @@ namespace PolymorphicElementsSourceGenerators
                                 }
                                 else
                                 {
-                                    writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? $"{StartByteIndex}, out {NextStartByteIndex}," : "")} out {elementData.Type} e))");
+                                    writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? $"{NextStartByteIndex}, out {NextStartByteIndex}," : "")} out {elementData.Type} e))");
                                     writer.WriteInScope(() =>
                                     {
                                         if(supportIndexing && elementData.HasAdditionalPayload)
@@ -384,11 +384,7 @@ namespace PolymorphicElementsSourceGenerators
                             });
                         }
                     });
-                });                        
-                if(supportIndexing)
-                {
-                    writer.WriteLine($"{NextStartByteIndex} = {StartByteIndex};");
-                }
+                });    
                 if(!functionData.ReturnTypeIsVoid)
                 {
                     writer.WriteLine($"return default;");
