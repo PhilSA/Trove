@@ -28,6 +28,9 @@ namespace PolymorphicElementsSourceGenerators
         private const string ReadAny = "ReadAny";
         private const string ReadAnyAsRef = "ReadAnyAsRef";
         private const string WriteAny = "WriteAny";
+        private const string GetAdditionalPayloadByteSize = "GetAdditionalPayloadByteSize";
+        private const string StartByteIndex = "startByteIndex";
+        private const string NextStartByteIndex = "nextStartByteIndex";
 
         public void Initialize(GeneratorInitializationContext context)
         {
@@ -103,26 +106,38 @@ namespace PolymorphicElementsSourceGenerators
 
                 // Elements
                 ushort idCounter = 0;
-                foreach (StructDeclarationSyntax elementStruct in syntaxReceiver.PolymorphicElementStructs)
+                foreach (StructDeclarationSyntax elementStructSyntax in syntaxReceiver.PolymorphicElementStructs)
                 {
-                    if (SourceGenUtils.ImplementsInterface(elementStruct, groupInterfaceSyntax.Identifier.Text))
+                    if (SourceGenUtils.ImplementsInterface(elementStructSyntax, groupInterfaceSyntax.Identifier.Text))
                     {
                         ElementData elementData = new ElementData();
                         elementData.Id = idCounter;
-                        elementData.Type = elementStruct.Identifier.Text;
+                        elementData.Type = elementStructSyntax.Identifier.Text;
                         groupData.ElementDatas.Add(elementData);
 
                         idCounter++;
 
                         // Usings
-                        string elementNamespace = SourceGenUtils.GetNamespace(elementStruct);
+                        string elementNamespace = SourceGenUtils.GetNamespace(elementStructSyntax);
                         if (groupData.Namespace != elementNamespace)
                         {
                             groupData.Usings.Add(elementNamespace);
                         }
-                        foreach (var usingElem in elementStruct.SyntaxTree.GetCompilationUnitRoot(context.CancellationToken).Usings)
+                        foreach (var usingElem in elementStructSyntax.SyntaxTree.GetCompilationUnitRoot(context.CancellationToken).Usings)
                         {
                             groupData.Usings.Add(usingElem.Name.ToString());
+                        }
+
+                        foreach (MemberDeclarationSyntax memberSyntax in elementStructSyntax.Members)
+                        {
+                            // Special functions
+                            if (memberSyntax.IsKind(SyntaxKind.MethodDeclaration) && memberSyntax is MethodDeclarationSyntax methodSyntax)
+                            {
+                                if(methodSyntax.Identifier.Text == GetAdditionalPayloadByteSize)
+                                {
+                                    elementData.HasAdditionalPayload = true;
+                                }
+                            }
                         }
                     }
                 }
@@ -316,11 +331,11 @@ namespace PolymorphicElementsSourceGenerators
 
             string genericType = collectionTypeIsGeneric ? $"<{collectionType}>" : "";
             string genericConstraint = collectionTypeIsGeneric ? $" {collectionGenericTypeConstraint}" : "";
-            writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{genericType}(ref {collectionType} {collectionName}{(supportIndexing ? ", int startByteIndex, out int newStartByteIndex" : "")}{parametersStringDeclaration}, out bool success){genericConstraint}");
+            writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{genericType}(ref {collectionType} {collectionName}{(supportIndexing ? $", int {StartByteIndex}, out int {NextStartByteIndex}" : "")}{parametersStringDeclaration}, out bool success){genericConstraint}");
             writer.WriteInScope(() =>
             {
                 writer.WriteLine($"success = false;");
-                writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? "startByteIndex, out startByteIndex," : "")} out ushort elementId))");
+                writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? $"{StartByteIndex}, out {StartByteIndex}," : "")} out ushort elementId))");
                 writer.WriteInScope(() =>
                 {
                     writer.WriteLine($"switch (elementId)");
@@ -333,22 +348,30 @@ namespace PolymorphicElementsSourceGenerators
                             {
                                 if(supportIndexing && functionData.WriteBackType == MethodWriteBackType.RefModify)
                                 {
-                                    writer.WriteLine($"ref {elementData.Type} e = ref {PolymorphicElementsUtility}.{InternalUse}.{ReadAnyAsRef}<{elementData.Type}{(collectionTypeIsGeneric ? $", {collectionType}" : "")}>(ref {collectionName}, {(supportIndexing ? "startByteIndex, out newStartByteIndex," : "")} out success);");
+                                    writer.WriteLine($"ref {elementData.Type} e = ref {PolymorphicElementsUtility}.{InternalUse}.{ReadAnyAsRef}<{elementData.Type}{(collectionTypeIsGeneric ? $", {collectionType}" : "")}>(ref {collectionName}, {(supportIndexing ? "{startByteIndex}, out {nextStartByteIndex}," : "")} out success);");
                                     writer.WriteLine($"if(success)");
                                     writer.WriteInScope(() =>
                                     {
+                                        if(supportIndexing && elementData.HasAdditionalPayload)
+                                        {
+                                            writer.WriteLine($"{NextStartByteIndex} += e.{GetAdditionalPayloadByteSize}();");
+                                        }
                                         writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")}e.{functionData.Name}({parametersStringInvocation});");
                                     });
                                 }
                                 else
                                 {
-                                    writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? "startByteIndex, out newStartByteIndex," : "")} out {elementData.Type} e))");
+                                    writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? $"{StartByteIndex}, out {NextStartByteIndex}," : "")} out {elementData.Type} e))");
                                     writer.WriteInScope(() =>
                                     {
+                                        if(supportIndexing && elementData.HasAdditionalPayload)
+                                        {
+                                            writer.WriteLine($"{NextStartByteIndex} += e.{GetAdditionalPayloadByteSize}();");
+                                        }
                                         writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : $"{functionData.ReturnType} returnValue = ")}e.{functionData.Name}({parametersStringInvocation});");
                                         if(supportIndexing && functionData.WriteBackType == MethodWriteBackType.Write)
                                         {
-                                            writer.WriteLine($"{PolymorphicElementsUtility}.{InternalUse}.{WriteAny}(ref {collectionName}, startByteIndex, e);");
+                                            writer.WriteLine($"{PolymorphicElementsUtility}.{InternalUse}.{WriteAny}(ref {collectionName}, {StartByteIndex}, e);");
                                         }
                                         writer.WriteLine($"success = true;");
                                         if(!functionData.ReturnTypeIsVoid)
@@ -364,7 +387,7 @@ namespace PolymorphicElementsSourceGenerators
                 });                        
                 if(supportIndexing)
                 {
-                    writer.WriteLine($"newStartByteIndex = startByteIndex;");
+                    writer.WriteLine($"{NextStartByteIndex} = {StartByteIndex};");
                 }
                 if(!functionData.ReturnTypeIsVoid)
                 {

@@ -63,6 +63,7 @@ namespace PolymorphicElementsSourceGenerators
     {
         public ushort Id;
         public string Type;
+        public bool HasAdditionalPayload;
     }
 
     public enum MethodWriteBackType
