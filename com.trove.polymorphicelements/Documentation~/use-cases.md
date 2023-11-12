@@ -15,14 +15,19 @@ Polymorphic Elements can therefore provide a better-performing alternative when 
 * Overhead of many jobs
 * Poor chunk utilization
 
+Often, these problems are a consequence of one of these requirements:
+* The need for ordering, where order cannon be defined by type.
+* The need for conditional behaviour or frequent behaviour changes.
+* The need to a wide variety of different possible behaviours.
+
 
 ## Events
 
-### Jobified events
+#### Jobified events
 
-### EntityManager events
+#### EntityManager events
 
-### Managed events
+#### Managed events
 
 
 ## Delegates
