@@ -332,3 +332,10 @@ public partial struct EventTestSystem : ISystem
 ```
 
 We've created a `MyEventsBufferElement : IBufferElementData` to store the byte array of polymorphic elements on the target entity, instead of the `NativeList<byte>` we used before. This buffer type contains only a single `byte`, and we reinterpret it to a `DynamicBuffer<byte>` before writing to it.
+
+
+## Alternative approach: Union Elements
+
+Trove Polymorphic Elements also offers an alternative way of solving the problem: [Union Elements](./union-element.md)
+
+Union Elements are easier and safer to use (easier to access or remove an element at a given index, no risk of trying to read an element at an invalid byte index or corrupting the byte array, etc...), but they have a performance penalty due to potentially wasting memory when iterating over elements in an array. This performance penalty becomes more and more significant depending on the difference in data sizes among different polymorphic elements of a same group.

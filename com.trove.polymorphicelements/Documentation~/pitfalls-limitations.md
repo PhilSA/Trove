@@ -7,3 +7,4 @@
 * entity remapping
 * reading at the correct startByteIndex
 * removing elements
+* conflicting types (Unity.Mathematics.Random vs System.Random)
