@@ -6,32 +6,6 @@ using Unity.Burst;
 
 namespace Trove.PolymorphicElements
 {
-    public unsafe struct EventList : IPolymorphicList
-    {
-        private UnsafeList<byte> List;
-
-        public int Length => List.Length;
-
-        public byte* Ptr => List.Ptr;
-
-        public EventList(int initialCapacity, Allocator allocator)
-        {
-            List = new UnsafeList<byte>(initialCapacity, allocator);
-        }
-
-        public void Dispose(JobHandle dep = default)
-        {
-            if (List.IsCreated)
-            {
-                List.Dispose(dep);
-            }
-        }
-
-        public void Resize(int newLength)
-        {
-            List.Resize(newLength);
-        }
-    }
     public struct EventStream
     {
         private UnsafeStream Stream;
@@ -96,78 +70,16 @@ namespace Trove.PolymorphicElements
         }
     }
 
-    public struct EventListManager
-    {
-        private UnsafeList<EventList> _eventCollections;
-        private Allocator _allocator;
-        private int _eventListIterator;
-
-        public EventListManager(ref SystemState state, int initialCapacity = 16)
-        {
-            _eventCollections = new UnsafeList<EventList>(initialCapacity, Allocator.Persistent);
-            _allocator = state.WorldUpdateAllocator;
-            _eventListIterator = 0;
-        }
-
-        public void Dispose(JobHandle dep = default)
-        {
-            for (int i = 0; i < _eventCollections.Length; i++)
-            {
-                _eventCollections[i].Dispose(dep);
-            }
-
-            if (_eventCollections.IsCreated)
-            {
-                _eventCollections.Dispose();
-            }
-        }
-
-        public EventList CreateEventList(int initialByteCapacity = 1000)
-        {
-            EventList list = new EventList(initialByteCapacity, _allocator);
-            _eventCollections.Add(list);
-            return list;
-        }
-
-        public void BeginEventListIteration()
-        {
-            _eventListIterator = 0;
-        }
-
-        public void DisposeAndClearEventLists()
-        {
-            for (int i = 0; i < _eventCollections.Length; i++)
-            {
-                _eventCollections[i].Dispose();
-            }
-            _eventCollections.Clear();
-        }
-
-        public bool NextEventList(out EventList eventList)
-        {
-            if (_eventListIterator < _eventCollections.Length)
-            {
-                eventList = _eventCollections[_eventListIterator];
-                _eventListIterator++;
-                return true;
-            }
-
-            eventList = default;
-            return false;
-        }
-    }
-
     public unsafe struct EventStreamManager
     {
-        [NativeDisableUnsafePtrRestriction]
-        private UnsafeList<EventStream> _eventCollections;
+        private NativeList<EventStream> _eventCollections;
         private Allocator _allocator;
         private int _eventStreamReaderIterator;
 
 
         public EventStreamManager(ref SystemState state, int initialCapacity = 16)
         {
-            _eventCollections = new UnsafeList<EventStream>(initialCapacity, Allocator.Persistent);
+            _eventCollections = new NativeList<EventStream>(initialCapacity, Allocator.Persistent);
             _allocator = state.WorldUpdateAllocator;
             _eventStreamReaderIterator = 0;
         }
@@ -217,11 +129,6 @@ namespace Trove.PolymorphicElements
 
             streamReader = default;
             return false;
-        }
-
-        public string GetDebugLength()
-        {
-            return $" Collections length is {_eventCollections.Length}";
         }
     }
 }

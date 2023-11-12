@@ -134,7 +134,7 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
     void OnUpdate(ref SystemState state)
     {
         EventsTest singleton = SystemAPI.GetSingleton<EventsTest>();
-        if (!singleton.EnableStressTestEventsTest)
+        if (!singleton.EnableStressTestEventsTest || !state.EntityManager.Exists(singleton.MainCubeInstance))
             return;
 
         int jobThreads = singleton.TransformEventsJobThreads;
@@ -212,7 +212,7 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
     void OnUpdate(ref SystemState state)
     {
         EventsTest singleton = SystemAPI.GetSingleton<EventsTest>();
-        if (!singleton.EnableStressTestEventsTest)
+        if (!singleton.EnableStressTestEventsTest || !state.EntityManager.Exists(singleton.MainCubeInstance))
             return;
 
         int jobThreads = singleton.ColorEventsJobThreads;
