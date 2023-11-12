@@ -122,9 +122,9 @@ public partial struct CoroutineSystem : ISystem
 
                 if (mustTriggerBegin)
                 {
-                    ICoroutineStateManager.Execute_Begin(ref coroutineStateBytes, currentStateByteStartIndex, out _, ref data);
+                    ICoroutineStateManager.Begin(ref coroutineStateBytes, currentStateByteStartIndex, out _, ref data, out _);
                 }
-                ICoroutineStateManager.Execute_Update(ref coroutineStateBytes, currentStateByteStartIndex, out _, ref data);
+                ICoroutineStateManager.Update(ref coroutineStateBytes, currentStateByteStartIndex, out _, ref data, out _);
             }
             else
             {

@@ -5,12 +5,14 @@ using Microsoft.CodeAnalysis.Text;
 using System.Text;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Linq;
 
 namespace PolymorphicElementsSourceGenerators
 {
     [Generator]
     public class PESourceGenerator : ISourceGenerator
     {
+        public const string VoidType = "void";
         public const string GeneratedGroupSuffix = "Manager";
         private const string MethodWriteBackAttributeName = "AllowElementModification";
         private const string MethodRefWriteBackAttributeName = "AllowElementModificationByRefUnsafe";
@@ -49,11 +51,11 @@ namespace PolymorphicElementsSourceGenerators
         private void BuildCodeData(CodeData codeData, PESyntaxReceiver syntaxReceiver, GeneratorExecutionContext context)
         {
             // Groups
-            foreach (InterfaceDeclarationSyntax groupInterface in syntaxReceiver.PolymorphicElementsGroupInterfaces)
+            foreach (InterfaceDeclarationSyntax groupInterfaceSyntax in syntaxReceiver.PolymorphicElementsGroupInterfaces)
             {
                 GroupInterfaceData groupData = new GroupInterfaceData();
-                groupData.Name = groupInterface.Identifier.Text;
-                groupData.Namespace = SourceGenUtils.GetNamespace(groupInterface);
+                groupData.Name = groupInterfaceSyntax.Identifier.Text;
+                groupData.Namespace = SourceGenUtils.GetNamespace(groupInterfaceSyntax);
 
                 // Usings
                 groupData.Usings = new List<string>()
@@ -65,18 +67,21 @@ namespace PolymorphicElementsSourceGenerators
                     "Unity.Collections",
                     "Unity.Collections.LowLevel.Unsafe",
                 };
-                foreach (var usingElem in groupInterface.SyntaxTree.GetCompilationUnitRoot(context.CancellationToken).Usings)
+                foreach (var usingElem in groupInterfaceSyntax.SyntaxTree.GetCompilationUnitRoot(context.CancellationToken).Usings)
                 {
                     groupData.Usings.Add(usingElem.Name.ToString());
                 }
 
-                // Functions
-                foreach (MemberDeclarationSyntax function in groupInterface.Members)
+                foreach (MemberDeclarationSyntax memberSyntax in groupInterfaceSyntax.Members)
                 {
-                    if (function.IsKind(SyntaxKind.MethodDeclaration) && function is MethodDeclarationSyntax methodSyntax)
+                    // Functions
+                    if (memberSyntax.IsKind(SyntaxKind.MethodDeclaration) && memberSyntax is MethodDeclarationSyntax methodSyntax)
                     {
                         FunctionData functionData = new FunctionData();
                         functionData.Name = methodSyntax.Identifier.Text;
+                        functionData.ReturnType = methodSyntax.ReturnType.ToString();
+                        functionData.ReturnTypeIsVoid = functionData.ReturnType == VoidType;
+
                         functionData.WriteBackType = MethodWriteBackType.None;
                         if(SourceGenUtils.HasAttribute(methodSyntax, MethodRefWriteBackAttributeName))
                         {
@@ -105,7 +110,7 @@ namespace PolymorphicElementsSourceGenerators
                 ushort idCounter = 0;
                 foreach (StructDeclarationSyntax elementStruct in syntaxReceiver.PolymorphicElementStructs)
                 {
-                    if (SourceGenUtils.ImplementsInterface(elementStruct, groupInterface.Identifier.Text))
+                    if (SourceGenUtils.ImplementsInterface(elementStruct, groupInterfaceSyntax.Identifier.Text))
                     {
                         ElementData elementData = new ElementData();
                         elementData.Id = idCounter;
@@ -200,12 +205,12 @@ namespace PolymorphicElementsSourceGenerators
                                 writer.WriteLine($"");
                             }
                             
-                            // Executes
+                            // Functions
                             foreach (FunctionData functionData in groupData.FunctionDatas)
                             {
                                 functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, false);
                                 
-                                writer.WriteLine($"public bool Execute_{functionData.Name}({parametersStringDeclaration})");
+                                writer.WriteLine($"public {functionData.ReturnType} {functionData.Name}({parametersStringDeclaration})");
                                 writer.WriteInScope(() =>
                                 {
                                     writer.WriteLine($"switch (TypeId)");
@@ -216,12 +221,18 @@ namespace PolymorphicElementsSourceGenerators
                                             writer.WriteLine($"case {elementData.Id}:");
                                             writer.WriteInScope(() =>
                                             {
-                                                writer.WriteLine($"Data.{elementData.Type}.{functionData.Name}({parametersStringInvocation});");
-                                                writer.WriteLine($"return true;");
+                                                writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")}Data.{elementData.Type}.{functionData.Name}({parametersStringInvocation});");
+                                                if(functionData.ReturnTypeIsVoid)
+                                                {
+                                                    writer.WriteLine($"break;");
+                                                }
                                             });
                                         }
                                     });
-                                    writer.WriteLine($"return false;");
+                                    if(!functionData.ReturnTypeIsVoid)
+                                    {
+                                        writer.WriteLine($"return default;");
+                                    }
                                 });
                                 writer.WriteLine($"");
                             }
@@ -232,36 +243,34 @@ namespace PolymorphicElementsSourceGenerators
                         // Add functions
                         foreach (ElementData elementData in groupData.ElementDatas)
                         {
-                            GenerateAddFunction(writer, "NativeStream.Writer", "streamWriter", elementData.Type, elementData.Id, false, false, "");
+                            GenerateAddFunction(writer, "NativeStream.Writer", "streamWriter", elementData, false, false, "");
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "S", "streamWriter", elementData.Type, elementData.Id, false, true, "where S : unmanaged, IPolymorphicStreamWriter");
+                            GenerateAddFunction(writer, "S", "streamWriter", elementData, false, true, "where S : unmanaged, IPolymorphicStreamWriter");
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "DynamicBuffer<byte>", "buffer", elementData.Type, elementData.Id, true, false, "");
+                            GenerateAddFunction(writer, "DynamicBuffer<byte>", "buffer", elementData, true, false, "");
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "NativeList<byte>", "list", elementData.Type, elementData.Id, true, false, "");
+                            GenerateAddFunction(writer, "NativeList<byte>", "list", elementData, true, false, "");
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "UnsafeList<byte>", "list", elementData.Type, elementData.Id, true, false, "");
+                            GenerateAddFunction(writer, "UnsafeList<byte>", "list", elementData, true, false, "");
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "L", "list", elementData.Type, elementData.Id, true, true, "where L : unmanaged, IPolymorphicList");
+                            GenerateAddFunction(writer, "L", "list", elementData, true, true, "where L : unmanaged, IPolymorphicList");
                             writer.WriteLine($"");
                         }
 
                         // Execute functions
                         foreach (FunctionData functionData in groupData.FunctionDatas)
                         {
-                            functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, true);
-
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, functionData.WriteBackType, "NativeStream.Reader", "streamReader", false, parametersStringDeclaration, parametersStringInvocation, false, "");
+                            GenerateExecuteFunction(writer, groupData, functionData, "NativeStream.Reader", "streamReader", false, false, "");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, functionData.WriteBackType, "S", "streamReader", false, parametersStringDeclaration, parametersStringInvocation, true, "where S : unmanaged, IPolymorphicStreamReader");
+                            GenerateExecuteFunction(writer, groupData, functionData, "S", "streamReader", false, true, "where S : unmanaged, IPolymorphicStreamReader");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, functionData.WriteBackType, "DynamicBuffer<byte>", "buffer", true, parametersStringDeclaration, parametersStringInvocation, false, "");
+                            GenerateExecuteFunction(writer, groupData, functionData, "DynamicBuffer<byte>", "buffer", true, false, "");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, functionData.WriteBackType, "NativeList<byte>", "list", true, parametersStringDeclaration, parametersStringInvocation, false, "");
+                            GenerateExecuteFunction(writer, groupData, functionData, "NativeList<byte>", "list", true, false, "");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, functionData.WriteBackType, "UnsafeList<byte>", "list", true, parametersStringDeclaration, parametersStringInvocation, false, "");
+                            GenerateExecuteFunction(writer, groupData, functionData, "UnsafeList<byte>", "list", true, false, "");
                             writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData.Name, functionData.WriteBackType, "L", "list", true, parametersStringDeclaration, parametersStringInvocation, true, "where L : unmanaged, IPolymorphicList");
+                            GenerateExecuteFunction(writer, groupData, functionData, "L", "list", true, true, "where L : unmanaged, IPolymorphicList");
                             writer.WriteLine($"");
                         }
 
@@ -282,8 +291,7 @@ namespace PolymorphicElementsSourceGenerators
             FileWriter writer, 
             string collectionType, 
             string collectionName, 
-            string elementType, 
-            ushort elementId, 
+            ElementData elementData, 
             bool supportElementAccess,
             bool collectionTypeIsGeneric,
             string collectionGenericTypeConstraint)
@@ -291,31 +299,31 @@ namespace PolymorphicElementsSourceGenerators
             string methodName = supportElementAccess ? AddElement : AppendElement;
             string genericType = collectionTypeIsGeneric ? $"<{collectionType}>" : "";
             string genericConstraint = collectionTypeIsGeneric ? $" {collectionGenericTypeConstraint}" : "";
-            writer.WriteLine($"public static {(supportElementAccess ? $"{PolymorphicElementMetaData}" : "void")} {methodName}{genericType}(ref {collectionType} {collectionName}, {elementType} element){genericConstraint}");
+            writer.WriteLine($"public static {(supportElementAccess ? $"{PolymorphicElementMetaData}" : "void")} {methodName}{genericType}(ref {collectionType} {collectionName}, {elementData.Type} element){genericConstraint}");
             writer.WriteInScope(() =>
             {
-                writer.WriteLine($"{(supportElementAccess ? $"return " : "")}{PolymorphicElementsUtility}.{methodName}(ref {collectionName}, {elementId}, element);");
+                writer.WriteLine($"{(supportElementAccess ? $"return " : "")}{PolymorphicElementsUtility}.{methodName}(ref {collectionName}, {elementData.Id}, element);");
             });
         }
 
         private void GenerateExecuteFunction(
             FileWriter writer, 
             GroupInterfaceData groupData, 
-            string functionName, 
-            MethodWriteBackType writeBackType,
+            FunctionData functionData, 
             string collectionType, 
             string collectionName, 
             bool supportIndexing, 
-            string parametersDeclaration, 
-            string parametersInvocation,
             bool collectionTypeIsGeneric,
             string collectionGenericTypeConstraint)
         {
+            functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, true);
+
             string genericType = collectionTypeIsGeneric ? $"<{collectionType}>" : "";
             string genericConstraint = collectionTypeIsGeneric ? $" {collectionGenericTypeConstraint}" : "";
-            writer.WriteLine($"public static bool {ExecuteFunction}_{functionName}{genericType}(ref {collectionType} {collectionName}{(supportIndexing ? ", int startByteIndex, out int newStartByteIndex" : "")}{parametersDeclaration}){genericConstraint}");
+            writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{genericType}(ref {collectionType} {collectionName}{(supportIndexing ? ", int startByteIndex, out int newStartByteIndex" : "")}{parametersStringDeclaration}, out bool success){genericConstraint}");
             writer.WriteInScope(() =>
             {
+                writer.WriteLine($"success = false;");
                 writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? "startByteIndex, out startByteIndex," : "")} out ushort elementId))");
                 writer.WriteInScope(() =>
                 {
@@ -327,14 +335,13 @@ namespace PolymorphicElementsSourceGenerators
                             writer.WriteLine($"case {elementData.Id}:");
                             writer.WriteInScope(() =>
                             {
-                                if(supportIndexing && writeBackType == MethodWriteBackType.RefModify)
+                                if(supportIndexing && functionData.WriteBackType == MethodWriteBackType.RefModify)
                                 {
-                                    writer.WriteLine($"ref {elementData.Type} e = ref {PolymorphicElementsUtility}.{InternalUse}.{ReadAnyAsRef}<{elementData.Type}{(collectionTypeIsGeneric ? $", {collectionType}" : "")}>(ref {collectionName}, {(supportIndexing ? "startByteIndex, out newStartByteIndex," : "")} out bool success);");
+                                    writer.WriteLine($"ref {elementData.Type} e = ref {PolymorphicElementsUtility}.{InternalUse}.{ReadAnyAsRef}<{elementData.Type}{(collectionTypeIsGeneric ? $", {collectionType}" : "")}>(ref {collectionName}, {(supportIndexing ? "startByteIndex, out newStartByteIndex," : "")} out success);");
                                     writer.WriteLine($"if(success)");
                                     writer.WriteInScope(() =>
                                     {
-                                        writer.WriteLine($"e.{functionName}({parametersInvocation});");
-                                        writer.WriteLine($"return true;");
+                                        writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")}e.{functionData.Name}({parametersStringInvocation});");
                                     });
                                 }
                                 else
@@ -342,24 +349,31 @@ namespace PolymorphicElementsSourceGenerators
                                     writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? "startByteIndex, out newStartByteIndex," : "")} out {elementData.Type} e))");
                                     writer.WriteInScope(() =>
                                     {
-                                        writer.WriteLine($"e.{functionName}({parametersInvocation});");
-                                        if(supportIndexing && writeBackType == MethodWriteBackType.Write)
+                                        writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : $"{functionData.ReturnType} returnValue = ")}e.{functionData.Name}({parametersStringInvocation});");
+                                        if(supportIndexing && functionData.WriteBackType == MethodWriteBackType.Write)
                                         {
                                             writer.WriteLine($"{PolymorphicElementsUtility}.{InternalUse}.{WriteAny}(ref {collectionName}, startByteIndex, e);");
                                         }
-                                        writer.WriteLine($"return true;");
+                                        writer.WriteLine($"success = true;");
+                                        if(!functionData.ReturnTypeIsVoid)
+                                        {
+                                            writer.WriteLine($"return returnValue;");
+                                        }
                                     });
                                 }
                                 writer.WriteLine($"break;");
                             });
                         }
                     });
-                });
+                });                        
                 if(supportIndexing)
                 {
                     writer.WriteLine($"newStartByteIndex = startByteIndex;");
                 }
-                writer.WriteLine($"return false;");
+                if(!functionData.ReturnTypeIsVoid)
+                {
+                    writer.WriteLine($"return default;");
+                }
             });
         }
     }

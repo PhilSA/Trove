@@ -18,11 +18,11 @@ First we must define a Polymorphic Elements Group. All elements that belong to t
 [PolymorphicElementsGroup]
 public interface IMyEvent
 {
-    void Process();
+    void Execute();
 }
 ```
 
-A Polymorphic Elements Group is any `interface` with the `[PolymorphicElementsGroup]` attribute. We've defined an `Process()` function, because all of our event types will have that function. Now let's define a Polymorphic Element for each of our event types:
+A Polymorphic Elements Group is any `interface` with the `[PolymorphicElementsGroup]` attribute. We've defined an `Execute()` function, because all of our event types will have that function. Now let's define a Polymorphic Element for each of our event types:
 
 ```cs
 [PolymorphicElement]
@@ -31,7 +31,7 @@ public struct SetPositionEvent : IMyEvent
     public Entity Entity;
     public float3 Position;
 
-    public void Process()
+    public void Execute()
     { }
 }
 
@@ -41,7 +41,7 @@ public struct SetRotationEvent : IMyEvent
     public Entity Entity;
     public quaternion Rotation;
 
-    public void Process()
+    public void Execute()
     { }
 }
 
@@ -51,14 +51,14 @@ public struct SetScaleEvent : IMyEvent
     public Entity Entity;
     public float Scale;
 
-    public void Process()
+    public void Execute()
     { }
 }
 ```
 
 We've defined three Polymorphic Elements: `SetPositionEvent`, `SetRotationEvent` and `SetScaleEvent`. A Polymorphic element is a `struct` marked with the `[PolymorphicElement]` attribute, and implementing an `interface` marked with the `[PolymorphicElementsGroup]` attribute (in this case; it's the `IMyEvent` interface).
 
-However, our events can't really do anything yet, because they don't have access to any data. We'll give them access to data as a parameter to their `Process()` function:
+However, our events can't really do anything yet, because they don't have access to any data. We'll give them access to data as a parameter to their `Execute()` function:
 
 ```cs
 public struct EventExecutionData
@@ -69,7 +69,7 @@ public struct EventExecutionData
 [PolymorphicElementsGroup]
 public interface IMyEvent
 {
-    void Process(ref EventExecutionData data);
+    void Execute(ref EventExecutionData data);
 }
 
 [PolymorphicElement]
@@ -78,7 +78,7 @@ public struct SetPositionEvent : IMyEvent
     public Entity Entity;
     public float3 Position;
 
-    public void Process(ref EventExecutionData data)
+    public void Execute(ref EventExecutionData data)
     {
         RefRW<LocalTransform> transformRef = data.LocalTransformLookup.GetRefRW(Entity);
         if (transformRef.IsValid)
@@ -94,7 +94,7 @@ public struct SetRotationEvent : IMyEvent
     public Entity Entity;
     public quaternion Rotation;
 
-    public void Process(ref EventExecutionData data)
+    public void Execute(ref EventExecutionData data)
     {
         RefRW<LocalTransform> transformRef = data.LocalTransformLookup.GetRefRW(Entity);
         if (transformRef.IsValid)
@@ -110,7 +110,7 @@ public struct SetScaleEvent : IEIMyEventvent
     public Entity Entity;
     public float Scale;
 
-    public void Process(ref EventExecutionData data)
+    public void Execute(ref EventExecutionData data)
     {
         RefRW<LocalTransform> transformRef = data.LocalTransformLookup.GetRefRW(Entity);
         if (transformRef.IsValid)
@@ -121,7 +121,7 @@ public struct SetScaleEvent : IEIMyEventvent
 }
 ```
 
-We've defined a `EventExecutionData` struct that holds a `ComponentLookup<LocalTransform>` that our events can use to access entity transforms. Then, we've added this struct as a ref parameter to the `Process()` function of our interface. Each event type can now implement the `Process()` function to modify their target `Entity`'s transform accordingly. 
+We've defined a `EventExecutionData` struct that holds a `ComponentLookup<LocalTransform>` that our events can use to access entity transforms. Then, we've added this struct as a ref parameter to the `Execute()` function of our interface. Each event type can now implement the `Execute()` function to modify their target `Entity`'s transform accordingly. 
 
 We've finished defining our Polymorphic Groups and Elements, and now we'll see how to create those Elements.
 
@@ -138,7 +138,7 @@ The `IMyEventManager` contains functions to write and read every Element type be
 - `UnsafeList<byte>`
 - custom lists implementing `IPolymorphicList`
 
-We can write elements to these collections using the `AppendElement` (for streams) and `AddElement` (for buffers/lists) generated functions of `IMyEventManager`, and we can execute a function of an element at a given byte index using the `Execute_MyFunctionName` generated functions. In the case of `IMyEventManager`, we have a `Execute_Process`, since our `IMyEvent` interface has the `Process()` function. Let's see how it works in code:
+We can write elements to these collections using the `AppendElement` (for streams) and `AddElement` (for buffers/lists) generated functions of `IMyEventManager`, and we can execute a function of an element at a given byte index using the `.MyFunctionName()` generated functions. In the case of `IMyEventManager`, we have a `Execute`, since our `IMyEvent` interface has the `Execute()` function. Let's see how it works in code:
 
 ```cs
 [BurstCompile]
@@ -187,20 +187,23 @@ public partial struct EventTestSystem : ISystem
             LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
         };
 
-        // Execute the Process() function of every element.
+        // Call the Execute() function of every element.
         // This loop will keep iterating as long as we haven't reached the end of the elements in the eventsList.
-        // IMyEventManager.Execute_Process returns true if it has found an element to read at the given elementStartByteIndex,
+        // IMyEventManager.Execute outputs a "bool success" based on if it has found an element to read at the given elementStartByteIndex,
         // and it will then output the next element start byte index to elementStartByteIndex.
         int elementStartByteIndex = 0;
-        while(IMyEventManager.Execute_Process(ref eventsList, elementStartByteIndex, out elementStartByteIndex, ref data))
-        { }
+        bool success = true;
+        while (success)
+        {
+            IMyEventManager.Execute(ref eventsList, elementStartByteIndex, out elementStartByteIndex, ref data, out success);
+        }
 
         eventsList.Dispose();
     }
 }
 ```
 
-This example was all done on the main thread, but both element writing (`AddElement`) and executing (`Execute_Process`) can be called in bursted jobs.
+This example was all done on the main thread, but both element writing (`AddElement`) and function calling (`Execute`) can be called in bursted jobs.
 
 Note that we can also alter this example to write events to a dynamic buffer on the entity whose transform is affected, instead of writing them to a global `NativeList`. We'll have to modify our events so that they gain access to component data directly rather than relying on a `ComponentLookup<LocalTransform>`:
 
@@ -213,7 +216,7 @@ public struct EventExecutionData
 [PolymorphicElementsGroup]
 public interface IMyEvent
 {
-    void Process(ref EventExecutionData data);
+    void Execute(ref EventExecutionData data);
 }
 
 [PolymorphicElement]
@@ -221,7 +224,7 @@ public struct SetPositionEvent : IMyEvent
 {
     public float3 Position;
 
-    public void Process(ref EventExecutionData data)
+    public void Execute(ref EventExecutionData data)
     {
         data.LocalTransform.ValueRW.Position = Position;
     }
@@ -232,7 +235,7 @@ public struct SetRotationEvent : IMyEvent
 {
     public quaternion Rotation;
 
-    public void Process(ref EventExecutionData data)
+    public void Execute(ref EventExecutionData data)
     {
         data.LocalTransform.ValueRW.Rotation = Rotation;
     }
@@ -243,7 +246,7 @@ public struct SetScaleEvent : IMyEvent
 {
     public float Scale;
 
-    public void Process(ref EventExecutionData data)
+    public void Execute(ref EventExecutionData data)
     {
         data.LocalTransform.ValueRW.Scale = Scale;
     }
@@ -308,13 +311,16 @@ public partial struct EventTestSystem : ISystem
                 LocalTransform = localTransform,
             };
 
-            // Execute the Process() function of every element.
+            // Call the Execute() function of every element.
             // This loop will keep iterating as long as we haven't reached the end of the elements in the eventsBuffer.
-            // IMyEventManager.Execute_Process returns true if it has found an element to read at the given elementStartByteIndex,
+            // IMyEventManager.Execute outputs a "bool success" based on if it has found an element to read at the given elementStartByteIndex,
             // and it will then output the next element start byte index to elementStartByteIndex.
             int elementStartByteIndex = 0;
-            while (IMyEventManager.Execute_Process(ref eventsByteBuffer, elementStartByteIndex, out elementStartByteIndex, ref data))
-            { }
+            bool success = true;
+            while (success)
+            {
+                IMyEventManager.Execute(ref eventsByteBuffer, elementStartByteIndex, out elementStartByteIndex, ref data, out success);
+            }
 
             // Clear the buffer of events once we're done processing.
             // Note: if you wanted the events to stay there as a "stack of ordered actions to execute later",

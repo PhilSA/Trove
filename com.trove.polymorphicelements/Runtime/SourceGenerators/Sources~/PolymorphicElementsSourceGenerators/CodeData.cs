@@ -24,8 +24,11 @@ namespace PolymorphicElementsSourceGenerators
     public class FunctionData
     {
         public string Name;
+        public string ReturnType;
+        public bool ReturnTypeIsVoid;
         public MethodWriteBackType WriteBackType;
         public List<ParameterData> ParameterDatas = new List<ParameterData>();
+
 
         public void GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, bool includeStartingComma)
         {

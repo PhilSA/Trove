@@ -57,7 +57,7 @@ public partial struct StateMachineSystem : ISystem
                     };
                     for (int s = 0; s < data.StateMetaDataBuffer.Length; s++)
                     { 
-                        IStateManager.Execute_OnStateMachineInitialize(ref data.StateElementBuffer, data.StateMetaDataBuffer[s].Value.StartByteIndex, out _, ref random, ref stateMachine, ref data);
+                        IStateManager.OnStateMachineInitialize(ref data.StateElementBuffer, data.StateMetaDataBuffer[s].Value.StartByteIndex, out _, ref random, ref stateMachine, ref data, out _);
                     }
                     MyStateMachine.TransitionToState(stateMachine.StartStateIndex, ref stateMachine, ref data);
                 }
@@ -98,7 +98,7 @@ public partial struct StateMachineSystem : ISystem
             };
 
             // Update current state
-            IStateManager.Execute_OnUpdate(ref data.StateElementBuffer, sm.ValueRW.CurrentStateByteStartIndex, out _, sm.ValueRO.Speed, ref sm.ValueRW, ref data);
+            IStateManager.OnUpdate(ref data.StateElementBuffer, sm.ValueRW.CurrentStateByteStartIndex, out _, sm.ValueRO.Speed, ref sm.ValueRW, ref data, out _);
         }
     }
 }

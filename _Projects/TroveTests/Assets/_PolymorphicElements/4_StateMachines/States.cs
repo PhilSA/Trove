@@ -126,7 +126,7 @@ public struct ScaleState : IState
         }
         else
         {
-            IStateManager.Execute_OnStateEnter(ref data.StateElementBuffer, SubStateMachine.CurrentStateByteStartIndex, out _, ref SubStateMachine, ref data);
+            IStateManager.OnStateEnter(ref data.StateElementBuffer, SubStateMachine.CurrentStateByteStartIndex, out _, ref SubStateMachine, ref data, out _);
         }
     }
 
@@ -134,7 +134,7 @@ public struct ScaleState : IState
     {
         data.LocalTransform.ValueRW.Scale = StartScale;
 
-        IStateManager.Execute_OnStateExit(ref data.StateElementBuffer, SubStateMachine.CurrentStateByteStartIndex, out _, ref SubStateMachine, ref data);
+        IStateManager.OnStateExit(ref data.StateElementBuffer, SubStateMachine.CurrentStateByteStartIndex, out _, ref SubStateMachine, ref data, out _);
     }
 
     public void OnUpdate(float cummulativeSpeed, ref MyStateMachine parentStateMachine, ref StateMachineData data)
@@ -142,7 +142,7 @@ public struct ScaleState : IState
         TimedState.OnStateUpdate(data.Time, parentStateMachine.Speed);
         data.LocalTransform.ValueRW.Scale = StartScale * (1f + (math.sin(TimedState.NormalizedTime * math.PI) * AddedScale));
 
-        IStateManager.Execute_OnUpdate(ref data.StateElementBuffer, SubStateMachine.CurrentStateByteStartIndex, out _, cummulativeSpeed * SubStateMachine.Speed, ref SubStateMachine, ref data);
+        IStateManager.OnUpdate(ref data.StateElementBuffer, SubStateMachine.CurrentStateByteStartIndex, out _, cummulativeSpeed * SubStateMachine.Speed, ref SubStateMachine, ref data, out _);
 
         TimedState.TransitionToStateIfEnded(NextStateIndex, ref parentStateMachine, ref data);
     }

@@ -47,7 +47,7 @@ public struct MyStateMachine : IComponentData
             GetStateMetaData(newStateIndex, out PolymorphicElementMetaData newStateMetaData, ref data.StateMetaDataBuffer))
         {
             // Call state exit on current state
-            IStateManager.Execute_OnStateExit(ref data.StateElementBuffer, stateMachine.CurrentStateByteStartIndex, out _, ref stateMachine, ref data);
+            IStateManager.OnStateExit(ref data.StateElementBuffer, stateMachine.CurrentStateByteStartIndex, out _, ref stateMachine, ref data, out _);
 
             // Change current state
             stateMachine.PreviousStateIndex = stateMachine.CurrentStateIndex;
@@ -55,7 +55,7 @@ public struct MyStateMachine : IComponentData
             stateMachine.CurrentStateByteStartIndex = newStateMetaData.StartByteIndex;
 
             // Call state enter on new current state
-            IStateManager.Execute_OnStateEnter(ref data.StateElementBuffer, stateMachine.CurrentStateByteStartIndex, out _, ref stateMachine, ref data);
+            IStateManager.OnStateEnter(ref data.StateElementBuffer, stateMachine.CurrentStateByteStartIndex, out _, ref stateMachine, ref data, out _);
 
             return true;
         }

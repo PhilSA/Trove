@@ -19,6 +19,7 @@ public struct StressTestEventsData
 [PolymorphicElementsGroup]
 public interface IStressTestEvent
 {
+    int TestProp { get; set; }
     void Execute(ref StressTestEventsData data);
 }
 
@@ -27,6 +28,8 @@ public struct StressTestEvent_SetPosition : IStressTestEvent
 {
     public Entity Entity;
     public float3 Position;
+
+    public int TestProp { get; set; }
 
     public void Execute(ref StressTestEventsData data)
     {
@@ -44,6 +47,8 @@ public struct StressTestEvent_SetRotation : IStressTestEvent
     public Entity Entity;
     public quaternion Rotation;
 
+    public int TestProp { get; set; }
+
     public void Execute(ref StressTestEventsData data)
     {
         RefRW<LocalTransform> transformRef = data.LocalTransformLookup.GetRefRW(Entity);
@@ -60,6 +65,8 @@ public struct StressTestEvent_SetScale : IStressTestEvent
     public Entity Entity;
     public float Scale;
 
+    public int TestProp { get; set; }
+
     public void Execute(ref StressTestEventsData data)
     {
         RefRW<LocalTransform> transformRef = data.LocalTransformLookup.GetRefRW(Entity);
@@ -75,6 +82,8 @@ public struct StressTestEvent_SetColor : IStressTestEvent
 {
     public Entity Entity;
     public float4 Color;
+
+    public int TestProp { get; set; }
 
     public void Execute(ref StressTestEventsData data)
     {
@@ -348,8 +357,11 @@ public partial struct StressTestEventExecutorSystem : ISystem
             {
                 // Iterate events in stream readers
                 EventStreamReader.BeginForEachIndex(i);
-                while (IStressTestEventManager.Execute_Execute(ref EventStreamReader, ref data))
-                { }
+                bool success = true;
+                while (success)
+                {
+                    IStressTestEventManager.Execute(ref EventStreamReader, ref data, out success);
+                }
                 EventStreamReader.EndForEachIndex();
             }
         }

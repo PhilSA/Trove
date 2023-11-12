@@ -42,7 +42,7 @@ public interface ICoroutineState
     [AllowElementModification]
     void Begin(ref CoroutineUpdateData data);
     [AllowElementModification]
-    void Update(ref CoroutineUpdateData data);
+    bool Update(ref CoroutineUpdateData data);
 }
 
 [PolymorphicElement]
@@ -57,7 +57,7 @@ public struct Coroutine_MoveTo : ICoroutineState
     public void Begin(ref CoroutineUpdateData data)
     { }
 
-    public void Update(ref CoroutineUpdateData data)
+    public bool Update(ref CoroutineUpdateData data)
     {
         if(data.LocalTransformLookup.TryGetComponent(Entity, out LocalTransform localTransform))
         {
@@ -80,6 +80,7 @@ public struct Coroutine_MoveTo : ICoroutineState
         {
             data.Coroutine.ValueRW.Next = true;
         }
+        return false;
     }
 }
 
@@ -92,7 +93,7 @@ public struct Coroutine_SetColor : ICoroutineState
     public void Begin(ref CoroutineUpdateData data)
     { }
 
-    public void Update(ref CoroutineUpdateData data)
+    public bool Update(ref CoroutineUpdateData data)
     {
         if (data.EmissionColorLookup.TryGetComponent(Entity, out URPMaterialPropertyEmissionColor emissionColor))
         {
@@ -100,6 +101,7 @@ public struct Coroutine_SetColor : ICoroutineState
             data.EmissionColorLookup[Entity] = emissionColor;
         }
         data.Coroutine.ValueRW.Next = true;
+        return false;
     }
 }
 
@@ -114,11 +116,12 @@ public struct Coroutine_Wait : ICoroutineState
         StartTime = (float)data.Time.ElapsedTime;
     }
 
-    public void Update(ref CoroutineUpdateData data)
+    public bool Update(ref CoroutineUpdateData data)
     {
         if((float)data.Time.ElapsedTime > StartTime + Time)
         {
             data.Coroutine.ValueRW.Next = true;
         }
+        return false;
     }
 }
