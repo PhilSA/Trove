@@ -12,15 +12,17 @@ namespace Trove.PolymorphicElements
 
         public EventStream(int bufferCount, Allocator allocator)
         {
-            Stream =new UnsafeStream(bufferCount, allocator);
+            Stream = new UnsafeStream(bufferCount, allocator);
         }
 
-        public void Dispose(JobHandle dep = default)
+        public JobHandle Dispose(JobHandle dep = default)
         {
             if (Stream.IsCreated)
             {
-                Stream.Dispose();
+                return Stream.Dispose(dep);
             }
+
+            return dep;
         }
 
         public Writer AsWriter()
@@ -72,35 +74,37 @@ namespace Trove.PolymorphicElements
 
     public unsafe struct EventStreamManager
     {
-        private NativeList<EventStream> _eventCollections;
+        private NativeList<EventStream> _eventStreamsList;
         private Allocator _allocator;
         private int _eventStreamReaderIterator;
 
 
         public EventStreamManager(ref SystemState state, int initialCapacity = 16)
         {
-            _eventCollections = new NativeList<EventStream>(initialCapacity, Allocator.Persistent);
+            _eventStreamsList = new NativeList<EventStream>(initialCapacity, Allocator.Persistent);
             _allocator = state.WorldUpdateAllocator;
             _eventStreamReaderIterator = 0;
         }
 
-        public void Dispose(JobHandle dep = default)
+        public JobHandle Dispose(JobHandle dep = default)
         {
-            for (int i = 0; i < _eventCollections.Length; i++)
+            for (int i = 0; i < _eventStreamsList.Length; i++)
             {
-                _eventCollections[i].Dispose(dep);
+                dep = JobHandle.CombineDependencies(dep, _eventStreamsList[i].Dispose(dep));
             }
 
-            if (_eventCollections.IsCreated)
+            if (_eventStreamsList.IsCreated)
             {
-                _eventCollections.Dispose(dep);
+                dep = _eventStreamsList.Dispose(dep);
             }
+
+            return dep;
         }
 
-        public EventStream.Writer CreateEventStreamWriter(int bufferCount)
+        public EventStream.Writer CreateEventStreamWriter(int bufferCount, Allocator allocator = Allocator.Persistent)
         {
-            EventStream stream = new EventStream(bufferCount, _allocator);
-            _eventCollections.Add(stream);
+            EventStream stream = new EventStream(bufferCount, allocator); 
+            _eventStreamsList.Add(stream);
             return stream.AsWriter();
         }
 
@@ -109,20 +113,21 @@ namespace Trove.PolymorphicElements
             _eventStreamReaderIterator = 0;
         }
 
-        public void DisposeAndClearEventStreams(JobHandle dep = default)
+        public JobHandle DisposeAndClearEventStreams(JobHandle dep = default)
         {
-            for (int i = 0; i < _eventCollections.Length; i++)
+            for (int i = 0; i < _eventStreamsList.Length; i++)
             {
-                _eventCollections.ElementAt(i).Dispose(dep);
+                dep = JobHandle.CombineDependencies(dep, _eventStreamsList.ElementAt(i).Dispose(dep));
             }
-            _eventCollections.Clear();
+            _eventStreamsList.Clear();
+            return dep;
         }
 
         public bool NextEventStreamReader(out EventStream.Reader streamReader)
         {
-            if (_eventStreamReaderIterator < _eventCollections.Length)
+            if (_eventStreamReaderIterator < _eventStreamsList.Length)
             {
-                streamReader = _eventCollections.ElementAt(_eventStreamReaderIterator).AsReader();
+                streamReader = _eventStreamsList.ElementAt(_eventStreamReaderIterator).AsReader();
                 _eventStreamReaderIterator++;
                 return true;
             }

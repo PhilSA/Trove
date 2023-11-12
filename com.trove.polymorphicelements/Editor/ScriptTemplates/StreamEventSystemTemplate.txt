@@ -52,7 +52,7 @@ public partial struct #SCRIPTNAME# : ISystem
         }
 
         // Dispose streams & clear
-        eventStreamManager.DisposeAndClearEventStreams(state.Dependency);
+        state.Dependency = eventStreamManager.DisposeAndClearEventStreams(state.Dependency);
     }
 
     [BurstCompile]

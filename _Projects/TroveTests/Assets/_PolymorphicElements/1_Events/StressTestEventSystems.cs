@@ -121,6 +121,8 @@ public partial struct StressTestEventSetupSystem : ISystem
 }
 
 [BurstCompile]
+[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
+[UpdateBefore(typeof(FixedStepSimulationSystemGroup))]
 public partial struct StressTestTransformEventCreatorSystem : ISystem
 {
     [BurstCompile]
@@ -199,6 +201,8 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
 
 
 [BurstCompile]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(FixedStepSimulationSystemGroup))]
 public partial struct StressTestColorEventCreatorSystem : ISystem
 {
     [BurstCompile]
@@ -259,6 +263,7 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
 }
 
 [BurstCompile]
+[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
 public partial struct StressTestEventExecutorSystem : ISystem
 {
     // Store collections in the system
@@ -316,7 +321,7 @@ public partial struct StressTestEventExecutorSystem : ISystem
         }
 
         // Dispose streams & clear
-        eventStreamManager.DisposeAndClearEventStreams(state.Dependency);
+        state.Dependency = eventStreamManager.DisposeAndClearEventStreams(state.Dependency);
 
     }
 
