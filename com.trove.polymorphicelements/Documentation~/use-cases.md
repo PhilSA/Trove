@@ -20,6 +20,8 @@ Often, these problems are a consequence of one of these requirements:
 * The need for conditional behaviour or frequent behaviour changes.
 * The need to a wide variety of different possible behaviours.
 
+The rest of this page describes several problems that Polymorphic Elements can solve very well.
+
 
 ## Events
 
