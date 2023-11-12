@@ -9,5 +9,7 @@ Trove Polymorphic Elements provides a codegen tool for polymorphic behaviour in 
 ## Table Of Contents
 
 * [When to use](./when-to-use.md)
-* [Tutorial](./tutorial.md)
-
+* [How it works](./how-it-works.md)
+* [Self-modifying Elements](./self-modifying-elements.md)
+* [Using element MetaData](./element-metadata.md)
+* [UnionElements](./union-element.md)
