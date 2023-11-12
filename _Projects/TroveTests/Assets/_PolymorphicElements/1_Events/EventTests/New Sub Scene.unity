@@ -169,10 +169,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EventsTest:
     EnableStressTestEventsTest: 1
-    TransformEventsJobThreads: 1
-    TransformEventsCount: 3
-    ColorEventsJobThreads: 1
-    ColorEventsCount: 3
+    TransformEventsCount: 200000
+    ColorEventsCount: 200000
     EnableManagedEventsTest: 0
     EnableEntityManagerEventsTest: 0
     EnableEntityEventsTest: 0

@@ -12,9 +12,7 @@ public struct EventsTest : IComponentData
     public Entity MainCubeInstance;
 
     public bool EnableStressTestEventsTest;
-    public int TransformEventsJobThreads;
     public int TransformEventsCount;
-    public int ColorEventsJobThreads;
     public int ColorEventsCount;
 
     public bool EnableManagedEventsTest;

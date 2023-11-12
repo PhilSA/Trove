@@ -139,54 +139,50 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
         if (!singleton.EnableStressTestEventsTest || !state.EntityManager.Exists(singleton.MainCubeInstance))
             return;
 
-        int jobThreads = singleton.TransformEventsJobThreads;
-        int eventsPerThread = singleton.TransformEventsCount / jobThreads;
-
-        EventStream.Writer eventStreamWriter = SystemAPI.GetSingletonRW<StressTestEventExecutorSystem.Singleton>().ValueRW.EventStreamManager.CreateEventStreamWriter(jobThreads);
-
         TransformEventJob job = new TransformEventJob
         {
-            EventsPerThread = eventsPerThread,
+            EventsCount = singleton.TransformEventsCount,
             Time = (float)SystemAPI.Time.ElapsedTime,
             Singleton = singleton,
-            EventStreamWriter = eventStreamWriter,
+
+            EventList = SystemAPI.GetSingletonRW<StressTestEventExecutorSystem.Singleton>().ValueRW.EventList,
         };
-        state.Dependency = job.Schedule(jobThreads, eventsPerThread, state.Dependency);
+        state.Dependency = job.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public partial struct TransformEventJob : IJobParallelFor
+    public partial struct TransformEventJob : IJob
     {
-        public int EventsPerThread;
+        public int EventsCount;
         public float Time;
         public EventsTest Singleton;
-        public EventStream.Writer EventStreamWriter;
 
-        public void Execute(int index)
+        public NativeList<byte> EventList;
+
+        public void Execute()
         {
-            Random random = Random.CreateFromIndex((uint)index + (uint)(Time * 10000f));
+            Random random = Random.CreateFromIndex((uint)(Time * 10000f));
 
-            EventStreamWriter.BeginForEachIndex(index);
-            for (int i = 0; i < EventsPerThread; i++)
+            for (int i = 0; i < EventsCount; i++)
             {
                 switch (i % 3)
                 {
                     case 0:
-                        IStressTestEventManager.AppendElement(ref EventStreamWriter, new StressTestEvent_SetPosition
+                        IStressTestEventManager.AddElement(ref EventList, new StressTestEvent_SetPosition
                         {
                             Entity = Singleton.MainCubeInstance,
                             Position = random.NextFloat3(new float3(-3f), new float3(3f)),
                         });
                         break;
                     case 1:
-                        IStressTestEventManager.AppendElement(ref EventStreamWriter, new StressTestEvent_SetRotation
+                        IStressTestEventManager.AddElement(ref EventList, new StressTestEvent_SetRotation
                         {
                             Entity = Singleton.MainCubeInstance,
                             Rotation = random.NextQuaternionRotation(),
                         });
                         break;
                     case 2:
-                        IStressTestEventManager.AppendElement(ref EventStreamWriter, new StressTestEvent_SetScale
+                        IStressTestEventManager.AddElement(ref EventList, new StressTestEvent_SetScale
                         {
                             Entity = Singleton.MainCubeInstance,
                             Scale = random.NextFloat(0.5f, 2f),
@@ -194,11 +190,9 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
                         break;
                 }
             }
-            EventStreamWriter.EndForEachIndex();
         }
     }
 }
-
 
 [BurstCompile]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -219,45 +213,40 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
         if (!singleton.EnableStressTestEventsTest || !state.EntityManager.Exists(singleton.MainCubeInstance))
             return;
 
-        int jobThreads = singleton.ColorEventsJobThreads;
-        int eventsPerThread = singleton.ColorEventsCount / jobThreads;
-
-        EventStream.Writer eventWriter = SystemAPI.GetSingletonRW<StressTestEventExecutorSystem.Singleton>().ValueRW.EventStreamManager.CreateEventStreamWriter(jobThreads);
-
         ColorEventsJob job = new ColorEventsJob
         {
-            EventsPerThread = eventsPerThread,
+            EventsCount = singleton.ColorEventsCount,
             Time = (float)SystemAPI.Time.ElapsedTime,
             Singleton = singleton,
-            EventStreamWriter = eventWriter,
+
+            EventList = SystemAPI.GetSingletonRW<StressTestEventExecutorSystem.Singleton>().ValueRW.EventList,
         };
-        state.Dependency = job.Schedule(jobThreads, 1, state.Dependency);
+        state.Dependency = job.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public partial struct ColorEventsJob : IJobParallelFor
+    public partial struct ColorEventsJob : IJob
     {
-        public int EventsPerThread;
+        public int EventsCount;
         public float Time;
         public EventsTest Singleton;
-        public EventStream.Writer EventStreamWriter;
+
+        public NativeList<byte> EventList;
 
         const float ColorStrength = 1f;
 
-        public void Execute(int index)
+        public void Execute()
         {
-            Random random = Random.CreateFromIndex((uint)index + (uint)(Time * 10000f));
+            Random random = Random.CreateFromIndex((uint)(Time * 10000f));
 
-            EventStreamWriter.BeginForEachIndex(index);
-            for (int i = 0; i < EventsPerThread; i++)
+            for (int i = 0; i < EventsCount; i++)
             {
-                IStressTestEventManager.AppendElement(ref EventStreamWriter, new StressTestEvent_SetColor
+                IStressTestEventManager.AddElement(ref EventList, new StressTestEvent_SetColor
                 {
                     Entity = Singleton.MainCubeInstance,
                     Color = new float4(random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), 1f),
                 });
             }
-            EventStreamWriter.EndForEachIndex();
         }
     }
 }
@@ -267,11 +256,11 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
 public partial struct StressTestEventExecutorSystem : ISystem
 {
     // Store collections in the system
-    private EventStreamManager _eventStreamManager;
+    private NativeList<byte> _internalEventList;
 
     public struct Singleton : IComponentData
     {
-        public EventStreamManager EventStreamManager;
+        public NativeList<byte> EventList;
     }
 
     [BurstCompile]
@@ -279,14 +268,13 @@ public partial struct StressTestEventExecutorSystem : ISystem
     {
         state.RequireForUpdate<EventsTest>();
 
-        // Create events manager in the system (allocates native collections)
-        _eventStreamManager = new EventStreamManager(ref state);
+        _internalEventList = new NativeList<byte>(100000, Allocator.Persistent);
 
         // Create singleton
         Entity singletonEntity = state.EntityManager.CreateEntity();
         state.EntityManager.AddComponentData(singletonEntity, new Singleton
         {
-            EventStreamManager = _eventStreamManager,
+            EventList = _internalEventList,
         });
     }
 
@@ -294,7 +282,10 @@ public partial struct StressTestEventExecutorSystem : ISystem
     void OnDestroy(ref SystemState state)
     {
         // Dispose events manager
-        _eventStreamManager.Dispose();
+        if (_internalEventList.IsCreated)
+        {
+            _internalEventList.Dispose();
+        }
     }
 
     [BurstCompile]
@@ -304,24 +295,15 @@ public partial struct StressTestEventExecutorSystem : ISystem
         if (!singleton.EnableStressTestEventsTest)
             return;
 
-        // Iterate stream readers and schedule a job to process each one
-        ref EventStreamManager eventStreamManager = ref SystemAPI.GetSingletonRW<Singleton>().ValueRW.EventStreamManager;
-        eventStreamManager.BeginEventStreamReaderIteration();
-        while (eventStreamManager.NextEventStreamReader(out EventStream.Reader streamReader))
+        ExecuteEventsJob job = new ExecuteEventsJob
         {
-            ExecuteEventsJob job = new ExecuteEventsJob
-            {
-                Singleton = singleton,
-                LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
-                EmissionColorLookup = SystemAPI.GetComponentLookup<URPMaterialPropertyEmissionColor>(false),
+            Singleton = singleton,
+            LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
+            EmissionColorLookup = SystemAPI.GetComponentLookup<URPMaterialPropertyEmissionColor>(false),
 
-                EventStreamReader = streamReader,
-            };
-            state.Dependency = job.Schedule(state.Dependency);
-        }
-
-        // Dispose streams & clear
-        state.Dependency = eventStreamManager.DisposeAndClearEventStreams(state.Dependency);
+            EventList = SystemAPI.GetSingletonRW<Singleton>().ValueRW.EventList,
+        };
+        state.Dependency = job.Schedule(state.Dependency);
 
     }
 
@@ -332,7 +314,7 @@ public partial struct StressTestEventExecutorSystem : ISystem
         public ComponentLookup<LocalTransform> LocalTransformLookup;
         public ComponentLookup<URPMaterialPropertyEmissionColor> EmissionColorLookup;
 
-        public EventStream.Reader EventStreamReader;
+        public NativeList<byte> EventList;
 
         public void Execute()
         {
@@ -343,18 +325,21 @@ public partial struct StressTestEventExecutorSystem : ISystem
                 EmissionColorLookup = EmissionColorLookup,
             };
 
-            // Iterate stream buffers
-            for (int i = 0; i < EventStreamReader.ForEachCount; i++)
+            int eventsCounter = 0;
+
+            // Iterate and execute events
+            int elementStartByteIndex = 0;
+            bool success = true;
+            while (success)
             {
-                // Iterate events in stream readers
-                EventStreamReader.BeginForEachIndex(i);
-                bool success = true;
-                while (success)
-                {
-                    IStressTestEventManager.Execute(ref EventStreamReader, ref data, out success);
-                }
-                EventStreamReader.EndForEachIndex();
+                eventsCounter++;
+                IStressTestEventManager.Execute(ref EventList, elementStartByteIndex, out elementStartByteIndex, ref data, out success);
             }
+
+            UnityEngine.Debug.Log($"Executed {eventsCounter} events");
+
+            // Clear events
+            EventList.Clear();
         }
     }
 }
