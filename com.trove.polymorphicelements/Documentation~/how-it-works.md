@@ -105,7 +105,7 @@ public struct SetRotationEvent : IMyEvent
 }
 
 [PolymorphicElement]
-public struct SetScaleEvent : IEIMyEventvent
+public struct SetScaleEvent : IMyEvent
 {
     public Entity Entity;
     public float Scale;

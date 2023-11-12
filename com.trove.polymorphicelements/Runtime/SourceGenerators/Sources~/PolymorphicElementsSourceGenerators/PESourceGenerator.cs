@@ -150,7 +150,82 @@ namespace PolymorphicElementsSourceGenerators
                 // Namespace
                 writer.WriteInNamespace(groupData.Namespace, () =>
                 {
-                    // Handler
+
+                    // Union struct of all elements
+                    writer.WriteLine($"[StructLayout(LayoutKind.Explicit)]");
+                    writer.WriteLine($"public struct {groupData.Name}{UnionElement}");
+                    writer.WriteInScope(() =>
+                    {
+                        // Data payload
+                        writer.WriteLine($"[StructLayout(LayoutKind.Explicit)]");
+                        writer.WriteLine($"public struct DataPayload");
+                        writer.WriteInScope(() =>
+                        {
+                            foreach (ElementData elementData in groupData.ElementDatas)
+                            {
+                                writer.WriteLine($"[FieldOffset(0)]");
+                                writer.WriteLine($"public {elementData.Type} {elementData.Type};");
+                            }
+                        });
+                        
+                        writer.WriteLine($"");
+                        
+                        writer.WriteLine($"[FieldOffset(0)]");
+                        writer.WriteLine($"public ushort TypeId;");
+                        writer.WriteLine($"[FieldOffset({PolymorphicElementsUtility}.{SizeOfElementTypeId})]");
+                        writer.WriteLine($"public DataPayload Data;");
+                        
+                        writer.WriteLine($"");
+                        
+                        // Constructors
+                        foreach (ElementData elementData in groupData.ElementDatas)
+                        {
+                            writer.WriteLine($"public {groupData.Name}{UnionElement}({elementData.Type} e)");
+                            writer.WriteInScope(() =>
+                            {
+                                writer.WriteLine($"TypeId = {elementData.Id};");
+                                writer.WriteLine($"Data = default;");
+                                writer.WriteLine($"Data.{elementData.Type} = e;");
+                            });
+                            writer.WriteLine($"");
+                        }
+                        
+                        // Functions
+                        foreach (FunctionData functionData in groupData.FunctionDatas)
+                        {
+                            functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, false);
+                            
+                            writer.WriteLine($"public {functionData.ReturnType} {functionData.Name}({parametersStringDeclaration})");
+                            writer.WriteInScope(() =>
+                            {
+                                writer.WriteLine($"switch (TypeId)");
+                                writer.WriteInScope(() =>
+                                {
+                                    foreach (ElementData elementData in groupData.ElementDatas)
+                                    {
+                                        writer.WriteLine($"case {elementData.Id}:");
+                                        writer.WriteInScope(() =>
+                                        {
+                                            writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")}Data.{elementData.Type}.{functionData.Name}({parametersStringInvocation});");
+                                            if(functionData.ReturnTypeIsVoid)
+                                            {
+                                                writer.WriteLine($"break;");
+                                            }
+                                        });
+                                    }
+                                });
+                                if(!functionData.ReturnTypeIsVoid)
+                                {
+                                    writer.WriteLine($"return default;");
+                                }
+                            });
+                            writer.WriteLine($"");
+                        }
+                    });
+
+                    writer.WriteLine($"");
+
+                    // Manager
                     writer.WriteLine($"public static class {groupData.GetGeneratedGroupName()}");
                     writer.WriteInScope(() =>
                     {
@@ -161,80 +236,6 @@ namespace PolymorphicElementsSourceGenerators
                             foreach (ElementData elementData in groupData.ElementDatas)
                             {
                                 writer.WriteLine($"{elementData.Type},");
-                            }
-                        });
-
-                        writer.WriteLine($"");
-
-                        // Union struct of all elements
-                        writer.WriteLine($"[StructLayout(LayoutKind.Explicit)]");
-                        writer.WriteLine($"public struct {UnionElement}");
-                        writer.WriteInScope(() =>
-                        {
-                            // Data payload
-                            writer.WriteLine($"[StructLayout(LayoutKind.Explicit)]");
-                            writer.WriteLine($"public struct DataPayload");
-                            writer.WriteInScope(() =>
-                            {
-                                foreach (ElementData elementData in groupData.ElementDatas)
-                                {
-                                    writer.WriteLine($"[FieldOffset(0)]");
-                                    writer.WriteLine($"public {elementData.Type} {elementData.Type};");
-                                }
-                            });
-                            
-                            writer.WriteLine($"");
-                            
-                            writer.WriteLine($"[FieldOffset(0)]");
-                            writer.WriteLine($"public ushort TypeId;");
-                            writer.WriteLine($"[FieldOffset({PolymorphicElementsUtility}.{SizeOfElementTypeId})]");
-                            writer.WriteLine($"public DataPayload Data;");
-                            
-                            writer.WriteLine($"");
-                            
-                            // Constructors
-                            foreach (ElementData elementData in groupData.ElementDatas)
-                            {
-                                writer.WriteLine($"public {UnionElement}({elementData.Type} e)");
-                                writer.WriteInScope(() =>
-                                {
-                                    writer.WriteLine($"TypeId = {elementData.Id};");
-                                    writer.WriteLine($"Data = default;");
-                                    writer.WriteLine($"Data.{elementData.Type} = e;");
-                                });
-                                writer.WriteLine($"");
-                            }
-                            
-                            // Functions
-                            foreach (FunctionData functionData in groupData.FunctionDatas)
-                            {
-                                functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, false);
-                                
-                                writer.WriteLine($"public {functionData.ReturnType} {functionData.Name}({parametersStringDeclaration})");
-                                writer.WriteInScope(() =>
-                                {
-                                    writer.WriteLine($"switch (TypeId)");
-                                    writer.WriteInScope(() =>
-                                    {
-                                        foreach (ElementData elementData in groupData.ElementDatas)
-                                        {
-                                            writer.WriteLine($"case {elementData.Id}:");
-                                            writer.WriteInScope(() =>
-                                            {
-                                                writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")}Data.{elementData.Type}.{functionData.Name}({parametersStringInvocation});");
-                                                if(functionData.ReturnTypeIsVoid)
-                                                {
-                                                    writer.WriteLine($"break;");
-                                                }
-                                            });
-                                        }
-                                    });
-                                    if(!functionData.ReturnTypeIsVoid)
-                                    {
-                                        writer.WriteLine($"return default;");
-                                    }
-                                });
-                                writer.WriteLine($"");
                             }
                         });
 

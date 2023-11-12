@@ -13,3 +13,4 @@ Trove Polymorphic Elements provides a codegen tool for polymorphic behaviour in 
 * [Union Elements](./union-element.md)
 * [Event System Template](./event-system.md)
 * [Use cases](./use-cases.md)
+* [Pitfalls and Limitations](./pitfalls-limitations.md)
