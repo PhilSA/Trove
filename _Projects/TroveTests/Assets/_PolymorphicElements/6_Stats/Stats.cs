@@ -38,7 +38,7 @@ namespace Trove.Stats
     ///     - ObserversCount
     ///     - sequence of StatReferences representing observers of this stat
     ///     - ModifiersCount
-    ///     - sequence of ModifierID + startByteIndex
+    ///     - sequence of ModifierID + startByteIndexOffset
     ///     - sequence of ModifierTypeID + variable-sized Modifier data (modifiers are polymorphic elements)
     ///     
     /// </summary>
@@ -138,7 +138,7 @@ namespace Trove.Stats
         private static int SizeOfObserver = sizeof(StatReference);
         private const int SizeOfModifiersCount = sizeof(int);
         private const int SizeOfModifierID = sizeof(int);
-        private const int SizeOfModifierStartByteIndex = sizeof(int);
+        private const int SizeOfModifierStartByteIndexOffsetFromModifiersStart = sizeof(int);
         // And finally, variable-sized modifiers
 
         private const int StartByteIndexOfStatsCount = SizeOfDataLayoutVersion + SizeOfModifierIDCounter;
@@ -309,7 +309,7 @@ namespace Trove.Stats
                 // Read modifiers count
                 if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out modifiersMapStartByteIndex, out modifiersCount))
                 {
-                    modifiersStartByteIndex = modifiersMapStartByteIndex + (modifiersCount * (SizeOfModifierID + SizeOfModifierStartByteIndex));
+                    modifiersStartByteIndex = modifiersMapStartByteIndex + (modifiersCount * (SizeOfModifierID + SizeOfModifierStartByteIndexOffsetFromModifiersStart));
                     return true;
                 }
             }
@@ -336,14 +336,16 @@ namespace Trove.Stats
                         // If it's the one we're looking for
                         if (otherModifierID == modifierID)
                         {
-                            // Read start byte index
-                            if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out modifierStartByteIndex))
+                            // Read start byte index offset from map end
+                            if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out int modifiersStartByteIndexOffsetFromModifiersStart))
                             {
+                                modifierStartByteIndex = modifiersStartByteIndex + modifiersStartByteIndexOffsetFromModifiersStart;
                                 return true;
                             }
                             else
                             {
                                 // Couldn't read the start byte index of the matched modifier. Not supposed to happen
+                                modifierStartByteIndex = default;
                                 return false;
                             }
                         }
@@ -638,22 +640,22 @@ namespace Trove.Stats
         {
             if (statsDataBufferLookup.TryGetBuffer(affectedStatReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
-                return AddModifier(ref statsDataBuffer, affectedStatReference, modifier, out modifierReference);
+                return AddModifier(ref statsDataBufferLookup, ref statsDataBuffer, affectedStatReference, modifier, out modifierReference);
             }
 
             modifierReference = default;
             return false;
         }
 
-        public bool AddModifier(ref DynamicBuffer<StatsData> statsDataBuffer, StatReference affectedStatReference, TModifier modifier, out StatModifierReference modifierReference)
+        public bool AddModifier(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statsDataBuffer, StatReference affectedStatReference, TModifier modifier, out StatModifierReference modifierReference)
         {
             // TODO:
+            // Get observed StatReferences
             // Only add if !IsStatAInStatBsObserversChain
-            // Find by cached or by search
-            // Insert modifier
+            // Insert modifier at the end
+            // Update modifiers count
+            // Update stat start indexes of every stat after our modifier
             // Recalc stat value
-
-            //modifier.InsertElement(ref affectedStatsDataBuffer, 0);
 
             modifierReference = default;
             return false;
@@ -663,13 +665,13 @@ namespace Trove.Stats
         {
             if (statsDataBufferLookup.TryGetBuffer(modifierReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
-                return OverwriteModifier(ref statsDataBuffer, ref modifierReference, modifier);
+                return OverwriteModifier(ref statsDataBufferLookup, ref statsDataBuffer, ref modifierReference, modifier);
             }
 
             return false;
         }
 
-        public bool OverwriteModifier(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatModifierReference modifierReference, TModifier modifier)
+        public bool OverwriteModifier(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statsDataBuffer, ref StatModifierReference modifierReference, TModifier modifier)
         {
             // TODO:
             // To prevent errors, do a resize and then a write at index. So it doesn't matter if the new one is a different size.
@@ -688,13 +690,13 @@ namespace Trove.Stats
         {
             if (statsDataBufferLookup.TryGetBuffer(modifierReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
-                return RemoveModifier(ref statsDataBuffer, modifierReference);
+                return RemoveModifier(ref statsDataBufferLookup, ref statsDataBuffer, modifierReference);
             }
 
             return false;
         }
 
-        public bool RemoveModifier(ref DynamicBuffer<StatsData> statsDataBuffer, StatModifierReference modifierReference)
+        public bool RemoveModifier(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statsDataBuffer, StatModifierReference modifierReference)
         {
             // TODO:
             // Find by cached or by search
