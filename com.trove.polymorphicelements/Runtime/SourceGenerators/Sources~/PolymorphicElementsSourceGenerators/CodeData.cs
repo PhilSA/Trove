@@ -25,10 +25,14 @@ namespace PolymorphicElementsSourceGenerators
     {
         public string Name;
         public string ReturnType;
+        public List<GenericTypeData> GenericTypeDatas;
+        public string GenericTypesString;
+        public string GenericTypeConstraintsString;
         public bool ReturnTypeIsVoid;
+        public bool IgnoreGenerationInManager;
+        public bool IgnoreGenerationInUnionElement;
         public MethodWriteBackType WriteBackType;
         public List<ParameterData> ParameterDatas = new List<ParameterData>();
-
 
         public void GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, bool includeStartingComma)
         {
@@ -64,6 +68,12 @@ namespace PolymorphicElementsSourceGenerators
         public ushort Id;
         public string Type;
         public bool HasAdditionalPayload;
+    }
+
+    public class GenericTypeData
+    {
+        public string Type;
+        public List<string> TypeConstraints;
     }
 
     public enum MethodWriteBackType

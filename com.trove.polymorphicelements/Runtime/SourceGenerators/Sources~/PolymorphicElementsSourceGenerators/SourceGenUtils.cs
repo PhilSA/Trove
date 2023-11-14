@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Collections.Generic;
 
 namespace PolymorphicElementsSourceGenerators
 {
@@ -44,6 +45,23 @@ namespace PolymorphicElementsSourceGenerators
             return false;
         }
 
+        public static bool HasAttribute(ISymbol symbol, string attributeName)
+        {
+            System.Collections.Immutable.ImmutableArray<AttributeData> attributes = symbol.GetAttributes();
+            if (attributes != null)
+            {
+                foreach (AttributeData attributeData in attributes)
+                {
+                    if (attributeData.AttributeClass.Name == attributeName)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public static bool ImplementsInterface(BaseTypeDeclarationSyntax typeSyntax, string interfaceName)
         {
             if (typeSyntax.BaseList != null)
@@ -58,6 +76,23 @@ namespace PolymorphicElementsSourceGenerators
             }
 
             return false;
+        }
+
+        public static string RefKindToString(RefKind refKind)
+        {
+            switch (refKind)
+            {
+                case RefKind.None:
+                    return "";
+                case RefKind.Ref:
+                    return "ref";
+                case RefKind.Out:
+                    return "out";
+                case RefKind.In:
+                    return "in";
+            }
+
+            return "";
         }
 
         public static string GetNamespace(BaseTypeDeclarationSyntax syntax)
@@ -76,6 +111,35 @@ namespace PolymorphicElementsSourceGenerators
             }
 
             return nameSpace;
+        }
+
+        public static void GetGenericTypesStrings(List<GenericTypeData> genericTypeDatas, out string genericTypesString, out string genericTypeConstraintsString)
+        {
+            genericTypesString = "";
+            genericTypeConstraintsString = "";
+
+            if(genericTypeDatas != null && genericTypeDatas.Count > 0)
+            {
+                genericTypesString += "<";
+
+                foreach (GenericTypeData typeData in genericTypeDatas)
+                {
+                    genericTypesString += $"{typeData.Type}, ";
+
+                    if(typeData.TypeConstraints.Count > 0)
+                    {
+                        genericTypeConstraintsString += $" where {typeData.Type}: ";
+                        foreach (string constraintType in typeData.TypeConstraints)
+                        {
+                            genericTypeConstraintsString += $"{constraintType}, ";
+                        }
+                        genericTypeConstraintsString = genericTypeConstraintsString.Substring(0, genericTypeConstraintsString.Length - 2);
+                    }
+                }
+
+                genericTypesString = genericTypesString.Substring(0, genericTypesString.Length - 2);
+                genericTypesString += ">";
+            }
         }
     }
 }

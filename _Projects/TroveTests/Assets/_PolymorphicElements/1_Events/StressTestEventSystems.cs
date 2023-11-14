@@ -336,7 +336,7 @@ public partial struct StressTestEventExecutorSystem : ISystem
                 }
             }
 
-            //UnityEngine.Debug.Log($"Executed {eventsCounter} events");
+            // UnityEngine.Debug.Log($"Executed {eventsCounter} events");
 
             // Clear events
             EventList.Clear();

@@ -6,18 +6,22 @@ using System.Runtime.CompilerServices;
 
 namespace Trove.PolymorphicElements
 {
-    public interface IPolymorphicStreamWriter
+    public interface IByteBufferElement
+    {
+    }
+
+    public interface IByteStreamWriter
     {
         void Write<T>(T t) where T : unmanaged;
     }
 
-    public interface IPolymorphicStreamReader
+    public interface IByteStreamReader
     {
         int RemainingItemCount { get; }
         T Read<T>() where T : unmanaged;
     }
 
-    public unsafe interface IPolymorphicList
+    public unsafe interface IByteList
     {
         int Length { get; }
         byte* Ptr { get; }
@@ -29,6 +33,11 @@ namespace Trove.PolymorphicElements
         public ushort TypeId;
         public int StartByteIndex;
         public int TotalSizeWithId;
+
+        public bool IsValid()
+        {
+            return TotalSizeWithId > 0;
+        }
     }
 
     public static unsafe class PolymorphicElementsUtility
@@ -46,7 +55,7 @@ namespace Trove.PolymorphicElements
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AppendElement<T, S>(ref S stream, ushort typeId, T value)
             where T : unmanaged
-            where S : unmanaged, IPolymorphicStreamWriter
+            where S : unmanaged, IByteStreamWriter
         {
             stream.Write(typeId);
             stream.Write(value);
@@ -64,7 +73,28 @@ namespace Trove.PolymorphicElements
                 TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
             };
 
-            buffer.ResizeUninitialized(metaData.StartByteIndex + metaData.TotalSizeWithId);
+            buffer.ResizeUninitialized(buffer.Length + metaData.TotalSizeWithId);
+            byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)metaData.StartByteIndex;
+            *(ushort*)(startPtr) = typeId;
+            startPtr += (long)SizeOfElementTypeId;
+            *(T*)(startPtr) = value;
+            return metaData;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PolymorphicElementMetaData AddElement<T, B>(ref DynamicBuffer<B> buffer, ushort typeId, T value)
+            where T : unmanaged
+            where B : unmanaged, IBufferElementData, IByteBufferElement
+        {
+            int sizeOfT = UnsafeUtility.SizeOf<T>();
+            PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+            {
+                TypeId = typeId,
+                StartByteIndex = buffer.Length,
+                TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
+            };
+
+            buffer.ResizeUninitialized(buffer.Length + metaData.TotalSizeWithId);
             byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)metaData.StartByteIndex;
             *(ushort*)(startPtr) = typeId;
             startPtr += (long)SizeOfElementTypeId;
@@ -84,7 +114,7 @@ namespace Trove.PolymorphicElements
                 TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
             };
 
-            list.ResizeUninitialized(metaData.StartByteIndex + metaData.TotalSizeWithId);
+            list.ResizeUninitialized(list.Length + metaData.TotalSizeWithId);
             byte* startPtr = list.GetUnsafePtr() + (long)metaData.StartByteIndex;
             *(ushort*)(startPtr) = typeId;
             startPtr += (long)SizeOfElementTypeId;
@@ -104,7 +134,7 @@ namespace Trove.PolymorphicElements
                 TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
             };
 
-            list.Resize(metaData.StartByteIndex + metaData.TotalSizeWithId);
+            list.Resize(list.Length + metaData.TotalSizeWithId);
             byte* startPtr = list.Ptr + (long)metaData.StartByteIndex;
             *(ushort*)(startPtr) = typeId;
             startPtr += (long)SizeOfElementTypeId;
@@ -115,7 +145,7 @@ namespace Trove.PolymorphicElements
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PolymorphicElementMetaData AddElement<T, L>(ref L list, ushort typeId, T value)
             where T : unmanaged
-            where L : unmanaged, IPolymorphicList
+            where L : unmanaged, IByteList
         {
             int sizeOfT = UnsafeUtility.SizeOf<T>();
             PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
@@ -125,7 +155,7 @@ namespace Trove.PolymorphicElements
                 TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
             };
 
-            list.Resize(metaData.StartByteIndex + metaData.TotalSizeWithId);
+            list.Resize(list.Length + metaData.TotalSizeWithId);
             byte* startPtr = list.Ptr + (long)metaData.StartByteIndex;
             *(ushort*)(startPtr) = typeId;
             startPtr += (long)SizeOfElementTypeId;
@@ -134,8 +164,240 @@ namespace Trove.PolymorphicElements
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PolymorphicElementMetaData InsertElement<T>(ref DynamicBuffer<byte> buffer, int atByteIndex, ushort typeId, T value)
+            where T : unmanaged
+        {
+            int sizeOfT = UnsafeUtility.SizeOf<T>();
+            PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+            {
+                TypeId = typeId,
+                StartByteIndex = atByteIndex,
+                TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
+            };
+
+            buffer.ResizeUninitialized(buffer.Length + metaData.TotalSizeWithId);
+            byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)atByteIndex;
+            *(ushort*)(startPtr) = typeId;
+            startPtr += (long)SizeOfElementTypeId;
+            *(T*)(startPtr) = value;
+            return metaData;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PolymorphicElementMetaData InsertElement<T, B>(ref DynamicBuffer<B> buffer, int atByteIndex, ushort typeId, T value)
+            where T : unmanaged
+            where B : unmanaged, IBufferElementData, IByteBufferElement
+        {
+            int sizeOfT = UnsafeUtility.SizeOf<T>();
+            PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+            {
+                TypeId = typeId,
+                StartByteIndex = atByteIndex,
+                TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
+            };
+
+            buffer.ResizeUninitialized(buffer.Length + metaData.TotalSizeWithId);
+            byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)atByteIndex;
+            *(ushort*)(startPtr) = typeId;
+            startPtr += (long)SizeOfElementTypeId;
+            *(T*)(startPtr) = value;
+            return metaData;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PolymorphicElementMetaData InsertElement<T>(ref NativeList<byte> list, int atByteIndex, ushort typeId, T value)
+            where T : unmanaged
+        {
+            int sizeOfT = UnsafeUtility.SizeOf<T>();
+            PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+            {
+                TypeId = typeId,
+                StartByteIndex = atByteIndex,
+                TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
+            };
+
+            list.ResizeUninitialized(list.Length + metaData.TotalSizeWithId);
+            byte* startPtr = list.GetUnsafePtr() + (long)atByteIndex;
+            *(ushort*)(startPtr) = typeId;
+            startPtr += (long)SizeOfElementTypeId;
+            *(T*)(startPtr) = value;
+            return metaData;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PolymorphicElementMetaData InsertElement<T>(ref UnsafeList<byte> list, int atByteIndex, ushort typeId, T value)
+            where T : unmanaged
+        {
+            int sizeOfT = UnsafeUtility.SizeOf<T>();
+            PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+            {
+                TypeId = typeId,
+                StartByteIndex = atByteIndex,
+                TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
+            };
+
+            list.Resize(list.Length + metaData.TotalSizeWithId);
+            byte* startPtr = list.Ptr + (long)atByteIndex;
+            *(ushort*)(startPtr) = typeId;
+            startPtr += (long)SizeOfElementTypeId;
+            *(T*)(startPtr) = value;
+            return metaData;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PolymorphicElementMetaData InsertElement<T, L>(ref L list, int atByteIndex, ushort typeId, T value)
+            where T : unmanaged
+            where L : unmanaged, IByteList
+        {
+            int sizeOfT = UnsafeUtility.SizeOf<T>();
+            PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+            {
+                TypeId = typeId,
+                StartByteIndex = atByteIndex,
+                TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
+            };
+
+            list.Resize(list.Length + metaData.TotalSizeWithId);
+            byte* startPtr = list.Ptr + (long)atByteIndex;
+            *(ushort*)(startPtr) = typeId;
+            startPtr += (long)SizeOfElementTypeId;
+            *(T*)(startPtr) = value;
+            return metaData;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PolymorphicElementMetaData TryOverwriteBytesAtNoResize<T>(ref DynamicBuffer<byte> buffer, int atByteIndex, ushort typeId, T value)
+            where T : unmanaged
+        {
+            int sizeOfT = UnsafeUtility.SizeOf<T>();
+            if (SizeOfElementTypeId + sizeOfT <= buffer.Length - atByteIndex)
+            {
+                PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+                {
+                    TypeId = typeId,
+                    StartByteIndex = atByteIndex,
+                    TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
+                };
+
+                byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)atByteIndex;
+                *(ushort*)(startPtr) = typeId;
+                startPtr += (long)SizeOfElementTypeId;
+                *(T*)(startPtr) = value;
+                return metaData;
+            }
+
+            return default;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PolymorphicElementMetaData TryOverwriteBytesAtNoResize<T, B>(ref DynamicBuffer<B> buffer, int atByteIndex, ushort typeId, T value)
+            where T : unmanaged
+            where B : unmanaged, IBufferElementData, IByteBufferElement
+        {
+            int sizeOfT = UnsafeUtility.SizeOf<T>();
+            if (SizeOfElementTypeId + sizeOfT <= buffer.Length - atByteIndex)
+            {
+                PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+                {
+                    TypeId = typeId,
+                    StartByteIndex = atByteIndex,
+                    TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
+                };
+
+                byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)atByteIndex;
+                *(ushort*)(startPtr) = typeId;
+                startPtr += (long)SizeOfElementTypeId;
+                *(T*)(startPtr) = value;
+                return metaData;
+            }
+
+            return default;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PolymorphicElementMetaData TryOverwriteBytesAtNoResize<T>(ref NativeList<byte> list, int atByteIndex, ushort typeId, T value)
+            where T : unmanaged
+        {
+            int sizeOfT = UnsafeUtility.SizeOf<T>();
+            if (SizeOfElementTypeId + sizeOfT <= list.Length - atByteIndex)
+            {
+                PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+                {
+                    TypeId = typeId,
+                    StartByteIndex = atByteIndex,
+                    TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
+                };
+
+                byte* startPtr = list.GetUnsafePtr() + (long)atByteIndex;
+                *(ushort*)(startPtr) = typeId;
+                startPtr += (long)SizeOfElementTypeId;
+                *(T*)(startPtr) = value;
+                return metaData;
+            }
+
+            return default;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PolymorphicElementMetaData TryOverwriteBytesAtNoResize<T>(ref UnsafeList<byte> list, int atByteIndex, ushort typeId, T value)
+            where T : unmanaged
+        {
+            int sizeOfT = UnsafeUtility.SizeOf<T>();
+            if (SizeOfElementTypeId + sizeOfT <= list.Length - atByteIndex)
+            {
+                PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+                {
+                    TypeId = typeId,
+                    StartByteIndex = atByteIndex,
+                    TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
+                };
+
+                byte* startPtr = list.Ptr + (long)atByteIndex;
+                *(ushort*)(startPtr) = typeId;
+                startPtr += (long)SizeOfElementTypeId;
+                *(T*)(startPtr) = value;
+                return metaData;
+            }
+
+            return default;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PolymorphicElementMetaData TryOverwriteBytesAtNoResize<T, L>(ref L list, int atByteIndex, ushort typeId, T value)
+            where T : unmanaged
+            where L : unmanaged, IByteList
+        {
+            int sizeOfT = UnsafeUtility.SizeOf<T>();
+            if (SizeOfElementTypeId + sizeOfT <= list.Length - atByteIndex)
+            {
+                PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+                {
+                    TypeId = typeId,
+                    StartByteIndex = atByteIndex,
+                    TotalSizeWithId = SizeOfElementTypeId + sizeOfT,
+                };
+
+                byte* startPtr = list.Ptr + (long)atByteIndex;
+                *(ushort*)(startPtr) = typeId;
+                startPtr += (long)SizeOfElementTypeId;
+                *(T*)(startPtr) = value;
+                return metaData;
+            }
+
+            return default;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool ReadElementValue<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, out int newStartByteIndex, out T value)
             where T : unmanaged
+        {
+            return InternalUse.ReadAny(ref buffer, startByteIndex + SizeOfElementTypeId, out newStartByteIndex, out value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool ReadElementValue<T, B>(ref DynamicBuffer<B> buffer, int startByteIndex, out int newStartByteIndex, out T value)
+            where T : unmanaged
+            where B : unmanaged, IBufferElementData, IByteBufferElement
         {
             return InternalUse.ReadAny(ref buffer, startByteIndex + SizeOfElementTypeId, out newStartByteIndex, out value);
         }
@@ -157,7 +419,7 @@ namespace Trove.PolymorphicElements
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool ReadElementValue<T, L>(ref L list, int startByteIndex, out int newStartByteIndex, out T value)
             where T : unmanaged
-            where L : unmanaged, IPolymorphicList
+            where L : unmanaged, IByteList
         {
             return InternalUse.ReadAny(ref list, startByteIndex + SizeOfElementTypeId, out newStartByteIndex, out value);
         }
@@ -165,6 +427,19 @@ namespace Trove.PolymorphicElements
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool WriteElementValue<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, T value)
             where T : unmanaged
+        {
+            if (startByteIndex + UnsafeUtility.SizeOf<T>() <= buffer.Length)
+            {
+                InternalUse.WriteAny(ref buffer, startByteIndex + SizeOfElementTypeId, value);
+                return true;
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool WriteElementValue<T, B>(ref DynamicBuffer<B> buffer, int startByteIndex, T value)
+            where T : unmanaged
+            where B : unmanaged, IBufferElementData, IByteBufferElement
         {
             if (startByteIndex + UnsafeUtility.SizeOf<T>() <= buffer.Length)
             {
@@ -201,122 +476,13 @@ namespace Trove.PolymorphicElements
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool WriteElementValue<T, L>(ref L list, int startByteIndex, T value)
             where T : unmanaged
-            where L : unmanaged, IPolymorphicList
+            where L : unmanaged, IByteList
         {
             if (startByteIndex + UnsafeUtility.SizeOf<T>() <= list.Length)
             {
                 InternalUse.WriteAny(ref list, startByteIndex + SizeOfElementTypeId, value);
                 return true;
             }
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool RemoveElement<T>(ref DynamicBuffer<byte> buffer, ref DynamicBuffer<PolymorphicElementMetaData> elementMetaDatas, PolymorphicElementMetaData removedElementMetaData)
-            where T : unmanaged
-        {
-            if (RemoveElement<T>(ref buffer, removedElementMetaData))
-            {
-                // Handle remapping element start byte indexes
-                for (int i = elementMetaDatas.Length - 1; i >= 0; i--)
-                {
-                    PolymorphicElementMetaData iteratedMetaData = elementMetaDatas[i];
-                    if (iteratedMetaData.StartByteIndex == removedElementMetaData.StartByteIndex)
-                    {
-                        elementMetaDatas.RemoveAt(i);
-                    }
-                    else if (iteratedMetaData.StartByteIndex > removedElementMetaData.StartByteIndex)
-                    {
-                        iteratedMetaData.StartByteIndex -= removedElementMetaData.TotalSizeWithId;
-                        elementMetaDatas[i] = iteratedMetaData;
-                    }
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool RemoveElement<T>(ref NativeList<byte> list, ref NativeList<PolymorphicElementMetaData> elementMetaDatas, PolymorphicElementMetaData removedElementMetaData)
-            where T : unmanaged
-        {
-            if (RemoveElement<T>(ref list, removedElementMetaData))
-            {
-                // Handle remapping element start byte indexes
-                for (int i = elementMetaDatas.Length - 1; i >= 0; i--)
-                {
-                    PolymorphicElementMetaData iteratedMetaData = elementMetaDatas[i];
-                    if (iteratedMetaData.StartByteIndex == removedElementMetaData.StartByteIndex)
-                    {
-                        elementMetaDatas.RemoveAt(i);
-                    }
-                    else if (iteratedMetaData.StartByteIndex > removedElementMetaData.StartByteIndex)
-                    {
-                        iteratedMetaData.StartByteIndex -= removedElementMetaData.TotalSizeWithId;
-                        elementMetaDatas[i] = iteratedMetaData;
-                    }
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool RemoveElement<T>(ref UnsafeList<byte> list, ref NativeList<PolymorphicElementMetaData> elementMetaDatas, PolymorphicElementMetaData removedElementMetaData)
-            where T : unmanaged
-        {
-            if (RemoveElement<T>(ref list, removedElementMetaData))
-            {
-                // Handle remapping element start byte indexes
-                for (int i = elementMetaDatas.Length - 1; i >= 0; i--)
-                {
-                    PolymorphicElementMetaData iteratedMetaData = elementMetaDatas[i];
-                    if (iteratedMetaData.StartByteIndex == removedElementMetaData.StartByteIndex)
-                    {
-                        elementMetaDatas.RemoveAt(i);
-                    }
-                    else if (iteratedMetaData.StartByteIndex > removedElementMetaData.StartByteIndex)
-                    {
-                        iteratedMetaData.StartByteIndex -= removedElementMetaData.TotalSizeWithId;
-                        elementMetaDatas[i] = iteratedMetaData;
-                    }
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool RemoveElement<T, L>(ref L list, ref NativeList<PolymorphicElementMetaData> elementMetaDatas, PolymorphicElementMetaData removedElementMetaData)
-            where T : unmanaged
-            where L : unmanaged, IPolymorphicList
-        {
-            if (RemoveElement<T, L>(ref list, removedElementMetaData))
-            {
-                // Handle remapping element start byte indexes
-                for (int i = elementMetaDatas.Length - 1; i >= 0; i--)
-                {
-                    PolymorphicElementMetaData iteratedMetaData = elementMetaDatas[i];
-                    if (iteratedMetaData.StartByteIndex == removedElementMetaData.StartByteIndex)
-                    {
-                        elementMetaDatas.RemoveAt(i);
-                    }
-                    else if (iteratedMetaData.StartByteIndex > removedElementMetaData.StartByteIndex)
-                    {
-                        iteratedMetaData.StartByteIndex -= removedElementMetaData.TotalSizeWithId;
-                        elementMetaDatas[i] = iteratedMetaData;
-                    }
-                }
-
-                return true;
-            }
-
             return false;
         }
 
@@ -328,7 +494,29 @@ namespace Trove.PolymorphicElements
             where T : unmanaged
         {
             int collectionLength = buffer.Length;
-            if(elementMetaData.TotalSizeWithId <= collectionLength - elementMetaData.StartByteIndex)
+            if (elementMetaData.TotalSizeWithId <= collectionLength - elementMetaData.StartByteIndex)
+            {
+                byte* removedElementPtr = (byte*)buffer.GetUnsafePtr() + (long)elementMetaData.StartByteIndex;
+                byte* nextElementPtr = removedElementPtr + (long)elementMetaData.TotalSizeWithId;
+                int collectionLengthAfterRemovedElement = collectionLength - (elementMetaData.StartByteIndex + elementMetaData.TotalSizeWithId);
+                UnsafeUtility.MemCpy(removedElementPtr, nextElementPtr, collectionLengthAfterRemovedElement);
+                buffer.ResizeUninitialized(collectionLength - elementMetaData.TotalSizeWithId);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Removes element based on provided size and preserves ordering of following elements
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool RemoveElement<T, B>(ref DynamicBuffer<B> buffer, PolymorphicElementMetaData elementMetaData)
+            where T : unmanaged
+            where B : unmanaged, IBufferElementData, IByteBufferElement
+        {
+            int collectionLength = buffer.Length;
+            if (elementMetaData.TotalSizeWithId <= collectionLength - elementMetaData.StartByteIndex)
             {
                 byte* removedElementPtr = (byte*)buffer.GetUnsafePtr() + (long)elementMetaData.StartByteIndex;
                 byte* nextElementPtr = removedElementPtr + (long)elementMetaData.TotalSizeWithId;
@@ -389,7 +577,7 @@ namespace Trove.PolymorphicElements
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool RemoveElement<T, L>(ref L list, PolymorphicElementMetaData elementMetaData)
             where T : unmanaged
-            where L : unmanaged, IPolymorphicList
+            where L : unmanaged, IByteList
         {
             int collectionLength = list.Length;
             if (elementMetaData.TotalSizeWithId <= collectionLength - elementMetaData.StartByteIndex)
@@ -424,7 +612,7 @@ namespace Trove.PolymorphicElements
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static bool ReadAny<T, S>(ref S stream, out T t)
                 where T : unmanaged
-                where S : unmanaged, IPolymorphicStreamReader
+                where S : unmanaged, IByteStreamReader
             {
                 if (stream.RemainingItemCount > 0)
                 {
@@ -445,8 +633,26 @@ namespace Trove.PolymorphicElements
                 {
                     byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
                     t = *(T*)startPtr;
-                    startByteIndex += sizeOfT;
-                    newStartByteIndex = startByteIndex;
+                    newStartByteIndex = startByteIndex + sizeOfT;
+                    return true;
+                }
+
+                t = default;
+                newStartByteIndex = startByteIndex;
+                return false;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static bool ReadAny<T, B>(ref DynamicBuffer<B> buffer, int startByteIndex, out int newStartByteIndex, out T t)
+                where T : unmanaged
+                where B : unmanaged, IBufferElementData, IByteBufferElement
+            {
+                int sizeOfT = UnsafeUtility.SizeOf<T>();
+                if (startByteIndex >= 0 && sizeOfT <= buffer.Length - startByteIndex)
+                {
+                    byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
+                    t = *(T*)startPtr;
+                    newStartByteIndex = startByteIndex + sizeOfT;
                     return true;
                 }
 
@@ -464,8 +670,7 @@ namespace Trove.PolymorphicElements
                 {
                     byte* startPtr = list.GetUnsafePtr() + (long)startByteIndex;
                     t = *(T*)startPtr;
-                    startByteIndex += sizeOfT;
-                    newStartByteIndex = startByteIndex;
+                    newStartByteIndex = startByteIndex + sizeOfT;
                     return true;
                 }
 
@@ -483,8 +688,7 @@ namespace Trove.PolymorphicElements
                 {
                     byte* startPtr = list.Ptr + (long)startByteIndex;
                     t = *(T*)startPtr;
-                    startByteIndex += sizeOfT;
-                    newStartByteIndex = startByteIndex;
+                    newStartByteIndex = startByteIndex + sizeOfT;
                     return true;
                 }
 
@@ -496,15 +700,14 @@ namespace Trove.PolymorphicElements
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static bool ReadAny<T, L>(ref L list, int startByteIndex, out int newStartByteIndex, out T t)
                 where T : unmanaged
-            where L : unmanaged, IPolymorphicList
+            where L : unmanaged, IByteList
             {
                 int sizeOfT = UnsafeUtility.SizeOf<T>();
                 if (startByteIndex >= 0 && sizeOfT <= list.Length - startByteIndex)
                 {
                     byte* startPtr = list.Ptr + (long)startByteIndex;
                     t = *(T*)startPtr;
-                    startByteIndex += sizeOfT;
-                    newStartByteIndex = startByteIndex;
+                    newStartByteIndex = startByteIndex + sizeOfT;
                     return true;
                 }
 
@@ -521,8 +724,26 @@ namespace Trove.PolymorphicElements
                 if (startByteIndex >= 0 && sizeOfT <= buffer.Length - startByteIndex)
                 {
                     byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
-                    startByteIndex += sizeOfT;
-                    newStartByteIndex = startByteIndex;
+                    newStartByteIndex = startByteIndex + sizeOfT;
+                    success = true;
+                    return ref *(T*)startPtr;
+                }
+
+                success = false;
+                newStartByteIndex = startByteIndex;
+                return ref *(T*)buffer.GetUnsafePtr();
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ref T ReadAnyAsRef<T, B>(ref DynamicBuffer<B> buffer, int startByteIndex, out int newStartByteIndex, out bool success)
+                where T : unmanaged
+                where B : unmanaged, IBufferElementData, IByteBufferElement
+            {
+                int sizeOfT = UnsafeUtility.SizeOf<T>();
+                if (startByteIndex >= 0 && sizeOfT <= buffer.Length - startByteIndex)
+                {
+                    byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
+                    newStartByteIndex = startByteIndex + sizeOfT;
                     success = true;
                     return ref *(T*)startPtr;
                 }
@@ -540,8 +761,7 @@ namespace Trove.PolymorphicElements
                 if (startByteIndex >= 0 && sizeOfT <= list.Length - startByteIndex)
                 {
                     byte* startPtr = list.GetUnsafePtr() + (long)startByteIndex;
-                    startByteIndex += sizeOfT;
-                    newStartByteIndex = startByteIndex;
+                    newStartByteIndex = startByteIndex + sizeOfT;
                     success = true;
                     return ref *(T*)startPtr;
                 }
@@ -559,8 +779,7 @@ namespace Trove.PolymorphicElements
                 if (startByteIndex >= 0 && sizeOfT <= list.Length - startByteIndex)
                 {
                     byte* startPtr = list.Ptr + (long)startByteIndex;
-                    startByteIndex += sizeOfT;
-                    newStartByteIndex = startByteIndex;
+                    newStartByteIndex = startByteIndex + sizeOfT;
                     success = true;
                     return ref *(T*)startPtr;
                 }
@@ -573,14 +792,13 @@ namespace Trove.PolymorphicElements
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ref T ReadAnyAsRef<T, L>(ref L list, int startByteIndex, out int newStartByteIndex, out bool success)
                 where T : unmanaged
-                where L : unmanaged, IPolymorphicList
+                where L : unmanaged, IByteList
             {
                 int sizeOfT = UnsafeUtility.SizeOf<T>();
                 if (startByteIndex >= 0 && sizeOfT <= list.Length - startByteIndex)
                 {
                     byte* startPtr = list.Ptr + (long)startByteIndex;
-                    startByteIndex += sizeOfT;
-                    newStartByteIndex = startByteIndex;
+                    newStartByteIndex = startByteIndex + sizeOfT;
                     success = true;
                     return ref *(T*)startPtr;
                 }
@@ -593,6 +811,15 @@ namespace Trove.PolymorphicElements
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static void WriteAny<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, T t)
                 where T : unmanaged
+            {
+                byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
+                *(T*)(startPtr) = t;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static void WriteAny<T, B>(ref DynamicBuffer<B> buffer, int startByteIndex, T t)
+                where T : unmanaged
+                where B : unmanaged, IBufferElementData, IByteBufferElement
             {
                 byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
                 *(T*)(startPtr) = t;
@@ -617,7 +844,7 @@ namespace Trove.PolymorphicElements
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static void WriteAny<T, L>(ref L list, int startByteIndex, T t)
                 where T : unmanaged
-            where L : unmanaged, IPolymorphicList
+            where L : unmanaged, IByteList
             {
                 byte* startPtr = list.Ptr + (long)startByteIndex;
                 *(T*)(startPtr) = t;

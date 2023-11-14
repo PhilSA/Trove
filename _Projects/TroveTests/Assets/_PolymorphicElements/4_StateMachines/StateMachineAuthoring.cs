@@ -27,8 +27,6 @@ public class StateMachineAuthoring : MonoBehaviour
 
             // Write states
             {
-                PolymorphicElementMetaData metaData;
-
                 int moveStateIndex = stateMetaDatas.Length;
                 stateMetaDatas.Add(IStateManager.AddElement(ref stateElements, new MoveState
                 {

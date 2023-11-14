@@ -11,4 +11,9 @@ Removing elements
 [AllowElementModification]
 [AllowElementModificationByRefUnsafe]
 
+[IgnoreGenerationInManager]
+[IgnoreGenerationInUnionElement]
+
 GetAdditionalPayloadByteSize
+
+Byte buffers of various PolyElement Groups, with a protocol (like for Stats system)

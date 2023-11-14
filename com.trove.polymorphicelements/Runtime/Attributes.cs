@@ -27,4 +27,19 @@ namespace Trove.PolymorphicElements
     public class AllowElementModificationByRefUnsafe : System.Attribute
     {
     }
+
+    [AttributeUsage(AttributeTargets.Method)]
+    public class IgnoreGenerationInManager : System.Attribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Method)]
+    public class IgnoreGenerationInUnionElement : System.Attribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Method)]
+    public class IgnoreGenerationInPartialElements : System.Attribute
+    {
+    }
 }

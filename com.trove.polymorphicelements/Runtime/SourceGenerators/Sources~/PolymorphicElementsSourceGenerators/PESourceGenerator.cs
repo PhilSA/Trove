@@ -23,6 +23,8 @@ namespace PolymorphicElementsSourceGenerators
         private const string SizeOfElementTypeId = "SizeOfElementTypeId";
         private const string AppendElement = "AppendElement";
         private const string AddElement = "AddElement";
+        private const string InsertElement = "InsertElement";
+        private const string TryOverwriteBytesAtNoResize = "TryOverwriteBytesAtNoResize";
         private const string UnionElement = "UnionElement";
         private const string InternalUse = "InternalUse";
         private const string ReadAny = "ReadAny";
@@ -32,7 +34,9 @@ namespace PolymorphicElementsSourceGenerators
         private const string StartByteIndex = "startByteIndex";
         private const string NextStartByteIndex = "nextStartByteIndex";
         private const string StartByteIndexOfElementValue = "startByteIndexOfElementValue";
-        
+        private const string IgnoreGenerationInManager = "IgnoreGenerationInManager";
+        private const string IgnoreGenerationInUnionElement = "IgnoreGenerationInUnionElement";
+        private const string IPolymorphicUnionElement = "IPolymorphicUnionElement";
 
         public void Initialize(GeneratorInitializationContext context)
         {
@@ -53,6 +57,9 @@ namespace PolymorphicElementsSourceGenerators
             // Groups
             foreach (InterfaceDeclarationSyntax groupInterfaceSyntax in syntaxReceiver.PolymorphicElementsGroupInterfaces)
             {
+                SemanticModel interfaceSemanticModel = context.Compilation.GetSemanticModel(groupInterfaceSyntax.SyntaxTree);
+                INamedTypeSymbol groupInterfaceSymbol = interfaceSemanticModel.GetDeclaredSymbol(groupInterfaceSyntax, context.CancellationToken);
+
                 GroupInterfaceData groupData = new GroupInterfaceData();
                 groupData.Name = groupInterfaceSyntax.Identifier.Text;
                 groupData.Namespace = SourceGenUtils.GetNamespace(groupInterfaceSyntax);
@@ -72,37 +79,79 @@ namespace PolymorphicElementsSourceGenerators
                     groupData.Usings.Add(usingElem.Name.ToString());
                 }
 
-                foreach (MemberDeclarationSyntax memberSyntax in groupInterfaceSyntax.Members)
+                List<INamedTypeSymbol> interfacesHierarchySymbols = new List<INamedTypeSymbol>();
+                interfacesHierarchySymbols.Add(groupInterfaceSymbol);
+                interfacesHierarchySymbols.AddRange(groupInterfaceSymbol.AllInterfaces);
+                foreach (INamedTypeSymbol interfaceSymbol in interfacesHierarchySymbols)
                 {
-                    // Functions
-                    if (memberSyntax.IsKind(SyntaxKind.MethodDeclaration) && memberSyntax is MethodDeclarationSyntax methodSyntax)
+                    foreach (ISymbol memberSymbol in interfaceSymbol.GetMembers())
                     {
-                        FunctionData functionData = new FunctionData();
-                        functionData.Name = methodSyntax.Identifier.Text;
-                        functionData.ReturnType = methodSyntax.ReturnType.ToString();
-                        functionData.ReturnTypeIsVoid = functionData.ReturnType == VoidType;
+                        // Functions
+                        if (memberSymbol.Kind == SymbolKind.Method && memberSymbol is IMethodSymbol methodSymbol)
+                        {
+                            FunctionData functionData = new FunctionData();
+                            functionData.Name = methodSymbol.Name;
+                            functionData.ReturnType = methodSymbol.ReturnType.ToString();
+                            functionData.ReturnTypeIsVoid = functionData.ReturnType == VoidType;
 
-                        functionData.WriteBackType = MethodWriteBackType.None;
-                        if(SourceGenUtils.HasAttribute(methodSyntax, MethodRefWriteBackAttributeName))
-                        {
-                            functionData.WriteBackType = MethodWriteBackType.RefModify;
-                        }
-                        else if(SourceGenUtils.HasAttribute(methodSyntax, MethodWriteBackAttributeName))
-                        {
-                            functionData.WriteBackType = MethodWriteBackType.Write;
-                        }
+                            functionData.WriteBackType = MethodWriteBackType.None;
+                            if (SourceGenUtils.HasAttribute(methodSymbol, MethodRefWriteBackAttributeName))
+                            {
+                                functionData.WriteBackType = MethodWriteBackType.RefModify;
+                            }
+                            else if (SourceGenUtils.HasAttribute(methodSymbol, MethodWriteBackAttributeName))
+                            {
+                                functionData.WriteBackType = MethodWriteBackType.Write;
+                            }
 
-                        // Parameters
-                        foreach (ParameterSyntax parameter in methodSyntax.ParameterList.Parameters)
-                        {
-                            ParameterData parameterData = new ParameterData();
-                            parameterData.RefType = parameter.Modifiers.ToString();
-                            parameterData.Type = parameter.Type.ToString();
-                            parameterData.Name = parameter.Identifier.Text;
-                            functionData.ParameterDatas.Add(parameterData);
+                            if (SourceGenUtils.HasAttribute(methodSymbol, IgnoreGenerationInManager))
+                            {
+                                functionData.IgnoreGenerationInManager = true;
+                            }
+                            if (SourceGenUtils.HasAttribute(methodSymbol, IgnoreGenerationInUnionElement))
+                            {
+                                functionData.IgnoreGenerationInUnionElement = true;
+                            }
+
+                            functionData.GenericTypeDatas = new List<GenericTypeData>();     
+                            if (methodSymbol.IsGenericMethod)
+                            {                           
+                                foreach (ITypeParameterSymbol typeParam in methodSymbol.TypeParameters)
+                                {
+                                    GenericTypeData genericTypeData = new GenericTypeData();
+                                    genericTypeData.Type = $"{typeParam}";
+                                    genericTypeData.TypeConstraints = new List<string>();
+
+                                    if (typeParam.HasUnmanagedTypeConstraint)
+                                    {
+                                        genericTypeData.TypeConstraints.Add($"unmanaged");
+                                    }
+                                    else if (typeParam.HasValueTypeConstraint)
+                                    {
+                                        genericTypeData.TypeConstraints.Add($"struct");
+                                    }
+                                    foreach (ITypeSymbol constraintType in typeParam.ConstraintTypes)
+                                    {
+                                        genericTypeData.TypeConstraints.Add($"{constraintType}");
+                                    }
+
+                                    functionData.GenericTypeDatas.Add(genericTypeData);
+                                }
+                                SourceGenUtils.GetGenericTypesStrings(functionData.GenericTypeDatas, out functionData.GenericTypesString, out functionData.GenericTypeConstraintsString);
+                            }
+
+                            // Parameters
+                            foreach (IParameterSymbol parameterSymbol in methodSymbol.Parameters)
+                            {
+                                ParameterData parameterData = new ParameterData();
+                                parameterData.RefType = SourceGenUtils.RefKindToString(parameterSymbol.RefKind);
+                                parameterData.Type = $"{parameterSymbol.Type}";
+                                parameterData.Name = parameterSymbol.Name;
+                                functionData.ParameterDatas.Add(parameterData);
+                            }
+
+                            groupData.FunctionDatas.Add(functionData);
                         }
-                        
-                        groupData.FunctionDatas.Add(functionData);
                     }
                 }
 
@@ -135,7 +184,7 @@ namespace PolymorphicElementsSourceGenerators
                             // Special functions
                             if (memberSyntax.IsKind(SyntaxKind.MethodDeclaration) && memberSyntax is MethodDeclarationSyntax methodSyntax)
                             {
-                                if(methodSyntax.Identifier.Text == GetAdditionalPayloadByteSize)
+                                if (methodSyntax.Identifier.Text == GetAdditionalPayloadByteSize)
                                 {
                                     elementData.HasAdditionalPayload = true;
                                 }
@@ -162,10 +211,9 @@ namespace PolymorphicElementsSourceGenerators
                 // Namespace
                 writer.WriteInNamespace(groupData.Namespace, () =>
                 {
-
                     // Union struct of all elements
                     writer.WriteLine($"[StructLayout(LayoutKind.Explicit)]");
-                    writer.WriteLine($"public struct {groupData.Name}{UnionElement}");
+                    writer.WriteLine($"public struct {groupData.Name}{UnionElement} : {groupData.Name}, {IPolymorphicUnionElement}");
                     writer.WriteInScope(() =>
                     {
                         // Data payload
@@ -201,37 +249,81 @@ namespace PolymorphicElementsSourceGenerators
                             });
                             writer.WriteLine($"");
                         }
+
+                        // Add 
+                        GenerateAddFunction(writer, true, groupData, null, "NativeStream.Writer", "streamWriter", false, null);
+                        writer.WriteLine($"");                            
+                        GenerateAddFunction(writer, true, groupData, null, "S", "streamWriter", false, new List<GenericTypeData>() { new GenericTypeData { Type = "S", TypeConstraints = new List<string>() { "unmanaged", "IByteStreamWriter" }}});
+                        writer.WriteLine($"");
+                        GenerateAddFunction(writer, true, groupData, null, "DynamicBuffer<byte>", "buffer", true, null);
+                        writer.WriteLine($"");                            
+                        GenerateAddFunction(writer, true, groupData, null, "DynamicBuffer<B>", "buffer", true, new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
+                        writer.WriteLine($"");
+                        GenerateAddFunction(writer, true, groupData, null, "NativeList<byte>", "list", true, null);
+                        writer.WriteLine($"");
+                        GenerateAddFunction(writer, true, groupData, null, "UnsafeList<byte>", "list", true, null);
+                        writer.WriteLine($"");                            
+                        GenerateAddFunction(writer, true, groupData, null, "L", "list", true, new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
+                        writer.WriteLine($"");
+
+                        // Insert
+                        GenerateInsertFunction(writer, true, groupData, null, "DynamicBuffer<byte>", "buffer", null);
+                        writer.WriteLine($"");                            
+                        GenerateInsertFunction(writer, true, groupData, null, "DynamicBuffer<B>", "buffer", new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
+                        writer.WriteLine($"");
+                        GenerateInsertFunction(writer, true, groupData, null, "NativeList<byte>", "list", null);
+                        writer.WriteLine($"");
+                        GenerateInsertFunction(writer, true, groupData, null, "UnsafeList<byte>", "list", null);
+                        writer.WriteLine($"");                            
+                        GenerateInsertFunction(writer, true, groupData, null, "L", "list", new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
+                        writer.WriteLine($"");
+
+                        // Overwrite
+                        GenerateOverwriteAtFunction(writer, true, groupData, null, "DynamicBuffer<byte>", "buffer", null);
+                        writer.WriteLine($"");                            
+                        GenerateOverwriteAtFunction(writer, true, groupData, null, "DynamicBuffer<B>", "buffer", new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
+                        writer.WriteLine($"");
+                        GenerateOverwriteAtFunction(writer, true, groupData, null, "NativeList<byte>", "list", null);
+                        writer.WriteLine($"");
+                        GenerateOverwriteAtFunction(writer, true, groupData, null, "UnsafeList<byte>", "list", null);
+                        writer.WriteLine($"");                            
+                        GenerateOverwriteAtFunction(writer, true, groupData, null, "L", "list", new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
                         
-                        // Functions
+                        writer.WriteLine($"");                            
+                        
+                        // Interface Functions
                         foreach (FunctionData functionData in groupData.FunctionDatas)
                         {
-                            functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, false);
-                            
-                            writer.WriteLine($"public {functionData.ReturnType} {functionData.Name}({parametersStringDeclaration})");
-                            writer.WriteInScope(() =>
+                            if (!functionData.IgnoreGenerationInUnionElement)
                             {
-                                writer.WriteLine($"switch (TypeId)");
+                                functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, false);
+
+                                writer.WriteLine($"public {functionData.ReturnType} {functionData.Name}{functionData.GenericTypesString}({parametersStringDeclaration}){functionData.GenericTypeConstraintsString}");
                                 writer.WriteInScope(() =>
                                 {
-                                    foreach (ElementData elementData in groupData.ElementDatas)
+                                    writer.WriteLine($"switch (TypeId)");
+                                    writer.WriteInScope(() =>
                                     {
-                                        writer.WriteLine($"case {elementData.Id}:");
-                                        writer.WriteInScope(() =>
+                                        foreach (ElementData elementData in groupData.ElementDatas)
                                         {
-                                            writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")}Data.{elementData.Type}.{functionData.Name}({parametersStringInvocation});");
-                                            if(functionData.ReturnTypeIsVoid)
+                                            writer.WriteLine($"case {elementData.Id}:");
+                                            writer.WriteInScope(() =>
                                             {
-                                                writer.WriteLine($"break;");
-                                            }
-                                        });
+                                                writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")}Data.{elementData.Type}.{functionData.Name}({parametersStringInvocation});");
+                                                if (functionData.ReturnTypeIsVoid)
+                                                {
+                                                    writer.WriteLine($"break;");
+                                                }
+                                            });
+                                        }
+                                    });
+                                    if (!functionData.ReturnTypeIsVoid)
+                                    {
+                                        writer.WriteLine($"return default;");
                                     }
                                 });
-                                if(!functionData.ReturnTypeIsVoid)
-                                {
-                                    writer.WriteLine($"return default;");
-                                }
-                            });
-                            writer.WriteLine($"");
+                                writer.WriteLine($"");
+                            }
                         }
                     });
 
@@ -252,39 +344,71 @@ namespace PolymorphicElementsSourceGenerators
                         });
 
                         writer.WriteLine($"");
-
-                        // Add functions
+                        
                         foreach (ElementData elementData in groupData.ElementDatas)
                         {
-                            GenerateAddFunction(writer, "NativeStream.Writer", "streamWriter", elementData, false, false, "");
+                            // Add 
+                            GenerateAddFunction(writer, false, groupData, elementData, "NativeStream.Writer", "streamWriter", false, null);
+                            writer.WriteLine($"");                            
+                            GenerateAddFunction(writer, false, groupData, elementData, "S", "streamWriter", false, new List<GenericTypeData>() { new GenericTypeData { Type = "S", TypeConstraints = new List<string>() { "unmanaged", "IByteStreamWriter" }}});
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "S", "streamWriter", elementData, false, true, "where S : unmanaged, IPolymorphicStreamWriter");
+                            GenerateAddFunction(writer, false, groupData, elementData, "DynamicBuffer<byte>", "buffer", true, null);
+                            writer.WriteLine($"");                            
+                            GenerateAddFunction(writer, false, groupData, elementData, "DynamicBuffer<B>", "buffer", true, new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "DynamicBuffer<byte>", "buffer", elementData, true, false, "");
+                            GenerateAddFunction(writer, false, groupData, elementData, "NativeList<byte>", "list", true, null);
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "NativeList<byte>", "list", elementData, true, false, "");
+                            GenerateAddFunction(writer, false, groupData, elementData, "UnsafeList<byte>", "list", true, null);
+                            writer.WriteLine($"");                            
+                            GenerateAddFunction(writer, false, groupData, elementData, "L", "list", true, new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "UnsafeList<byte>", "list", elementData, true, false, "");
+
+                            // Insert
+                            GenerateInsertFunction(writer, false, groupData, elementData, "DynamicBuffer<byte>", "buffer", null);
+                            writer.WriteLine($"");                            
+                            GenerateInsertFunction(writer, false, groupData, elementData, "DynamicBuffer<B>", "buffer", new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
                             writer.WriteLine($"");
-                            GenerateAddFunction(writer, "L", "list", elementData, true, true, "where L : unmanaged, IPolymorphicList");
+                            GenerateInsertFunction(writer, false, groupData, elementData, "NativeList<byte>", "list", null);
                             writer.WriteLine($"");
+                            GenerateInsertFunction(writer, false, groupData, elementData, "UnsafeList<byte>", "list", null);
+                            writer.WriteLine($"");                            
+                            GenerateInsertFunction(writer, false, groupData, elementData, "L", "list", new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
+                            writer.WriteLine($"");
+
+                            // Overwrite
+                            GenerateOverwriteAtFunction(writer, false, groupData, elementData, "DynamicBuffer<byte>", "buffer", null);
+                            writer.WriteLine($"");                            
+                            GenerateOverwriteAtFunction(writer, false, groupData, elementData, "DynamicBuffer<B>", "buffer", new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
+                            writer.WriteLine($"");
+                            GenerateOverwriteAtFunction(writer, false, groupData, elementData, "NativeList<byte>", "list", null);
+                            writer.WriteLine($"");
+                            GenerateOverwriteAtFunction(writer, false, groupData, elementData, "UnsafeList<byte>", "list", null);
+                            writer.WriteLine($"");                            
+                            GenerateOverwriteAtFunction(writer, false, groupData, elementData, "L", "list", new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
                         }
+
+                        writer.WriteLine($"");
 
                         // Execute functions
                         foreach (FunctionData functionData in groupData.FunctionDatas)
                         {
-                            GenerateExecuteFunction(writer, groupData, functionData, "NativeStream.Reader", "streamReader", false, false, "");
-                            writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData, "S", "streamReader", false, true, "where S : unmanaged, IPolymorphicStreamReader");
-                            writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData, "DynamicBuffer<byte>", "buffer", true, false, "");
-                            writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData, "NativeList<byte>", "list", true, false, "");
-                            writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData, "UnsafeList<byte>", "list", true, false, "");
-                            writer.WriteLine($"");
-                            GenerateExecuteFunction(writer, groupData, functionData, "L", "list", true, true, "where L : unmanaged, IPolymorphicList");
-                            writer.WriteLine($"");
+                            if (!functionData.IgnoreGenerationInManager)
+                            {
+                                GenerateExecuteFunction(writer, groupData, functionData, "NativeStream.Reader", "streamReader", false, null);
+                                writer.WriteLine($"");
+                                GenerateExecuteFunction(writer, groupData, functionData, "S", "streamReader", false, new List<GenericTypeData>() { new GenericTypeData { Type = "S", TypeConstraints = new List<string>() { "unmanaged", "IByteStreamReader" }}});
+                                writer.WriteLine($"");
+                                GenerateExecuteFunction(writer, groupData, functionData, "DynamicBuffer<byte>", "buffer", true, null);
+                                writer.WriteLine($"");                                
+                                GenerateExecuteFunction(writer, groupData, functionData, "DynamicBuffer<B>", "buffer", true, new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
+                                writer.WriteLine($"");
+                                GenerateExecuteFunction(writer, groupData, functionData, "NativeList<byte>", "list", true, null);
+                                writer.WriteLine($"");
+                                GenerateExecuteFunction(writer, groupData, functionData, "UnsafeList<byte>", "list", true, null);
+                                writer.WriteLine($"");                                
+                                GenerateExecuteFunction(writer, groupData, functionData, "L", "list", true, new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
+                                writer.WriteLine($"");
+                            }
                         }
 
                         // GetElementType
@@ -301,22 +425,135 @@ namespace PolymorphicElementsSourceGenerators
         }
 
         private void GenerateAddFunction(
-            FileWriter writer, 
-            string collectionType, 
-            string collectionName, 
-            ElementData elementData, 
+            FileWriter writer,
+            bool forUnionElement,
+            GroupInterfaceData groupData,
+            ElementData elementData,
+            string collectionType,
+            string collectionName,
             bool supportElementAccess,
-            bool collectionTypeIsGeneric,
-            string collectionGenericTypeConstraint)
+            List<GenericTypeData> collectionGenericTypes)
         {
             string methodName = supportElementAccess ? AddElement : AppendElement;
-            string genericType = collectionTypeIsGeneric ? $"<{collectionType}>" : "";
-            string genericConstraint = collectionTypeIsGeneric ? $" {collectionGenericTypeConstraint}" : "";
-            writer.WriteLine($"public static {(supportElementAccess ? $"{PolymorphicElementMetaData}" : "void")} {methodName}{genericType}(ref {collectionType} {collectionName}, {elementData.Type} element){genericConstraint}");
-            writer.WriteInScope(() =>
+            SourceGenUtils.GetGenericTypesStrings(collectionGenericTypes, out string allGenericTypes, out string allGenericTypeConstraints);
+
+            if(forUnionElement)
             {
-                writer.WriteLine($"{(supportElementAccess ? $"return " : "")}{PolymorphicElementsUtility}.{methodName}(ref {collectionName}, {elementData.Id}, element);");
-            });
+                writer.WriteLine($"public {(supportElementAccess ? $"{PolymorphicElementMetaData}" : "void")} {methodName}VariableSized{allGenericTypes}(ref {collectionType} {collectionName}){allGenericTypeConstraints}");
+                writer.WriteInScope(() =>
+                {
+                    writer.WriteLine($"switch (TypeId)");
+                    writer.WriteInScope(() =>
+                    {
+                        foreach (ElementData tmpElementData in groupData.ElementDatas)
+                        {
+                            writer.WriteLine($"case {tmpElementData.Id}:");
+                            writer.WriteInScope(() =>
+                            {
+                                writer.WriteLine($"{(supportElementAccess ? $"return " : "")}{PolymorphicElementsUtility}.{methodName}(ref {collectionName}, {tmpElementData.Id}, Data.{tmpElementData.Type});");
+                                if(!supportElementAccess)
+                                {
+                                    writer.WriteLine($"break;");
+                                }
+                            });
+                        }
+                    });
+                    if(supportElementAccess)
+                    {
+                        writer.WriteLine($"return default;");
+                    }
+                });
+            }
+            else
+            {
+                writer.WriteLine($"public static {(supportElementAccess ? $"{PolymorphicElementMetaData}" : "void")} {methodName}{allGenericTypes}(ref {collectionType} {collectionName}, {elementData.Type} e){allGenericTypeConstraints}");
+                writer.WriteInScope(() =>
+                {
+                    writer.WriteLine($"{(supportElementAccess ? $"return " : "")}{PolymorphicElementsUtility}.{methodName}(ref {collectionName}, {elementData.Id}, e);");
+                });
+            }
+        }
+
+        private void GenerateInsertFunction(
+            FileWriter writer, 
+            bool forUnionElement,
+            GroupInterfaceData groupData,
+            ElementData elementData,
+            string collectionType, 
+            string collectionName,
+            List<GenericTypeData> collectionGenericTypes)
+        {
+            SourceGenUtils.GetGenericTypesStrings(collectionGenericTypes, out string allGenericTypes, out string allGenericTypeConstraints);
+            
+            if(forUnionElement)
+            {
+                writer.WriteLine($"public {PolymorphicElementMetaData} {InsertElement}VariableSized{allGenericTypes}(ref {collectionType} {collectionName}, int atByteIndex){allGenericTypeConstraints}");
+                writer.WriteInScope(() =>
+                {
+                    writer.WriteLine($"switch (TypeId)");
+                    writer.WriteInScope(() =>
+                    {
+                        foreach (ElementData tmpElementData in groupData.ElementDatas)
+                        {
+                            writer.WriteLine($"case {tmpElementData.Id}:");
+                            writer.WriteInScope(() =>
+                            {
+                                writer.WriteLine($"return {PolymorphicElementsUtility}.{InsertElement}(ref {collectionName}, atByteIndex, {tmpElementData.Id}, Data.{tmpElementData.Type});");
+                            });
+                        }
+                    });
+                    writer.WriteLine($"return default;");
+                });
+            }
+            else
+            {
+                writer.WriteLine($"public static {PolymorphicElementMetaData} {InsertElement}{allGenericTypes}(ref {collectionType} {collectionName}, int atByteIndex, {elementData.Type} e){allGenericTypeConstraints}");
+                writer.WriteInScope(() =>
+                {
+                    writer.WriteLine($"return {PolymorphicElementsUtility}.{InsertElement}(ref {collectionName}, atByteIndex, {elementData.Id}, e);");
+                });
+            }
+        }
+
+        private void GenerateOverwriteAtFunction(
+            FileWriter writer, 
+            bool forUnionElement,
+            GroupInterfaceData groupData,
+            ElementData elementData,
+            string collectionType, 
+            string collectionName,
+            List<GenericTypeData> collectionGenericTypes)
+        {
+            SourceGenUtils.GetGenericTypesStrings(collectionGenericTypes, out string allGenericTypes, out string allGenericTypeConstraints);
+            
+            if(forUnionElement)
+            {
+                writer.WriteLine($"public {PolymorphicElementMetaData} {TryOverwriteBytesAtNoResize}VariableSized{allGenericTypes}(ref {collectionType} {collectionName}, int atByteIndex){allGenericTypeConstraints}");
+                writer.WriteInScope(() =>
+                {
+                    writer.WriteLine($"switch (TypeId)");
+                    writer.WriteInScope(() =>
+                    {
+                        foreach (ElementData tmpElementData in groupData.ElementDatas)
+                        {
+                            writer.WriteLine($"case {tmpElementData.Id}:");
+                            writer.WriteInScope(() =>
+                            {
+                                writer.WriteLine($"return {PolymorphicElementsUtility}.{TryOverwriteBytesAtNoResize}(ref {collectionName}, atByteIndex, {tmpElementData.Id}, Data.{tmpElementData.Type});");
+                            });
+                        }
+                    });
+                    writer.WriteLine($"return default;");
+                });
+            }
+            else
+            {
+                writer.WriteLine($"public static {PolymorphicElementMetaData} {TryOverwriteBytesAtNoResize}{allGenericTypes}(ref {collectionType} {collectionName}, int atByteIndex, {elementData.Type} e){allGenericTypeConstraints}");
+                writer.WriteInScope(() =>
+                {
+                    writer.WriteLine($"return {PolymorphicElementsUtility}.{TryOverwriteBytesAtNoResize}(ref {collectionName}, atByteIndex, {elementData.Id}, e);");
+                });
+            }
         }
 
         private void GenerateExecuteFunction(
@@ -326,14 +563,22 @@ namespace PolymorphicElementsSourceGenerators
             string collectionType, 
             string collectionName, 
             bool supportIndexing, 
-            bool collectionTypeIsGeneric,
-            string collectionGenericTypeConstraint)
+            List<GenericTypeData> collectionGenericTypes)
         {
             functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, true);
 
-            string genericType = collectionTypeIsGeneric ? $"<{collectionType}>" : "";
-            string genericConstraint = collectionTypeIsGeneric ? $" {collectionGenericTypeConstraint}" : "";
-            writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{genericType}(ref {collectionType} {collectionName}{(supportIndexing ? $", int {StartByteIndex}, out int {NextStartByteIndex}" : "")}{parametersStringDeclaration}, out bool success){genericConstraint}");
+            List<GenericTypeData> allGenericTypeDatas = new List<GenericTypeData>();
+            if(collectionGenericTypes != null)
+            {
+                allGenericTypeDatas.AddRange(collectionGenericTypes);
+            }
+            if(functionData.GenericTypeDatas != null)
+            {
+                allGenericTypeDatas.AddRange(functionData.GenericTypeDatas);
+            }
+            SourceGenUtils.GetGenericTypesStrings(allGenericTypeDatas, out string allGenericTypes, out string allGenericTypeConstraints);
+
+            writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{allGenericTypes}(ref {collectionType} {collectionName}{(supportIndexing ? $", int {StartByteIndex}, out int {NextStartByteIndex}" : "")}{parametersStringDeclaration}, out bool success){allGenericTypeConstraints}");
             writer.WriteInScope(() =>
             {         
                 writer.WriteLine($"success = false;");
@@ -348,9 +593,21 @@ namespace PolymorphicElementsSourceGenerators
                             writer.WriteLine($"case {elementData.Id}:");
                             writer.WriteInScope(() =>
                             {
+                                List<GenericTypeData> readGenericTypeDatas = new List<GenericTypeData>();
+                                readGenericTypeDatas.Add(new GenericTypeData
+                                {
+                                    Type = elementData.Type,
+                                    TypeConstraints = new List<string>(),
+                                });
+                                if(collectionGenericTypes != null)
+                                {
+                                    readGenericTypeDatas.AddRange(collectionGenericTypes);
+                                }
+                                SourceGenUtils.GetGenericTypesStrings(readGenericTypeDatas, out string readGenericTypes, out _);
+
                                 if(supportIndexing && functionData.WriteBackType == MethodWriteBackType.RefModify)
                                 {
-                                    writer.WriteLine($"ref {elementData.Type} e = ref {PolymorphicElementsUtility}.{InternalUse}.{ReadAnyAsRef}<{elementData.Type}{(collectionTypeIsGeneric ? $", {collectionType}" : "")}>(ref {collectionName}, {(supportIndexing ? $"{NextStartByteIndex}, out {NextStartByteIndex}," : "")} out success);");
+                                    writer.WriteLine($"ref {elementData.Type} e = ref {PolymorphicElementsUtility}.{InternalUse}.{ReadAnyAsRef}{readGenericTypes}(ref {collectionName}, {(supportIndexing ? $"{NextStartByteIndex}, out {NextStartByteIndex}," : "")} out success);");
                                     writer.WriteLine($"if(success)");
                                     writer.WriteInScope(() =>
                                     {
