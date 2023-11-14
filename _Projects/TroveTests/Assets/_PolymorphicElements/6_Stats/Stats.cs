@@ -537,23 +537,28 @@ namespace Trove.Stats
                     ref StatValues statValues = ref PolymorphicElementsUtility.InternalUse.ReadAnyAsRef<StatValues, StatsData>(ref statsDataBuffer, readByteIndex, out _, out bool success);
                     if (success)
                     {
+                        float prevValue = statValues.Value;
+                        statValues.Value = statValues.BaseValue;
                         modifierStack.Apply(statValues.BaseValue, ref statValues.Value);
 
-                        // Notify observers
-                        readByteIndex = observersStartByteIndex;
-                        for (int i = 0; i < observersCount; i++)
+                        // Recalculate observers if value changed
+                        if (statValues.Value != prevValue)
                         {
-                            if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out StatReference observerOfStat))
+                            readByteIndex = observersStartByteIndex;
+                            for (int i = 0; i < observersCount; i++)
                             {
-                                // Local observer
-                                if (observerOfStat.Entity == statReference.Entity)
+                                if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out StatReference observerOfStat))
                                 {
-                                    RecalculateStat(ref statsDataBufferLookup, ref statsDataBuffer, ref observerOfStat);
-                                }
-                                // Remote observer
-                                else
-                                {
-                                    RecalculateStat(ref statsDataBufferLookup, ref observerOfStat);
+                                    // Local observer
+                                    if (observerOfStat.Entity == statReference.Entity)
+                                    {
+                                        RecalculateStat(ref statsDataBufferLookup, ref statsDataBuffer, ref observerOfStat);
+                                    }
+                                    // Remote observer
+                                    else
+                                    {
+                                        RecalculateStat(ref statsDataBufferLookup, ref observerOfStat);
+                                    }
                                 }
                             }
                         }
