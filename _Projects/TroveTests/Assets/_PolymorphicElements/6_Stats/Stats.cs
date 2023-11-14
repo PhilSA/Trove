@@ -571,28 +571,59 @@ namespace Trove.Stats
             return false;
         }
 
-        private bool IsStatAInStatBsObserversChain(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statA, ref StatReference statB)
+        private bool IsStatAInStatBsObserversChain(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statADataBuffer, ref StatReference statA, ref StatReference statB)
+        {
+            if (statsDataBufferLookup.TryGetBuffer(statB.Entity, out DynamicBuffer<StatsData> statBDataBuffer))
+            {
+                return IsStatAInStatBsObserversChain(ref statsDataBufferLookup, ref statADataBuffer, ref statBDataBuffer, ref statA, ref statB);
+            }
+
+            return false;
+        }
+
+        private bool IsStatAInStatBsObserversChain(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statADataBuffer, ref DynamicBuffer<StatsData> statBDataBuffer, ref StatReference statA, ref StatReference statB)
         {
             // Assume statA is up to date
-            if (UpdateStatReferenceCachedData(ref statsDataBuffer, ref statB))
+            if (UpdateStatReferenceCachedData(ref statADataBuffer, ref statB))
             {
                 // Check if stat A is in observers of stat B
-                if (FindObserversCountAndStartByteIndex(ref statsDataBuffer, statB.CachedStatStartByteIndex, out int observersCount, out int observersStartByteIndex))
+                if (FindObserversCountAndStartByteIndex(ref statADataBuffer, statB.CachedStatStartByteIndex, out int observersCount, out int observersStartByteIndex))
                 {
                     int readByteIndex = observersStartByteIndex;
                     for (int i = 0; i < observersCount; i++)
                     {
-                        if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out StatReference observerOfStatB))
+                        if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statADataBuffer, readByteIndex, out readByteIndex, out StatReference observerOfStatB))
                         {
                             if (observerOfStatB == statA)
                             {
                                 return true;
                             }
+                            // Check if statA is an observer of the observer of statB
                             else
                             {
-                                if (IsStatAInStatBsObserversChain(ref statsDataBuffer, ref statA, ref observerOfStatB))
+                                // Observer is local to B
+                                if (observerOfStatB.Entity == statB.Entity)
                                 {
-                                    return true;
+                                    if (IsStatAInStatBsObserversChain(ref statsDataBufferLookup, ref statADataBuffer, ref statBDataBuffer, ref statA, ref observerOfStatB))
+                                    {
+                                        return true;
+                                    }
+                                }
+                                // Observer is local to A
+                                else if (observerOfStatB.Entity == statA.Entity)
+                                {
+                                    if (IsStatAInStatBsObserversChain(ref statsDataBufferLookup, ref statADataBuffer, ref statADataBuffer, ref statA, ref observerOfStatB))
+                                    {
+                                        return true;
+                                    }
+                                }
+                                // Observer is other entity
+                                else
+                                {
+                                    if (IsStatAInStatBsObserversChain(ref statsDataBufferLookup, ref statADataBuffer, ref statA, ref observerOfStatB))
+                                    {
+                                        return true;
+                                    }
                                 }
                             }
                         }
