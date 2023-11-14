@@ -16,6 +16,12 @@ public struct StatModifiersStack : IStatModifiersStack
     public float Multiply;
     public float Add;
 
+    public void Reset()
+    {
+        Multiply = 1f;
+        Add = 0f;
+    }
+
     public void Apply(float statBaseValue, ref float statValue)
     {
         statValue = statBaseValue;

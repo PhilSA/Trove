@@ -28,16 +28,18 @@ namespace Trove.Stats
     /// Buffer of bytes representing stats data
     /// 
     /// The layout of the data is as follows:
-    /// - First, a DataLayoutVersion and a ModifierIDCounter
-    /// - Then, a sequence of StatTypeID + StartByteIndex, sorted by StartByteIndex in ascending order
-    /// - Then, a sequence of variable-size stat data:
+    /// - DataLayoutVersion 
+    /// - ModifierIDCounter
+    /// - StatsCount
+    /// - sequence of StatTypeID + StartByteIndex, sorted by StartByteIndex in ascending order
+    /// - sequence of variable-size stat data:
     ///     - Stat base value 
     ///     - Stat final value
-    ///     - ModifiersCount
     ///     - ObserversCount
-    ///     - ObserversStartByteIndex
-    ///     - sequence of ModifierTypeID + variable-sized Modifier data (modifiers are polymorphic elements)
     ///     - sequence of StatReferences representing observers of this stat
+    ///     - ModifiersCount
+    ///     - sequence of ModifierID + startByteIndex
+    ///     - sequence of ModifierTypeID + variable-sized Modifier data (modifiers are polymorphic elements)
     ///     
     /// </summary>
     public struct StatsData : IBufferElementData, IByteBufferElement
@@ -56,9 +58,9 @@ namespace Trove.Stats
         public Entity Entity;
         public ushort StatTypeID;
 
-        public byte HasCachedData;
-        public int CachedStatStartByteIndex;
-        public int CachedDataLayoutVersion;
+        internal byte HasCachedData;
+        internal int CachedStatStartByteIndex;
+        internal int CachedDataLayoutVersion;
 
         public StatReference(Entity onEntity, ushort statTypeID)
         {
@@ -69,16 +71,28 @@ namespace Trove.Stats
             CachedStatStartByteIndex = 0;
             CachedDataLayoutVersion = 0;
         }
+
+        public static bool operator ==(StatReference a, StatReference b)
+        {
+            return b.Entity == a.Entity && b.StatTypeID == a.StatTypeID;
+        }
+
+        public static bool operator !=(StatReference a, StatReference b)
+        {
+            return b.Entity != a.Entity || b.StatTypeID != a.StatTypeID;
+        }
     }
 
     public struct StatModifierReference
     {
         public Entity Entity;
         public ushort StatTypeID;
-        public int StatModifierID;
+        public int ModifierID;
 
-        public int CachedStatModifierStartByteIndex;
-        public int CachedDataLayoutVersion;
+        internal byte HasCachedData;
+        internal int CachedStatStartByteIndex;
+        internal int CachedStatModifierStartByteIndex;
+        internal int CachedDataLayoutVersion;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -88,38 +102,53 @@ namespace Trove.Stats
         public float Value;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct StatModifiersAndObservers
-    {
-        public ushort ModifiersCount;
-        public ushort ObserversCount;
-        public int ObserversStartByteIndex;
-    }
-
     public interface IBaseStatModifier<TModifiersStack> where TModifiersStack : unmanaged, IStatModifiersStack
     {
-        void Apply(ref TModifiersStack stack);
+        public void Apply(ref TModifiersStack stack);
     }
 
     public interface IStatModifiersStack
     {
-        void Apply(float statBaseValue, ref float statValue);
+        public void Reset();
+        public void Apply(float statBaseValue, ref float statValue);
     }
 
-    public unsafe static class StatsHandler
+    public interface IModifiersApplier
     {
+        public void ApplyModifiers(int startByteIndex, int count);
+    }
+
+    public unsafe struct StatsHandler<TModifier, TModifierStack, TModifiersApplier>
+            where TModifier : unmanaged, IBaseStatModifier<TModifierStack>, IPolymorphicUnionElement
+            where TModifierStack : unmanaged, IStatModifiersStack
+            where TModifiersApplier : unmanaged, IModifiersApplier
+    {
+        // Global data
         private const int SizeOfDataLayoutVersion = sizeof(int);
         private const int SizeOfModifierIDCounter = sizeof(int);
+        private const int SizeOfStatsCount = sizeof(ushort);
+
+        // Stats map
         private const int SizeOfStatTypeID = sizeof(ushort);
         private const int SizeOfStatStartByteIndex = sizeof(int);
+
+        // Stat datas
         private static int SizeOfStatValues = sizeof(StatValues);
-        private static int SizeOfStatModifiersAndObservers = sizeof(StatModifiersAndObservers);
+        private const int SizeOfObserversCount = sizeof(int);
+        private static int SizeOfObserver = sizeof(StatReference);
+        private const int SizeOfModifiersCount = sizeof(int);
+        private const int SizeOfModifierID = sizeof(int);
+        private const int SizeOfModifierStartByteIndex = sizeof(int);
+        // And finally, variable-sized modifiers
+
+        private const int StartByteIndexOfStatsCount = SizeOfDataLayoutVersion + SizeOfModifierIDCounter;
 
         public static void InitializeStatsData(ref DynamicBuffer<StatsData> statsDataBuffer, in NativeList<StatDefinition> statDefinitions)
         {
             statsDataBuffer.Clear();
             int writeByteIndex = 0;
-            int statsDataStartByteIndex = statDefinitions.Length * (SizeOfStatTypeID + SizeOfStatStartByteIndex);
+
+            // TODO; filter out duplicate stats?
 
             // Data layout version
             PolymorphicElementsUtility.InternalUse.WriteAny(ref statsDataBuffer, writeByteIndex, (int)0);
@@ -129,7 +158,12 @@ namespace Trove.Stats
             PolymorphicElementsUtility.InternalUse.WriteAny(ref statsDataBuffer, writeByteIndex, (int)0);
             writeByteIndex += SizeOfModifierIDCounter;
 
+            // Stats count
+            PolymorphicElementsUtility.InternalUse.WriteAny(ref statsDataBuffer, writeByteIndex, (ushort)statDefinitions.Length);
+            writeByteIndex += SizeOfStatsCount;
+
             // Add sequence of stat type IDs and start byte index
+            int statsDataStartByteIndex = writeByteIndex + (statDefinitions.Length * (SizeOfStatTypeID + SizeOfStatStartByteIndex));
             for (int i = 0; i < statDefinitions.Length; i++)
             {
                 // Stat type ID
@@ -137,7 +171,7 @@ namespace Trove.Stats
                 writeByteIndex += SizeOfStatTypeID;
 
                 // Stat start byte index
-                PolymorphicElementsUtility.InternalUse.WriteAny(ref statsDataBuffer, writeByteIndex, statsDataStartByteIndex + (i * (SizeOfStatValues + SizeOfStatModifiersAndObservers)));
+                PolymorphicElementsUtility.InternalUse.WriteAny(ref statsDataBuffer, writeByteIndex, statsDataStartByteIndex + (i * (SizeOfStatValues + SizeOfObserversCount + SizeOfModifiersCount)));
                 writeByteIndex += SizeOfStatStartByteIndex;
             }
 
@@ -155,147 +189,427 @@ namespace Trove.Stats
                 PolymorphicElementsUtility.InternalUse.WriteAny(ref statsDataBuffer, writeByteIndex, statValues);
                 writeByteIndex += SizeOfStatValues;
 
-                // Modifiers and observers
-                StatModifiersAndObservers modifiersAndObservers = new StatModifiersAndObservers
-                {
-                    ModifiersCount = 0,
-                    ObserversCount = 0,
-                    ObserversStartByteIndex = writeByteIndex + SizeOfStatModifiersAndObservers,
-                };
-                PolymorphicElementsUtility.InternalUse.WriteAny(ref statsDataBuffer, writeByteIndex, modifiersAndObservers);
-                writeByteIndex += SizeOfStatModifiersAndObservers;
+                // Observers count
+                PolymorphicElementsUtility.InternalUse.WriteAny(ref statsDataBuffer, writeByteIndex, (int)0);
+                writeByteIndex += SizeOfObserversCount;
+
+                // Modifiers count
+                PolymorphicElementsUtility.InternalUse.WriteAny(ref statsDataBuffer, writeByteIndex, (int)0);
+                writeByteIndex += SizeOfModifiersCount;
             }
         }
 
-        private static int GetDataLayoutVersion(ref DynamicBuffer<StatsData> statsDataBuffer)
+        public static int GetDataLayoutVersion(ref DynamicBuffer<StatsData> statsDataBuffer)
         {
             PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, 0, out _, out int result);
             return result;
         }
 
-        private static int IncrementDataLayoutVersion(ref DynamicBuffer<StatsData> statsDataBuffer, out bool success)
+        public static bool IncrementDataLayoutVersion(ref DynamicBuffer<StatsData> statsDataBuffer)
         {
-            ref int dataLayoutVersion = ref PolymorphicElementsUtility.InternalUse.ReadAnyAsRef<int, StatsData>(ref statsDataBuffer, 0, out _, out success);
-            dataLayoutVersion++;
-            return dataLayoutVersion;
+            ref int dataLayoutVersion = ref PolymorphicElementsUtility.InternalUse.ReadAnyAsRef<int, StatsData>(ref statsDataBuffer, 0, out _, out bool success);
+            if (success)
+            {
+                dataLayoutVersion++;
+                return true;
+            }
+
+            return false;
         }
 
-        private static int GetAndIncrementModifierIDCounter(ref DynamicBuffer<StatsData> statsDataBuffer, out bool success)
+        private static bool GetAndIncrementModifierIDCounter(ref DynamicBuffer<StatsData> statsDataBuffer, out int modifierID)
         {
-            ref int modIDCounter = ref PolymorphicElementsUtility.InternalUse.ReadAnyAsRef<int, StatsData>(ref statsDataBuffer, SizeOfDataLayoutVersion, out _, out success);
-            modIDCounter++;
-            return modIDCounter;
+            ref int modIDCounter = ref PolymorphicElementsUtility.InternalUse.ReadAnyAsRef<int, StatsData>(ref statsDataBuffer, SizeOfDataLayoutVersion, out _, out bool success);
+            if (success)
+            {
+                modIDCounter++;
+                modifierID = modIDCounter;
+                return true;
+            }
+
+            modifierID = 0;
+            return false;
         }
 
-        private static void UpdateStatReferenceCachedData(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference)
+        private static bool FindStatStartByteIndex(ref DynamicBuffer<StatsData> statsDataBuffer, ushort statTypeID, out int statStartByteIndex)
+        {
+            int readByteIndex = StartByteIndexOfStatsCount;
+
+            // Read stats count
+            if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out ushort statsCount))
+            {
+                // For each stat
+                for (int i = 0; i < statsCount; i++)
+                {
+                    // Read stat type ID
+                    if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out ushort otherStatTypeId))
+                    {
+                        // If it's the same as the id we're looking for...
+                        if (otherStatTypeId == statTypeID)
+                        {
+                            // Read start byte index
+                            if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out statStartByteIndex))
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                // Couldn't read the start byte index of the matched stat. Not supposed to happen
+                                return false;
+                            }
+                        }
+                        readByteIndex += SizeOfStatTypeID;
+                    }
+                    else
+                    {
+                        // Couldn't read the stat type ID. Not supposed to happen
+                        statStartByteIndex = default;
+                        return false;
+                    }
+                }
+            }
+
+            // The stat doesn't exist
+            statStartByteIndex = default;
+            return false;
+        }
+
+        private static bool FindObserversCountAndStartByteIndex(ref DynamicBuffer<StatsData> statsDataBuffer, int statStartByteIndex, out int observersCount, out int observersStartByteIndex)
+        {
+            int readByteIndex = statStartByteIndex;
+
+            // Skip stat values
+            readByteIndex += SizeOfStatValues;
+
+            // Read observers count and outputted next byte index
+            if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out observersStartByteIndex, out observersCount))
+            {
+                return true;
+            }
+
+            // Couldnt read modifiers & observers info
+            observersStartByteIndex = default;
+            return false;
+        }
+
+        private static bool FindModifiersCountAndStartByteIndexes(
+            ref DynamicBuffer<StatsData> statsDataBuffer, 
+            int statStartByteIndex,
+            out int observersCount, 
+            out int observersStartByteIndex,
+            out int modifiersCount, 
+            out int modifiersMapStartByteIndex, 
+            out int modifiersStartByteIndex)
+        {
+            if(FindObserversCountAndStartByteIndex(ref statsDataBuffer, statStartByteIndex, out observersCount, out observersStartByteIndex))
+            {
+                // Skip observers
+                int readByteIndex = observersStartByteIndex + (observersCount * SizeOfObserver);
+
+                // Read modifiers count
+                if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out modifiersMapStartByteIndex, out modifiersCount))
+                {
+                    modifiersStartByteIndex = modifiersMapStartByteIndex + (modifiersCount * (SizeOfModifierID + SizeOfModifierStartByteIndex));
+                    return true;
+                }
+            }
+
+            // Couldnt read modifiers & observers info
+            modifiersCount = default;
+            modifiersMapStartByteIndex = default;
+            modifiersStartByteIndex = default;
+            return false;
+        }
+
+        private static bool FindModifierStartByteIndex(ref DynamicBuffer<StatsData> statsDataBuffer, int statStartByteIndex, int modifierID, out int modifierStartByteIndex)
+        {
+            if(FindModifiersCountAndStartByteIndexes(ref statsDataBuffer, statStartByteIndex, out int observersCount, out int observersStartByteIndex, out int modifiersCount, out int modifiersMapStartByteIndex, out int modifiersStartByteIndex))
+            {
+                int readByteIndex = modifiersMapStartByteIndex;
+
+                // For each modifier in ID map
+                for (int i = 0; i < modifiersCount; i++)
+                {
+                    // Read modifier ID
+                    if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out int otherModifierID))
+                    {
+                        // If it's the one we're looking for
+                        if (otherModifierID == modifierID)
+                        {
+                            // Read start byte index
+                            if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out modifierStartByteIndex))
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                // Couldn't read the start byte index of the matched modifier. Not supposed to happen
+                                return false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Couldn't read modifier ID
+                        modifierStartByteIndex = default;
+                        return false;
+                    }
+                }
+            }
+
+            // Couldnt read modifiers & observers info
+            modifierStartByteIndex = default;
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="statsDataBuffer"></param>
+        /// <param name="statReference"></param>
+        /// <returns>false if the reference couldn't be solved</returns>
+        private static bool UpdateStatReferenceCachedData(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference)
         {
             int dataLayoutVersion = GetDataLayoutVersion(ref statsDataBuffer);
-           
-            // TODO; and return what?
 
             // Update cache data
-            if (statReference.HasCachedData == 0 || statReference.CachedDataLayoutVersion != dataLayoutVersion)
+            if (statReference.CachedDataLayoutVersion != dataLayoutVersion || statReference.HasCachedData == 0)
             {
-                // TODO
-                statReference.CachedDataLayoutVersion = dataLayoutVersion;
+                if(FindStatStartByteIndex(ref statsDataBuffer, statReference.StatTypeID, out int statStartByteIndex))
+                {
+                    statReference.HasCachedData = 1;
+                    statReference.CachedStatStartByteIndex = statStartByteIndex;
+                    statReference.CachedDataLayoutVersion = dataLayoutVersion;
+                }
+                else
+                {
+                    // Couldn't find stat
+                    return false;
+                }
             }
 
-            //return false;
+            return true;
         }
 
-        public static bool GetStatValues(ref BufferLookup<StatsData> statsDataBufferLookup, StatReference statReference, out StatValues statValues)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="statsDataBuffer"></param>
+        /// <param name="modifierReference"></param>
+        /// <returns>false if the reference couldn't be solved</returns>
+        private static bool UpdateModifierReferenceCachedData(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatModifierReference modifierReference)
+        {
+            int dataLayoutVersion = GetDataLayoutVersion(ref statsDataBuffer);
+
+            // Update cache data
+            if (modifierReference.CachedDataLayoutVersion != dataLayoutVersion || modifierReference.HasCachedData == 0)
+            {
+                if (FindStatStartByteIndex(ref statsDataBuffer, modifierReference.StatTypeID, out int statStartByteIndex))
+                {
+                    if (FindModifierStartByteIndex(ref statsDataBuffer, modifierReference.StatTypeID, modifierReference.ModifierID, out int modifierStartByteIndex))
+                    {
+                        modifierReference.HasCachedData = 1;
+                        modifierReference.CachedStatStartByteIndex = statStartByteIndex;
+                        modifierReference.CachedStatModifierStartByteIndex = modifierStartByteIndex;
+                        modifierReference.CachedDataLayoutVersion = dataLayoutVersion;
+                    }
+                    else
+                    {
+                        // Couldn't find modifier
+                        return false;
+                    }
+                }
+                else
+                {
+                    // Couldn't find stat
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool GetStatValues(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference, out StatValues statValues)
         {
             if (statsDataBufferLookup.TryGetBuffer(statReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
-                return GetStatValues(ref statsDataBuffer, statReference, out statValues);
+                return GetStatValues(ref statsDataBuffer, ref statReference, out statValues);
             }
 
             statValues = default;
             return false;
         }
 
-        public static bool GetStatValues(ref DynamicBuffer<StatsData> statsDataBuffer, StatReference statReference, out StatValues statValues)
+        public static bool GetStatValues(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, out StatValues statValues)
         {
-            // TODO:
-            // Find by cached or by search
+            if (UpdateStatReferenceCachedData(ref statsDataBuffer, ref statReference))
+            {
+                int readByteIndex = statReference.CachedStatStartByteIndex;
+                if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out statValues))
+                {
+                    return true;
+                }
+            }
 
             statValues = default;
             return false;
         }
 
-        public static bool SetStatBaseValue(ref BufferLookup<StatsData> statsDataBufferLookup, StatReference statReference, float baseValue)
+        public static bool SetStatBaseValue(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference, float baseValue)
         {
             if (statsDataBufferLookup.TryGetBuffer(statReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
-                return SetStatBaseValue(ref statsDataBuffer, statReference, baseValue);
+                return SetStatBaseValue(ref statsDataBuffer, ref statReference, baseValue);
             }
 
             return false;
         }
 
-        public static bool SetStatBaseValue(ref DynamicBuffer<StatsData> statsDataBuffer, StatReference statReference, float baseValue)
+        public static bool SetStatBaseValue(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, float baseValue)
         {
-            // TODO:
-            // Find by cached or by search
-
-            return false;
-        }
-
-        public static bool AddStatBaseValue(ref BufferLookup<StatsData> statsDataBufferLookup, StatReference statReference, float value)
-        {
-            if (statsDataBufferLookup.TryGetBuffer(statReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
+            if (UpdateStatReferenceCachedData(ref statsDataBuffer, ref statReference))
             {
-                return AddStatBaseValue(ref statsDataBuffer, statReference, value);
+                int readByteIndex = statReference.CachedStatStartByteIndex;
+                ref StatValues statValues = ref PolymorphicElementsUtility.InternalUse.ReadAnyAsRef<StatValues, StatsData>(ref statsDataBuffer, readByteIndex, out _, out bool success);
+                if (success)
+                {
+                    statValues.BaseValue = baseValue;
+                    return true;
+                }
             }
 
             return false;
         }
 
-        public static bool AddStatBaseValue(ref DynamicBuffer<StatsData> statsDataBuffer, StatReference statReference, float value)
-        {
-            // TODO:
-            // Find by cached or by search
-
-            return false;
-        }
-
-        public static bool RecalculateStat(ref BufferLookup<StatsData> statsDataBufferLookup, StatReference statReference)
+        public static bool AddStatBaseValue(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference, float value)
         {
             if (statsDataBufferLookup.TryGetBuffer(statReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
-                return RecalculateStat(ref statsDataBuffer, statReference);
+                return AddStatBaseValue(ref statsDataBuffer, ref statReference, value);
             }
 
             return false;
         }
 
-        public static bool RecalculateStat(ref DynamicBuffer<StatsData> statsDataBuffer, StatReference statReference)
+        public static bool AddStatBaseValue(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, float value)
         {
-            // TODO:
-            // Find by cached or by search
-            // Apply all modifiers
-            // Recalc all local observers
-            // Recalc all remote observers
+            if (UpdateStatReferenceCachedData(ref statsDataBuffer, ref statReference))
+            {
+                int readByteIndex = statReference.CachedStatStartByteIndex;
+                ref StatValues statValues = ref PolymorphicElementsUtility.InternalUse.ReadAnyAsRef<StatValues, StatsData>(ref statsDataBuffer, readByteIndex, out _, out bool success);
+                if (success)
+                {
+                    statValues.BaseValue += value;
+                    return true;
+                }
+            }
 
             return false;
         }
 
-        public static bool AddModifier<TModifier, TModifiersStack>(ref BufferLookup<StatsData> statsDataBufferLookup, StatReference affectedStatReference, TModifier modifier, out StatModifierReference modifierReference)
-            where TModifier : unmanaged, IBaseStatModifier<TModifiersStack>, IPolymorphicUnionElement
-            where TModifiersStack : unmanaged, IStatModifiersStack
+        public static bool RecalculateStat(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference)
+        {
+            if (statsDataBufferLookup.TryGetBuffer(statReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
+            {
+                return RecalculateStat(ref statsDataBufferLookup, ref statsDataBuffer, ref statReference);
+            }
+
+            return false;
+        }
+
+        public static bool RecalculateStat(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference)
+        {
+            if (UpdateStatReferenceCachedData(ref statsDataBuffer, ref statReference))
+            {
+                // Create modifiers stack
+                TModifierStack modifierStack = new TModifierStack();
+                modifierStack.Reset();
+
+                // Get modifiers count and start indexes so we know which modifiers to apply
+                if (FindModifiersCountAndStartByteIndexes(ref statsDataBuffer, statReference.CachedStatStartByteIndex, out int observersCount, out int observersStartByteIndex, out int modifiersCount, out int modifiersMapStartByteIndex, out int modifiersStartByteIndex))
+                {
+                    // Apply all modifiers to stack
+                    TModifiersApplier modifiersApplier = new TModifiersApplier();
+                    modifiersApplier.ApplyModifiers(modifiersStartByteIndex, modifiersCount);
+
+                    // Apply stack to stat values
+                    int readByteIndex = statReference.CachedStatStartByteIndex;
+                    ref StatValues statValues = ref PolymorphicElementsUtility.InternalUse.ReadAnyAsRef<StatValues, StatsData>(ref statsDataBuffer, readByteIndex, out _, out bool success);
+                    if (success)
+                    {
+                        modifierStack.Apply(statValues.BaseValue, ref statValues.Value);
+
+                        // Notify observers
+                        readByteIndex = observersStartByteIndex;
+                        for (int i = 0; i < observersCount; i++)
+                        {
+                            if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out StatReference observerOfStat))
+                            {
+                                // Local observer
+                                if (observerOfStat.Entity == statReference.Entity)
+                                {
+                                    RecalculateStat(ref statsDataBufferLookup, ref statsDataBuffer, ref observerOfStat);
+                                }
+                                // Remote observer
+                                else
+                                {
+                                    RecalculateStat(ref statsDataBufferLookup, ref observerOfStat);
+                                }
+                            }
+                        }
+
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsStatAInStatBsObserversChain(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statA, ref StatReference statB)
+        {
+            // Assume statA is up to date
+            if (UpdateStatReferenceCachedData(ref statsDataBuffer, ref statB))
+            {
+                // Check if stat A is in observers of stat B
+                if (FindObserversCountAndStartByteIndex(ref statsDataBuffer, statB.CachedStatStartByteIndex, out int observersCount, out int observersStartByteIndex))
+                {
+                    int readByteIndex = observersStartByteIndex;
+                    for (int i = 0; i < observersCount; i++)
+                    {
+                        if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out StatReference observerOfStatB))
+                        {
+                            if(observerOfStatB == statA)
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                if(IsStatAInStatBsObserversChain(ref statsDataBuffer, ref statA, ref observerOfStatB))
+                                {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        public static bool AddModifier(ref BufferLookup<StatsData> statsDataBufferLookup, StatReference affectedStatReference, TModifier modifier, out StatModifierReference modifierReference)
         {
             if (statsDataBufferLookup.TryGetBuffer(affectedStatReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
-                return AddModifier<TModifier, TModifiersStack>(ref statsDataBuffer, affectedStatReference, modifier, out modifierReference);
+                return AddModifier(ref statsDataBuffer, affectedStatReference, modifier, out modifierReference);
             }
 
             modifierReference = default;
             return false;
         }
 
-        public static bool AddModifier<TModifier, TModifiersStack>(ref DynamicBuffer<StatsData> statsDataBuffer, StatReference affectedStatReference, TModifier modifier, out StatModifierReference modifierReference)
-            where TModifier : unmanaged, IBaseStatModifier<TModifiersStack>, IPolymorphicUnionElement
-            where TModifiersStack : unmanaged, IStatModifiersStack
+        public static bool AddModifier(ref DynamicBuffer<StatsData> statsDataBuffer, StatReference affectedStatReference, TModifier modifier, out StatModifierReference modifierReference)
         {
             // TODO:
             // Find by cached or by search
@@ -308,21 +622,17 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool OverwriteModifier<TModifier, TModifiersStack>(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatModifierReference modifierReference, TModifier modifier)
-            where TModifier : unmanaged, IBaseStatModifier<TModifiersStack>, IPolymorphicUnionElement
-            where TModifiersStack : unmanaged, IStatModifiersStack
+        public static bool OverwriteModifier(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatModifierReference modifierReference, TModifier modifier)
         {
             if (statsDataBufferLookup.TryGetBuffer(modifierReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
-                return OverwriteModifier<TModifier, TModifiersStack>(ref statsDataBuffer, ref modifierReference, modifier);
+                return OverwriteModifier(ref statsDataBuffer, ref modifierReference, modifier);
             }
 
             return false;
         }
 
-        public static bool OverwriteModifier<TModifier, TModifiersStack>(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatModifierReference modifierReference, TModifier modifier)
-            where TModifier : unmanaged, IBaseStatModifier<TModifiersStack>, IPolymorphicUnionElement
-            where TModifiersStack : unmanaged, IStatModifiersStack
+        public static bool OverwriteModifier(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatModifierReference modifierReference, TModifier modifier)
         {
             // TODO:
             // To prevent errors, do a resize and then a write at index. So it doesn't matter if the new one is a different size.
