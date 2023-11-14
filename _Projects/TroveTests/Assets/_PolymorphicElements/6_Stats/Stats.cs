@@ -113,15 +113,15 @@ namespace Trove.Stats
         public void Apply(float statBaseValue, ref float statValue);
     }
 
-    public interface IModifiersApplier
+    public interface IModifiersApplier<TModifiersStack> where TModifiersStack : unmanaged, IStatModifiersStack
     {
-        public void ApplyModifiers(int startByteIndex, int count);
+        public void ApplyModifiers(ref DynamicBuffer<StatsData> statsDataBuffer, ref TModifiersStack modifiersStack, int startByteIndex, int count);
     }
 
-    public unsafe struct StatsHandler<TModifier, TModifierStack, TModifiersApplier>
+    public unsafe struct BaseStatsHandler<TModifier, TModifierStack, TModifiersApplier>
             where TModifier : unmanaged, IBaseStatModifier<TModifierStack>, IPolymorphicUnionElement
             where TModifierStack : unmanaged, IStatModifiersStack
-            where TModifiersApplier : unmanaged, IModifiersApplier
+            where TModifiersApplier : unmanaged, IModifiersApplier<TModifierStack>
     {
         // Global data
         private const int SizeOfDataLayoutVersion = sizeof(int);
@@ -143,7 +143,7 @@ namespace Trove.Stats
 
         private const int StartByteIndexOfStatsCount = SizeOfDataLayoutVersion + SizeOfModifierIDCounter;
 
-        public static void InitializeStatsData(ref DynamicBuffer<StatsData> statsDataBuffer, in NativeList<StatDefinition> statDefinitions)
+        public void InitializeStatsData(ref DynamicBuffer<StatsData> statsDataBuffer, in NativeList<StatDefinition> statDefinitions)
         {
             statsDataBuffer.Clear();
             int writeByteIndex = 0;
@@ -199,13 +199,13 @@ namespace Trove.Stats
             }
         }
 
-        public static int GetDataLayoutVersion(ref DynamicBuffer<StatsData> statsDataBuffer)
+        public int GetDataLayoutVersion(ref DynamicBuffer<StatsData> statsDataBuffer)
         {
             PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, 0, out _, out int result);
             return result;
         }
 
-        public static bool IncrementDataLayoutVersion(ref DynamicBuffer<StatsData> statsDataBuffer)
+        public bool IncrementDataLayoutVersion(ref DynamicBuffer<StatsData> statsDataBuffer)
         {
             ref int dataLayoutVersion = ref PolymorphicElementsUtility.InternalUse.ReadAnyAsRef<int, StatsData>(ref statsDataBuffer, 0, out _, out bool success);
             if (success)
@@ -217,7 +217,7 @@ namespace Trove.Stats
             return false;
         }
 
-        private static bool GetAndIncrementModifierIDCounter(ref DynamicBuffer<StatsData> statsDataBuffer, out int modifierID)
+        private bool GetAndIncrementModifierIDCounter(ref DynamicBuffer<StatsData> statsDataBuffer, out int modifierID)
         {
             ref int modIDCounter = ref PolymorphicElementsUtility.InternalUse.ReadAnyAsRef<int, StatsData>(ref statsDataBuffer, SizeOfDataLayoutVersion, out _, out bool success);
             if (success)
@@ -231,7 +231,7 @@ namespace Trove.Stats
             return false;
         }
 
-        private static bool FindStatStartByteIndex(ref DynamicBuffer<StatsData> statsDataBuffer, ushort statTypeID, out int statStartByteIndex)
+        private bool FindStatStartByteIndex(ref DynamicBuffer<StatsData> statsDataBuffer, ushort statTypeID, out int statStartByteIndex)
         {
             int readByteIndex = StartByteIndexOfStatsCount;
 
@@ -274,7 +274,7 @@ namespace Trove.Stats
             return false;
         }
 
-        private static bool FindObserversCountAndStartByteIndex(ref DynamicBuffer<StatsData> statsDataBuffer, int statStartByteIndex, out int observersCount, out int observersStartByteIndex)
+        private bool FindObserversCountAndStartByteIndex(ref DynamicBuffer<StatsData> statsDataBuffer, int statStartByteIndex, out int observersCount, out int observersStartByteIndex)
         {
             int readByteIndex = statStartByteIndex;
 
@@ -292,16 +292,16 @@ namespace Trove.Stats
             return false;
         }
 
-        private static bool FindModifiersCountAndStartByteIndexes(
-            ref DynamicBuffer<StatsData> statsDataBuffer, 
+        private bool FindModifiersCountAndStartByteIndexes(
+            ref DynamicBuffer<StatsData> statsDataBuffer,
             int statStartByteIndex,
-            out int observersCount, 
+            out int observersCount,
             out int observersStartByteIndex,
-            out int modifiersCount, 
-            out int modifiersMapStartByteIndex, 
+            out int modifiersCount,
+            out int modifiersMapStartByteIndex,
             out int modifiersStartByteIndex)
         {
-            if(FindObserversCountAndStartByteIndex(ref statsDataBuffer, statStartByteIndex, out observersCount, out observersStartByteIndex))
+            if (FindObserversCountAndStartByteIndex(ref statsDataBuffer, statStartByteIndex, out observersCount, out observersStartByteIndex))
             {
                 // Skip observers
                 int readByteIndex = observersStartByteIndex + (observersCount * SizeOfObserver);
@@ -321,9 +321,9 @@ namespace Trove.Stats
             return false;
         }
 
-        private static bool FindModifierStartByteIndex(ref DynamicBuffer<StatsData> statsDataBuffer, int statStartByteIndex, int modifierID, out int modifierStartByteIndex)
+        private bool FindModifierStartByteIndex(ref DynamicBuffer<StatsData> statsDataBuffer, int statStartByteIndex, int modifierID, out int modifierStartByteIndex)
         {
-            if(FindModifiersCountAndStartByteIndexes(ref statsDataBuffer, statStartByteIndex, out int observersCount, out int observersStartByteIndex, out int modifiersCount, out int modifiersMapStartByteIndex, out int modifiersStartByteIndex))
+            if (FindModifiersCountAndStartByteIndexes(ref statsDataBuffer, statStartByteIndex, out int observersCount, out int observersStartByteIndex, out int modifiersCount, out int modifiersMapStartByteIndex, out int modifiersStartByteIndex))
             {
                 int readByteIndex = modifiersMapStartByteIndex;
 
@@ -368,14 +368,14 @@ namespace Trove.Stats
         /// <param name="statsDataBuffer"></param>
         /// <param name="statReference"></param>
         /// <returns>false if the reference couldn't be solved</returns>
-        private static bool UpdateStatReferenceCachedData(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference)
+        private bool UpdateStatReferenceCachedData(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference)
         {
             int dataLayoutVersion = GetDataLayoutVersion(ref statsDataBuffer);
 
             // Update cache data
             if (statReference.CachedDataLayoutVersion != dataLayoutVersion || statReference.HasCachedData == 0)
             {
-                if(FindStatStartByteIndex(ref statsDataBuffer, statReference.StatTypeID, out int statStartByteIndex))
+                if (FindStatStartByteIndex(ref statsDataBuffer, statReference.StatTypeID, out int statStartByteIndex))
                 {
                     statReference.HasCachedData = 1;
                     statReference.CachedStatStartByteIndex = statStartByteIndex;
@@ -397,7 +397,7 @@ namespace Trove.Stats
         /// <param name="statsDataBuffer"></param>
         /// <param name="modifierReference"></param>
         /// <returns>false if the reference couldn't be solved</returns>
-        private static bool UpdateModifierReferenceCachedData(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatModifierReference modifierReference)
+        private bool UpdateModifierReferenceCachedData(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatModifierReference modifierReference)
         {
             int dataLayoutVersion = GetDataLayoutVersion(ref statsDataBuffer);
 
@@ -429,7 +429,7 @@ namespace Trove.Stats
             return true;
         }
 
-        public static bool GetStatValues(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference, out StatValues statValues)
+        public bool GetStatValues(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference, out StatValues statValues)
         {
             if (statsDataBufferLookup.TryGetBuffer(statReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
@@ -440,7 +440,7 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool GetStatValues(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, out StatValues statValues)
+        public bool GetStatValues(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, out StatValues statValues)
         {
             if (UpdateStatReferenceCachedData(ref statsDataBuffer, ref statReference))
             {
@@ -455,7 +455,7 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool SetStatBaseValue(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference, float baseValue)
+        public bool SetStatBaseValue(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference, float baseValue)
         {
             if (statsDataBufferLookup.TryGetBuffer(statReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
@@ -465,7 +465,7 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool SetStatBaseValue(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, float baseValue)
+        public bool SetStatBaseValue(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, float baseValue)
         {
             if (UpdateStatReferenceCachedData(ref statsDataBuffer, ref statReference))
             {
@@ -481,7 +481,7 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool AddStatBaseValue(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference, float value)
+        public bool AddStatBaseValue(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference, float value)
         {
             if (statsDataBufferLookup.TryGetBuffer(statReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
@@ -491,7 +491,7 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool AddStatBaseValue(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, float value)
+        public bool AddStatBaseValue(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, float value)
         {
             if (UpdateStatReferenceCachedData(ref statsDataBuffer, ref statReference))
             {
@@ -507,7 +507,7 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool RecalculateStat(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference)
+        public bool RecalculateStat(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference)
         {
             if (statsDataBufferLookup.TryGetBuffer(statReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
@@ -517,7 +517,7 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool RecalculateStat(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference)
+        public bool RecalculateStat(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference)
         {
             if (UpdateStatReferenceCachedData(ref statsDataBuffer, ref statReference))
             {
@@ -530,7 +530,7 @@ namespace Trove.Stats
                 {
                     // Apply all modifiers to stack
                     TModifiersApplier modifiersApplier = new TModifiersApplier();
-                    modifiersApplier.ApplyModifiers(modifiersStartByteIndex, modifiersCount);
+                    modifiersApplier.ApplyModifiers(ref statsDataBuffer, ref modifierStack, modifiersStartByteIndex, modifiersCount);
 
                     // Apply stack to stat values
                     int readByteIndex = statReference.CachedStatStartByteIndex;
@@ -566,7 +566,7 @@ namespace Trove.Stats
             return false;
         }
 
-        private static bool IsStatAInStatBsObserversChain(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statA, ref StatReference statB)
+        private bool IsStatAInStatBsObserversChain(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statA, ref StatReference statB)
         {
             // Assume statA is up to date
             if (UpdateStatReferenceCachedData(ref statsDataBuffer, ref statB))
@@ -579,13 +579,13 @@ namespace Trove.Stats
                     {
                         if (PolymorphicElementsUtility.InternalUse.ReadAny(ref statsDataBuffer, readByteIndex, out readByteIndex, out StatReference observerOfStatB))
                         {
-                            if(observerOfStatB == statA)
+                            if (observerOfStatB == statA)
                             {
                                 return true;
                             }
                             else
                             {
-                                if(IsStatAInStatBsObserversChain(ref statsDataBuffer, ref statA, ref observerOfStatB))
+                                if (IsStatAInStatBsObserversChain(ref statsDataBuffer, ref statA, ref observerOfStatB))
                                 {
                                     return true;
                                 }
@@ -598,7 +598,7 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool AddModifier(ref BufferLookup<StatsData> statsDataBufferLookup, StatReference affectedStatReference, TModifier modifier, out StatModifierReference modifierReference)
+        public bool AddModifier(ref BufferLookup<StatsData> statsDataBufferLookup, StatReference affectedStatReference, TModifier modifier, out StatModifierReference modifierReference)
         {
             if (statsDataBufferLookup.TryGetBuffer(affectedStatReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
@@ -609,9 +609,10 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool AddModifier(ref DynamicBuffer<StatsData> statsDataBuffer, StatReference affectedStatReference, TModifier modifier, out StatModifierReference modifierReference)
+        public bool AddModifier(ref DynamicBuffer<StatsData> statsDataBuffer, StatReference affectedStatReference, TModifier modifier, out StatModifierReference modifierReference)
         {
             // TODO:
+            // Only add if !IsStatAInStatBsObserversChain
             // Find by cached or by search
             // Insert modifier
             // Recalc stat value
@@ -622,7 +623,7 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool OverwriteModifier(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatModifierReference modifierReference, TModifier modifier)
+        public bool OverwriteModifier(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatModifierReference modifierReference, TModifier modifier)
         {
             if (statsDataBufferLookup.TryGetBuffer(modifierReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
@@ -632,7 +633,7 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool OverwriteModifier(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatModifierReference modifierReference, TModifier modifier)
+        public bool OverwriteModifier(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatModifierReference modifierReference, TModifier modifier)
         {
             // TODO:
             // To prevent errors, do a resize and then a write at index. So it doesn't matter if the new one is a different size.
@@ -647,7 +648,7 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool RemoveModifier(ref BufferLookup<StatsData> statsDataBufferLookup, StatModifierReference modifierReference)
+        public bool RemoveModifier(ref BufferLookup<StatsData> statsDataBufferLookup, StatModifierReference modifierReference)
         {
             if (statsDataBufferLookup.TryGetBuffer(modifierReference.Entity, out DynamicBuffer<StatsData> statsDataBuffer))
             {
@@ -657,7 +658,7 @@ namespace Trove.Stats
             return false;
         }
 
-        public static bool RemoveModifier(ref DynamicBuffer<StatsData> statsDataBuffer, StatModifierReference modifierReference)
+        public bool RemoveModifier(ref DynamicBuffer<StatsData> statsDataBuffer, StatModifierReference modifierReference)
         {
             // TODO:
             // Find by cached or by search
