@@ -37,6 +37,7 @@ namespace PolymorphicElementsSourceGenerators
         private const string IgnoreGenerationInManager = "IgnoreGenerationInManager";
         private const string IgnoreGenerationInUnionElement = "IgnoreGenerationInUnionElement";
         private const string IPolymorphicUnionElement = "IPolymorphicUnionElement";
+        private const string GetVariableElementTotalSizeWithID = "GetVariableElementTotalSizeWithID";
 
         public void Initialize(GeneratorInitializationContext context)
         {
@@ -213,7 +214,7 @@ namespace PolymorphicElementsSourceGenerators
                 {
                     // Union struct of all elements
                     writer.WriteLine($"[StructLayout(LayoutKind.Explicit)]");
-                    writer.WriteLine($"public struct {groupData.Name}{UnionElement} : {groupData.Name}, {IPolymorphicUnionElement}");
+                    writer.WriteLine($"public unsafe struct {groupData.Name}{UnionElement} : {groupData.Name}, {IPolymorphicUnionElement}");
                     writer.WriteInScope(() =>
                     {
                         // Data payload
@@ -249,6 +250,56 @@ namespace PolymorphicElementsSourceGenerators
                             });
                             writer.WriteLine($"");
                         }
+
+                        // Implicit casts from elem
+                        foreach (ElementData elementData in groupData.ElementDatas)
+                        {
+                            writer.WriteLine($"public static implicit operator {groupData.Name}{UnionElement}({elementData.Type} e) => new {groupData.Name}{UnionElement}(e);");
+                        }
+
+                        writer.WriteLine($"");
+
+                        // Get variable size
+                        {
+                            writer.WriteLine($"public static int {GetVariableElementTotalSizeWithID}(ushort typeID)");
+                            writer.WriteInScope(() =>
+                            {
+                                writer.WriteLine($"switch (typeID)");
+                                writer.WriteInScope(() =>
+                                {
+                                    foreach (ElementData elementData in groupData.ElementDatas)
+                                    {
+                                        writer.WriteLine($"case {elementData.Id}:");
+                                        writer.WriteInScope(() =>
+                                        {
+                                            writer.WriteLine($"return {PolymorphicElementsUtility}.{SizeOfElementTypeId} + sizeof({elementData.Type});");
+                                        });
+                                    }
+                                });
+                                writer.WriteLine($"return default;");
+                            });
+
+                            writer.WriteLine($"");
+                            writer.WriteLine($"public int {GetVariableElementTotalSizeWithID}()");
+                            writer.WriteInScope(() =>
+                            {
+                                writer.WriteLine($"switch (TypeId)");
+                                writer.WriteInScope(() =>
+                                {
+                                    foreach (ElementData elementData in groupData.ElementDatas)
+                                    {
+                                        writer.WriteLine($"case {elementData.Id}:");
+                                        writer.WriteInScope(() =>
+                                        {
+                                            writer.WriteLine($"return {PolymorphicElementsUtility}.{SizeOfElementTypeId} + sizeof({elementData.Type});");
+                                        });
+                                    }
+                                });
+                                writer.WriteLine($"return default;");
+                            });
+                        }
+
+                        writer.WriteLine($"");
 
                         // Add 
                         GenerateAddFunction(writer, true, groupData, null, "NativeStream.Writer", "streamWriter", false, null);

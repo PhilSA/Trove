@@ -7,6 +7,7 @@ namespace Trove.PolymorphicElements
 {
 	public interface IPolymorphicUnionElement
 	{
+		public int GetVariableElementTotalSizeWithID();
 		public void AppendElementVariableSized(ref NativeStream.Writer streamWriter);
 		public void AppendElementVariableSized<S>(ref S streamWriter) where S : unmanaged, IByteStreamWriter;
 		public PolymorphicElementMetaData AddElementVariableSized(ref DynamicBuffer<byte> buffer);

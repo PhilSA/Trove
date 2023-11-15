@@ -6,12 +6,12 @@ using Trove.Stats;
 using Unity.Collections;
 
 [PolymorphicElementsGroup]
-public interface IStatModifier : IBaseStatModifier<StatModifiersStack>
+public interface IStatModifier : IBaseStatModifier<StatModifiersStack, FixedList512Bytes<StatReference>>
 { }
 
 public static class StatsHandler
 {
-    private static BaseStatsHandler<IStatModifierUnionElement, StatModifiersStack, ModifiersApplier> _baseHandler = default;
+    private static BaseStatsHandler<IStatModifierUnionElement, StatModifiersStack, ModifiersApplier, FixedList512Bytes<StatReference>> _baseHandler = default;
 
     public static void InitializeStatsData(ref DynamicBuffer<StatsData> statsDataBuffer, in NativeList<StatDefinition> statDefinitions) => 
         _baseHandler.InitializeStatsData(ref statsDataBuffer, in statDefinitions);
@@ -25,16 +25,24 @@ public static class StatsHandler
         _baseHandler.GetStatValues(ref statsDataBuffer, ref statReference, out statValues);
     public static bool SetStatBaseValue(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference, float baseValue) =>
         _baseHandler.SetStatBaseValue(ref statsDataBufferLookup, ref statReference, baseValue);
-    public static bool SetStatBaseValue(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, float baseValue) =>
-        _baseHandler.SetStatBaseValue(ref statsDataBuffer, ref statReference, baseValue);
+    public static bool SetStatBaseValue(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, float baseValue) =>
+        _baseHandler.SetStatBaseValue(ref statsDataBufferLookup, ref statsDataBuffer, ref statReference, baseValue);
     public static bool AddStatBaseValue(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference, float value) =>
         _baseHandler.AddStatBaseValue(ref statsDataBufferLookup, ref statReference, value);
-    public static bool AddStatBaseValue(ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, float value) =>
-        _baseHandler.AddStatBaseValue(ref statsDataBuffer, ref statReference, value);
+    public static bool AddStatBaseValue(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference, float value) =>
+        _baseHandler.AddStatBaseValue(ref statsDataBufferLookup, ref statsDataBuffer, ref statReference, value);
     public static bool RecalculateStat(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference statReference) =>
         _baseHandler.RecalculateStat(ref statsDataBufferLookup, ref statReference);
     public static bool RecalculateStat(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference statReference) =>
         _baseHandler.RecalculateStat(ref statsDataBufferLookup, ref statsDataBuffer, ref statReference);
+    public static bool AddModifier(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatReference affectedStatReference, IStatModifierUnionElement modifier, out StatModifierReference modifierReference) =>
+        _baseHandler.AddModifier(ref statsDataBufferLookup, ref affectedStatReference, modifier, out modifierReference);
+    public static bool AddModifier(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statsDataBuffer, ref StatReference affectedStatReference, IStatModifierUnionElement modifier, out StatModifierReference modifierReference) =>
+        _baseHandler.AddModifier(ref statsDataBufferLookup, ref statsDataBuffer, ref affectedStatReference, modifier, out modifierReference);
+    public static bool RemoveModifier(ref BufferLookup<StatsData> statsDataBufferLookup, ref StatModifierReference modifierReference) =>
+        _baseHandler.RemoveModifier(ref statsDataBufferLookup, ref modifierReference);
+    public static bool RemoveModifier(ref BufferLookup<StatsData> statsDataBufferLookup, ref DynamicBuffer<StatsData> statsDataBuffer, ref StatModifierReference modifierReference) =>
+        _baseHandler.RemoveModifier(ref statsDataBufferLookup, ref statsDataBuffer, ref modifierReference);
 }
 
 public struct ModifiersApplier : IModifiersApplier<StatModifiersStack>
@@ -48,6 +56,8 @@ public struct ModifiersApplier : IModifiersApplier<StatModifiersStack>
         }
     }
 }
+
+// TODO: DeferredStatRecalculateSystem
 
 public enum StatType : ushort // Has to be ushort
 {
@@ -80,6 +90,10 @@ public struct StatModifier_Add : IStatModifier
 {
     public float Value;
 
+    public void AddObservedStatReferences(ref FixedList512Bytes<StatReference> statReferencesList)
+    {
+    }
+
     public void Apply(ref StatModifiersStack stack)
     {
         stack.Add += Value;
@@ -90,6 +104,10 @@ public struct StatModifier_Add : IStatModifier
 public struct StatModifier_Multiply : IStatModifier 
 {
     public float Value;
+
+    public void AddObservedStatReferences(ref FixedList512Bytes<StatReference> statReferencesList)
+    {
+    }
 
     public void Apply(ref StatModifiersStack stack)
     {

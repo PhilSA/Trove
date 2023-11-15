@@ -621,6 +621,18 @@ namespace Trove.PolymorphicElements
         public static class InternalUse
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static int GetLength<L, T>(ref L list) where L : unmanaged, INativeList<T> where T : unmanaged
+            {
+                return buffer.Length;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static int GetLength<T>(ref DynamicBuffer<T> buffer)
+            {
+
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static bool ReadAny<T>(ref NativeStream.Reader stream, out T t)
                 where T : unmanaged
             {
@@ -834,45 +846,150 @@ namespace Trove.PolymorphicElements
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void WriteAny<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, T t)
+            public static bool WriteAny<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, T t)
                 where T : unmanaged
             {
-                byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
-                *(T*)(startPtr) = t;
+                if (startByteIndex >= 0 && startByteIndex < buffer.Length)
+                {
+                    byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
+                    *(T*)(startPtr) = t;
+                    return true;
+                }
+                return false;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void WriteAny<T, B>(ref DynamicBuffer<B> buffer, int startByteIndex, T t)
+            public static bool WriteAny<T, B>(ref DynamicBuffer<B> buffer, int startByteIndex, T t)
                 where T : unmanaged
                 where B : unmanaged, IBufferElementData, IByteBufferElement
             {
-                byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
-                *(T*)(startPtr) = t;
+                if (startByteIndex >= 0 && startByteIndex < buffer.Length)
+                {
+                    byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
+                    *(T*)(startPtr) = t;
+                    return true;
+                }
+                return false;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void WriteAny<T>(ref NativeList<byte> list, int startByteIndex, T t)
+            public static bool WriteAny<T>(ref NativeList<byte> list, int startByteIndex, T t)
                 where T : unmanaged
             {
-                byte* startPtr = list.GetUnsafePtr() + (long)startByteIndex;
-                *(T*)(startPtr) = t;
+                if (startByteIndex >= 0 && startByteIndex < list.Length)
+                {
+                    byte* startPtr = list.GetUnsafePtr() + (long)startByteIndex;
+                    *(T*)(startPtr) = t;
+                    return true;
+                }
+                return false;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void WriteAny<T>(ref UnsafeList<byte> list, int startByteIndex, T t)
+            public static bool WriteAny<T>(ref UnsafeList<byte> list, int startByteIndex, T t)
                 where T : unmanaged
             {
-                byte* startPtr = list.Ptr + (long)startByteIndex;
-                *(T*)(startPtr) = t;
+                if (startByteIndex >= 0 && startByteIndex < list.Length)
+                {
+                    byte* startPtr = list.Ptr + (long)startByteIndex;
+                    *(T*)(startPtr) = t;
+                    return true;
+                }
+                return false;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void WriteAny<T, L>(ref L list, int startByteIndex, T t)
+            public static bool WriteAny<T, L>(ref L list, int startByteIndex, T t)
                 where T : unmanaged
             where L : unmanaged, IByteList
             {
-                byte* startPtr = list.Ptr + (long)startByteIndex;
-                *(T*)(startPtr) = t;
+                if (startByteIndex >= 0 && startByteIndex < list.Length)
+                {
+                    byte* startPtr = list.Ptr + (long)startByteIndex;
+                    *(T*)(startPtr) = t;
+                    return true;
+                }
+                return false;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static bool InsertAny<T>(ref DynamicBuffer<byte> buffer, int atByteIndex, T value)
+                where T : unmanaged
+            {
+                if (atByteIndex >= 0 && atByteIndex < buffer.Length)
+                {
+                    int sizeOfT = UnsafeUtility.SizeOf<T>();
+                    buffer.ResizeUninitialized(buffer.Length + sizeOfT);
+                    byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)atByteIndex;
+                    int sizeOfMovedMemory = 
+                    byte* movedPtr = startPtr + (long)sizeOfT;
+                    UnsafeUtility.MemCpy(movedPtr, startPtr, )
+                    *(T*)(startPtr) = value;
+                    return true;
+                }
+                return false;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static bool InsertAny<T, B>(ref DynamicBuffer<B> buffer, int atByteIndex, T value)
+                where T : unmanaged
+                where B : unmanaged, IBufferElementData, IByteBufferElement
+            {
+                if (atByteIndex >= 0 && atByteIndex < buffer.Length)
+                {
+                    int sizeOfT = UnsafeUtility.SizeOf<T>();
+                    buffer.ResizeUninitialized(buffer.Length + sizeOfT);
+                    byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)atByteIndex;
+                    *(T*)(startPtr) = value;
+                    return true;
+                }
+                return false;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static bool InsertAny<T>(ref NativeList<byte> list, int atByteIndex, T value)
+                where T : unmanaged
+            {
+                if (atByteIndex >= 0 && atByteIndex < list.Length)
+                {
+                    int sizeOfT = UnsafeUtility.SizeOf<T>();
+                    list.ResizeUninitialized(list.Length + sizeOfT);
+                    byte* startPtr = list.GetUnsafePtr() + (long)atByteIndex;
+                    *(T*)(startPtr) = value;
+                    return true;
+                }
+                return false;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static bool InsertAny<T>(ref UnsafeList<byte> list, int atByteIndex, T value)
+                where T : unmanaged
+            {
+                if (atByteIndex >= 0 && atByteIndex < list.Length)
+                {
+                    int sizeOfT = UnsafeUtility.SizeOf<T>();
+                    list.Resize(list.Length + sizeOfT);
+                    byte* startPtr = list.Ptr + (long)atByteIndex;
+                    *(T*)(startPtr) = value;
+                    return true;
+                }
+                return false;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static bool InsertAny<T, L>(ref L list, int atByteIndex, T value)
+                where T : unmanaged
+                where L : unmanaged, IByteList
+            {
+                if (atByteIndex >= 0 && atByteIndex < list.Length)
+                {
+                    int sizeOfT = UnsafeUtility.SizeOf<T>();
+                    list.Resize(list.Length + sizeOfT);
+                    byte* startPtr = list.Ptr + (long)atByteIndex;
+                    *(T*)(startPtr) = value;
+                    return true;
+                }
+                return false;
             }
         }
     }
