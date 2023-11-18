@@ -24,20 +24,15 @@ namespace PolymorphicElementsSourceGenerators
         private const string AppendElement = "AppendElement";
         private const string AddElement = "AddElement";
         private const string InsertElement = "InsertElement";
-        private const string TryOverwriteBytesAtNoResize = "TryOverwriteBytesAtNoResize";
         private const string UnionElement = "UnionElement";
-        private const string InternalUse = "InternalUse";
-        private const string ReadAny = "ReadAny";
-        private const string ReadAnyAsRef = "ReadAnyAsRef";
-        private const string WriteAny = "WriteAny";
-        private const string GetAdditionalPayloadByteSize = "GetAdditionalPayloadByteSize";
+        private const string ByteCollectionUtility = "ByteCollectionUtility";
+        private const string Read = "Read";
+        private const string ReadAsRef = "ReadAsRef";
+        private const string WriteNoResize = "WriteNoResize";
         private const string StartByteIndex = "startByteIndex";
         private const string NextStartByteIndex = "nextStartByteIndex";
         private const string StartByteIndexOfElementValue = "startByteIndexOfElementValue";
-        private const string IgnoreGenerationInManager = "IgnoreGenerationInManager";
-        private const string IgnoreGenerationInUnionElement = "IgnoreGenerationInUnionElement";
         private const string IPolymorphicUnionElement = "IPolymorphicUnionElement";
-        private const string GetVariableElementTotalSizeWithID = "GetVariableElementTotalSizeWithID";
 
         public void Initialize(GeneratorInitializationContext context)
         {
@@ -105,15 +100,6 @@ namespace PolymorphicElementsSourceGenerators
                                 functionData.WriteBackType = MethodWriteBackType.Write;
                             }
 
-                            if (SourceGenUtils.HasAttribute(methodSymbol, IgnoreGenerationInManager))
-                            {
-                                functionData.IgnoreGenerationInManager = true;
-                            }
-                            if (SourceGenUtils.HasAttribute(methodSymbol, IgnoreGenerationInUnionElement))
-                            {
-                                functionData.IgnoreGenerationInUnionElement = true;
-                            }
-
                             functionData.GenericTypeDatas = new List<GenericTypeData>();     
                             if (methodSymbol.IsGenericMethod)
                             {                           
@@ -165,7 +151,6 @@ namespace PolymorphicElementsSourceGenerators
                         ElementData elementData = new ElementData();
                         elementData.Id = idCounter;
                         elementData.Type = elementStructSyntax.Identifier.Text;
-                        groupData.ElementDatas.Add(elementData);
 
                         idCounter++;
 
@@ -179,18 +164,8 @@ namespace PolymorphicElementsSourceGenerators
                         {
                             groupData.Usings.Add(usingElem.Name.ToString());
                         }
-
-                        foreach (MemberDeclarationSyntax memberSyntax in elementStructSyntax.Members)
-                        {
-                            // Special functions
-                            if (memberSyntax.IsKind(SyntaxKind.MethodDeclaration) && memberSyntax is MethodDeclarationSyntax methodSyntax)
-                            {
-                                if (methodSyntax.Identifier.Text == GetAdditionalPayloadByteSize)
-                                {
-                                    elementData.HasAdditionalPayload = true;
-                                }
-                            }
-                        }
+                        
+                        groupData.ElementDatas.Add(elementData);
                     }
                 }
 
@@ -219,6 +194,17 @@ namespace PolymorphicElementsSourceGenerators
                     {
                         // Data payload
                         writer.WriteLine($"[StructLayout(LayoutKind.Explicit)]");
+                        writer.WriteLine($"public struct TypeIdAndDataPayload");
+                        writer.WriteInScope(() =>
+                        {
+                            writer.WriteLine($"[FieldOffset(0)]");
+                            writer.WriteLine($"public ushort TypeId;");
+                            writer.WriteLine($"[FieldOffset(sizeof(ushort))]");
+                            writer.WriteLine($"public DataPayload Data;");
+                        });
+
+                        // Data payload
+                        writer.WriteLine($"[StructLayout(LayoutKind.Explicit)]");
                         writer.WriteLine($"public struct DataPayload");
                         writer.WriteInScope(() =>
                         {
@@ -232,23 +218,37 @@ namespace PolymorphicElementsSourceGenerators
                         writer.WriteLine($"");
                         
                         writer.WriteLine($"[FieldOffset(0)]");
-                        writer.WriteLine($"public ushort TypeId;");
-                        writer.WriteLine($"[FieldOffset({PolymorphicElementsUtility}.{SizeOfElementTypeId})]");
-                        writer.WriteLine($"public DataPayload Data;");
+                        writer.WriteLine($"public int ElementSize;");
+                        writer.WriteLine($"[FieldOffset(sizeof(int))]");
+                        writer.WriteLine($"public TypeIdAndDataPayload TypeIdAndData;");
                         
                         writer.WriteLine($"");
                         
                         // Constructors
-                        foreach (ElementData elementData in groupData.ElementDatas)
                         {
-                            writer.WriteLine($"public {groupData.Name}{UnionElement}({elementData.Type} e)");
+                            // From pointer
+                            writer.WriteLine($"public {groupData.Name}{UnionElement}(byte* ptr, int size)");
                             writer.WriteInScope(() =>
                             {
-                                writer.WriteLine($"TypeId = {elementData.Id};");
-                                writer.WriteLine($"Data = default;");
-                                writer.WriteLine($"Data.{elementData.Type} = e;");
+                                writer.WriteLine($"ElementSize = size;");
+                                writer.WriteLine($"TypeIdAndData = *(TypeIdAndDataPayload*)ptr;");
                             });
-                            writer.WriteLine($"");
+                        
+                            // From element structs
+                            foreach (ElementData elementData in groupData.ElementDatas)
+                            {
+                                writer.WriteLine($"public {groupData.Name}{UnionElement}({elementData.Type} e)");
+                                writer.WriteInScope(() =>
+                                {
+                                    writer.WriteLine($"ElementSize = sizeof(ushort) + sizeof({elementData.Type});");
+
+                                    writer.WriteLine($"TypeIdAndData = default;");
+                                    writer.WriteLine($"TypeIdAndData.TypeId = {elementData.Id};");
+                                    writer.WriteLine($"TypeIdAndData.Data = default;");
+                                    writer.WriteLine($"TypeIdAndData.Data.{elementData.Type} = e;");
+                                });
+                                writer.WriteLine($"");
+                            }
                         }
 
                         // Implicit casts from elem
@@ -259,56 +259,16 @@ namespace PolymorphicElementsSourceGenerators
 
                         writer.WriteLine($"");
 
-                        // Get variable size
-                        {
-                            writer.WriteLine($"public static int {GetVariableElementTotalSizeWithID}(ushort typeID)");
-                            writer.WriteInScope(() =>
-                            {
-                                writer.WriteLine($"switch (typeID)");
-                                writer.WriteInScope(() =>
-                                {
-                                    foreach (ElementData elementData in groupData.ElementDatas)
-                                    {
-                                        writer.WriteLine($"case {elementData.Id}:");
-                                        writer.WriteInScope(() =>
-                                        {
-                                            writer.WriteLine($"return {PolymorphicElementsUtility}.{SizeOfElementTypeId} + sizeof({elementData.Type});");
-                                        });
-                                    }
-                                });
-                                writer.WriteLine($"return default;");
-                            });
-
-                            writer.WriteLine($"");
-                            writer.WriteLine($"public int {GetVariableElementTotalSizeWithID}()");
-                            writer.WriteInScope(() =>
-                            {
-                                writer.WriteLine($"switch (TypeId)");
-                                writer.WriteInScope(() =>
-                                {
-                                    foreach (ElementData elementData in groupData.ElementDatas)
-                                    {
-                                        writer.WriteLine($"case {elementData.Id}:");
-                                        writer.WriteInScope(() =>
-                                        {
-                                            writer.WriteLine($"return {PolymorphicElementsUtility}.{SizeOfElementTypeId} + sizeof({elementData.Type});");
-                                        });
-                                    }
-                                });
-                                writer.WriteLine($"return default;");
-                            });
-                        }
-
-                        writer.WriteLine($"");
-
                         // Add 
                         GenerateAddFunction(writer, true, groupData, null, "NativeStream.Writer", "streamWriter", false, null);
+                        writer.WriteLine($"");         
+                        GenerateAddFunction(writer, true, groupData, null, "UnsafeStream.Writer", "streamWriter", false, null);
                         writer.WriteLine($"");                            
-                        GenerateAddFunction(writer, true, groupData, null, "S", "streamWriter", false, new List<GenericTypeData>() { new GenericTypeData { Type = "S", TypeConstraints = new List<string>() { "unmanaged", "IByteStreamWriter" }}});
+                        GenerateAddFunction(writer, true, groupData, null, "S", "streamWriter", false, new List<GenericTypeData>() { new GenericTypeData { Type = "S", TypeConstraints = new List<string>() { "unmanaged", "IStreamWriter" }}});
                         writer.WriteLine($"");
-                        GenerateAddFunction(writer, true, groupData, null, "DynamicBuffer<byte>", "buffer", true, null);
-                        writer.WriteLine($"");                            
-                        GenerateAddFunction(writer, true, groupData, null, "DynamicBuffer<B>", "buffer", true, new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
+                        GenerateAddFunction(writer, true, groupData, null, "DynamicBuffer<byte>", "list", true, null);
+                        writer.WriteLine($"");
+                        GenerateAddFunction(writer, true, groupData, null, "DynamicBuffer<B>", "list", true, new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
                         writer.WriteLine($"");
                         GenerateAddFunction(writer, true, groupData, null, "NativeList<byte>", "list", true, null);
                         writer.WriteLine($"");
@@ -318,63 +278,47 @@ namespace PolymorphicElementsSourceGenerators
                         writer.WriteLine($"");
 
                         // Insert
-                        GenerateInsertFunction(writer, true, groupData, null, "DynamicBuffer<byte>", "buffer", null);
-                        writer.WriteLine($"");                            
-                        GenerateInsertFunction(writer, true, groupData, null, "DynamicBuffer<B>", "buffer", new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
+                        GenerateInsertFunction(writer, true, groupData, null, "DynamicBuffer<byte>", "list", null);
+                        writer.WriteLine($"");
+                        GenerateInsertFunction(writer, true, groupData, null, "DynamicBuffer<B>", "list", new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
                         writer.WriteLine($"");
                         GenerateInsertFunction(writer, true, groupData, null, "NativeList<byte>", "list", null);
                         writer.WriteLine($"");
                         GenerateInsertFunction(writer, true, groupData, null, "UnsafeList<byte>", "list", null);
                         writer.WriteLine($"");                            
                         GenerateInsertFunction(writer, true, groupData, null, "L", "list", new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
-                        writer.WriteLine($"");
-
-                        // Overwrite
-                        GenerateOverwriteAtFunction(writer, true, groupData, null, "DynamicBuffer<byte>", "buffer", null);
-                        writer.WriteLine($"");                            
-                        GenerateOverwriteAtFunction(writer, true, groupData, null, "DynamicBuffer<B>", "buffer", new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
-                        writer.WriteLine($"");
-                        GenerateOverwriteAtFunction(writer, true, groupData, null, "NativeList<byte>", "list", null);
-                        writer.WriteLine($"");
-                        GenerateOverwriteAtFunction(writer, true, groupData, null, "UnsafeList<byte>", "list", null);
-                        writer.WriteLine($"");                            
-                        GenerateOverwriteAtFunction(writer, true, groupData, null, "L", "list", new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
-                        
-                        writer.WriteLine($"");                            
+                        writer.WriteLine($"");                        
                         
                         // Interface Functions
                         foreach (FunctionData functionData in groupData.FunctionDatas)
                         {
-                            if (!functionData.IgnoreGenerationInUnionElement)
-                            {
-                                functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, false);
+                            functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation, false);
 
-                                writer.WriteLine($"public {functionData.ReturnType} {functionData.Name}{functionData.GenericTypesString}({parametersStringDeclaration}){functionData.GenericTypeConstraintsString}");
+                            writer.WriteLine($"public {functionData.ReturnType} {functionData.Name}{functionData.GenericTypesString}({parametersStringDeclaration}){functionData.GenericTypeConstraintsString}");
+                            writer.WriteInScope(() =>
+                            {
+                                writer.WriteLine($"switch (TypeIdAndData.TypeId)");
                                 writer.WriteInScope(() =>
                                 {
-                                    writer.WriteLine($"switch (TypeId)");
-                                    writer.WriteInScope(() =>
+                                    foreach (ElementData elementData in groupData.ElementDatas)
                                     {
-                                        foreach (ElementData elementData in groupData.ElementDatas)
+                                        writer.WriteLine($"case {elementData.Id}:");
+                                        writer.WriteInScope(() =>
                                         {
-                                            writer.WriteLine($"case {elementData.Id}:");
-                                            writer.WriteInScope(() =>
+                                            writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")}TypeIdAndData.Data.{elementData.Type}.{functionData.Name}({parametersStringInvocation});");
+                                            if (functionData.ReturnTypeIsVoid)
                                             {
-                                                writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")}Data.{elementData.Type}.{functionData.Name}({parametersStringInvocation});");
-                                                if (functionData.ReturnTypeIsVoid)
-                                                {
-                                                    writer.WriteLine($"break;");
-                                                }
-                                            });
-                                        }
-                                    });
-                                    if (!functionData.ReturnTypeIsVoid)
-                                    {
-                                        writer.WriteLine($"return default;");
+                                                writer.WriteLine($"break;");
+                                            }
+                                        });
                                     }
                                 });
-                                writer.WriteLine($"");
-                            }
+                                if (!functionData.ReturnTypeIsVoid)
+                                {
+                                    writer.WriteLine($"return default;");
+                                }
+                            });
+                            writer.WriteLine($"");
                         }
                     });
 
@@ -401,12 +345,14 @@ namespace PolymorphicElementsSourceGenerators
                             // Add 
                             GenerateAddFunction(writer, false, groupData, elementData, "NativeStream.Writer", "streamWriter", false, null);
                             writer.WriteLine($"");                            
-                            GenerateAddFunction(writer, false, groupData, elementData, "S", "streamWriter", false, new List<GenericTypeData>() { new GenericTypeData { Type = "S", TypeConstraints = new List<string>() { "unmanaged", "IByteStreamWriter" }}});
+                            GenerateAddFunction(writer, false, groupData, elementData, "UnsafeStream.Writer", "streamWriter", false, null);
+                            writer.WriteLine($"");                            
+                            GenerateAddFunction(writer, false, groupData, elementData, "S", "streamWriter", false, new List<GenericTypeData>() { new GenericTypeData { Type = "S", TypeConstraints = new List<string>() { "unmanaged", "IStreamWriter" }}});
                             writer.WriteLine($"");
                             GenerateAddFunction(writer, false, groupData, elementData, "DynamicBuffer<byte>", "buffer", true, null);
-                            writer.WriteLine($"");                            
+                            writer.WriteLine($"");    
                             GenerateAddFunction(writer, false, groupData, elementData, "DynamicBuffer<B>", "buffer", true, new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
-                            writer.WriteLine($"");
+                            writer.WriteLine($"");    
                             GenerateAddFunction(writer, false, groupData, elementData, "NativeList<byte>", "list", true, null);
                             writer.WriteLine($"");
                             GenerateAddFunction(writer, false, groupData, elementData, "UnsafeList<byte>", "list", true, null);
@@ -416,26 +362,14 @@ namespace PolymorphicElementsSourceGenerators
 
                             // Insert
                             GenerateInsertFunction(writer, false, groupData, elementData, "DynamicBuffer<byte>", "buffer", null);
-                            writer.WriteLine($"");                            
+                            writer.WriteLine($"");       
                             GenerateInsertFunction(writer, false, groupData, elementData, "DynamicBuffer<B>", "buffer", new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
-                            writer.WriteLine($"");
+                            writer.WriteLine($"");        
                             GenerateInsertFunction(writer, false, groupData, elementData, "NativeList<byte>", "list", null);
                             writer.WriteLine($"");
                             GenerateInsertFunction(writer, false, groupData, elementData, "UnsafeList<byte>", "list", null);
                             writer.WriteLine($"");                            
                             GenerateInsertFunction(writer, false, groupData, elementData, "L", "list", new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
-                            writer.WriteLine($"");
-
-                            // Overwrite
-                            GenerateOverwriteAtFunction(writer, false, groupData, elementData, "DynamicBuffer<byte>", "buffer", null);
-                            writer.WriteLine($"");                            
-                            GenerateOverwriteAtFunction(writer, false, groupData, elementData, "DynamicBuffer<B>", "buffer", new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
-                            writer.WriteLine($"");
-                            GenerateOverwriteAtFunction(writer, false, groupData, elementData, "NativeList<byte>", "list", null);
-                            writer.WriteLine($"");
-                            GenerateOverwriteAtFunction(writer, false, groupData, elementData, "UnsafeList<byte>", "list", null);
-                            writer.WriteLine($"");                            
-                            GenerateOverwriteAtFunction(writer, false, groupData, elementData, "L", "list", new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
                         }
 
                         writer.WriteLine($"");
@@ -443,23 +377,22 @@ namespace PolymorphicElementsSourceGenerators
                         // Execute functions
                         foreach (FunctionData functionData in groupData.FunctionDatas)
                         {
-                            if (!functionData.IgnoreGenerationInManager)
-                            {
-                                GenerateExecuteFunction(writer, groupData, functionData, "NativeStream.Reader", "streamReader", false, null);
-                                writer.WriteLine($"");
-                                GenerateExecuteFunction(writer, groupData, functionData, "S", "streamReader", false, new List<GenericTypeData>() { new GenericTypeData { Type = "S", TypeConstraints = new List<string>() { "unmanaged", "IByteStreamReader" }}});
-                                writer.WriteLine($"");
-                                GenerateExecuteFunction(writer, groupData, functionData, "DynamicBuffer<byte>", "buffer", true, null);
-                                writer.WriteLine($"");                                
-                                GenerateExecuteFunction(writer, groupData, functionData, "DynamicBuffer<B>", "buffer", true, new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
-                                writer.WriteLine($"");
-                                GenerateExecuteFunction(writer, groupData, functionData, "NativeList<byte>", "list", true, null);
-                                writer.WriteLine($"");
-                                GenerateExecuteFunction(writer, groupData, functionData, "UnsafeList<byte>", "list", true, null);
-                                writer.WriteLine($"");                                
-                                GenerateExecuteFunction(writer, groupData, functionData, "L", "list", true, new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
-                                writer.WriteLine($"");
-                            }
+                            GenerateExecuteFunction(writer, groupData, functionData, "NativeStream.Reader", "streamReader", false, null);
+                            writer.WriteLine($"");
+                            GenerateExecuteFunction(writer, groupData, functionData, "UnsafeStream.Reader", "streamReader", false, null);
+                            writer.WriteLine($"");
+                            GenerateExecuteFunction(writer, groupData, functionData, "S", "streamReader", false, new List<GenericTypeData>() { new GenericTypeData { Type = "S", TypeConstraints = new List<string>() { "unmanaged", "IStreamReader" }}});
+                            writer.WriteLine($"");
+                            GenerateExecuteFunction(writer, groupData, functionData, "DynamicBuffer<byte>", "buffer", true, null);
+                            writer.WriteLine($""); 
+                            GenerateExecuteFunction(writer, groupData, functionData, "DynamicBuffer<B>", "buffer", true, new List<GenericTypeData>() { new GenericTypeData { Type = "B", TypeConstraints = new List<string>() { "unmanaged", "IBufferElementData", "IByteBufferElement" }}});
+                            writer.WriteLine($""); 
+                            GenerateExecuteFunction(writer, groupData, functionData, "NativeList<byte>", "list", true, null);
+                            writer.WriteLine($"");
+                            GenerateExecuteFunction(writer, groupData, functionData, "UnsafeList<byte>", "list", true, null);
+                            writer.WriteLine($"");                                
+                            GenerateExecuteFunction(writer, groupData, functionData, "L", "list", true, new List<GenericTypeData>() { new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" }}});
+                            writer.WriteLine($"");
                         }
 
                         // GetElementType
@@ -493,7 +426,7 @@ namespace PolymorphicElementsSourceGenerators
                 writer.WriteLine($"public {(supportElementAccess ? $"{PolymorphicElementMetaData}" : "void")} {methodName}VariableSized{allGenericTypes}(ref {collectionType} {collectionName}){allGenericTypeConstraints}");
                 writer.WriteInScope(() =>
                 {
-                    writer.WriteLine($"switch (TypeId)");
+                    writer.WriteLine($"switch (TypeIdAndData.TypeId)");
                     writer.WriteInScope(() =>
                     {
                         foreach (ElementData tmpElementData in groupData.ElementDatas)
@@ -501,7 +434,7 @@ namespace PolymorphicElementsSourceGenerators
                             writer.WriteLine($"case {tmpElementData.Id}:");
                             writer.WriteInScope(() =>
                             {
-                                writer.WriteLine($"{(supportElementAccess ? $"return " : "")}{PolymorphicElementsUtility}.{methodName}(ref {collectionName}, {tmpElementData.Id}, Data.{tmpElementData.Type});");
+                                writer.WriteLine($"{(supportElementAccess ? $"return " : "")}{PolymorphicElementsUtility}.{methodName}(ref {collectionName}, {tmpElementData.Id}, TypeIdAndData.Data.{tmpElementData.Type});");
                                 if(!supportElementAccess)
                                 {
                                     writer.WriteLine($"break;");
@@ -541,7 +474,7 @@ namespace PolymorphicElementsSourceGenerators
                 writer.WriteLine($"public {PolymorphicElementMetaData} {InsertElement}VariableSized{allGenericTypes}(ref {collectionType} {collectionName}, int atByteIndex){allGenericTypeConstraints}");
                 writer.WriteInScope(() =>
                 {
-                    writer.WriteLine($"switch (TypeId)");
+                    writer.WriteLine($"switch (TypeIdAndData.TypeId)");
                     writer.WriteInScope(() =>
                     {
                         foreach (ElementData tmpElementData in groupData.ElementDatas)
@@ -549,7 +482,7 @@ namespace PolymorphicElementsSourceGenerators
                             writer.WriteLine($"case {tmpElementData.Id}:");
                             writer.WriteInScope(() =>
                             {
-                                writer.WriteLine($"return {PolymorphicElementsUtility}.{InsertElement}(ref {collectionName}, atByteIndex, {tmpElementData.Id}, Data.{tmpElementData.Type});");
+                                writer.WriteLine($"return {PolymorphicElementsUtility}.{InsertElement}(ref {collectionName}, atByteIndex, {tmpElementData.Id}, TypeIdAndData.Data.{tmpElementData.Type});");
                             });
                         }
                     });
@@ -562,47 +495,6 @@ namespace PolymorphicElementsSourceGenerators
                 writer.WriteInScope(() =>
                 {
                     writer.WriteLine($"return {PolymorphicElementsUtility}.{InsertElement}(ref {collectionName}, atByteIndex, {elementData.Id}, e);");
-                });
-            }
-        }
-
-        private void GenerateOverwriteAtFunction(
-            FileWriter writer, 
-            bool forUnionElement,
-            GroupInterfaceData groupData,
-            ElementData elementData,
-            string collectionType, 
-            string collectionName,
-            List<GenericTypeData> collectionGenericTypes)
-        {
-            SourceGenUtils.GetGenericTypesStrings(collectionGenericTypes, out string allGenericTypes, out string allGenericTypeConstraints);
-            
-            if(forUnionElement)
-            {
-                writer.WriteLine($"public {PolymorphicElementMetaData} {TryOverwriteBytesAtNoResize}VariableSized{allGenericTypes}(ref {collectionType} {collectionName}, int atByteIndex){allGenericTypeConstraints}");
-                writer.WriteInScope(() =>
-                {
-                    writer.WriteLine($"switch (TypeId)");
-                    writer.WriteInScope(() =>
-                    {
-                        foreach (ElementData tmpElementData in groupData.ElementDatas)
-                        {
-                            writer.WriteLine($"case {tmpElementData.Id}:");
-                            writer.WriteInScope(() =>
-                            {
-                                writer.WriteLine($"return {PolymorphicElementsUtility}.{TryOverwriteBytesAtNoResize}(ref {collectionName}, atByteIndex, {tmpElementData.Id}, Data.{tmpElementData.Type});");
-                            });
-                        }
-                    });
-                    writer.WriteLine($"return default;");
-                });
-            }
-            else
-            {
-                writer.WriteLine($"public static {PolymorphicElementMetaData} {TryOverwriteBytesAtNoResize}{allGenericTypes}(ref {collectionType} {collectionName}, int atByteIndex, {elementData.Type} e){allGenericTypeConstraints}");
-                writer.WriteInScope(() =>
-                {
-                    writer.WriteLine($"return {PolymorphicElementsUtility}.{TryOverwriteBytesAtNoResize}(ref {collectionName}, atByteIndex, {elementData.Id}, e);");
                 });
             }
         }
@@ -630,19 +522,19 @@ namespace PolymorphicElementsSourceGenerators
             SourceGenUtils.GetGenericTypesStrings(allGenericTypeDatas, out string allGenericTypes, out string allGenericTypeConstraints);
 
             writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{allGenericTypes}(ref {collectionType} {collectionName}{(supportIndexing ? $", int {StartByteIndex}, out int {NextStartByteIndex}" : "")}{parametersStringDeclaration}, out bool success){allGenericTypeConstraints}");
-            writer.WriteInScope(() =>
+            writer.WriteInScope((System.Action)(() =>
             {         
                 writer.WriteLine($"success = false;");
-                writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? $"{StartByteIndex}, out {NextStartByteIndex}," : "")} out ushort elementId))");
-                writer.WriteInScope(() =>
+                writer.WriteLine($"if ({ByteCollectionUtility}.{Read}(ref {collectionName}, {(supportIndexing ? $"{StartByteIndex}, out {NextStartByteIndex}," : "")} out ushort elementId))");
+                writer.WriteInScope((System.Action)(() =>
                 {
                     writer.WriteLine($"switch (elementId)");
-                    writer.WriteInScope(() =>
+                    writer.WriteInScope((System.Action)(() =>
                     {
                         foreach (ElementData elementData in groupData.ElementDatas)
                         {
                             writer.WriteLine($"case {elementData.Id}:");
-                            writer.WriteInScope(() =>
+                            writer.WriteInScope((System.Action)(() =>
                             {
                                 List<GenericTypeData> readGenericTypeDatas = new List<GenericTypeData>();
                                 readGenericTypeDatas.Add(new GenericTypeData
@@ -658,14 +550,10 @@ namespace PolymorphicElementsSourceGenerators
 
                                 if(supportIndexing && functionData.WriteBackType == MethodWriteBackType.RefModify)
                                 {
-                                    writer.WriteLine($"ref {elementData.Type} e = ref {PolymorphicElementsUtility}.{InternalUse}.{ReadAnyAsRef}{readGenericTypes}(ref {collectionName}, {(supportIndexing ? $"{NextStartByteIndex}, out {NextStartByteIndex}," : "")} out success);");
+                                    writer.WriteLine($"ref {elementData.Type} e = ref {ByteCollectionUtility}.{ReadAsRef}{readGenericTypes}(ref {collectionName}, {(supportIndexing ? $"{NextStartByteIndex}, out {NextStartByteIndex}," : "")} out success);");
                                     writer.WriteLine($"if(success)");
                                     writer.WriteInScope(() =>
                                     {
-                                        if(supportIndexing && elementData.HasAdditionalPayload)
-                                        {
-                                            writer.WriteLine($"{NextStartByteIndex} += e.{GetAdditionalPayloadByteSize}();");
-                                        }
                                         writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")}e.{functionData.Name}({parametersStringInvocation});");
                                     });
                                 }
@@ -675,35 +563,31 @@ namespace PolymorphicElementsSourceGenerators
                                     {
                                     writer.WriteLine($"int {StartByteIndexOfElementValue} = {NextStartByteIndex};");
                                     }
-                                    writer.WriteLine($"if ({PolymorphicElementsUtility}.{InternalUse}.{ReadAny}(ref {collectionName}, {(supportIndexing ? $"{StartByteIndexOfElementValue}, out {NextStartByteIndex}," : "")} out {elementData.Type} e))");
-                                    writer.WriteInScope(() =>
+                                    writer.WriteLine($"if ({ByteCollectionUtility}.{Read}(ref {collectionName}, {(supportIndexing ? $"{StartByteIndexOfElementValue}, out {NextStartByteIndex}," : "")} out {elementData.Type} e))");
+                                    writer.WriteInScope((System.Action)(() =>
                                     {
-                                        if(supportIndexing && elementData.HasAdditionalPayload)
-                                        {
-                                            writer.WriteLine($"{NextStartByteIndex} += e.{GetAdditionalPayloadByteSize}();");
-                                        }
                                         writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : $"{functionData.ReturnType} returnValue = ")}e.{functionData.Name}({parametersStringInvocation});");
                                         if(supportIndexing && functionData.WriteBackType == MethodWriteBackType.Write)
                                         {
-                                            writer.WriteLine($"{PolymorphicElementsUtility}.{InternalUse}.{WriteAny}(ref {collectionName}, {StartByteIndexOfElementValue}, e);");
+                                            writer.WriteLine($"{ByteCollectionUtility}.{PESourceGenerator.WriteNoResize}(ref {collectionName}, {StartByteIndexOfElementValue}, e);");
                                         }
                                         writer.WriteLine($"success = true;");
                                         if(!functionData.ReturnTypeIsVoid)
                                         {
                                             writer.WriteLine($"return returnValue;");
                                         }
-                                    });
+                                    }));
                                 }
                                 writer.WriteLine($"break;");
-                            });
+                            }));
                         }
-                    });
-                });    
+                    }));
+                }));    
                 if(!functionData.ReturnTypeIsVoid)
                 {
                     writer.WriteLine($"return default;");
                 }
-            });
+            }));
         }
     }
 }

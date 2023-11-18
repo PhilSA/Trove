@@ -7,9 +7,9 @@ namespace Trove.PolymorphicElements
 {
 	public interface IPolymorphicUnionElement
 	{
-		public int GetVariableElementTotalSizeWithID();
 		public void AppendElementVariableSized(ref NativeStream.Writer streamWriter);
-		public void AppendElementVariableSized<S>(ref S streamWriter) where S : unmanaged, IByteStreamWriter;
+		public void AppendElementVariableSized(ref UnsafeStream.Writer streamWriter);
+		public void AppendElementVariableSized<S>(ref S streamWriter) where S : unmanaged, IStreamWriter;
 		public PolymorphicElementMetaData AddElementVariableSized(ref DynamicBuffer<byte> buffer);
 		public PolymorphicElementMetaData AddElementVariableSized<B>(ref DynamicBuffer<B> buffer) where B : unmanaged, IBufferElementData, IByteBufferElement;
 		public PolymorphicElementMetaData AddElementVariableSized(ref NativeList<byte> list);
@@ -20,10 +20,5 @@ namespace Trove.PolymorphicElements
 		public PolymorphicElementMetaData InsertElementVariableSized(ref NativeList<byte> list, int atByteIndex);
 		public PolymorphicElementMetaData InsertElementVariableSized(ref UnsafeList<byte> list, int atByteIndex);
 		public PolymorphicElementMetaData InsertElementVariableSized<L>(ref L list, int atByteIndex) where L : unmanaged, IByteList;
-		public PolymorphicElementMetaData TryOverwriteBytesAtNoResizeVariableSized(ref DynamicBuffer<byte> buffer, int atByteIndex);
-		public PolymorphicElementMetaData TryOverwriteBytesAtNoResizeVariableSized<B>(ref DynamicBuffer<B> buffer, int atByteIndex) where B : unmanaged, IBufferElementData, IByteBufferElement;
-		public PolymorphicElementMetaData TryOverwriteBytesAtNoResizeVariableSized(ref NativeList<byte> list, int atByteIndex);
-		public PolymorphicElementMetaData TryOverwriteBytesAtNoResizeVariableSized(ref UnsafeList<byte> list, int atByteIndex);
-		public PolymorphicElementMetaData TryOverwriteBytesAtNoResizeVariableSized<L>(ref L list, int atByteIndex) where L : unmanaged, IByteList;
 	}
 }

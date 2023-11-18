@@ -42,13 +42,14 @@ Moreover, be sure to check the "Samples" tab of each package's page in the Packa
 Package statuses:
 * ✅: Slightly experimental
 * ⚠️: Experimental
-* ⛔: Too experimental
+* ⛔: Too experimental (under construction)
 
 
 | **Name** | **Install URLs** | **Description** | **Status** |
 | :--- | :--- | :--- | :--- |
 | **Common** | `https://github.com/PhilSA/Trove.git?path=/com.trove.common` | Trove Common provides various tools and utilities that may be used by other packages or projects. <br> ([Documentation](./com.trove.common/Documentation~/index.md)) | ✅ |
 | **Polymorphic Elements** | `https://github.com/PhilSA/Trove.git?path=/com.trove.polymorphicelements` | Trove Polymorphic Elements provides a codegen tool for polymorphic behaviour in burstable unmanaged code. They can be used to efficiently solve problems that involve ordering, conditional execution, or a large variety of behaviours in ECS: events, delegates, coroutines, state machines, behaviour trees, etc... <br> ([Documentation](./com.trove.polymorphicelements/Documentation~/index.md)) | ⚠️ |
+| **Entity Virtual Objects** | `https://github.com/PhilSA/Trove.git?path=/com.trove.entityvirtualobjects` | Trove Entity Virtual Objects provides a way to create a world of virtual "objects" of any unamanged type that belongs to an entity. Objects can also include collection types, and nested collections are supported. Any objects belonging to the same Entity can safely read and write to each other in a parallel entity iteration job, since an objects world's memory is all backed by the same dynamic buffer. <br> ([Documentation](./com.trove.entityvirtualobjects/Documentation~/index.md)) | ⚠️ |
 | **Attributes** | `https://github.com/PhilSA/Trove.git?path=/com.trove.attributes` | Trove Attributes allows you to define identifiable "numbers" (attributes) on entities, and add/remove "rules" (modifiers) that affect the evaluation of these numbers' values. This tool can be used to effortlessly setup gameplay mechanics such as RPG character/equipment attributes, buffs, effects, roguelike-style stackable powerups and synergies, etc... <br> ([Documentation](./com.trove.attributes/Documentation~/index.md)) | ⚠️ |
 | **Utility AI** | First, install: <br> `https://github.com/PhilSA/Trove.git?path=/com.trove.common` <br><br> Then, install: <br> `https://github.com/PhilSA/Trove.git?path=/com.trove.utilityai` | Trove Utility AI provides a flexible and efficient decision-making system for ECS. <br> ([Documentation](./com.trove.utilityai/Documentation~/index.md)) | ⚠️ |
 | **Tweens** | First, install: <br> `https://github.com/PhilSA/Trove.git?path=/com.trove.common` <br><br> Then, install: <br> `https://github.com/PhilSA/Trove.git?path=/com.trove.tweens` | Trove Tweens is a simple tweening tool that allows you to create your own highly-efficient custom tweens. <br> ([Documentation](./com.trove.tweens/Documentation~/index.md)) | ⚠️ |

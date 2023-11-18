@@ -16,6 +16,12 @@
         "com.unity.entities": "1.0.10"
       }
     },
+    "com.trove.entityvirtualobjects": {
+      "version": "file:../../../com.trove.entityvirtualobjects",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "com.trove.polymorphicelements": {
       "version": "file:../../../com.trove.polymorphicelements",
       "depth": 0,
@@ -128,11 +134,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.logging": {
-      "version": "1.0.11",
+      "version": "1.0.16",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.burst": "1.8.4",
+        "com.unity.burst": "1.8.8",
         "com.unity.collections": "2.1.4"
       },
       "url": "https://packages.unity.com"

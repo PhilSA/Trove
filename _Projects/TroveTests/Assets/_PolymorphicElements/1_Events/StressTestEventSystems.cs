@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Rendering;
 using Trove.PolymorphicElements;
 using Unity.Jobs;
+using Unity.Logging;
 using Unity.Collections.LowLevel.Unsafe;
 
 #region Event Definitions
@@ -326,17 +327,17 @@ public partial struct StressTestEventExecutorSystem : ISystem
 
             // Iterate and execute events
             int elementStartByteIndex = 0;
-            bool success = true;
+            bool success = EventList.Length > 0;
             while (success)
             {
                 IStressTestEventManager.Execute(ref EventList, elementStartByteIndex, out elementStartByteIndex, ref data, out success);
-                if(success)
+                if (success)
                 {
                     eventsCounter++;
                 }
             }
 
-            // UnityEngine.Debug.Log($"Executed {eventsCounter} events");
+           Log.Debug($"Executed {eventsCounter} events");
 
             // Clear events
             EventList.Clear();

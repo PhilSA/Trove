@@ -75,12 +75,12 @@ public class StateMachineAuthoring : MonoBehaviour
                     if (PolymorphicElementsUtility.ReadElementValue(ref stateElements, stateMetaDatas[moveStateIndex].StartByteIndex, out _, out MoveState moveState))
                     {
                         moveState.NextStateIndex = rotateStateIndex;
-                        PolymorphicElementsUtility.WriteElementValue(ref stateElements, stateMetaDatas[moveStateIndex].StartByteIndex, moveState);
+                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElements, stateMetaDatas[moveStateIndex].StartByteIndex, moveState);
                     }
                     if (PolymorphicElementsUtility.ReadElementValue(ref stateElements, stateMetaDatas[rotateStateIndex].StartByteIndex, out _, out RotateState rotateState))
                     {
                         rotateState.NextStateIndex = scaleStateIndex;
-                        PolymorphicElementsUtility.WriteElementValue(ref stateElements, stateMetaDatas[rotateStateIndex].StartByteIndex, rotateState);
+                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElements, stateMetaDatas[rotateStateIndex].StartByteIndex, rotateState);
                     }
                     if (PolymorphicElementsUtility.ReadElementValue(ref stateElements, stateMetaDatas[scaleStateIndex].StartByteIndex, out _, out ScaleState scaleState))
                     {
@@ -96,22 +96,22 @@ public class StateMachineAuthoring : MonoBehaviour
                             PreviousStateIndex = -1,
                         };
 
-                        PolymorphicElementsUtility.WriteElementValue(ref stateElements, stateMetaDatas[scaleStateIndex].StartByteIndex, scaleState);
+                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElements, stateMetaDatas[scaleStateIndex].StartByteIndex, scaleState);
                     }
                     if (PolymorphicElementsUtility.ReadElementValue(ref stateElements, stateMetaDatas[redStateIndex].StartByteIndex, out _, out ColorState redState))
                     {
                         redState.NextStateIndex = greenStateIndex;
-                        PolymorphicElementsUtility.WriteElementValue(ref stateElements, stateMetaDatas[redStateIndex].StartByteIndex, redState);
+                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElements, stateMetaDatas[redStateIndex].StartByteIndex, redState);
                     }
                     if (PolymorphicElementsUtility.ReadElementValue(ref stateElements, stateMetaDatas[greenStateIndex].StartByteIndex, out _, out ColorState greenState))
                     {
                         greenState.NextStateIndex = blueStateIndex;
-                        PolymorphicElementsUtility.WriteElementValue(ref stateElements, stateMetaDatas[greenStateIndex].StartByteIndex, greenState);
+                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElements, stateMetaDatas[greenStateIndex].StartByteIndex, greenState);
                     }
                     if (PolymorphicElementsUtility.ReadElementValue(ref stateElements, stateMetaDatas[blueStateIndex].StartByteIndex, out _, out ColorState blueState))
                     {
                         blueState.NextStateIndex = redStateIndex;
-                        PolymorphicElementsUtility.WriteElementValue(ref stateElements, stateMetaDatas[blueStateIndex].StartByteIndex, blueState);
+                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElements, stateMetaDatas[blueStateIndex].StartByteIndex, blueState);
                     }
                 }
             }

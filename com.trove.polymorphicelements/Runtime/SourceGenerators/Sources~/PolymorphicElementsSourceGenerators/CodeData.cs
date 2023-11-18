@@ -29,8 +29,6 @@ namespace PolymorphicElementsSourceGenerators
         public string GenericTypesString;
         public string GenericTypeConstraintsString;
         public bool ReturnTypeIsVoid;
-        public bool IgnoreGenerationInManager;
-        public bool IgnoreGenerationInUnionElement;
         public MethodWriteBackType WriteBackType;
         public List<ParameterData> ParameterDatas = new List<ParameterData>();
 
@@ -67,7 +65,6 @@ namespace PolymorphicElementsSourceGenerators
     {
         public ushort Id;
         public string Type;
-        public bool HasAdditionalPayload;
     }
 
     public class GenericTypeData
