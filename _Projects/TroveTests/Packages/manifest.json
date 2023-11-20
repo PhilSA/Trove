@@ -2,8 +2,7 @@
   "dependencies": {
     "com.trove.attributes": "file:../../../com.trove.attributes",
     "com.trove.common": "file:../../../com.trove.common",
-    "com.trove.polymorphicelements": "file:../../../com.trove.polymorphicelements",
-    "com.trove.entityvirtualobjects": "file:../../../com.trove.entityvirtualobjects",
+    "com.trove.virtualobjects": "file:../../../com.trove.virtualobjects",
     "com.trove.tweens": "file:../../../com.trove.tweens",
     "com.trove.utilityai": "file:../../../com.trove.utilityai",
     "com.unity.collab-proxy": "2.2.0",

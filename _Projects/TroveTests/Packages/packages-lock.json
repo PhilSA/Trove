@@ -16,18 +16,6 @@
         "com.unity.entities": "1.0.10"
       }
     },
-    "com.trove.entityvirtualobjects": {
-      "version": "file:../../../com.trove.entityvirtualobjects",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {}
-    },
-    "com.trove.polymorphicelements": {
-      "version": "file:../../../com.trove.polymorphicelements",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {}
-    },
     "com.trove.tweens": {
       "version": "file:../../../com.trove.tweens",
       "depth": 0,
@@ -43,6 +31,12 @@
       "dependencies": {
         "com.unity.entities": "1.0.10"
       }
+    },
+    "com.trove.virtualobjects": {
+      "version": "file:../../../com.trove.virtualobjects",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
     },
     "com.unity.burst": {
       "version": "1.8.9",
