@@ -58,7 +58,10 @@ public partial struct StateMachineSystem : ISystem
                     };
                     for (int s = 0; s < data.StateMetaDataBuffer.Length; s++)
                     {
-                        IStateManager.OnStateMachineInitialize(PolymorphicElementsUtility.GetPtrOfByteIndex(data.StateElementBuffer, data.StateMetaDataBuffer[s].Value.StartByteIndex), out _, ref random, ref stateMachine, ref data);
+                        if (PolymorphicElementsUtility.GetPtrOfByteIndex(data.StateElementBuffer, data.StateMetaDataBuffer[s].Value.StartByteIndex, out PolymorphicElementPtr ptr))
+                        {
+                            IStateManager.OnStateMachineInitialize(ptr, out _, ref random, ref stateMachine, ref data);
+                        }
                     }
                     MyStateMachine.TransitionToState(stateMachine.StartStateIndex, ref stateMachine, ref data);
                 }
@@ -99,7 +102,10 @@ public partial struct StateMachineSystem : ISystem
             };
 
             // Update current state
-            IStateManager.OnUpdate(PolymorphicElementsUtility.GetPtrOfByteIndex(data.StateElementBuffer, sm.ValueRW.CurrentStateByteStartIndex), out _, sm.ValueRO.Speed, ref sm.ValueRW, ref data);
+            if (PolymorphicElementsUtility.GetPtrOfByteIndex(data.StateElementBuffer, sm.ValueRW.CurrentStateByteStartIndex, out PolymorphicElementPtr ptr))
+            {
+                IStateManager.OnUpdate(ptr, out _, sm.ValueRO.Speed, ref sm.ValueRW, ref data);
+            }
         }
     }
 }

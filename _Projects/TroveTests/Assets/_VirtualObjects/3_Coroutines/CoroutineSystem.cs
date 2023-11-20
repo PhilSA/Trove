@@ -51,27 +51,31 @@ public partial struct CoroutineSystem : ISystem
                     DynamicBuffer<PolymorphicElementMetaData> coroutineMetaDatasBuffer = state.EntityManager.GetBuffer<CoroutineMetaData>(coroutineEntity).Reinterpret<PolymorphicElementMetaData>();
 
                     // Add sequence of states
-                    coroutineMetaDatasBuffer.Add(PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBuffer, new Coroutine_MoveTo
+                    PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBuffer, new Coroutine_MoveTo
                     {
                         Entity = cube,
                         Target = math.up() * 5f,
                         Speed = 5f,
-                    }));
-                    coroutineMetaDatasBuffer.Add(PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBuffer, new Coroutine_Wait
+                    }, out PolymorphicElementMetaData metaData);
+                    coroutineMetaDatasBuffer.Add(metaData);
+                    PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBuffer, new Coroutine_Wait
                     {
                         Time = 2f,
-                    }));
-                    coroutineMetaDatasBuffer.Add(PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBuffer, new Coroutine_SetColor
+                    }, out metaData);
+                    coroutineMetaDatasBuffer.Add(metaData);
+                    PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBuffer, new Coroutine_SetColor
                     {
                         Entity = cube,
                         Target = new float4(10f, 0f, 0f, 1f),
-                    }));
-                    coroutineMetaDatasBuffer.Add(PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBuffer, new Coroutine_MoveTo
+                    }, out metaData);
+                    coroutineMetaDatasBuffer.Add(metaData);
+                    PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBuffer, new Coroutine_MoveTo
                     {
                         Entity = cube,
                         Target = math.up() * 5f + math.right() * 6f,
                         Speed = 2f,
-                    }));
+                    }, out metaData);
+                    coroutineMetaDatasBuffer.Add(metaData);
                 }
             }
 
@@ -120,12 +124,18 @@ public partial struct CoroutineSystem : ISystem
                 int currentStateByteStartIndex = metaDataBuffer[coroutine.ValueRW.CurrentStateIndex].Value.StartByteIndex;
                 DynamicBuffer<byte> coroutineStateBytes = coroutineStateBuffer.Reinterpret<byte>();
 
+                PolymorphicElementPtr ptr;
                 if (mustTriggerBegin)
                 {
-                    
-                    ICoroutineStateManager.Begin(PolymorphicElementsUtility.GetPtrOfByteIndex(coroutineStateBytes, currentStateByteStartIndex), out _, ref data);
+                    if (PolymorphicElementsUtility.GetPtrOfByteIndex(coroutineStateBytes, currentStateByteStartIndex, out ptr))
+                    {
+                        ICoroutineStateManager.Begin(ptr, out _, ref data);
+                    }
                 }
-                ICoroutineStateManager.Update(PolymorphicElementsUtility.GetPtrOfByteIndex(coroutineStateBytes, currentStateByteStartIndex), out _, ref data);
+                if (PolymorphicElementsUtility.GetPtrOfByteIndex(coroutineStateBytes, currentStateByteStartIndex, out ptr))
+                {
+                    ICoroutineStateManager.Update(ptr, out _, ref data);
+                }
             }
             else
             {

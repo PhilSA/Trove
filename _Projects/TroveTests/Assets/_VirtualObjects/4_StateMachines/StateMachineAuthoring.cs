@@ -28,46 +28,52 @@ public class StateMachineAuthoring : MonoBehaviour
             // Write states
             {
                 int moveStateIndex = stateMetaDatas.Length;
-                stateMetaDatas.Add(PolymorphicElementsUtility.AddElementGetMetaData(ref stateElements, new MoveState
+                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElements, new MoveState
                 {
                     TimedState = new TimedState(2f),
                     Movement = math.forward(),
-                }));
+                }, out PolymorphicElementMetaData metaData);
+                stateMetaDatas.Add(metaData);
 
                 int rotateStateIndex = stateMetaDatas.Length;
-                stateMetaDatas.Add(PolymorphicElementsUtility.AddElementGetMetaData(ref stateElements, new RotateState
+                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElements, new RotateState
                 {
                     TimedState = new TimedState(2f),
                     RotationSpeed = new float3(1f),
-                }));
+                }, out metaData);
+                stateMetaDatas.Add(metaData);
 
                 int scaleStateIndex = stateMetaDatas.Length;
-                stateMetaDatas.Add(PolymorphicElementsUtility.AddElementGetMetaData(ref stateElements, new ScaleState
+                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElements, new ScaleState
                 {
                     TimedState = new TimedState(2f),
                     AddedScale = 3f,
-                }));
+                }, out metaData);
+                stateMetaDatas.Add(metaData);
 
                 int redStateIndex = stateMetaDatas.Length;
-                stateMetaDatas.Add(PolymorphicElementsUtility.AddElementGetMetaData(ref stateElements, new ColorState
+                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElements, new ColorState
                 {
                     TimedState = new TimedState(0.25f),
                     Color = new float4(100f, 0f, 0, 1f),
-                }));
+                }, out metaData);
+                stateMetaDatas.Add(metaData);
 
                 int greenStateIndex = stateMetaDatas.Length;
-                stateMetaDatas.Add(PolymorphicElementsUtility.AddElementGetMetaData(ref stateElements, new ColorState
+                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElements, new ColorState
                 {
                     TimedState = new TimedState(0.25f),
                     Color = new float4(0f, 100f, 0, 1f),
-                }));
+                }, out metaData);
+                stateMetaDatas.Add(metaData);
 
                 int blueStateIndex = stateMetaDatas.Length;
-                stateMetaDatas.Add(PolymorphicElementsUtility.AddElementGetMetaData(ref stateElements, new ColorState
+                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElements, new ColorState
                 {
                     TimedState = new TimedState(0.25f),
                     Color = new float4(0f, 0f, 100, 1f),
-                }));
+                }, out metaData);
+                stateMetaDatas.Add(metaData);
 
                 // Modify state data after adding them
                 {

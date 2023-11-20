@@ -50,9 +50,9 @@ public struct MyStateMachine : IComponentData
             GetStateMetaData(newStateIndex, out PolymorphicElementMetaData newStateMetaData, ref data.StateMetaDataBuffer))
         {
             // Call state exit on current state
-            if (stateMachine.CurrentStateByteStartIndex >= 0)
+            if (PolymorphicElementsUtility.GetPtrOfByteIndex(data.StateElementBuffer, stateMachine.CurrentStateByteStartIndex, out PolymorphicElementPtr ptr))
             {
-                IStateManager.OnStateExit(PolymorphicElementsUtility.GetPtrOfByteIndex(data.StateElementBuffer, stateMachine.CurrentStateByteStartIndex), out _, ref stateMachine, ref data);
+                IStateManager.OnStateExit(ptr, out _, ref stateMachine, ref data);
             }
 
             // Change current state
@@ -61,7 +61,10 @@ public struct MyStateMachine : IComponentData
             stateMachine.CurrentStateByteStartIndex = newStateMetaData.StartByteIndex;
 
             // Call state enter on new current state
-            IStateManager.OnStateEnter(PolymorphicElementsUtility.GetPtrOfByteIndex(data.StateElementBuffer, stateMachine.CurrentStateByteStartIndex), out _, ref stateMachine, ref data);
+            if (PolymorphicElementsUtility.GetPtrOfByteIndex(data.StateElementBuffer, stateMachine.CurrentStateByteStartIndex, out ptr))
+            {
+                IStateManager.OnStateEnter(ptr, out _, ref stateMachine, ref data);
+            }
 
             return true;
         }

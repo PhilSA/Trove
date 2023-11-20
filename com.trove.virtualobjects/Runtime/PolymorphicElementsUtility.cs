@@ -31,6 +31,12 @@ namespace Trove.PolymorphicElements
     {
         public const int SizeOfElementTypeId = sizeof(ushort);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool CheckIndexValid(int index, int length)
+        {
+            return index >= 0 && index < length;
+        }
+
         #region GetPtr
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool GetPtrOfNextStreamElement(NativeStream.Reader stream, out PolymorphicElementPtr ptr)
@@ -59,15 +65,27 @@ namespace Trove.PolymorphicElements
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PolymorphicElementPtr GetPtrOfByteIndex(DynamicBuffer<byte> buffer, int byteIndex)
+        public static bool GetPtrOfByteIndex(DynamicBuffer<byte> buffer, int byteIndex, out PolymorphicElementPtr ptr)
         {
-            return (byte*)buffer.GetUnsafePtr() + (long)byteIndex;
+            if (CheckIndexValid(byteIndex, buffer.Length))
+            {
+                ptr = (byte*)buffer.GetUnsafePtr() + (long)byteIndex;
+                return true;
+            }
+            ptr = default;
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PolymorphicElementPtr GetPtrOfByteIndex(NativeList<byte> list, int byteIndex)
+        public static bool GetPtrOfByteIndex(NativeList<byte> list, int byteIndex, out PolymorphicElementPtr ptr)
         {
-            return list.GetUnsafePtr() + (long)byteIndex;
+            if (CheckIndexValid(byteIndex, list.Length))
+            {
+                ptr = list.GetUnsafePtr() + (long)byteIndex;
+                return true;
+            }
+            ptr = default;
+            return false;
         }
         #endregion
 
@@ -93,11 +111,11 @@ namespace Trove.PolymorphicElements
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PolymorphicElementMetaData AddElementGetMetaData<T>(ref DynamicBuffer<byte> buffer, T writer)
+        public static void AddElementGetMetaData<T>(ref DynamicBuffer<byte> buffer, T writer, out PolymorphicElementMetaData metaData)
             where T : unmanaged, IPolymorphicElementWriter
         {
             int totalElementSize = writer.GetTotalSize();
-            PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+            metaData = new PolymorphicElementMetaData
             {
                 TypeId = writer.GetTypeId(),
                 StartByteIndex = buffer.Length,
@@ -107,7 +125,6 @@ namespace Trove.PolymorphicElements
             buffer.ResizeUninitialized(buffer.Length + totalElementSize);
             byte* writePtr = (byte*)buffer.GetUnsafePtr() + (long)prevLength;
             writer.Write(writePtr);
-            return metaData;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -122,11 +139,11 @@ namespace Trove.PolymorphicElements
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PolymorphicElementMetaData AddElementGetMetaData<T>(ref NativeList<byte> list, T writer)
+        public static void AddElementGetMetaData<T>(ref NativeList<byte> list, T writer, out PolymorphicElementMetaData metaData)
             where T : unmanaged, IPolymorphicElementWriter
         {
             int totalElementSize = writer.GetTotalSize();
-            PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+            metaData = new PolymorphicElementMetaData
             {
                 TypeId = writer.GetTypeId(),
                 StartByteIndex = list.Length,
@@ -136,16 +153,15 @@ namespace Trove.PolymorphicElements
             list.ResizeUninitialized(list.Length + totalElementSize);
             byte* writePtr = list.GetUnsafePtr() + (long)prevLength;
             writer.Write(writePtr);
-            return metaData;
         }
         #endregion
 
         #region InsertElement
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InsertElement<T>(ref DynamicBuffer<byte> buffer, int atByteIndex, T writer)
+        public static bool InsertElement<T>(ref DynamicBuffer<byte> buffer, int atByteIndex, T writer)
             where T : unmanaged, IPolymorphicElementWriter
         {
-            if (atByteIndex >= 0 && atByteIndex < buffer.Length)
+            if (CheckIndexValid(atByteIndex, buffer.Length))
             {
                 long byteSizeOfRestOfList = buffer.Length - atByteIndex;
                 buffer.ResizeUninitialized(buffer.Length + writer.GetTotalSize());
@@ -153,17 +169,19 @@ namespace Trove.PolymorphicElements
                 byte* destPtr = startPtr + byteSizeOfRestOfList;
                 UnsafeUtility.MemCpy(destPtr, startPtr, byteSizeOfRestOfList);
                 writer.Write(startPtr);
+                return true;
             }
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PolymorphicElementMetaData InsertElementGetMetaData<T>(ref DynamicBuffer<byte> buffer, int atByteIndex, T writer)
+        public static bool InsertElementGetMetaData<T>(ref DynamicBuffer<byte> buffer, int atByteIndex, T writer, out PolymorphicElementMetaData metaData)
             where T : unmanaged, IPolymorphicElementWriter
         {
-            if (atByteIndex >= 0 && atByteIndex < buffer.Length)
+            if (CheckIndexValid(atByteIndex, buffer.Length))
             {
                 int totalElementSize = writer.GetTotalSize();
-                PolymorphicElementMetaData metaData = new PolymorphicElementMetaData
+                metaData = new PolymorphicElementMetaData
                 {
                     TypeId = writer.GetTypeId(),
                     StartByteIndex = atByteIndex,
@@ -175,10 +193,10 @@ namespace Trove.PolymorphicElements
                 byte* destPtr = startPtr + byteSizeOfRestOfList;
                 UnsafeUtility.MemCpy(destPtr, startPtr, byteSizeOfRestOfList);
                 writer.Write(startPtr);
-                return metaData;
+                return true;
             }
-
-            return default;
+            metaData = default;
+            return false;
         }
         #endregion
 

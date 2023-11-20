@@ -422,9 +422,9 @@ public partial struct StressTestEventExecutorSystem : ISystem
 
             // Iterate and execute events
             int readByteIndex = 0;
-            while (readByteIndex < EventList.Length - 1)
+            while (PolymorphicElementsUtility.GetPtrOfByteIndex(EventList, readByteIndex, out PolymorphicElementPtr ptr))
             {
-                IStressTestEventManager.Execute(PolymorphicElementsUtility.GetPtrOfByteIndex(EventList, readByteIndex), out int readSize, ref data);
+                IStressTestEventManager.Execute(ptr, out int readSize, ref data);
                 readByteIndex += readSize;
                 eventsCounter++;
             }
