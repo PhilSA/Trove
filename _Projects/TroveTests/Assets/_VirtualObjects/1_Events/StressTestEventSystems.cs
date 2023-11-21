@@ -8,6 +8,7 @@ using Trove.PolymorphicElements;
 using Unity.Jobs;
 using Unity.Logging;
 using Unity.Collections.LowLevel.Unsafe;
+using System.Runtime.CompilerServices;
 
 #region Event Definitions
 public struct StressTestEventsData
@@ -165,6 +166,8 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
         {
             Random random = Random.CreateFromIndex((uint)(Time * 10000f));
 
+            NativeListWrapper<byte> eventListWrapper = new NativeListWrapper<byte>(EventList);
+
             for (int i = 0; i < EventsCount; i++)
             {
                 if (Singleton.UseUnionEvents)
@@ -199,21 +202,21 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
                     switch (i % 3)
                     {
                         case 0:
-                            PolymorphicElementsUtility.AddElement(ref EventList, new StressTestEvent_SetPosition
+                            PolymorphicElementsUtility.AddElement(ref eventListWrapper, new StressTestEvent_SetPosition
                             {
                                 Entity = Singleton.MainCubeInstance,
                                 Position = random.NextFloat3(new float3(-3f), new float3(3f)),
                             });
                             break;
                         case 1:
-                            PolymorphicElementsUtility.AddElement(ref EventList, new StressTestEvent_SetRotation
+                            PolymorphicElementsUtility.AddElement(ref eventListWrapper, new StressTestEvent_SetRotation
                             {
                                 Entity = Singleton.MainCubeInstance,
                                 Rotation = random.NextQuaternionRotation(),
                             });
                             break;
                         case 2:
-                            PolymorphicElementsUtility.AddElement(ref EventList, new StressTestEvent_SetScale
+                            PolymorphicElementsUtility.AddElement(ref eventListWrapper, new StressTestEvent_SetScale
                             {
                                 Entity = Singleton.MainCubeInstance,
                                 Scale = random.NextFloat(0.5f, 2f),
@@ -272,6 +275,8 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
         {
             Random random = Random.CreateFromIndex((uint)(Time * 10000f));
 
+            NativeListWrapper<byte> eventListWrapper = new NativeListWrapper<byte>(EventList);
+
             for (int i = 0; i < EventsCount; i++)
             {
                 if (Singleton.UseUnionEvents)
@@ -284,7 +289,7 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
                 }
                 else
                 {
-                    PolymorphicElementsUtility.AddElement(ref EventList, new StressTestEvent_SetColor
+                    PolymorphicElementsUtility.AddElement(ref eventListWrapper, new StressTestEvent_SetColor
                     {
                         Entity = Singleton.MainCubeInstance,
                         Color = new float4(random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), 1f),
@@ -294,6 +299,7 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
         }
     }
 }
+
 
 [BurstCompile]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -384,9 +390,8 @@ public partial struct StressTestEventExecutorSystem : ISystem
                 EmissionColorLookup = EmissionColorLookup,
             };
 
-            int eventsCounter = 0;
-
             // Iterate and execute events
+            int eventsCounter = 0;
             for (int i = 0; i < EventList.Length; i++)
             {
                 EventList[i].Execute(ref data);
@@ -418,14 +423,13 @@ public partial struct StressTestEventExecutorSystem : ISystem
                 EmissionColorLookup = EmissionColorLookup,
             };
 
-            int eventsCounter = 0;
+            NativeListWrapper<byte> eventListWrapper = new NativeListWrapper<byte>(EventList);
+            IStressTestEventManager.Executors.Execute<NativeListWrapper<byte>> eventExecutor = new IStressTestEventManager.Executors.Execute<NativeListWrapper<byte>>(eventListWrapper);
 
             // Iterate and execute events
-            int readByteIndex = 0;
-            while (PolymorphicElementsUtility.GetPtrOfByteIndex(EventList, readByteIndex, out PolymorphicElementPtr ptr))
+            int eventsCounter = 0;
+            while (eventExecutor.ExecuteNext(ref data))
             {
-                IStressTestEventManager.Execute(ptr, out int readSize, ref data);
-                readByteIndex += readSize;
                 eventsCounter++;
             }
 
@@ -434,5 +438,85 @@ public partial struct StressTestEventExecutorSystem : ISystem
             // Clear events
             EventList.Clear();
         }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public unsafe struct StreamExecutor_Execute<T> where T : unmanaged, IStreamReaderWrapper
+{
+    public T Stream;
+
+    public StreamExecutor_Execute(T stream)
+    {
+        Stream = stream;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool ExecuteNext(ref StressTestEventsData data)
+    {
+        if(Stream.RemainingItemCount() > 0)
+        {
+            byte* ptr = Stream.ReadPtr(2);
+            IStressTestEventManager.Execute(ptr, out int readSize, ref data);
+            Stream.ReadPtr(readSize - 2);
+            return true;
+        }
+        return false;
+    }
+}
+
+public unsafe struct Executor_Execute<T> where T : unmanaged, IByteCollectionWrapper
+{
+    private int _currentByteIndex;
+    public T Collection;
+
+    public Executor_Execute(T collection, int startByteIndex = 0)
+    {
+        _currentByteIndex = startByteIndex;
+        Collection = collection;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool ExecuteNext(ref StressTestEventsData data)
+    {
+        if (_currentByteIndex >= 0 && _currentByteIndex < Collection.Length())
+        {
+            byte* ptr = Collection.Ptr() + (long)_currentByteIndex;
+            IStressTestEventManager.Execute(ptr, out int readSize, ref data);
+            _currentByteIndex += readSize;
+            return true;
+        }
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool ExecuteAt(int atByteIndex, ref StressTestEventsData data)
+    {
+        SetCurrentByteIndex(atByteIndex);
+        return ExecuteNext(ref data);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetCurrentByteIndex(int byteIndex)
+    {
+        _currentByteIndex = byteIndex;
     }
 }

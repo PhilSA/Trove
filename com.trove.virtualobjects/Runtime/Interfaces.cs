@@ -9,6 +9,6 @@ namespace Trove.PolymorphicElements
 	{
 		public ushort GetTypeId();
 		public unsafe int GetTotalSize();
-		public unsafe void Write(PolymorphicElementPtr ptr);
+		public unsafe void Write(byte* ptr);
 	}
 }

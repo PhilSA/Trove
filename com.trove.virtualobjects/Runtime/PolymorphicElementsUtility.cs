@@ -7,6 +7,213 @@ using System.Runtime.CompilerServices;
 
 namespace Trove.PolymorphicElements
 {
+    public unsafe interface IStreamWriterWrapper
+    {
+        public void Write<T>(T value) where T : unmanaged;
+        public byte* Allocate(int size);
+    }
+
+    public unsafe interface IStreamReaderWrapper
+    {
+        public int RemainingItemCount();
+        public T Read<T>() where T : unmanaged;
+        public byte* ReadPtr(int size);
+    }
+
+    public unsafe interface IByteCollectionWrapper
+    {
+        public byte* Ptr();
+        public int Length();
+        public void Resize(int newLength);
+    }
+
+    public struct NativeStreamWriterWrapper : IStreamWriterWrapper
+    {
+        public NativeStream.Writer StreamWriter;
+
+        public NativeStreamWriterWrapper(NativeStream.Writer streamWriter)
+        {
+            StreamWriter = streamWriter;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe byte* Allocate(int size)
+        {
+            return StreamWriter.Allocate(size);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Write<T>(T value) where T : unmanaged
+        {
+            StreamWriter.Write(value);
+        }
+    }
+
+    public struct UnsafeStreamWriterWrapper : IStreamWriterWrapper
+    {
+        public UnsafeStream.Writer StreamWriter;
+
+        public UnsafeStreamWriterWrapper(UnsafeStream.Writer streamWriter)
+        {
+            StreamWriter = streamWriter;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe byte* Allocate(int size)
+        {
+            return StreamWriter.Allocate(size);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Write<T>(T value) where T : unmanaged
+        {
+            StreamWriter.Write(value);
+        }
+    }
+
+    public struct NativeStreamReaderWrapper : IStreamReaderWrapper
+    {
+        public NativeStream.Reader StreamReader;
+
+        public NativeStreamReaderWrapper(NativeStream.Reader streamReader)
+        {
+            StreamReader = streamReader;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Read<T>() where T : unmanaged
+        {
+            return StreamReader.Read<T>();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe byte* ReadPtr(int size)
+        {
+            return StreamReader.ReadUnsafePtr(size);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int RemainingItemCount()
+        {
+            return StreamReader.RemainingItemCount;
+        }
+    }
+
+    public struct UnsafeStreamReaderWrapper : IStreamReaderWrapper
+    {
+        public UnsafeStream.Reader StreamReader;
+
+        public UnsafeStreamReaderWrapper(UnsafeStream.Reader streamReader)
+        {
+            StreamReader = streamReader;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Read<T>() where T : unmanaged
+        {
+            return StreamReader.Read<T>();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe byte* ReadPtr(int size)
+        {
+            return StreamReader.ReadUnsafePtr(size);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int RemainingItemCount()
+        {
+            return StreamReader.RemainingItemCount;
+        }
+    }
+
+    public struct DynamicBufferWrapper<T> : IByteCollectionWrapper
+        where T : unmanaged
+    {
+        public DynamicBuffer<T> Buffer;
+
+        public DynamicBufferWrapper(DynamicBuffer<T> buffer)
+        {
+            Buffer = buffer;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Length()
+        {
+            return Buffer.Length;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe byte* Ptr()
+        {
+            return (byte*)Buffer.GetUnsafePtr();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Resize(int newLength)
+        {
+            Buffer.ResizeUninitialized(newLength);
+        }
+    }
+
+    public struct NativeListWrapper<T> : IByteCollectionWrapper
+        where T : unmanaged
+    {
+        public NativeList<T> List;
+
+        public NativeListWrapper(NativeList<T> list)
+        {
+            List = list;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Length()
+        {
+            return List.Length;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe byte* Ptr()
+        {
+            return (byte*)List.GetUnsafePtr();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Resize(int newLength)
+        {
+            List.ResizeUninitialized(newLength);
+        }
+    }
+
+    public struct UnsafeListWrapper<T> : IByteCollectionWrapper
+        where T : unmanaged
+    {
+        public UnsafeList<T> List;
+
+        public UnsafeListWrapper(UnsafeList<T> list)
+        {
+            List = list;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Length()
+        {
+            return List.Length;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe byte* Ptr()
+        {
+            return (byte*)List.Ptr;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Resize(int newLength)
+        {
+            List.Resize(newLength);
+        }
+    }
+
     public struct PolymorphicElementMetaData
     {
         public ushort TypeId;
@@ -19,153 +226,60 @@ namespace Trove.PolymorphicElements
         }
     }
 
-    public unsafe struct PolymorphicElementPtr
-    {
-        public byte* Ptr;
-
-        public static implicit operator byte*(PolymorphicElementPtr e) => e.Ptr;
-        public static implicit operator PolymorphicElementPtr(byte* e) => new PolymorphicElementPtr { Ptr = e };
-    }
-
     public static unsafe class PolymorphicElementsUtility
     {
         public const int SizeOfElementTypeId = sizeof(ushort);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool CheckIndexValid(int index, int length)
-        {
-            return index >= 0 && index < length;
-        }
-
-        #region GetPtr
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool GetPtrOfNextStreamElement(NativeStream.Reader stream, out PolymorphicElementPtr ptr)
-        {
-            if (stream.RemainingItemCount > 1)
-            {
-                int elementSize = stream.Read<int>();
-                ptr = stream.ReadUnsafePtr(elementSize);
-                return true;
-            }
-            ptr = default;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool GetPtrOfNextStreamElement(UnsafeStream.Reader stream, out PolymorphicElementPtr ptr)
-        {
-            if (stream.RemainingItemCount > 1)
-            {
-                int elementSize = stream.Read<int>();
-                ptr = stream.ReadUnsafePtr(elementSize);
-                return true;
-            }
-            ptr = default;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool GetPtrOfByteIndex(DynamicBuffer<byte> buffer, int byteIndex, out PolymorphicElementPtr ptr)
-        {
-            if (CheckIndexValid(byteIndex, buffer.Length))
-            {
-                ptr = (byte*)buffer.GetUnsafePtr() + (long)byteIndex;
-                return true;
-            }
-            ptr = default;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool GetPtrOfByteIndex(NativeList<byte> list, int byteIndex, out PolymorphicElementPtr ptr)
-        {
-            if (CheckIndexValid(byteIndex, list.Length))
-            {
-                ptr = list.GetUnsafePtr() + (long)byteIndex;
-                return true;
-            }
-            ptr = default;
-            return false;
-        }
-        #endregion
-
-        #region AddElement
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AddElement<T>(ref NativeStream.Writer stream, T writer)
+        public static void AddStreamElement<C, T>(ref C stream, T writer)
+            where C : unmanaged, IStreamWriterWrapper
             where T : unmanaged, IPolymorphicElementWriter
         {
-            stream.Write(writer.GetTotalSize());
-            byte* startPtr = stream.Allocate(writer.GetTotalSize());
-            writer.Write(startPtr);
+            byte* ptr = stream.Allocate(writer.GetTotalSize());
+            writer.Write(ptr);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AddElement<T>(ref DynamicBuffer<byte> buffer, T writer)
+        public static void AddElement<C, T>(ref C collection, T writer)
+            where C : unmanaged, IByteCollectionWrapper
             where T : unmanaged, IPolymorphicElementWriter
         {
             int totalElementSize = writer.GetTotalSize();
-            int prevLength = buffer.Length;
-            buffer.ResizeUninitialized(buffer.Length + totalElementSize);
-            byte* writePtr = (byte*)buffer.GetUnsafePtr() + (long)prevLength;
-            writer.Write(writePtr);
+            int lengthBeforeResize = collection.Length();
+            collection.Resize(lengthBeforeResize + totalElementSize);
+            byte* ptr = collection.Ptr() + (long)lengthBeforeResize;
+            writer.Write(ptr);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AddElementGetMetaData<T>(ref DynamicBuffer<byte> buffer, T writer, out PolymorphicElementMetaData metaData)
+        public static void AddElementGetMetaData<C, T>(ref C collection, T writer, out PolymorphicElementMetaData metaData)
+            where C : unmanaged, IByteCollectionWrapper
             where T : unmanaged, IPolymorphicElementWriter
         {
             int totalElementSize = writer.GetTotalSize();
+            int lengthBeforeResize = collection.Length();
             metaData = new PolymorphicElementMetaData
             {
                 TypeId = writer.GetTypeId(),
-                StartByteIndex = buffer.Length,
+                StartByteIndex = lengthBeforeResize,
                 TotalSizeWithId = totalElementSize,
             };
-            int prevLength = buffer.Length;
-            buffer.ResizeUninitialized(buffer.Length + totalElementSize);
-            byte* writePtr = (byte*)buffer.GetUnsafePtr() + (long)prevLength;
-            writer.Write(writePtr);
+            collection.Resize(lengthBeforeResize + totalElementSize);
+            byte* ptr = collection.Ptr() + (long)lengthBeforeResize;
+            writer.Write(ptr);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AddElement<T>(ref NativeList<byte> list, T writer)
+        public static bool InsertElement<C, T>(ref C collection, T writer, int atByteIndex)
+            where C : unmanaged, IByteCollectionWrapper
             where T : unmanaged, IPolymorphicElementWriter
         {
-            int totalElementSize = writer.GetTotalSize();
-            int prevLength = list.Length;
-            list.ResizeUninitialized(list.Length + totalElementSize);
-            byte* writePtr = list.GetUnsafePtr() + (long)prevLength;
-            writer.Write(writePtr);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AddElementGetMetaData<T>(ref NativeList<byte> list, T writer, out PolymorphicElementMetaData metaData)
-            where T : unmanaged, IPolymorphicElementWriter
-        {
-            int totalElementSize = writer.GetTotalSize();
-            metaData = new PolymorphicElementMetaData
+            int lengthBeforeResize = collection.Length();
+            if (atByteIndex >= 0 && atByteIndex < lengthBeforeResize)
             {
-                TypeId = writer.GetTypeId(),
-                StartByteIndex = list.Length,
-                TotalSizeWithId = totalElementSize,
-            };
-            int prevLength = list.Length;
-            list.ResizeUninitialized(list.Length + totalElementSize);
-            byte* writePtr = list.GetUnsafePtr() + (long)prevLength;
-            writer.Write(writePtr);
-        }
-        #endregion
-
-        #region InsertElement
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool InsertElement<T>(ref DynamicBuffer<byte> buffer, int atByteIndex, T writer)
-            where T : unmanaged, IPolymorphicElementWriter
-        {
-            if (CheckIndexValid(atByteIndex, buffer.Length))
-            {
-                long byteSizeOfRestOfList = buffer.Length - atByteIndex;
-                buffer.ResizeUninitialized(buffer.Length + writer.GetTotalSize());
-                byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)atByteIndex;
+                long byteSizeOfRestOfList = lengthBeforeResize - atByteIndex;
+                collection.Resize(lengthBeforeResize + writer.GetTotalSize());
+                byte* startPtr = collection.Ptr() + (long)atByteIndex;
                 byte* destPtr = startPtr + byteSizeOfRestOfList;
                 UnsafeUtility.MemCpy(destPtr, startPtr, byteSizeOfRestOfList);
                 writer.Write(startPtr);
@@ -175,10 +289,12 @@ namespace Trove.PolymorphicElements
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool InsertElementGetMetaData<T>(ref DynamicBuffer<byte> buffer, int atByteIndex, T writer, out PolymorphicElementMetaData metaData)
+        public static bool InsertElementGetMetaData<C, T>(ref C collection, T writer, int atByteIndex, out PolymorphicElementMetaData metaData)
+            where C : unmanaged, IByteCollectionWrapper
             where T : unmanaged, IPolymorphicElementWriter
         {
-            if (CheckIndexValid(atByteIndex, buffer.Length))
+            int lengthBeforeResize = collection.Length();
+            if (atByteIndex >= 0 && atByteIndex < lengthBeforeResize)
             {
                 int totalElementSize = writer.GetTotalSize();
                 metaData = new PolymorphicElementMetaData
@@ -187,9 +303,9 @@ namespace Trove.PolymorphicElements
                     StartByteIndex = atByteIndex,
                     TotalSizeWithId = totalElementSize,
                 };
-                long byteSizeOfRestOfList = buffer.Length - atByteIndex;
-                buffer.ResizeUninitialized(buffer.Length + totalElementSize);
-                byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)atByteIndex;
+                long byteSizeOfRestOfList = lengthBeforeResize - atByteIndex;
+                collection.Resize(lengthBeforeResize + totalElementSize);
+                byte* startPtr = collection.Ptr() + (long)atByteIndex;
                 byte* destPtr = startPtr + byteSizeOfRestOfList;
                 UnsafeUtility.MemCpy(destPtr, startPtr, byteSizeOfRestOfList);
                 writer.Write(startPtr);
@@ -198,186 +314,82 @@ namespace Trove.PolymorphicElements
             metaData = default;
             return false;
         }
-        #endregion
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        #region WriteValueNoResize
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool WriteElementValueNoResize<T>(ref DynamicBuffer<byte> buffer, int elementStartIndex, T value)
+        public static bool WriteElementValueNoResize<C, T>(ref C collection, int elementStartIndex, T value)
+            where C : unmanaged, IByteCollectionWrapper
             where T : unmanaged
         {
             elementStartIndex += SizeOfElementTypeId;
-            return ByteCollectionUtility.WriteNoResize(ref buffer, elementStartIndex, value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool WriteElementValueNoResize<T, B>(ref DynamicBuffer<B> buffer, int elementStartIndex, T value)
-            where T : unmanaged
-            where B : unmanaged, IBufferElementData, IByteBufferElement
-        {
-            elementStartIndex += SizeOfElementTypeId;
-            return ByteCollectionUtility.WriteNoResize(ref buffer, elementStartIndex, value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool WriteElementValueNoResize<T>(ref NativeList<byte> list, int elementStartIndex, T value)
-            where T : unmanaged
-        {
-            elementStartIndex += SizeOfElementTypeId;
-            return ByteCollectionUtility.WriteNoResize(ref list, elementStartIndex, value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool WriteElementValueNoResize<T>(ref UnsafeList<byte> list, int elementStartIndex, T value)
-            where T : unmanaged
-        {
-            elementStartIndex += SizeOfElementTypeId;
-            return ByteCollectionUtility.WriteNoResize(ref list, elementStartIndex, value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool WriteElementValueNoResize<T, L>(ref L list, int elementStartIndex, T value)
-            where T : unmanaged
-            where L : unmanaged, IByteList
-        {
-            elementStartIndex += SizeOfElementTypeId;
-            return ByteCollectionUtility.WriteNoResize(ref list, elementStartIndex, value);
-        }
-        #endregion
-
-        #region Read
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool ReadElementValue<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, out int newStartByteIndex, out T value)
-            where T : unmanaged
-        {
-            if(ByteCollectionUtility.Read(ref buffer, startByteIndex + SizeOfElementTypeId, out newStartByteIndex, out value))
+            int sizeOfT = sizeof(T);
+            if (elementStartIndex >= 0 && elementStartIndex + sizeOfT <= collection.Length())
             {
+                byte* startPtr = collection.Ptr() + (long)elementStartIndex;
+                *(T*)(startPtr) = value;
                 return true;
             }
-            value = default;
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool ReadElementValue<T, B>(ref DynamicBuffer<B> buffer, int startByteIndex, out int newStartByteIndex, out T value)
+        public static bool ReadElementValue<C, T>(ref C collection, int startByteIndex, out int readSize, out T value)
+            where C : unmanaged, IByteCollectionWrapper
             where T : unmanaged
-            where B : unmanaged, IBufferElementData, IByteBufferElement
         {
-            if (ByteCollectionUtility.Read(ref buffer, startByteIndex + SizeOfElementTypeId, out newStartByteIndex, out value))
+            int sizeOfT = sizeof(T);
+            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= collection.Length())
             {
+                byte* startPtr = collection.Ptr() + (long)(startByteIndex + sizeOfT);
+                value = *(T*)startPtr;
+                readSize = SizeOfElementTypeId + sizeOfT;
                 return true;
             }
             value = default;
+            readSize = 0;
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool ReadElementValue<T>(ref NativeList<byte> list, int startByteIndex, out int newStartByteIndex, out T value)
-            where T : unmanaged
-        {
-            if (ByteCollectionUtility.Read(ref list, startByteIndex + SizeOfElementTypeId, out newStartByteIndex, out value))
-            {
-                return true;
-            }
-            value = default;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool ReadElementValue<T>(ref UnsafeList<byte> list, int startByteIndex, out int newStartByteIndex, out T value)
-            where T : unmanaged
-        {
-            if (ByteCollectionUtility.Read(ref list, startByteIndex + SizeOfElementTypeId, out newStartByteIndex, out value))
-            {
-                return true;
-            }
-            value = default;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool ReadElementValue<T, L>(ref L list, int startByteIndex, out int newStartByteIndex, out T value)
-            where T : unmanaged
-            where L : unmanaged, IByteList
-        {
-            if (ByteCollectionUtility.Read(ref list, startByteIndex + SizeOfElementTypeId, out newStartByteIndex, out value))
-            {
-                return true;
-            }
-            value = default;
-            return false;
-        }
-        #endregion
-
-        #region Remove
         /// <summary>
-        /// Removes element based on provided size and preserves ordering of following elements
+        /// Unsafe because if the collection gets moved in memory after the ref is gotten, 
+        /// changing the ref's value will change invalid memory
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool RemoveElement<T>(ref DynamicBuffer<byte> buffer, PolymorphicElementMetaData elementMetaData)
+        public static ref T ReadElementValueAsRefUnsafe<C, T>(ref C collection, int startByteIndex, out int readSize, out bool success)
+            where C : unmanaged, IByteCollectionWrapper
             where T : unmanaged
         {
-            return ByteCollectionUtility.RemoveSize(ref buffer, elementMetaData.StartByteIndex, elementMetaData.TotalSizeWithId);
+            int sizeOfT = sizeof(T);
+            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= collection.Length())
+            {
+                byte* startPtr = collection.Ptr() + (long)(startByteIndex + sizeOfT);
+                readSize = SizeOfElementTypeId + sizeOfT;
+                success = true;
+                return ref *(T*)startPtr;
+            }
+            success = false;
+            readSize = 0;
+            return ref *(T*)collection.Ptr();
         }
 
         /// <summary>
         /// Removes element based on provided size and preserves ordering of following elements
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool RemoveElement<T, B>(ref DynamicBuffer<B> buffer, PolymorphicElementMetaData elementMetaData)
-            where T : unmanaged
-            where B : unmanaged, IBufferElementData, IByteBufferElement
-        {
-            return ByteCollectionUtility.RemoveSize(ref buffer, elementMetaData.StartByteIndex, elementMetaData.TotalSizeWithId);
-        }
-
-        /// <summary>
-        /// Removes element based on provided size and preserves ordering of following elements
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool RemoveElement<T>(ref NativeList<byte> list, PolymorphicElementMetaData elementMetaData)
+        public static bool RemoveElement<C, T>(ref C collection, int atByteIndex, int size, PolymorphicElementMetaData elementMetaData)
+            where C : unmanaged, IByteCollectionWrapper
             where T : unmanaged
         {
-            return ByteCollectionUtility.RemoveSize(ref list, elementMetaData.StartByteIndex, elementMetaData.TotalSizeWithId);
+            int collectionLengthBeforeResize = collection.Length();
+            if (atByteIndex >= 0 && atByteIndex + size <= collectionLengthBeforeResize)
+            {
+                long byteSizeOfRestOfList = collectionLengthBeforeResize - (atByteIndex + size);
+                byte* destPtr = collection.Ptr() + (long)atByteIndex;
+                byte* startPtr = destPtr + size;
+                UnsafeUtility.MemCpy(destPtr, startPtr, byteSizeOfRestOfList);
+                collection.Resize(collectionLengthBeforeResize - size);
+                return true;
+            }
+            return false;
         }
-
-        /// <summary>
-        /// Removes element based on provided size and preserves ordering of following elements
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool RemoveElement<T>(ref UnsafeList<byte> list, PolymorphicElementMetaData elementMetaData)
-            where T : unmanaged
-        {
-            return ByteCollectionUtility.RemoveSize(ref list, elementMetaData.StartByteIndex, elementMetaData.TotalSizeWithId);
-        }
-
-        /// <summary>
-        /// Removes element based on provided size and preserves ordering of following elements
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool RemoveElement<T, L>(ref L list, PolymorphicElementMetaData elementMetaData)
-            where T : unmanaged
-            where L : unmanaged, IByteList
-        {
-            return ByteCollectionUtility.RemoveSize(ref list, elementMetaData.StartByteIndex, elementMetaData.TotalSizeWithId);
-        }
-        #endregion
     }
 }

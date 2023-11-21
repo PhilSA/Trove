@@ -16,25 +16,14 @@ namespace PolymorphicElementsSourceGenerators
         public const string GeneratedGroupSuffix = "Manager";
         private const string MethodWriteBackAttributeName = "AllowElementModification";
         private const string MethodRefWriteBackAttributeName = "AllowElementModificationByRefUnsafe";
-        private const string PolymorphicElementsUtility = "PolymorphicElementsUtility";
         private const string ElementTypeEnumName = "ElementType";
-        private const string PolymorphicElementMetaData = "PolymorphicElementMetaData";
         private const string GetElementTypeId = "GetElementTypeId";
         private const string GetElementTotalSize = "GetElementTotalSize";
-        private const string SizeOfElementTypeId = "SizeOfElementTypeId";
-        private const string AppendElement = "AppendElement";
-        private const string AddElement = "AddElement";
-        private const string InsertElement = "InsertElement";
         private const string UnionElement = "UnionElement";
-        private const string ByteCollectionUtility = "ByteCollectionUtility";
-        private const string Read = "Read";
-        private const string ReadAsRef = "ReadAsRef";
-        private const string WriteNoResize = "WriteNoResize";
-        private const string StartByteIndex = "startByteIndex";
-        private const string NextStartByteIndex = "nextStartByteIndex";
-        private const string StartByteIndexOfElementValue = "startByteIndexOfElementValue";
         private const string IPolymorphicElementWriter = "IPolymorphicElementWriter";
-        private const string PolymorphicElementPtr = "PolymorphicElementPtr";
+        private const string IStreamReaderWrapper = "IStreamReaderWrapper";
+        private const string IByteCollectionWrapper = "IByteCollectionWrapper";
+        private const string AggressiveInline = "[MethodImpl(MethodImplOptions.AggressiveInlining)]";
         
 
         public void Initialize(GeneratorInitializationContext context)
@@ -237,6 +226,93 @@ namespace PolymorphicElementsSourceGenerators
 
                 writer.WriteLine($"");
 
+                // Executors
+                {
+                    writer.WriteLine($"public static class Executors");
+                    writer.WriteInScope(() => 
+                    { 
+                        foreach (FunctionData functionData in groupData.FunctionDatas)
+                        {
+                            functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation);
+
+                            // StreamExecutor
+                            writer.WriteLine($"public unsafe struct {functionData.Name}_Stream<T> where T : unmanaged, {IStreamReaderWrapper}");
+                            writer.WriteInScope(() => 
+                            { 
+                                writer.WriteLine($"public T Stream;");
+                                writer.WriteLine($"");
+                                writer.WriteLine($"public {functionData.Name}_Stream(T stream)");
+                                writer.WriteInScope(() => 
+                                { 
+                                    writer.WriteLine($"Stream = stream;");
+                                });
+                                writer.WriteLine($"");
+                                writer.WriteLine($"{AggressiveInline}");
+                                writer.WriteLine($"public bool ExecuteNext({parametersStringDeclaration})");
+                                writer.WriteInScope(() => 
+                                { 
+                                    writer.WriteLine($"if(Stream.RemainingItemCount() > 0)");
+                                    writer.WriteInScope(() => 
+                                    { 
+                                        writer.WriteLine($"byte* ptr = Stream.ReadPtr(2);");
+                                        writer.WriteLine($"{groupData.GetGeneratedGroupName()}.{functionData.Name}(ptr, out int readSize{(functionData.ParameterDatas.Count > 0 ? $", {parametersStringInvocation}" : "")});");
+                                        writer.WriteLine($"Stream.ReadPtr(readSize - 2);");
+                                        writer.WriteLine($"return true;");
+                                    });
+                                    writer.WriteLine($"return false;");
+                                });
+                            });
+
+                            // Executor
+                            writer.WriteLine($"public unsafe struct {functionData.Name}<T> where T : unmanaged, {IByteCollectionWrapper}");
+                            writer.WriteInScope(() => 
+                            { 
+                                writer.WriteLine($"private int _currentByteIndex;");
+                                writer.WriteLine($"public T Collection;");
+                                writer.WriteLine($"");
+                                writer.WriteLine($"public {functionData.Name}(T collection, int startByteIndex = 0)");
+                                writer.WriteInScope(() => 
+                                { 
+                                    writer.WriteLine($"_currentByteIndex = startByteIndex;");
+                                    writer.WriteLine($"Collection = collection;");
+                                });
+                                writer.WriteLine($"");
+                                writer.WriteLine($"{AggressiveInline}");
+                                writer.WriteLine($"public bool ExecuteNext({parametersStringDeclaration})");
+                                writer.WriteInScope(() => 
+                                { 
+                                    writer.WriteLine($"if (_currentByteIndex >= 0 && _currentByteIndex < Collection.Length())");
+                                    writer.WriteInScope(() => 
+                                    { 
+                                        writer.WriteLine($"byte* ptr = Collection.Ptr() + (long)_currentByteIndex;");
+                                        writer.WriteLine($"{groupData.GetGeneratedGroupName()}.{functionData.Name}(ptr, out int readSize{(functionData.ParameterDatas.Count > 0 ? $", {parametersStringInvocation}" : "")});");
+                                        writer.WriteLine($"_currentByteIndex += readSize;");
+                                        writer.WriteLine($"return true;");
+                                    });
+                                    writer.WriteLine($"return false;");
+                                });
+                                writer.WriteLine($"");
+                                writer.WriteLine($"{AggressiveInline}");
+                                writer.WriteLine($"public bool ExecuteAt(int atByteIndex{(functionData.ParameterDatas.Count > 0 ? $", {parametersStringDeclaration}" : "")})");
+                                writer.WriteInScope(() => 
+                                { 
+                                    writer.WriteLine($"SetCurrentByteIndex(atByteIndex);");
+                                    writer.WriteLine($"return ExecuteNext({parametersStringInvocation});");
+                                });
+                                writer.WriteLine($"");
+                                writer.WriteLine($"{AggressiveInline}");
+                                writer.WriteLine($"public void SetCurrentByteIndex(int byteIndex)");
+                                writer.WriteInScope(() => 
+                                { 
+                                    writer.WriteLine($"_currentByteIndex = byteIndex;");
+                                });
+                            });
+                        }
+                    });
+                }
+
+                writer.WriteLine($"");
+
                 // GetElementTypeId
                 writer.WriteLine($"public static {ElementTypeEnumName} {GetElementTypeId}(ushort typeId)");
                 writer.WriteInScope(() => 
@@ -271,13 +347,13 @@ namespace PolymorphicElementsSourceGenerators
                 {
                     // Write
                     {
-                        writer.WriteLine($"[MethodImpl(MethodImplOptions.AggressiveInlining)]");
-                        writer.WriteLine($"public static void WriteElement({PolymorphicElementPtr} ptr, {elementData.Type} e)");
+                        writer.WriteLine($"{AggressiveInline}");
+                        writer.WriteLine($"public static void WriteElement(byte* ptr, {elementData.Type} e)");
                         writer.WriteInScope(() =>
                         {
-                            writer.WriteLine($"*(ushort*)ptr.Ptr = {elementData.Id};");
-                            writer.WriteLine($"ptr.Ptr += (long)sizeof(ushort);");
-                            writer.WriteLine($"*({elementData.Type}*)ptr.Ptr = e;");
+                            writer.WriteLine($"*(ushort*)ptr = {elementData.Id};");
+                            writer.WriteLine($"ptr += (long)sizeof(ushort);");
+                            writer.WriteLine($"*({elementData.Type}*)ptr = e;");
                         });
                     }
 
@@ -297,13 +373,13 @@ namespace PolymorphicElementsSourceGenerators
                     SourceGenUtils.GetGenericTypesStrings(allGenericTypeDatas, out string allGenericTypes, out string allGenericTypeConstraints);
 
                     {
-                        writer.WriteLine($"[MethodImpl(MethodImplOptions.AggressiveInlining)]");
-                        writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{allGenericTypes}({PolymorphicElementPtr} ptr, out int readSize{(functionData.ParameterDatas.Count > 0 ? $", {parametersStringDeclaration}" : "")}){allGenericTypeConstraints}");
+                        writer.WriteLine($"{AggressiveInline}");
+                        writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{allGenericTypes}(byte* ptr, out int readSize{(functionData.ParameterDatas.Count > 0 ? $", {parametersStringDeclaration}" : "")}){allGenericTypeConstraints}");
                         writer.WriteInScope(() =>
                         {         
                             writer.WriteLine($"readSize = sizeof(ushort);");
-                            writer.WriteLine($"ushort typeId = *(ushort*)ptr.Ptr;");
-                            writer.WriteLine($"ptr.Ptr += (long)sizeof(ushort);");
+                            writer.WriteLine($"ushort typeId = *(ushort*)ptr;");
+                            writer.WriteLine($"ptr += (long)sizeof(ushort);");
                             writer.WriteLine($"switch (typeId)");
                             writer.WriteInScope(() =>
                             {
@@ -315,13 +391,13 @@ namespace PolymorphicElementsSourceGenerators
                                         writer.WriteLine($"readSize += sizeof({elementData.Type});");
                                         if(functionData.WriteBackType == MethodWriteBackType.RefModify)
                                         {
-                                            writer.WriteLine($"(({elementData.Type}*)ptr.Ptr)->{functionData.Name}({parametersStringInvocation});");
+                                            writer.WriteLine($"(({elementData.Type}*)ptr)->{functionData.Name}({parametersStringInvocation});");
                                         }
                                         else if (functionData.WriteBackType == MethodWriteBackType.Write)
                                         {
-                                            writer.WriteLine($"{elementData.Type} e = *({elementData.Type}*)ptr.Ptr;");
+                                            writer.WriteLine($"{elementData.Type} e = *({elementData.Type}*)ptr;");
                                             writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : $"{functionData.ReturnType} returnValue = ")}e.{functionData.Name}({parametersStringInvocation});");
-                                            writer.WriteLine($"*({elementData.Type}*)ptr.Ptr = e;");
+                                            writer.WriteLine($"*({elementData.Type}*)ptr = e;");
                                             if(!functionData.ReturnTypeIsVoid)
                                             {
                                                 writer.WriteLine($"return returnValue;");
@@ -329,7 +405,7 @@ namespace PolymorphicElementsSourceGenerators
                                         }
                                         else
                                         {
-                                            writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")} (*({elementData.Type}*)ptr.Ptr).{functionData.Name}({parametersStringInvocation});");
+                                            writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")} (*({elementData.Type}*)ptr).{functionData.Name}({parametersStringInvocation});");
                                         }
                                         writer.WriteLine($"break;");
                                     });
@@ -442,7 +518,7 @@ namespace PolymorphicElementsSourceGenerators
                 writer.WriteInScope(() =>
                 {
                     // Get type id
-                    writer.WriteLine($"[MethodImpl(MethodImplOptions.AggressiveInlining)]");
+                    writer.WriteLine($"{AggressiveInline}");
                     writer.WriteLine($"public ushort GetTypeId()");
                     writer.WriteInScope(() =>
                     {
@@ -452,7 +528,7 @@ namespace PolymorphicElementsSourceGenerators
                     writer.WriteLine($"");
 
                     // Get size
-                    writer.WriteLine($"[MethodImpl(MethodImplOptions.AggressiveInlining)]");
+                    writer.WriteLine($"{AggressiveInline}");
                     writer.WriteLine($"public unsafe int GetTotalSize()");
                     writer.WriteInScope(() =>
                     {
@@ -463,13 +539,13 @@ namespace PolymorphicElementsSourceGenerators
 
                     // Write
                     {
-                        writer.WriteLine($"[MethodImpl(MethodImplOptions.AggressiveInlining)]");
-                        writer.WriteLine($"public unsafe void Write({PolymorphicElementPtr} ptr)");
+                        writer.WriteLine($"{AggressiveInline}");
+                        writer.WriteLine($"public unsafe void Write(byte* ptr)");
                         writer.WriteInScope(() =>
                         {
-                            writer.WriteLine($"*(ushort*)ptr.Ptr = {elementData.Id};");
-                            writer.WriteLine($"ptr.Ptr += (long)sizeof(ushort);");
-                            writer.WriteLine($"*({elementData.Type}*)ptr.Ptr = this;");
+                            writer.WriteLine($"*(ushort*)ptr = {elementData.Id};");
+                            writer.WriteLine($"ptr += (long)sizeof(ushort);");
+                            writer.WriteLine($"*({elementData.Type}*)ptr = this;");
                         });
                     }
                     

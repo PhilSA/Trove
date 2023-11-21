@@ -48,21 +48,29 @@ public partial struct StateMachineSystem : ISystem
                     // Randomize state machine
                     stateMachine.Speed = random.NextFloat(0.5f, 3f);
 
+                    DynamicBuffer<StateElement> stateElementBuffer = SystemAPI.GetBuffer<StateElement>(entity);
+                    DynamicBufferWrapper<StateElement> stateElementBufferWrapper = new DynamicBufferWrapper<StateElement>(stateElementBuffer);
                     StateMachineData data = new StateMachineData
                     {
                         Time = SystemAPI.Time,
                         LocalTransform = SystemAPI.GetComponentLookup<LocalTransform>(false).GetRefRW(entity),
                         EmissionColor = SystemAPI.GetComponentLookup<URPMaterialPropertyEmissionColor>(false).GetRefRW(entity),
-                        StateElementBuffer = SystemAPI.GetBuffer<StateElement>(entity).Reinterpret<byte>(),
                         StateMetaDataBuffer = SystemAPI.GetBuffer<StateMetaData>(entity),
+
+                        Executor_OnStateExit = new IStateManager.Executors.OnStateExit<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper),
+                        Executor_OnStateEnter = new IStateManager.Executors.OnStateEnter<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper),
+                        Executor_OnUpdate = new IStateManager.Executors.OnUpdate<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper),
                     };
-                    for (int s = 0; s < data.StateMetaDataBuffer.Length; s++)
+
+                    // Initialize all states
+                    int statCounter = 0;
+                    IStateManager.Executors.OnStateMachineInitialize<DynamicBufferWrapper<StateElement>> executor_OnInitialize = new IStateManager.Executors.OnStateMachineInitialize<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper, 0);
+                    while(executor_OnInitialize.ExecuteNext(ref random, ref stateMachine, ref data))
                     {
-                        if (PolymorphicElementsUtility.GetPtrOfByteIndex(data.StateElementBuffer, data.StateMetaDataBuffer[s].Value.StartByteIndex, out PolymorphicElementPtr ptr))
-                        {
-                            IStateManager.OnStateMachineInitialize(ptr, out _, ref random, ref stateMachine, ref data);
-                        }
+                        Log.Debug($"Initializing state {statCounter}");
+                        statCounter++;
                     }
+
                     MyStateMachine.TransitionToState(stateMachine.StartStateIndex, ref stateMachine, ref data);
                 }
 
@@ -92,20 +100,21 @@ public partial struct StateMachineSystem : ISystem
             DynamicBuffer<StateMetaData> stateMetaDataBuffer)
         {
             // Build data
+            DynamicBufferWrapper<StateElement> stateElementBufferWrapper = new DynamicBufferWrapper<StateElement>(stateElementBuffer);
             StateMachineData data = new StateMachineData
             {
                 Time = TimeData,
                 LocalTransform = localTransform,
                 EmissionColor = emissionColor,
-                StateElementBuffer = stateElementBuffer.Reinterpret<byte>(),
                 StateMetaDataBuffer = stateMetaDataBuffer,
+
+                Executor_OnStateExit = new IStateManager.Executors.OnStateExit<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper),
+                Executor_OnStateEnter = new IStateManager.Executors.OnStateEnter<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper),
+                Executor_OnUpdate = new IStateManager.Executors.OnUpdate<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper),
             };
 
             // Update current state
-            if (PolymorphicElementsUtility.GetPtrOfByteIndex(data.StateElementBuffer, sm.ValueRW.CurrentStateByteStartIndex, out PolymorphicElementPtr ptr))
-            {
-                IStateManager.OnUpdate(ptr, out _, sm.ValueRO.Speed, ref sm.ValueRW, ref data);
-            }
+            data.Executor_OnUpdate.ExecuteAt(sm.ValueRW.CurrentStateByteStartIndex, sm.ValueRO.Speed, ref sm.ValueRW, ref data);
         }
     }
 }

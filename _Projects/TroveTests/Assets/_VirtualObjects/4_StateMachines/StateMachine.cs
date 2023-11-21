@@ -12,11 +12,16 @@ using Unity.Collections.LowLevel.Unsafe;
 
 public struct StateMachineData
 {
+
     public TimeData Time;
     public RefRW<LocalTransform> LocalTransform;
     public RefRW<URPMaterialPropertyEmissionColor> EmissionColor;
-    public DynamicBuffer<byte> StateElementBuffer;
     public DynamicBuffer<StateMetaData> StateMetaDataBuffer;
+
+    // Executors
+    public IStateManager.Executors.OnStateExit<DynamicBufferWrapper<StateElement>> Executor_OnStateExit;
+    public IStateManager.Executors.OnStateEnter<DynamicBufferWrapper<StateElement>> Executor_OnStateEnter;
+    public IStateManager.Executors.OnUpdate<DynamicBufferWrapper<StateElement>> Executor_OnUpdate;
 
     public float ExtraTime;
 }
@@ -50,10 +55,7 @@ public struct MyStateMachine : IComponentData
             GetStateMetaData(newStateIndex, out PolymorphicElementMetaData newStateMetaData, ref data.StateMetaDataBuffer))
         {
             // Call state exit on current state
-            if (PolymorphicElementsUtility.GetPtrOfByteIndex(data.StateElementBuffer, stateMachine.CurrentStateByteStartIndex, out PolymorphicElementPtr ptr))
-            {
-                IStateManager.OnStateExit(ptr, out _, ref stateMachine, ref data);
-            }
+            data.Executor_OnStateExit.ExecuteAt(stateMachine.CurrentStateByteStartIndex, ref stateMachine, ref data);
 
             // Change current state
             stateMachine.PreviousStateIndex = stateMachine.CurrentStateIndex;
@@ -61,10 +63,7 @@ public struct MyStateMachine : IComponentData
             stateMachine.CurrentStateByteStartIndex = newStateMetaData.StartByteIndex;
 
             // Call state enter on new current state
-            if (PolymorphicElementsUtility.GetPtrOfByteIndex(data.StateElementBuffer, stateMachine.CurrentStateByteStartIndex, out ptr))
-            {
-                IStateManager.OnStateEnter(ptr, out _, ref stateMachine, ref data);
-            }
+            data.Executor_OnStateEnter.ExecuteAt(stateMachine.CurrentStateByteStartIndex, ref stateMachine, ref data);
 
             return true;
         }
