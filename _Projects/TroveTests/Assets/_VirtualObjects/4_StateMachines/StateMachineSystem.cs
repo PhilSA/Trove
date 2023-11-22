@@ -109,4 +109,4 @@ public partial struct StateMachineSystem : ISystem
             IStateManager.OnUpdate(data.StateElementsBuffer, sm.ValueRW.CurrentStateByteStartIndex, out _, out _, sm.ValueRO.Speed, ref sm.ValueRW, ref data);
         }
     }
-}
+} 
