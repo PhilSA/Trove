@@ -168,7 +168,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EventsTest:
-    UseUnionEvents: 1
+    UseUnionEvents: 0
     EnableStressTestEventsTest: 1
     TransformEventsCount: 500000
     ColorEventsCount: 500000

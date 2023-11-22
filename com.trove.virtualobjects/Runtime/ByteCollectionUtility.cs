@@ -8,15 +8,17 @@ using Unity.Logging;
 
 namespace Trove.PolymorphicElements
 {
-    public interface IStreamWriter
+    public unsafe interface IStreamWriter
     {
-        void Write<T>(T t) where T : unmanaged;
+        public void Write<T>(T t) where T : unmanaged;
+        public byte* Allocate(int size);
     }
 
-    public interface IStreamReader
+    public unsafe interface IStreamReader
     {
-        int RemainingItemCount { get; }
-        T Read<T>() where T : unmanaged;
+        public int RemainingItemCount { get; }
+        public T Read<T>() where T : unmanaged;
+        public byte* ReadUnsafePtr(int size);
     }
 
     public unsafe interface IByteList
@@ -25,9 +27,6 @@ namespace Trove.PolymorphicElements
         byte* Ptr { get; }
         void Resize(int newLength);
     }
-
-    public interface IByteBufferElement
-    { }
 
     public static unsafe class ByteCollectionUtility
     {
@@ -76,188 +75,134 @@ namespace Trove.PolymorphicElements
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Read<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, out int newStartByteIndex, out T t)
+        public static bool Read<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, out int readSize, out T t)
             where T : unmanaged
         {
-            int sizeOfT = sizeof(T);
-            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= buffer.Length)
+            readSize = sizeof(T);
+            if (startByteIndex >= 0 && startByteIndex + readSize <= buffer.Length)
             {
                 byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
                 t = *(T*)startPtr;
-                newStartByteIndex = startByteIndex + sizeOfT;
                 return true;
             }
 
             t = default;
-            newStartByteIndex = startByteIndex;
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Read<T, B>(ref DynamicBuffer<B> buffer, int startByteIndex, out int newStartByteIndex, out T t)
-            where T : unmanaged
-            where B : unmanaged, IBufferElementData, IByteBufferElement
-        {
-            int sizeOfT = sizeof(T);
-            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= buffer.Length)
-            {
-                byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
-                t = *(T*)startPtr;
-                newStartByteIndex = startByteIndex + sizeOfT;
-                return true;
-            }
-
-            t = default;
-            newStartByteIndex = startByteIndex;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Read<T>(ref NativeList<byte> list, int startByteIndex, out int newStartByteIndex, out T t)
+        public static bool Read<T>(ref NativeList<byte> list, int startByteIndex, out int readSize, out T t)
             where T : unmanaged
         {
-            int sizeOfT = sizeof(T);
-            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= list.Length)
+            readSize = sizeof(T);
+            if (startByteIndex >= 0 && startByteIndex + readSize <= list.Length)
             {
                 byte* startPtr = list.GetUnsafePtr() + (long)startByteIndex;
                 t = *(T*)startPtr;
-                newStartByteIndex = startByteIndex + sizeOfT;
                 return true;
             }
 
             t = default;
-            newStartByteIndex = startByteIndex;
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Read<T>(ref UnsafeList<byte> list, int startByteIndex, out int newStartByteIndex, out T t)
+        public static bool Read<T>(ref UnsafeList<byte> list, int startByteIndex, out int readSize, out T t)
             where T : unmanaged
         {
-            int sizeOfT = sizeof(T);
-            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= list.Length)
+            readSize = sizeof(T);
+            if (startByteIndex >= 0 && startByteIndex + readSize <= list.Length)
             {
                 byte* startPtr = list.Ptr + (long)startByteIndex;
                 t = *(T*)startPtr;
-                newStartByteIndex = startByteIndex + sizeOfT;
                 return true;
             }
 
             t = default;
-            newStartByteIndex = startByteIndex;
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Read<T, L>(ref L list, int startByteIndex, out int newStartByteIndex, out T t)
+        public static bool Read<T, L>(ref L list, int startByteIndex, out int readSize, out T t)
             where T : unmanaged
             where L : unmanaged, IByteList
         {
-            int sizeOfT = sizeof(T);
-            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= list.Length)
+            readSize = sizeof(T);
+            if (startByteIndex >= 0 && startByteIndex + readSize <= list.Length)
             {
                 byte* startPtr = list.Ptr + (long)startByteIndex;
                 t = *(T*)startPtr;
-                newStartByteIndex = startByteIndex + sizeOfT;
                 return true;
             }
 
             t = default;
-            newStartByteIndex = startByteIndex;
             return false;
         }
         #endregion
 
         #region ReadAsRef
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T ReadAsRef<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, out int newStartByteIndex, out bool success)
+        public static ref T ReadAsRef<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, out int readSize, out bool success)
             where T : unmanaged
         {
-            int sizeOfT = sizeof(T);
-            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= buffer.Length)
+            readSize = sizeof(T);
+            if (startByteIndex >= 0 && startByteIndex + readSize <= buffer.Length)
             {
                 byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
-                newStartByteIndex = startByteIndex + sizeOfT;
                 success = true;
                 return ref *(T*)startPtr;
             }
 
             success = false;
-            newStartByteIndex = startByteIndex;
             return ref *(T*)buffer.GetUnsafePtr();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T ReadAsRef<T, B>(ref DynamicBuffer<B> buffer, int startByteIndex, out int newStartByteIndex, out bool success)
-            where T : unmanaged
-            where B : unmanaged, IBufferElementData, IByteBufferElement
-        {
-            int sizeOfT = sizeof(T);
-            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= buffer.Length)
-            {
-                byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
-                newStartByteIndex = startByteIndex + sizeOfT;
-                success = true;
-                return ref *(T*)startPtr;
-            }
-
-            success = false;
-            newStartByteIndex = startByteIndex;
-            return ref *(T*)buffer.GetUnsafePtr();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T ReadAsRef<T>(ref NativeList<byte> list, int startByteIndex, out int newStartByteIndex, out bool success)
+        public static ref T ReadAsRef<T>(ref NativeList<byte> list, int startByteIndex, out int readSize, out bool success)
             where T : unmanaged
         {
-            int sizeOfT = sizeof(T);
-            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= list.Length)
+            readSize = sizeof(T);
+            if (startByteIndex >= 0 && startByteIndex + readSize <= list.Length)
             {
                 byte* startPtr = list.GetUnsafePtr() + (long)startByteIndex;
-                newStartByteIndex = startByteIndex + sizeOfT;
                 success = true;
                 return ref *(T*)startPtr;
             }
 
             success = false;
-            newStartByteIndex = startByteIndex;
             return ref *(T*)list.GetUnsafePtr();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T ReadAsRef<T>(ref UnsafeList<byte> list, int startByteIndex, out int newStartByteIndex, out bool success)
+        public static ref T ReadAsRef<T>(ref UnsafeList<byte> list, int startByteIndex, out int readSize, out bool success)
             where T : unmanaged
         {
-            int sizeOfT = sizeof(T);
-            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= list.Length)
+            readSize = sizeof(T);
+            if (startByteIndex >= 0 && startByteIndex + readSize <= list.Length)
             {
                 byte* startPtr = list.Ptr + (long)startByteIndex;
-                newStartByteIndex = startByteIndex + sizeOfT;
                 success = true;
                 return ref *(T*)startPtr;
             }
 
             success = false;
-            newStartByteIndex = startByteIndex;
             return ref *(T*)list.Ptr;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T ReadAsRef<T, L>(ref L list, int startByteIndex, out int newStartByteIndex, out bool success)
+        public static ref T ReadAsRef<T, L>(ref L list, int startByteIndex, out int readSize, out bool success)
             where T : unmanaged
             where L : unmanaged, IByteList
         {
-            int sizeOfT = sizeof(T);
-            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= list.Length)
+            readSize = sizeof(T);
+            if (startByteIndex >= 0 && startByteIndex + readSize <= list.Length)
             {
                 byte* startPtr = list.Ptr + (long)startByteIndex;
-                newStartByteIndex = startByteIndex + sizeOfT;
                 success = true;
                 return ref *(T*)startPtr;
             }
 
             success = false;
-            newStartByteIndex = startByteIndex;
             return ref *(T*)list.Ptr;
         }
         #endregion
@@ -266,21 +211,6 @@ namespace Trove.PolymorphicElements
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool WriteNoResize<T>(ref DynamicBuffer<byte> buffer, int startByteIndex, T t)
             where T : unmanaged
-        {
-            int sizeOfT = sizeof(T);
-            if (startByteIndex >= 0 && startByteIndex + sizeOfT <= buffer.Length)
-            {
-                byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)startByteIndex;
-                *(T*)(startPtr) = t;
-                return true;
-            }
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool WriteNoResize<T, B>(ref DynamicBuffer<B> buffer, int startByteIndex, T t)
-            where T : unmanaged
-            where B : unmanaged, IBufferElementData, IByteBufferElement
         {
             int sizeOfT = sizeof(T);
             if (startByteIndex >= 0 && startByteIndex + sizeOfT <= buffer.Length)
@@ -349,18 +279,6 @@ namespace Trove.PolymorphicElements
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Add<T, B>(ref DynamicBuffer<B> buffer, T value)
-            where T : unmanaged
-            where B : unmanaged, IBufferElementData, IByteBufferElement
-        {
-            int sizeOfT = sizeof(T);
-            int prevLength = buffer.Length;
-            buffer.ResizeUninitialized(buffer.Length + sizeOfT);
-            byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)prevLength;
-            *(T*)(startPtr) = value;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Add<T>(ref NativeList<byte> list, T value)
             where T : unmanaged
         {
@@ -404,25 +322,6 @@ namespace Trove.PolymorphicElements
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Insert<T>(ref DynamicBuffer<byte> buffer, int atByteIndex, T value)
             where T : unmanaged
-        {
-            if (atByteIndex >= 0 && atByteIndex < buffer.Length)
-            {
-                int sizeOfT = sizeof(T);
-                long byteSizeOfRestOfList = buffer.Length - atByteIndex;
-                buffer.ResizeUninitialized(buffer.Length + sizeOfT);
-                byte* startPtr = (byte*)buffer.GetUnsafePtr() + (long)atByteIndex;
-                byte* destPtr = startPtr + byteSizeOfRestOfList;
-                UnsafeUtility.MemCpy(destPtr, startPtr, byteSizeOfRestOfList);
-                *(T*)(startPtr) = value;
-                return true;
-            }
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Insert<T, B>(ref DynamicBuffer<B> buffer, int atByteIndex, T value)
-            where T : unmanaged
-            where B : unmanaged, IBufferElementData, IByteBufferElement
         {
             if (atByteIndex >= 0 && atByteIndex < buffer.Length)
             {
@@ -508,14 +407,6 @@ namespace Trove.PolymorphicElements
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Remove<T, B>(ref DynamicBuffer<B> buffer, int atByteIndex)
-            where T : unmanaged
-            where B : unmanaged, IBufferElementData, IByteBufferElement
-        {
-            return RemoveSize(ref buffer, atByteIndex, sizeof(T));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Remove<T>(ref NativeList<byte> list, int atByteIndex)
             where T : unmanaged
         {
@@ -541,22 +432,6 @@ namespace Trove.PolymorphicElements
         #region RemoveSize
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool RemoveSize(ref DynamicBuffer<byte> buffer, int atByteIndex, int size)
-        {
-            if (atByteIndex >= 0 && atByteIndex + size <= buffer.Length)
-            {
-                long byteSizeOfRestOfList = buffer.Length - (atByteIndex + size);
-                byte* destPtr = (byte*)buffer.GetUnsafePtr() + (long)atByteIndex;
-                byte* startPtr = destPtr + size;
-                UnsafeUtility.MemCpy(destPtr, startPtr, byteSizeOfRestOfList);
-                buffer.ResizeUninitialized(buffer.Length - size);
-                return true;
-            }
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool RemoveSize<B>(ref DynamicBuffer<B> buffer, int atByteIndex, int size)
-            where B : unmanaged, IBufferElementData, IByteBufferElement
         {
             if (atByteIndex >= 0 && atByteIndex + size <= buffer.Length)
             {

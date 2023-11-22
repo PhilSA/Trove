@@ -26,7 +26,7 @@ public partial struct StateMachineSystem : ISystem
         StateMachineTests singleton = SystemAPI.GetSingleton<StateMachineTests>();
 
         // Create state machines
-        if(!HasInitialized)
+        if (!HasInitialized)
         {
             const float spacing = 2f;
             Random random = Random.CreateFromIndex(1);
@@ -48,27 +48,23 @@ public partial struct StateMachineSystem : ISystem
                     // Randomize state machine
                     stateMachine.Speed = random.NextFloat(0.5f, 3f);
 
-                    DynamicBuffer<StateElement> stateElementBuffer = SystemAPI.GetBuffer<StateElement>(entity);
-                    DynamicBufferWrapper<StateElement> stateElementBufferWrapper = new DynamicBufferWrapper<StateElement>(stateElementBuffer);
+                    DynamicBuffer<byte> stateElementBuffer = SystemAPI.GetBuffer<StateElement>(entity).Reinterpret<byte>();
                     StateMachineData data = new StateMachineData
                     {
                         Time = SystemAPI.Time,
                         LocalTransform = SystemAPI.GetComponentLookup<LocalTransform>(false).GetRefRW(entity),
                         EmissionColor = SystemAPI.GetComponentLookup<URPMaterialPropertyEmissionColor>(false).GetRefRW(entity),
+                        StateElementsBuffer = stateElementBuffer,
                         StateMetaDataBuffer = SystemAPI.GetBuffer<StateMetaData>(entity),
-
-                        Executor_OnStateExit = new IStateManager.Executors.OnStateExit<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper),
-                        Executor_OnStateEnter = new IStateManager.Executors.OnStateEnter<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper),
-                        Executor_OnUpdate = new IStateManager.Executors.OnUpdate<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper),
                     };
 
                     // Initialize all states
-                    int statCounter = 0;
-                    IStateManager.Executors.OnStateMachineInitialize<DynamicBufferWrapper<StateElement>> executor_OnInitialize = new IStateManager.Executors.OnStateMachineInitialize<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper, 0);
-                    while(executor_OnInitialize.ExecuteNext(ref random, ref stateMachine, ref data))
+                    int readIndex = 0;
+                    bool hasFinished = false;
+                    while (!hasFinished)
                     {
-                        Log.Debug($"Initializing state {statCounter}");
-                        statCounter++;
+                        IStateManager.OnStateMachineInitialize(stateElementBuffer, readIndex, out int readSize, out hasFinished, ref random, ref stateMachine, ref data);
+                        readIndex += readSize;
                     }
 
                     MyStateMachine.TransitionToState(stateMachine.StartStateIndex, ref stateMachine, ref data);
@@ -93,28 +89,24 @@ public partial struct StateMachineSystem : ISystem
         public TimeData TimeData;
 
         public void Execute(
-            RefRW<MyStateMachine> sm, 
-            RefRW<LocalTransform> localTransform, 
+            RefRW<MyStateMachine> sm,
+            RefRW<LocalTransform> localTransform,
             RefRW<URPMaterialPropertyEmissionColor> emissionColor,
             DynamicBuffer<StateElement> stateElementBuffer,
             DynamicBuffer<StateMetaData> stateMetaDataBuffer)
         {
             // Build data
-            DynamicBufferWrapper<StateElement> stateElementBufferWrapper = new DynamicBufferWrapper<StateElement>(stateElementBuffer);
             StateMachineData data = new StateMachineData
             {
                 Time = TimeData,
                 LocalTransform = localTransform,
                 EmissionColor = emissionColor,
+                StateElementsBuffer = stateElementBuffer.Reinterpret<byte>(),
                 StateMetaDataBuffer = stateMetaDataBuffer,
-
-                Executor_OnStateExit = new IStateManager.Executors.OnStateExit<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper),
-                Executor_OnStateEnter = new IStateManager.Executors.OnStateEnter<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper),
-                Executor_OnUpdate = new IStateManager.Executors.OnUpdate<DynamicBufferWrapper<StateElement>>(stateElementBufferWrapper),
             };
 
             // Update current state
-            data.Executor_OnUpdate.ExecuteAt(sm.ValueRW.CurrentStateByteStartIndex, sm.ValueRO.Speed, ref sm.ValueRW, ref data);
+            IStateManager.OnUpdate(data.StateElementsBuffer, sm.ValueRW.CurrentStateByteStartIndex, out _, out _, sm.ValueRO.Speed, ref sm.ValueRW, ref data);
         }
     }
 }

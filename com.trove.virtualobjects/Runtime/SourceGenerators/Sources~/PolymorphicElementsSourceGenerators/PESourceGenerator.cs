@@ -6,9 +6,19 @@ using System.Text;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Linq;
+using System.IO;
 
 namespace PolymorphicElementsSourceGenerators
 {
+    public enum ReaderType
+    {
+        Stream,
+        DynamicBuffer,
+        NativeList,
+        UnsafeList,
+        IByteList,
+    }
+
     [Generator]
     public class PESourceGenerator : ISourceGenerator
     {
@@ -21,9 +31,9 @@ namespace PolymorphicElementsSourceGenerators
         private const string GetElementTotalSize = "GetElementTotalSize";
         private const string UnionElement = "UnionElement";
         private const string IPolymorphicElementWriter = "IPolymorphicElementWriter";
-        private const string IStreamReaderWrapper = "IStreamReaderWrapper";
-        private const string IByteCollectionWrapper = "IByteCollectionWrapper";
+        private const string IPolymorphicElementReader = "IPolymorphicElementReader";
         private const string AggressiveInline = "[MethodImpl(MethodImplOptions.AggressiveInlining)]";
+        private const string ByteCollectionUtility = "ByteCollectionUtility";
         
 
         public void Initialize(GeneratorInitializationContext context)
@@ -211,7 +221,7 @@ namespace PolymorphicElementsSourceGenerators
         private void WriteManager(FileWriter writer, GroupInterfaceData groupData)
         {
             // Manager
-            writer.WriteLine($"public static unsafe class {groupData.GetGeneratedGroupName()}");
+            writer.WriteLine($"public static unsafe partial class {groupData.GetGeneratedGroupName()}");
             writer.WriteInScope(() =>
             {
                 // Type enum
@@ -223,93 +233,6 @@ namespace PolymorphicElementsSourceGenerators
                         writer.WriteLine($"{elementData.Type},");
                     }
                 });
-
-                writer.WriteLine($"");
-
-                // Executors
-                {
-                    writer.WriteLine($"public static class Executors");
-                    writer.WriteInScope(() => 
-                    { 
-                        foreach (FunctionData functionData in groupData.FunctionDatas)
-                        {
-                            functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation);
-
-                            // StreamExecutor
-                            writer.WriteLine($"public unsafe struct {functionData.Name}_Stream<T> where T : unmanaged, {IStreamReaderWrapper}");
-                            writer.WriteInScope(() => 
-                            { 
-                                writer.WriteLine($"public T Stream;");
-                                writer.WriteLine($"");
-                                writer.WriteLine($"public {functionData.Name}_Stream(T stream)");
-                                writer.WriteInScope(() => 
-                                { 
-                                    writer.WriteLine($"Stream = stream;");
-                                });
-                                writer.WriteLine($"");
-                                writer.WriteLine($"{AggressiveInline}");
-                                writer.WriteLine($"public bool ExecuteNext({parametersStringDeclaration})");
-                                writer.WriteInScope(() => 
-                                { 
-                                    writer.WriteLine($"if(Stream.RemainingItemCount() > 0)");
-                                    writer.WriteInScope(() => 
-                                    { 
-                                        writer.WriteLine($"byte* ptr = Stream.ReadPtr(2);");
-                                        writer.WriteLine($"{groupData.GetGeneratedGroupName()}.{functionData.Name}(ptr, out int readSize{(functionData.ParameterDatas.Count > 0 ? $", {parametersStringInvocation}" : "")});");
-                                        writer.WriteLine($"Stream.ReadPtr(readSize - 2);");
-                                        writer.WriteLine($"return true;");
-                                    });
-                                    writer.WriteLine($"return false;");
-                                });
-                            });
-
-                            // Executor
-                            writer.WriteLine($"public unsafe struct {functionData.Name}<T> where T : unmanaged, {IByteCollectionWrapper}");
-                            writer.WriteInScope(() => 
-                            { 
-                                writer.WriteLine($"private int _currentByteIndex;");
-                                writer.WriteLine($"public T Collection;");
-                                writer.WriteLine($"");
-                                writer.WriteLine($"public {functionData.Name}(T collection, int startByteIndex = 0)");
-                                writer.WriteInScope(() => 
-                                { 
-                                    writer.WriteLine($"_currentByteIndex = startByteIndex;");
-                                    writer.WriteLine($"Collection = collection;");
-                                });
-                                writer.WriteLine($"");
-                                writer.WriteLine($"{AggressiveInline}");
-                                writer.WriteLine($"public bool ExecuteNext({parametersStringDeclaration})");
-                                writer.WriteInScope(() => 
-                                { 
-                                    writer.WriteLine($"if (_currentByteIndex >= 0 && _currentByteIndex < Collection.Length())");
-                                    writer.WriteInScope(() => 
-                                    { 
-                                        writer.WriteLine($"byte* ptr = Collection.Ptr() + (long)_currentByteIndex;");
-                                        writer.WriteLine($"{groupData.GetGeneratedGroupName()}.{functionData.Name}(ptr, out int readSize{(functionData.ParameterDatas.Count > 0 ? $", {parametersStringInvocation}" : "")});");
-                                        writer.WriteLine($"_currentByteIndex += readSize;");
-                                        writer.WriteLine($"return true;");
-                                    });
-                                    writer.WriteLine($"return false;");
-                                });
-                                writer.WriteLine($"");
-                                writer.WriteLine($"{AggressiveInline}");
-                                writer.WriteLine($"public bool ExecuteAt(int atByteIndex{(functionData.ParameterDatas.Count > 0 ? $", {parametersStringDeclaration}" : "")})");
-                                writer.WriteInScope(() => 
-                                { 
-                                    writer.WriteLine($"SetCurrentByteIndex(atByteIndex);");
-                                    writer.WriteLine($"return ExecuteNext({parametersStringInvocation});");
-                                });
-                                writer.WriteLine($"");
-                                writer.WriteLine($"{AggressiveInline}");
-                                writer.WriteLine($"public void SetCurrentByteIndex(int byteIndex)");
-                                writer.WriteInScope(() => 
-                                { 
-                                    writer.WriteLine($"_currentByteIndex = byteIndex;");
-                                });
-                            });
-                        }
-                    });
-                }
 
                 writer.WriteLine($"");
 
@@ -343,9 +266,10 @@ namespace PolymorphicElementsSourceGenerators
 
                 writer.WriteLine($"");
 
+                // Write
                 foreach (ElementData elementData in groupData.ElementDatas)
                 {
-                    // Write
+                    // Ptr
                     {
                         writer.WriteLine($"{AggressiveInline}");
                         writer.WriteLine($"public static void WriteElement(byte* ptr, {elementData.Type} e)");
@@ -355,15 +279,16 @@ namespace PolymorphicElementsSourceGenerators
                             writer.WriteLine($"ptr += (long)sizeof(ushort);");
                             writer.WriteLine($"*({elementData.Type}*)ptr = e;");
                         });
+                        writer.WriteLine($"");
                     }
-
-                    writer.WriteLine($"");
                 }
 
                 // Execute functions
                 foreach (FunctionData functionData in groupData.FunctionDatas)
                 {
                     functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation);
+                    string parametersStringDeclarationAfterOtherParameters = functionData.ParameterDatas.Count > 0 ? $", {parametersStringDeclaration}" : "";
+                    string parametersStringInvocationAfterOtherParameters = functionData.ParameterDatas.Count > 0 ? $", {parametersStringInvocation}" : "";
 
                     List<GenericTypeData> allGenericTypeDatas = new List<GenericTypeData>();
                     if(functionData.GenericTypeDatas != null)
@@ -372,53 +297,147 @@ namespace PolymorphicElementsSourceGenerators
                     }
                     SourceGenUtils.GetGenericTypesStrings(allGenericTypeDatas, out string allGenericTypes, out string allGenericTypeConstraints);
 
+                    // NativeStream.Reader
                     {
-                        writer.WriteLine($"{AggressiveInline}");
-                        writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{allGenericTypes}(byte* ptr, out int readSize{(functionData.ParameterDatas.Count > 0 ? $", {parametersStringDeclaration}" : "")}){allGenericTypeConstraints}");
-                        writer.WriteInScope(() =>
-                        {         
-                            writer.WriteLine($"readSize = sizeof(ushort);");
-                            writer.WriteLine($"ushort typeId = *(ushort*)ptr;");
-                            writer.WriteLine($"ptr += (long)sizeof(ushort);");
-                            writer.WriteLine($"switch (typeId)");
-                            writer.WriteInScope(() =>
-                            {
-                                foreach (ElementData elementData in groupData.ElementDatas)
-                                {
-                                    writer.WriteLine($"case {elementData.Id}:");
-                                    writer.WriteInScope(() =>
-                                    {
-                                        writer.WriteLine($"readSize += sizeof({elementData.Type});");
-                                        if(functionData.WriteBackType == MethodWriteBackType.RefModify)
-                                        {
-                                            writer.WriteLine($"(({elementData.Type}*)ptr)->{functionData.Name}({parametersStringInvocation});");
-                                        }
-                                        else if (functionData.WriteBackType == MethodWriteBackType.Write)
-                                        {
-                                            writer.WriteLine($"{elementData.Type} e = *({elementData.Type}*)ptr;");
-                                            writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : $"{functionData.ReturnType} returnValue = ")}e.{functionData.Name}({parametersStringInvocation});");
-                                            writer.WriteLine($"*({elementData.Type}*)ptr = e;");
-                                            if(!functionData.ReturnTypeIsVoid)
-                                            {
-                                                writer.WriteLine($"return returnValue;");
-                                            }
-                                        }
-                                        else
-                                        {
-                                            writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : "return ")} (*({elementData.Type}*)ptr).{functionData.Name}({parametersStringInvocation});");
-                                        }
-                                        writer.WriteLine($"break;");
-                                    });
-                                }
-                            });
-
-                            if(!functionData.ReturnTypeIsVoid)
-                            {
-                                writer.WriteLine($"return default;");
-                            }
-                        });
+                        GenerateExecutionFunction(
+                            writer, 
+                            groupData,
+                            functionData,
+                            allGenericTypes,
+                            allGenericTypeConstraints,
+                            parametersStringDeclaration,
+                            parametersStringInvocation,
+                            parametersStringDeclarationAfterOtherParameters,
+                            parametersStringInvocationAfterOtherParameters,
+                            ReaderType.Stream,
+                            "NativeStream.Reader",
+                            "streamReader");
                     }
 
+                    writer.WriteLine($"");
+
+                    // UnsafeStream.Reader
+                    {
+                        GenerateExecutionFunction(
+                            writer, 
+                            groupData,
+                            functionData,
+                            allGenericTypes,
+                            allGenericTypeConstraints,
+                            parametersStringDeclaration,
+                            parametersStringInvocation,
+                            parametersStringDeclarationAfterOtherParameters,
+                            parametersStringInvocationAfterOtherParameters,
+                            ReaderType.Stream,
+                            "UnsafeStream.Reader",
+                            "streamReader");
+                    }
+                    
+                    writer.WriteLine($"");
+
+                    // IStreamReader
+                    {
+                        List<GenericTypeData> extraGenericTypeDatas = new List<GenericTypeData>();
+                        extraGenericTypeDatas.AddRange(allGenericTypeDatas);
+                        extraGenericTypeDatas.Add(new GenericTypeData { Type = "S", TypeConstraints = new List<string>() { "unmanaged", "IStreamReader" } });
+                        SourceGenUtils.GetGenericTypesStrings(extraGenericTypeDatas, out string extraGenericTypes, out string extraGenericTypeConstraints);
+                        
+                        GenerateExecutionFunction(
+                            writer, 
+                            groupData,
+                            functionData,
+                            extraGenericTypes,
+                            extraGenericTypeConstraints,
+                            parametersStringDeclaration,
+                            parametersStringInvocation,
+                            parametersStringDeclarationAfterOtherParameters,
+                            parametersStringInvocationAfterOtherParameters,
+                            ReaderType.Stream,
+                            "S",
+                            "streamReader");
+                    }
+                    
+                    writer.WriteLine($"");
+
+                    // DynamicBuffer<byte>
+                    {
+                        GenerateExecutionFunction(
+                            writer, 
+                            groupData,
+                            functionData,
+                            allGenericTypes,
+                            allGenericTypeConstraints,
+                            parametersStringDeclaration,
+                            parametersStringInvocation,
+                            parametersStringDeclarationAfterOtherParameters,
+                            parametersStringInvocationAfterOtherParameters,
+                            ReaderType.DynamicBuffer,
+                            "DynamicBuffer<byte>",
+                            "buffer");
+                    }
+                    
+                    writer.WriteLine($"");
+
+                    // NativeList<byte>
+                    {
+                        GenerateExecutionFunction(
+                            writer, 
+                            groupData,
+                            functionData,
+                            allGenericTypes,
+                            allGenericTypeConstraints,
+                            parametersStringDeclaration,
+                            parametersStringInvocation,
+                            parametersStringDeclarationAfterOtherParameters,
+                            parametersStringInvocationAfterOtherParameters,
+                            ReaderType.NativeList,
+                            "NativeList<byte>",
+                            "list");
+                    }
+                    
+                    writer.WriteLine($"");
+
+                    // UnsafeList<byte>
+                    {
+                        GenerateExecutionFunction(
+                            writer, 
+                            groupData,
+                            functionData,
+                            allGenericTypes,
+                            allGenericTypeConstraints,
+                            parametersStringDeclaration,
+                            parametersStringInvocation,
+                            parametersStringDeclarationAfterOtherParameters,
+                            parametersStringInvocationAfterOtherParameters,
+                            ReaderType.UnsafeList,
+                            "UnsafeList<byte>",
+                            "list");
+                    }
+                    
+                    writer.WriteLine($"");
+
+                    // IByteList
+                    {
+                        List<GenericTypeData> extraGenericTypeDatas = new List<GenericTypeData>();
+                        extraGenericTypeDatas.AddRange(allGenericTypeDatas);
+                        extraGenericTypeDatas.Add(new GenericTypeData { Type = "L", TypeConstraints = new List<string>() { "unmanaged", "IByteList" } });
+                        SourceGenUtils.GetGenericTypesStrings(extraGenericTypeDatas, out string extraGenericTypes, out string extraGenericTypeConstraints);
+
+                        GenerateExecutionFunction(
+                            writer, 
+                            groupData,
+                            functionData,
+                            extraGenericTypes,
+                            extraGenericTypeConstraints,
+                            parametersStringDeclaration,
+                            parametersStringInvocation,
+                            parametersStringDeclarationAfterOtherParameters,
+                            parametersStringInvocationAfterOtherParameters,
+                            ReaderType.IByteList,
+                            "L",
+                            "list");
+                    }
+                    
                     writer.WriteLine($"");
                 }
             });
@@ -553,6 +572,189 @@ namespace PolymorphicElementsSourceGenerators
                 });
                 writer.WriteLine($"");
             }
+        }
+
+        private void GenerateExecutionFunction(
+            FileWriter writer, 
+            GroupInterfaceData groupData,
+            FunctionData functionData,
+            string allGenericTypes,
+            string allGenericTypeConstraints,
+            string parametersStringDeclaration,
+            string parametersStringInvocation,
+            string parametersStringDeclarationAfterOtherParameters,
+            string parametersStringInvocationAfterOtherParameters,
+            ReaderType readerType,
+            string readerTypeName,
+            string readerName)
+        {
+            string extraParameters = "";
+            switch(readerType)
+            {
+                case ReaderType.Stream:
+                    extraParameters = "";
+                    break;
+                case ReaderType.DynamicBuffer:
+                case ReaderType.NativeList:
+                case ReaderType.UnsafeList:
+                case ReaderType.IByteList:
+                    extraParameters = "int atByteIndex, out int readSize,";
+                    break;
+            }
+
+            string readWriteExtraGenericTypes = "";
+            switch(readerType)
+            {
+                case ReaderType.Stream:
+                case ReaderType.DynamicBuffer:
+                case ReaderType.NativeList:
+                case ReaderType.UnsafeList:
+                    readWriteExtraGenericTypes = "";
+                    break;
+                case ReaderType.IByteList:
+                    readWriteExtraGenericTypes = $", {readerTypeName}";
+                    break;
+            }
+
+            writer.WriteLine($"{AggressiveInline}");
+            writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{allGenericTypes}({readerTypeName} {readerName}, {extraParameters}out bool hasFinished{parametersStringDeclarationAfterOtherParameters}){allGenericTypeConstraints}");
+            writer.WriteInScope(() =>
+            {         
+                switch(readerType)
+                {
+                    case ReaderType.Stream:
+                        writer.WriteLine($"if({readerName}.RemainingItemCount < 2)");
+                        writer.WriteInScope(() =>
+                        {   
+                            writer.WriteLine($"hasFinished = true;");
+                            if(functionData.ReturnTypeIsVoid)
+                            {
+                                writer.WriteLine($"return;");
+                            }
+                            else
+                            {
+                                writer.WriteLine($"return default;");
+                            }
+                        });
+                        writer.WriteLine($"ushort typeId = {readerName}.Read<ushort>();");
+                        break;
+                    case ReaderType.DynamicBuffer:
+                    case ReaderType.NativeList:
+                    case ReaderType.UnsafeList:
+                    case ReaderType.IByteList:
+                        writer.WriteLine($"if(!{ByteCollectionUtility}.Read<ushort{readWriteExtraGenericTypes}>(ref {readerName}, atByteIndex, out readSize, out ushort typeId))");
+                        writer.WriteInScope(() =>
+                        {   
+                            writer.WriteLine($"hasFinished = true;");
+                            if(functionData.ReturnTypeIsVoid)
+                            {
+                                writer.WriteLine($"return;");
+                            }
+                            else
+                            {
+                                writer.WriteLine($"return default;");
+                            }
+                        });
+                        writer.WriteLine($"atByteIndex += readSize;");
+                        break;
+                }
+                writer.WriteLine($"switch (typeId)");
+                writer.WriteInScope(() =>
+                {
+                    foreach (ElementData elementData in groupData.ElementDatas)
+                    {
+                        writer.WriteLine($"case {elementData.Id}:");
+                        writer.WriteInScope(() =>
+                        {
+                            switch(readerType)
+                            {
+                                case ReaderType.Stream:
+                                    writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : $"{functionData.ReturnType} returnValue = ")}{readerName}.Read<{elementData.Type}>().{functionData.Name}({parametersStringInvocation});");
+                                    writer.WriteLine($"hasFinished = {readerName}.RemainingItemCount < 2;");
+                                    if(functionData.ReturnTypeIsVoid)
+                                    {
+                                        writer.WriteLine($"return;");
+                                    }
+                                    else
+                                    {
+                                        writer.WriteLine($"return returnValue;");
+                                    }
+                                    break;
+                                case ReaderType.DynamicBuffer:
+                                case ReaderType.NativeList:
+                                case ReaderType.UnsafeList:
+                                case ReaderType.IByteList:
+                                    if(functionData.WriteBackType == MethodWriteBackType.RefModify)
+                                    {
+                                        writer.WriteLine($"ref {elementData.Type} e = ref {ByteCollectionUtility}.ReadAsRef<{elementData.Type}{readWriteExtraGenericTypes}>(ref {readerName}, atByteIndex, out int valueReadSize, out bool success);");
+                                        writer.WriteLine($"if(!success)");
+                                        writer.WriteInScope(() =>
+                                        {   
+                                            writer.WriteLine($"break;");
+                                        });
+                                        writer.WriteLine($"hasFinished = (atByteIndex + valueReadSize) >= {readerName}.Length;");
+                                        writer.WriteLine($"readSize += valueReadSize;");
+                                        writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : $"{elementData.Type} returnValue ")}e.{functionData.Name}({parametersStringInvocation});");
+                                        if(functionData.ReturnTypeIsVoid)
+                                        {
+                                            writer.WriteLine($"return;");
+                                        }
+                                        else
+                                        {
+                                            writer.WriteLine($"return returnValue;");
+                                        }
+                                    }
+                                    else if (functionData.WriteBackType == MethodWriteBackType.Write)
+                                    {
+                                        writer.WriteLine($"if(!{ByteCollectionUtility}.Read<{elementData.Type}{readWriteExtraGenericTypes}>(ref {readerName}, atByteIndex, out int valueReadSize, out {elementData.Type} e))");
+                                        writer.WriteInScope(() =>
+                                        {   
+                                            writer.WriteLine($"break;");
+                                        });
+                                        writer.WriteLine($"hasFinished = (atByteIndex + valueReadSize) >= {readerName}.Length;");
+                                        writer.WriteLine($"readSize += valueReadSize;");
+                                        writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : $"{functionData.ReturnType} returnValue = ")}e.{functionData.Name}({parametersStringInvocation});");
+                                        writer.WriteLine($"{ByteCollectionUtility}.WriteNoResize<{elementData.Type}{readWriteExtraGenericTypes}>(ref {readerName}, atByteIndex, e);");
+                                        if(functionData.ReturnTypeIsVoid)
+                                        {
+                                            writer.WriteLine($"return;");
+                                        }
+                                        else
+                                        {
+                                            writer.WriteLine($"return returnValue;");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        writer.WriteLine($"if(!{ByteCollectionUtility}.Read<{elementData.Type}{readWriteExtraGenericTypes}>(ref {readerName}, atByteIndex, out int valueReadSize, out {elementData.Type} e))");
+                                        writer.WriteInScope(() =>
+                                        {   
+                                            writer.WriteLine($"break;");
+                                        });
+                                        writer.WriteLine($"hasFinished = (atByteIndex + valueReadSize) >= {readerName}.Length;");
+                                        writer.WriteLine($"readSize += valueReadSize;");
+                                        writer.WriteLine($"{(functionData.ReturnTypeIsVoid ? "" : $"{functionData.ReturnType} returnValue = ")}e.{functionData.Name}({parametersStringInvocation});");
+                                        if(functionData.ReturnTypeIsVoid)
+                                        {
+                                            writer.WriteLine($"return;");
+                                        }
+                                        else
+                                        {
+                                            writer.WriteLine($"return returnValue;");
+                                        }
+                                    }
+                                    break;
+                            }
+                        });
+                    }
+                });
+
+                writer.WriteLine($"hasFinished = true;");
+                if(!functionData.ReturnTypeIsVoid)
+                {
+                    writer.WriteLine($"return default;");
+                }
+            });
         }
     }
 }

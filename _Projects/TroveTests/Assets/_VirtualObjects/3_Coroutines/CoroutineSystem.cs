@@ -47,30 +47,29 @@ public partial struct CoroutineSystem : ISystem
                     state.EntityManager.AddBuffer<CoroutineState>(coroutineEntity).Reinterpret<byte>();
                     state.EntityManager.AddBuffer<CoroutineMetaData>(coroutineEntity).Reinterpret<PolymorphicElementMetaData>();
 
-                    DynamicBuffer<CoroutineState> coroutineStatesBuffer = state.EntityManager.GetBuffer<CoroutineState>(coroutineEntity);
-                    DynamicBufferWrapper<CoroutineState> coroutineStatesBufferWrapper = new DynamicBufferWrapper<CoroutineState>(coroutineStatesBuffer);
+                    DynamicBuffer<byte> coroutineStatesBuffer = state.EntityManager.GetBuffer<CoroutineState>(coroutineEntity).Reinterpret<byte>();
                     DynamicBuffer<PolymorphicElementMetaData> coroutineMetaDatasBuffer = state.EntityManager.GetBuffer<CoroutineMetaData>(coroutineEntity).Reinterpret<PolymorphicElementMetaData>();
 
                     // Add sequence of states
-                    PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBufferWrapper, new Coroutine_MoveTo
+                    PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBuffer, new Coroutine_MoveTo
                     {
                         Entity = cube,
                         Target = math.up() * 5f,
                         Speed = 5f,
                     }, out PolymorphicElementMetaData metaData);
                     coroutineMetaDatasBuffer.Add(metaData);
-                    PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBufferWrapper, new Coroutine_Wait
+                    PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBuffer, new Coroutine_Wait
                     {
                         Time = 2f,
                     }, out metaData);
                     coroutineMetaDatasBuffer.Add(metaData);
-                    PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBufferWrapper, new Coroutine_SetColor
+                    PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBuffer, new Coroutine_SetColor
                     {
                         Entity = cube,
                         Target = new float4(10f, 0f, 0f, 1f),
                     }, out metaData);
                     coroutineMetaDatasBuffer.Add(metaData);
-                    PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBufferWrapper, new Coroutine_MoveTo
+                    PolymorphicElementsUtility.AddElementGetMetaData(ref coroutineStatesBuffer, new Coroutine_MoveTo
                     {
                         Entity = cube,
                         Target = math.up() * 5f + math.right() * 6f,
@@ -120,18 +119,16 @@ public partial struct CoroutineSystem : ISystem
                 mustTriggerBegin = true;
             }
 
+            DynamicBuffer<byte> coroutineStateBytesBuffer = coroutineStateBuffer.Reinterpret<byte>();
+
             if (coroutine.ValueRW.CurrentStateIndex >= 0 && coroutine.ValueRW.CurrentStateIndex < metaDataBuffer.Length)
             {
                 int currentStateByteStartIndex = metaDataBuffer[coroutine.ValueRW.CurrentStateIndex].Value.StartByteIndex;
-                DynamicBufferWrapper<CoroutineState> coroutineStatesBufferWrapper = new DynamicBufferWrapper<CoroutineState>(coroutineStateBuffer);
-                ICoroutineStateManager.Executors.Update<DynamicBufferWrapper<CoroutineState>> executor_Update = new ICoroutineStateManager.Executors.Update<DynamicBufferWrapper<CoroutineState>>(coroutineStatesBufferWrapper);
-
                 if (mustTriggerBegin)
                 {
-                    ICoroutineStateManager.Executors.Begin<DynamicBufferWrapper<CoroutineState>> executor_Begin = new ICoroutineStateManager.Executors.Begin<DynamicBufferWrapper<CoroutineState>>(coroutineStatesBufferWrapper);
-                    executor_Begin.ExecuteAt(currentStateByteStartIndex, ref data);
+                    ICoroutineStateManager.Begin(coroutineStateBytesBuffer, currentStateByteStartIndex, out _, out _, ref data);
                 }
-                executor_Update.ExecuteAt(currentStateByteStartIndex, ref data);
+                ICoroutineStateManager.Update(coroutineStateBytesBuffer, currentStateByteStartIndex, out _, out _, ref data);
             }
             else
             {

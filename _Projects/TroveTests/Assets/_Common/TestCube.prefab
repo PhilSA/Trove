@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 1405625547818348368}
   - component: {fileID: 4931560489929856554}
   - component: {fileID: 812110439800572851}
-  - component: {fileID: -6070659283575424605}
   - component: {fileID: 6415119218649045412}
   m_Layer: 0
   m_Name: TestCube
@@ -85,18 +84,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &-6070659283575424605
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1984675103061595673}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6c40d6da24c9e6740aead11d7891fa15, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &6415119218649045412
 MonoBehaviour:
   m_ObjectHideFlags: 0

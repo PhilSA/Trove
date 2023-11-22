@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Trove.PolymorphicElements;
 using Unity.Entities;
 using Unity.Rendering;
+using Unity.Logging;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -22,14 +23,13 @@ public class StateMachineAuthoring : MonoBehaviour
                 CurrentStateByteStartIndex = -1,
                 PreviousStateIndex = -1,
             });
-            DynamicBuffer<StateElement> stateElementBuffer = AddBuffer<StateElement>(entity);
-            DynamicBufferWrapper<StateElement> stateElementBufferWrapper = new DynamicBufferWrapper<StateElement>(stateElementBuffer);
+            DynamicBuffer<byte> stateElementBuffer = AddBuffer<StateElement>(entity).Reinterpret<byte>();
             DynamicBuffer<PolymorphicElementMetaData> stateMetaDatas = AddBuffer<StateMetaData>(entity).Reinterpret<PolymorphicElementMetaData>();
 
             // Write states
             {
                 int moveStateIndex = stateMetaDatas.Length;
-                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElementBufferWrapper, new MoveState
+                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElementBuffer, new MoveState
                 {
                     TimedState = new TimedState(2f),
                     Movement = math.forward(),
@@ -37,7 +37,7 @@ public class StateMachineAuthoring : MonoBehaviour
                 stateMetaDatas.Add(metaData);
 
                 int rotateStateIndex = stateMetaDatas.Length;
-                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElementBufferWrapper, new RotateState
+                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElementBuffer, new RotateState
                 {
                     TimedState = new TimedState(2f),
                     RotationSpeed = new float3(1f),
@@ -45,7 +45,7 @@ public class StateMachineAuthoring : MonoBehaviour
                 stateMetaDatas.Add(metaData);
 
                 int scaleStateIndex = stateMetaDatas.Length;
-                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElementBufferWrapper, new ScaleState
+                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElementBuffer, new ScaleState
                 {
                     TimedState = new TimedState(2f),
                     AddedScale = 3f,
@@ -53,7 +53,7 @@ public class StateMachineAuthoring : MonoBehaviour
                 stateMetaDatas.Add(metaData);
 
                 int redStateIndex = stateMetaDatas.Length;
-                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElementBufferWrapper, new ColorState
+                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElementBuffer, new ColorState
                 {
                     TimedState = new TimedState(0.25f),
                     Color = new float4(100f, 0f, 0, 1f),
@@ -61,7 +61,7 @@ public class StateMachineAuthoring : MonoBehaviour
                 stateMetaDatas.Add(metaData);
 
                 int greenStateIndex = stateMetaDatas.Length;
-                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElementBufferWrapper, new ColorState
+                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElementBuffer, new ColorState
                 {
                     TimedState = new TimedState(0.25f),
                     Color = new float4(0f, 100f, 0, 1f),
@@ -69,7 +69,7 @@ public class StateMachineAuthoring : MonoBehaviour
                 stateMetaDatas.Add(metaData);
 
                 int blueStateIndex = stateMetaDatas.Length;
-                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElementBufferWrapper, new ColorState
+                PolymorphicElementsUtility.AddElementGetMetaData(ref stateElementBuffer, new ColorState
                 {
                     TimedState = new TimedState(0.25f),
                     Color = new float4(0f, 0f, 100, 1f),
@@ -79,17 +79,17 @@ public class StateMachineAuthoring : MonoBehaviour
                 // Modify state data after adding them
                 {
                     // Store next states
-                    if (PolymorphicElementsUtility.ReadElementValue(ref stateElementBufferWrapper, stateMetaDatas[moveStateIndex].StartByteIndex, out _, out MoveState moveState))
+                    if (PolymorphicElementsUtility.ReadElementValue(ref stateElementBuffer, stateMetaDatas[moveStateIndex].StartByteIndex, out MoveState moveState))
                     {
                         moveState.NextStateIndex = rotateStateIndex;
-                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElementBufferWrapper, stateMetaDatas[moveStateIndex].StartByteIndex, moveState);
+                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElementBuffer, stateMetaDatas[moveStateIndex].StartByteIndex, moveState);
                     }
-                    if (PolymorphicElementsUtility.ReadElementValue(ref stateElementBufferWrapper, stateMetaDatas[rotateStateIndex].StartByteIndex, out _, out RotateState rotateState))
+                    if (PolymorphicElementsUtility.ReadElementValue(ref stateElementBuffer, stateMetaDatas[rotateStateIndex].StartByteIndex, out RotateState rotateState))
                     {
                         rotateState.NextStateIndex = scaleStateIndex;
-                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElementBufferWrapper, stateMetaDatas[rotateStateIndex].StartByteIndex, rotateState);
+                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElementBuffer, stateMetaDatas[rotateStateIndex].StartByteIndex, rotateState);
                     }
-                    if (PolymorphicElementsUtility.ReadElementValue(ref stateElementBufferWrapper, stateMetaDatas[scaleStateIndex].StartByteIndex, out _, out ScaleState scaleState))
+                    if (PolymorphicElementsUtility.ReadElementValue(ref stateElementBuffer, stateMetaDatas[scaleStateIndex].StartByteIndex, out ScaleState scaleState))
                     {
                         scaleState.NextStateIndex = moveStateIndex;
 
@@ -103,22 +103,22 @@ public class StateMachineAuthoring : MonoBehaviour
                             PreviousStateIndex = -1,
                         };
 
-                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElementBufferWrapper, stateMetaDatas[scaleStateIndex].StartByteIndex, scaleState);
+                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElementBuffer, stateMetaDatas[scaleStateIndex].StartByteIndex, scaleState);
                     }
-                    if (PolymorphicElementsUtility.ReadElementValue(ref stateElementBufferWrapper, stateMetaDatas[redStateIndex].StartByteIndex, out _, out ColorState redState))
+                    if (PolymorphicElementsUtility.ReadElementValue(ref stateElementBuffer, stateMetaDatas[redStateIndex].StartByteIndex, out ColorState redState))
                     {
                         redState.NextStateIndex = greenStateIndex;
-                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElementBufferWrapper, stateMetaDatas[redStateIndex].StartByteIndex, redState);
+                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElementBuffer, stateMetaDatas[redStateIndex].StartByteIndex, redState);
                     }
-                    if (PolymorphicElementsUtility.ReadElementValue(ref stateElementBufferWrapper, stateMetaDatas[greenStateIndex].StartByteIndex, out _, out ColorState greenState))
+                    if (PolymorphicElementsUtility.ReadElementValue(ref stateElementBuffer, stateMetaDatas[greenStateIndex].StartByteIndex, out ColorState greenState))
                     {
                         greenState.NextStateIndex = blueStateIndex;
-                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElementBufferWrapper, stateMetaDatas[greenStateIndex].StartByteIndex, greenState);
+                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElementBuffer, stateMetaDatas[greenStateIndex].StartByteIndex, greenState);
                     }
-                    if (PolymorphicElementsUtility.ReadElementValue(ref stateElementBufferWrapper, stateMetaDatas[blueStateIndex].StartByteIndex, out _, out ColorState blueState))
+                    if (PolymorphicElementsUtility.ReadElementValue(ref stateElementBuffer, stateMetaDatas[blueStateIndex].StartByteIndex, out ColorState blueState))
                     {
                         blueState.NextStateIndex = redStateIndex;
-                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElementBufferWrapper, stateMetaDatas[blueStateIndex].StartByteIndex, blueState);
+                        PolymorphicElementsUtility.WriteElementValueNoResize(ref stateElementBuffer, stateMetaDatas[blueStateIndex].StartByteIndex, blueState);
                     }
                 }
             }

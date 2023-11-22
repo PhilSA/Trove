@@ -149,12 +149,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 117169960}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 08c4bc18c53134b48b83cee63e224943, type: 3}
+  m_Script: {fileID: 11500000, guid: f8da430ce3d270f42af835526dfcd67b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Params:
     StateMachinesCount: 500000
-  StateMachinePrefab: {fileID: 1984675103061595673, guid: 23489498c8b7d674fb84fa5577d8c398,
+  StateMachinePrefab: {fileID: 6853305709917029630, guid: 18fd0d1a159dc294daf89e02a155d2e9,
     type: 3}
 --- !u!4 &117169962
 Transform:
