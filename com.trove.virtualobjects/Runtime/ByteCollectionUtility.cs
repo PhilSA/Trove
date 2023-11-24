@@ -12,6 +12,8 @@ namespace Trove.PolymorphicElements
     {
         public void Write<T>(T t) where T : unmanaged;
         public byte* Allocate(int size);
+        public void BeginForEachIndex(int index);
+        public void EndForEachIndex();
     }
 
     public unsafe interface IStreamReader
@@ -19,6 +21,8 @@ namespace Trove.PolymorphicElements
         public int RemainingItemCount { get; }
         public T Read<T>() where T : unmanaged;
         public byte* ReadUnsafePtr(int size);
+        public void BeginForEachIndex(int index);
+        public void EndForEachIndex();
     }
 
     public unsafe interface IByteList

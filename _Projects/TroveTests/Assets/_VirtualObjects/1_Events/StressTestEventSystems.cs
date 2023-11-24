@@ -124,14 +124,14 @@ public partial struct StressTestEventSetupSystem : ISystem
 
 [BurstCompile]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-[UpdateBefore(typeof(StressTestEventExecutorSystem))]
+[UpdateBefore(typeof(MyEventSystem))]
 public partial struct StressTestTransformEventCreatorSystem : ISystem
 {
     [BurstCompile]
     void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<EventsTest>();
-        state.RequireForUpdate<StressTestEventExecutorSystem.Singleton>();
+        state.RequireForUpdate<MyEventSystem.Singleton>();
     }
 
     [BurstCompile]
@@ -147,8 +147,7 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
             Time = (float)SystemAPI.Time.ElapsedTime,
             Singleton = singleton,
 
-            EventList = SystemAPI.GetSingletonRW<StressTestEventExecutorSystem.Singleton>().ValueRW.EventList,
-            UnionEventList = SystemAPI.GetSingletonRW<StressTestEventExecutorSystem.Singleton>().ValueRW.UnionEventList,
+            EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriter(1, ref state),
         };
         state.Dependency = job.Schedule(state.Dependency);
     }
@@ -160,84 +159,55 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
         public float Time;
         public EventsTest Singleton;
 
-        public NativeList<byte> EventList;
-        public NativeList<IStressTestEventUnionElement> UnionEventList;
+        public UnsafeStream.Writer EventWriter;
 
         public void Execute()
         {
             Random random = Random.CreateFromIndex((uint)(Time * 10000f));
 
+            EventWriter.BeginForEachIndex(0);
             for (int i = 0; i < EventsCount; i++)
             {
-                if (Singleton.UseUnionEvents)
+                switch (i % 3)
                 {
-                    switch (i % 3)
-                    {
-                        case 0:
-                            UnionEventList.Add(new StressTestEvent_SetPosition
-                            {
-                                Entity = Singleton.MainCubeInstance,
-                                Position = random.NextFloat3(new float3(-3f), new float3(3f)),
-                            });
-                            break;
-                        case 1:
-                            UnionEventList.Add(new StressTestEvent_SetRotation
-                            {
-                                Entity = Singleton.MainCubeInstance,
-                                Rotation = random.NextQuaternionRotation(),
-                            });
-                            break;
-                        case 2:
-                            UnionEventList.Add(new StressTestEvent_SetScale
-                            {
-                                Entity = Singleton.MainCubeInstance,
-                                Scale = random.NextFloat(0.5f, 2f),
-                            });
-                            break;
-                    }
-                }
-                else
-                {
-                    switch (i % 3)
-                    {
-                        case 0:
-                            PolymorphicElementsUtility.AddElement(ref EventList, new StressTestEvent_SetPosition
-                            {
-                                Entity = Singleton.MainCubeInstance,
-                                Position = random.NextFloat3(new float3(-3f), new float3(3f)),
-                            });
-                            break;
-                        case 1:
-                            PolymorphicElementsUtility.AddElement(ref EventList, new StressTestEvent_SetRotation
-                            {
-                                Entity = Singleton.MainCubeInstance,
-                                Rotation = random.NextQuaternionRotation(),
-                            });
-                            break;
-                        case 2:
-                            PolymorphicElementsUtility.AddElement(ref EventList, new StressTestEvent_SetScale
-                            {
-                                Entity = Singleton.MainCubeInstance,
-                                Scale = random.NextFloat(0.5f, 2f),
-                            });
-                            break;
-                    }
+                    case 0:
+                        PolymorphicElementsUtility.AddStreamElement(ref EventWriter, new StressTestEvent_SetPosition
+                        {
+                            Entity = Singleton.MainCubeInstance,
+                            Position = random.NextFloat3(new float3(-3f), new float3(3f)),
+                        });
+                        break;
+                    case 1:
+                        PolymorphicElementsUtility.AddStreamElement(ref EventWriter, new StressTestEvent_SetRotation
+                        {
+                            Entity = Singleton.MainCubeInstance,
+                            Rotation = random.NextQuaternionRotation(),
+                        });
+                        break;
+                    case 2:
+                        PolymorphicElementsUtility.AddStreamElement(ref EventWriter, new StressTestEvent_SetScale
+                        {
+                            Entity = Singleton.MainCubeInstance,
+                            Scale = random.NextFloat(0.5f, 2f),
+                        });
+                        break;
                 }
             }
+            EventWriter.EndForEachIndex();
         }
     }
 }
 
 [BurstCompile]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-[UpdateBefore(typeof(StressTestEventExecutorSystem))]
+[UpdateAfter(typeof(MyEventSystem))]
 public partial struct StressTestColorEventCreatorSystem : ISystem
 {
     [BurstCompile]
     void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<EventsTest>();
-        state.RequireForUpdate<StressTestEventExecutorSystem.Singleton>();
+        state.RequireForUpdate<MyEventSystem.Singleton>();
     }
 
     [BurstCompile]
@@ -253,8 +223,7 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
             Time = (float)SystemAPI.Time.ElapsedTime,
             Singleton = singleton,
 
-            EventList = SystemAPI.GetSingletonRW<StressTestEventExecutorSystem.Singleton>().ValueRW.EventList,
-            UnionEventList = SystemAPI.GetSingletonRW<StressTestEventExecutorSystem.Singleton>().ValueRW.UnionEventList,
+            EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriter(1, ref state),
         };
         state.Dependency = job.Schedule(state.Dependency);
     }
@@ -266,8 +235,7 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
         public float Time;
         public EventsTest Singleton;
 
-        public NativeList<byte> EventList;
-        public NativeList<IStressTestEventUnionElement> UnionEventList;
+        public UnsafeStream.Writer EventWriter;
 
         const float ColorStrength = 1f;
 
@@ -275,169 +243,241 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
         {
             Random random = Random.CreateFromIndex((uint)(Time * 10000f));
 
+            EventWriter.BeginForEachIndex(0);
             for (int i = 0; i < EventsCount; i++)
             {
-                if (Singleton.UseUnionEvents)
+                PolymorphicElementsUtility.AddStreamElement(ref EventWriter, new StressTestEvent_SetColor
                 {
-                    UnionEventList.Add(new StressTestEvent_SetColor
-                    {
-                        Entity = Singleton.MainCubeInstance,
-                        Color = new float4(random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), 1f),
-                    });
-                }
-                else
-                {
-                    PolymorphicElementsUtility.AddElement(ref EventList, new StressTestEvent_SetColor
-                    {
-                        Entity = Singleton.MainCubeInstance,
-                        Color = new float4(random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), 1f),
-                    });
-                }
+                    Entity = Singleton.MainCubeInstance,
+                    Color = new float4(random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), 1f),
+                });
             }
+            EventWriter.EndForEachIndex();
         }
     }
 }
 
 
+//[BurstCompile]
+//[UpdateInGroup(typeof(SimulationSystemGroup))]
+//public partial struct StressTestEventExecutorSystem : ISystem
+//{
+//    private NativeList<byte> _internalEventList;
+//    private NativeList<IStressTestEventUnionElement> _internalUnionEventList;
+
+//    public struct Singleton : IComponentData
+//    {
+//        public NativeList<byte> EventList;
+//        public NativeList<IStressTestEventUnionElement> UnionEventList;
+//    }
+
+//    [BurstCompile]
+//    void OnCreate(ref SystemState state)
+//    {
+//        state.RequireForUpdate<EventsTest>();
+
+//        // Create singleton
+//        _internalEventList = new NativeList<byte>(1000000, Allocator.Persistent);
+//        _internalUnionEventList = new NativeList<IStressTestEventUnionElement>(100000, Allocator.Persistent);
+//        Entity singletonEntity = state.EntityManager.CreateEntity();
+//        state.EntityManager.AddComponentData(singletonEntity, new Singleton
+//        {
+//            EventList = _internalEventList,
+//            UnionEventList = _internalUnionEventList,
+//        });
+//    }
+
+//    [BurstCompile]
+//    void OnDestroy(ref SystemState state)
+//    {
+//        if (_internalEventList.IsCreated)
+//        {
+//            _internalEventList.Dispose();
+//        }
+//    }
+
+//    [BurstCompile]
+//    void OnUpdate(ref SystemState state)
+//    {
+//        EventsTest singleton = SystemAPI.GetSingleton<EventsTest>();
+//        if (!singleton.EnableStressTestEventsTest)
+//            return;
+
+//        if (singleton.UseUnionEvents)
+//        {
+//            ExecuteUnionEventsJob job = new ExecuteUnionEventsJob
+//            {
+//                Singleton = singleton,
+//                LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
+//                EmissionColorLookup = SystemAPI.GetComponentLookup<URPMaterialPropertyEmissionColor>(false),
+
+//                EventList = SystemAPI.GetSingletonRW<Singleton>().ValueRW.UnionEventList,
+//            };
+//            state.Dependency = job.Schedule(state.Dependency);
+//        }
+//        else
+//        {
+//            ExecuteEventsJob job = new ExecuteEventsJob
+//            {
+//                Singleton = singleton,
+//                LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
+//                EmissionColorLookup = SystemAPI.GetComponentLookup<URPMaterialPropertyEmissionColor>(false),
+
+//                EventList = SystemAPI.GetSingletonRW<Singleton>().ValueRW.EventList,
+//            };
+//            state.Dependency = job.Schedule(state.Dependency);
+//        }
+//    }
+
+//    [BurstCompile]
+//    public partial struct ExecuteUnionEventsJob : IJob
+//    {
+//        public EventsTest Singleton;
+//        public ComponentLookup<LocalTransform> LocalTransformLookup;
+//        public ComponentLookup<URPMaterialPropertyEmissionColor> EmissionColorLookup;
+
+//        public NativeList<IStressTestEventUnionElement> EventList;
+
+//        public unsafe void Execute()
+//        {
+//            StressTestEventsData data = new StressTestEventsData
+//            {
+//                Singleton = Singleton,
+//                LocalTransformLookup = LocalTransformLookup,
+//                EmissionColorLookup = EmissionColorLookup,
+//            };
+
+//            // Iterate and execute events
+//            int eventsCounter = 0;
+//            for (int i = 0; i < EventList.Length; i++)
+//            {
+//                EventList[i].Execute(ref data);
+//                eventsCounter++;
+//            }
+
+//            //Log.Debug($"Executed {eventsCounter} events");
+
+//            // Clear events
+//            EventList.Clear();
+//        }
+//    }
+
+//    [BurstCompile]
+//    public partial struct ExecuteEventsJob : IJob
+//    {
+//        public EventsTest Singleton;
+//        public ComponentLookup<LocalTransform> LocalTransformLookup;
+//        public ComponentLookup<URPMaterialPropertyEmissionColor> EmissionColorLookup;
+
+//        public NativeList<byte> EventList;
+
+//        public void Execute()
+//        {
+//            StressTestEventsData data = new StressTestEventsData
+//            {
+//                Singleton = Singleton,
+//                LocalTransformLookup = LocalTransformLookup,
+//                EmissionColorLookup = EmissionColorLookup,
+//            };
+
+//            // Iterate and execute events
+//            int eventsCounter = 0;
+//            int readByteIndex = 0;
+//            bool hasFinished = false;
+//            while (!hasFinished)
+//            {
+//                IStressTestEventManager.Execute(EventList, readByteIndex, out int readSize, out hasFinished, ref data);
+//                readByteIndex += readSize;
+//                eventsCounter++;
+
+//                //Log.Debug($"Iter {eventsCounter} readSize {readSize} hasFinished {hasFinished} readByteIndex {readByteIndex}");
+//            }
+
+//            //Log.Debug($"Executed {eventsCounter} events");
+
+//            // Clear events
+//            EventList.Clear();
+//        }
+//    }
+//}
+
+
+
+
+
 [BurstCompile]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-public partial struct StressTestEventExecutorSystem : ISystem
+public partial struct MyEventSystem : ISystem
 {
-    private NativeList<byte> _internalEventList;
-    private NativeList<IStressTestEventUnionElement> _internalUnionEventList;
-
     public struct Singleton : IComponentData
     {
-        public NativeList<byte> EventList;
-        public NativeList<IStressTestEventUnionElement> UnionEventList;
+        public EventBuffersManager EventBuffersManager;
     }
 
+    private EventBuffersManagerData _eventBuffersManagerData;
+
     [BurstCompile]
-    void OnCreate(ref SystemState state)
+    public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<EventsTest>();
-
-        // Create singleton
-        _internalEventList = new NativeList<byte>(1000000, Allocator.Persistent);
-        _internalUnionEventList = new NativeList<IStressTestEventUnionElement>(100000, Allocator.Persistent);
-        Entity singletonEntity = state.EntityManager.CreateEntity();
-        state.EntityManager.AddComponentData(singletonEntity, new Singleton
-        {
-            EventList = _internalEventList,
-            UnionEventList = _internalUnionEventList,
-        });
+        _eventBuffersManagerData = new EventBuffersManagerData(ref state);
+        state.EntityManager.AddComponentData(state.EntityManager.CreateEntity(), new Singleton { EventBuffersManager = new EventBuffersManager(ref _eventBuffersManagerData) });
     }
 
     [BurstCompile]
-    void OnDestroy(ref SystemState state)
+    public void OnDestroy(ref SystemState state)
     {
-        if (_internalEventList.IsCreated)
-        {
-            _internalEventList.Dispose();
-        }
+        _eventBuffersManagerData.DisposeAll();
     }
 
     [BurstCompile]
-    void OnUpdate(ref SystemState state)
+    public void OnUpdate(ref SystemState state)
     {
-        EventsTest singleton = SystemAPI.GetSingleton<EventsTest>();
-        if (!singleton.EnableStressTestEventsTest)
-            return;
-
-        if (singleton.UseUnionEvents)
+        EventsTest eventTestSingleton = SystemAPI.GetSingleton<EventsTest>();
+        ExecuteEventsJob job = new ExecuteEventsJob
         {
-            ExecuteUnionEventsJob job = new ExecuteUnionEventsJob
-            {
-                Singleton = singleton,
-                LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
-                EmissionColorLookup = SystemAPI.GetComponentLookup<URPMaterialPropertyEmissionColor>(false),
-
-                EventList = SystemAPI.GetSingletonRW<Singleton>().ValueRW.UnionEventList,
-            };
-            state.Dependency = job.Schedule(state.Dependency);
-        }
-        else
-        {
-            ExecuteEventsJob job = new ExecuteEventsJob
-            {
-                Singleton = singleton,
-                LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
-                EmissionColorLookup = SystemAPI.GetComponentLookup<URPMaterialPropertyEmissionColor>(false),
-
-                EventList = SystemAPI.GetSingletonRW<Singleton>().ValueRW.EventList,
-            };
-            state.Dependency = job.Schedule(state.Dependency);
-        }
+            EventTestSingleton = eventTestSingleton,
+            LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
+            EmissionColorLookup = SystemAPI.GetComponentLookup<URPMaterialPropertyEmissionColor>(false),
+            EventBuffersManagerData = _eventBuffersManagerData,
+        };
+        state.Dependency = job.Schedule(state.Dependency);
+        state.Dependency = _eventBuffersManagerData.AfterEventsProcessed(ref state, state.Dependency);
     }
 
     [BurstCompile]
-    public partial struct ExecuteUnionEventsJob : IJob
+    public struct ExecuteEventsJob : IJob
     {
-        public EventsTest Singleton;
+        public EventsTest EventTestSingleton;
         public ComponentLookup<LocalTransform> LocalTransformLookup;
         public ComponentLookup<URPMaterialPropertyEmissionColor> EmissionColorLookup;
-
-        public NativeList<IStressTestEventUnionElement> EventList;
-
-        public unsafe void Execute()
-        {
-            StressTestEventsData data = new StressTestEventsData
-            {
-                Singleton = Singleton,
-                LocalTransformLookup = LocalTransformLookup,
-                EmissionColorLookup = EmissionColorLookup,
-            };
-
-            // Iterate and execute events
-            int eventsCounter = 0;
-            for (int i = 0; i < EventList.Length; i++)
-            {
-                EventList[i].Execute(ref data);
-                eventsCounter++;
-            }
-
-            //Log.Debug($"Executed {eventsCounter} events");
-
-            // Clear events
-            EventList.Clear();
-        }
-    }
-
-    [BurstCompile]
-    public partial struct ExecuteEventsJob : IJob
-    {
-        public EventsTest Singleton;
-        public ComponentLookup<LocalTransform> LocalTransformLookup;
-        public ComponentLookup<URPMaterialPropertyEmissionColor> EmissionColorLookup;
-
-        public NativeList<byte> EventList;
+        public EventBuffersManagerData EventBuffersManagerData;
 
         public void Execute()
         {
+            // Build Data
             StressTestEventsData data = new StressTestEventsData
             {
-                Singleton = Singleton,
+                Singleton = EventTestSingleton,
                 LocalTransformLookup = LocalTransformLookup,
                 EmissionColorLookup = EmissionColorLookup,
             };
 
-            // Iterate and execute events
-            int eventsCounter = 0;
-            int readByteIndex = 0;
-            bool hasFinished = false;
-            while (!hasFinished)
+            // Execute
+            for (int i = 0; i < EventBuffersManagerData.EventStreams.Length; i++)
             {
-                IStressTestEventManager.Execute(EventList, readByteIndex, out int readSize, out hasFinished, ref data);
-                readByteIndex += readSize;
-                eventsCounter++;
-
-                //Log.Debug($"Iter {eventsCounter} readSize {readSize} hasFinished {hasFinished} readByteIndex {readByteIndex}");
+                UnsafeStream.Reader streamReader = EventBuffersManagerData.EventStreams[i].AsReader();
+                for (int j = 0; j < streamReader.ForEachCount; j++)
+                {
+                    streamReader.BeginForEachIndex(j);
+                    bool hasFinished = false;
+                    //while (!hasFinished)
+                    {
+                        IStressTestEventManager.Execute(streamReader, out hasFinished, ref data);
+                    }
+                    streamReader.EndForEachIndex();
+                }
             }
-
-            //Log.Debug($"Executed {eventsCounter} events");
-
-            // Clear events
-            EventList.Clear();
         }
     }
 }
