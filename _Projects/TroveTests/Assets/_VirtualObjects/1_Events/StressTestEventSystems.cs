@@ -147,7 +147,7 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
             Time = (float)SystemAPI.Time.ElapsedTime,
             Singleton = singleton,
 
-            EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriter(1, ref state),
+            EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriterParallel(1, ref state),
         };
         state.Dependency = job.Schedule(state.Dependency);
     }
@@ -159,7 +159,7 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
         public float Time;
         public EventsTest Singleton;
 
-        public UnsafeStream.Writer EventWriter;
+        public EventWriterParallel EventWriter;
 
         public void Execute()
         {
@@ -223,7 +223,7 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
             Time = (float)SystemAPI.Time.ElapsedTime,
             Singleton = singleton,
 
-            EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriter(1, ref state),
+            EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriterParallel(1, ref state),
         };
         state.Dependency = job.Schedule(state.Dependency);
     }
@@ -235,7 +235,7 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
         public float Time;
         public EventsTest Singleton;
 
-        public UnsafeStream.Writer EventWriter;
+        public EventWriterParallel EventWriter;
 
         const float ColorStrength = 1f;
 
@@ -295,7 +295,7 @@ public partial struct MyEventSystem : ISystem
             EventBuffersManagerData = _eventBuffersManagerData,
         };
         state.Dependency = job.Schedule(state.Dependency);
-        state.Dependency = _eventBuffersManagerData.AfterEventsProcessed(ref state, state.Dependency);
+        _eventBuffersManagerData.AfterEventsProcessed(ref state);
     }
 
     [BurstCompile]
@@ -319,19 +319,36 @@ public partial struct MyEventSystem : ISystem
             int executedCount = 0;
 
             // Execute
-            for (int i = 0; i < EventBuffersManagerData.EventStreams.Length; i++)
             {
-                UnsafeStream.Reader streamReader = EventBuffersManagerData.EventStreams[i].AsReader();
-                for (int j = 0; j < streamReader.ForEachCount; j++)
+                // Lists
+                for (int i = 0; i < EventBuffersManagerData.EventLists.Length; i++)
                 {
-                    streamReader.BeginForEachIndex(j);
+                    UnsafeList<byte> list = EventBuffersManagerData.EventLists[i];
+                    int readByteIndex = 0;
                     bool hasFinished = false;
                     while (!hasFinished)
                     {
-                        IStressTestEventManager.Execute(ref streamReader, out hasFinished, ref data);
+                        IStressTestEventManager.Execute(ref list, readByteIndex, out int readSize, out hasFinished, ref data);
+                        readByteIndex += readSize;
                         executedCount++;
                     }
-                    streamReader.EndForEachIndex();
+                }
+
+                // Streams
+                for (int i = 0; i < EventBuffersManagerData.EventStreams.Length; i++)
+                {
+                    UnsafeStream.Reader streamReader = EventBuffersManagerData.EventStreams[i].AsReader();
+                    for (int j = 0; j < streamReader.ForEachCount; j++)
+                    {
+                        streamReader.BeginForEachIndex(j);
+                        bool hasFinished = false;
+                        while (!hasFinished)
+                        {
+                            IStressTestEventManager.Execute(ref streamReader, out hasFinished, ref data);
+                            executedCount++;
+                        }
+                        streamReader.EndForEachIndex();
+                    }
                 }
             }
 

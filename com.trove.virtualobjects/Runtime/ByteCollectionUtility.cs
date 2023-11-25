@@ -29,7 +29,7 @@ namespace Trove.PolymorphicElements
     {
         int Length { get; }
         byte* Ptr { get; }
-        void Resize(int newLength);
+        void Resize(int newLength, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory);
     }
 
     public static unsafe class ByteCollectionUtility

@@ -8,7 +8,22 @@ using Trove.PolymorphicElements;
 using Unity.Burst;
 using Unity.Jobs;
 
-public unsafe struct EventWriter : IStreamWriter
+public unsafe struct EventWriterSingle : IByteList
+{
+    [NativeDisableUnsafePtrRestriction]
+    internal UnsafeList<byte>* List;
+
+    public int Length => List->Length;
+
+    public byte* Ptr => List->Ptr;
+
+    public void Resize(int newLength, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+    {
+        List->Resize(newLength, options);
+    }
+}
+
+public unsafe struct EventWriterParallel : IStreamWriter
 {
     internal UnsafeStream.Writer StreamWriter;
 
@@ -32,6 +47,7 @@ public unsafe struct EventWriter : IStreamWriter
         StreamWriter.EndForEachIndex();
     }
 }
+
 public unsafe struct EventBuffersManager
 {
     [NativeDisableUnsafePtrRestriction]
@@ -42,34 +58,59 @@ public unsafe struct EventBuffersManager
         Data = (EventBuffersManagerData*)UnsafeUtility.AddressOf(ref data);
     }
 
-    public UnsafeStream.Writer CreateEventWriter(int bufferCount, ref SystemState state)
+    public EventWriterSingle CreateEventWriterSingle(int initialCapacity, ref SystemState state)
     {
-        Data->EventsFinalizerDep.Complete();
-        var newStream = new UnsafeStream(bufferCount, Allocator.Persistent);
+        Data->EventListsClearingDep.Complete();
+
+        UnsafeList<byte> newList = new UnsafeList<byte>(initialCapacity, Allocator.Persistent);
+        Data->EventLists.Add(newList); // todo: allocator
+
+        EventWriterSingle eventWriter = new EventWriterSingle
+        {
+            List = (Data->EventLists.GetUnsafePtr() + (long)(Data->EventLists.Length - 1)),
+        };
+
+        return eventWriter;
+    }
+
+    public EventWriterParallel CreateEventWriterParallel(int bufferCount, ref SystemState state)
+    {
+        Data->EventListsClearingDep.Complete();
+
+        UnsafeStream newStream = new UnsafeStream(bufferCount, Allocator.Persistent);
         Data->EventStreams.Add(newStream); // todo: allocator
-        //return new EventWriter
-        //{
-        //    StreamWriter = Data->EventStreams[Data->EventStreams.Length - 1].AsWriter(),
-        //};
-        //return Data->EventStreams[Data->EventStreams.Length - 1].AsWriter();
-        return newStream.AsWriter();
+
+        EventWriterParallel eventWriter = new EventWriterParallel
+        {
+            StreamWriter = newStream.AsWriter(),
+        };
+
+        return eventWriter;
     }
 }
 
 public unsafe struct EventBuffersManagerData
 {
+    [ReadOnly]
+    internal NativeList<UnsafeList<byte>> EventLists;
+    [ReadOnly]
     internal NativeList<UnsafeStream> EventStreams;
-    internal JobHandle EventsFinalizerDep;
+    internal JobHandle EventListsClearingDep;
 
     public EventBuffersManagerData(ref SystemState state)
     {
+        EventLists = new NativeList<UnsafeList<byte>>(Allocator.Persistent);
         EventStreams = new NativeList<UnsafeStream>(Allocator.Persistent);
-        EventsFinalizerDep = default;
+        EventListsClearingDep = default;
     }
 
     public JobHandle DisposeAll(JobHandle dep = default)
     {
         JobHandle returnDep = dep;
+        for (int i = 0; i < EventLists.Length; i++)
+        {
+            returnDep = EventLists[i].Dispose(dep);
+        }
         for (int i = 0; i < EventStreams.Length; i++)
         {
             returnDep = EventStreams[i].Dispose(dep);
@@ -81,33 +122,38 @@ public unsafe struct EventBuffersManagerData
         return returnDep;
     }
 
-    public JobHandle AfterEventsProcessed(ref SystemState state, JobHandle dep)
+    public void AfterEventsProcessed(ref SystemState state)
     {
-        state.Dependency.Complete();
-        JobHandle returnDep = dep;
+        JobHandle returnDep = state.Dependency;
+        for (int i = 0; i < EventLists.Length; i++)
+        {
+            returnDep = EventLists[i].Dispose(returnDep);
+        }
         for (int i = 0; i < EventStreams.Length; i++)
         {
             returnDep = EventStreams[i].Dispose(returnDep);
         }
-        ClearListJob clearJob = new ClearListJob
+        ClearEventListsJob clearJob = new ClearEventListsJob
         {
-            List = EventStreams,
+            EventLists = EventLists,
+            EventStreams = EventStreams,
         };
         returnDep = clearJob.Schedule(returnDep);
 
-        EventsFinalizerDep = returnDep;
-
-        return returnDep;
+        EventListsClearingDep = returnDep;
+        state.Dependency = returnDep;
     }
 
     [BurstCompile]
-    public struct ClearListJob : IJob
+    public struct ClearEventListsJob : IJob
     {
-        public NativeList<UnsafeStream> List;
+        public NativeList<UnsafeList<byte>> EventLists;
+        public NativeList<UnsafeStream> EventStreams;
 
         public void Execute()
         {
-            List.Clear();
+            EventLists.Clear();
+            EventStreams.Clear();
         }
     }
 }
