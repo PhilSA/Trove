@@ -126,9 +126,9 @@ public partial struct CoroutineSystem : ISystem
                 int currentStateByteStartIndex = metaDataBuffer[coroutine.ValueRW.CurrentStateIndex].Value.StartByteIndex;
                 if (mustTriggerBegin)
                 {
-                    ICoroutineStateManager.Begin(coroutineStateBytesBuffer, currentStateByteStartIndex, out _, out _, ref data);
+                    ICoroutineStateManager.Begin(ref coroutineStateBytesBuffer, currentStateByteStartIndex, out _, out _, ref data);
                 }
-                ICoroutineStateManager.Update(coroutineStateBytesBuffer, currentStateByteStartIndex, out _, out _, ref data);
+                ICoroutineStateManager.Update(ref coroutineStateBytesBuffer, currentStateByteStartIndex, out _, out _, ref data);
             }
             else
             {

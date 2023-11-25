@@ -33,6 +33,12 @@ public struct PositionToScaleSequenceTween : IComponentData
 public partial struct PositionToScaleSequenceTweenSystem : ISystem
 {
     [BurstCompile]
+    void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<TweensTester>();
+    }
+
+    [BurstCompile]
     void OnUpdate(ref SystemState state)
     {
         PositionToScaleSequenceTweenJob job = new PositionToScaleSequenceTweenJob
@@ -57,6 +63,12 @@ public partial struct PositionToScaleSequenceTweenSystem : ISystem
 [BurstCompile]
 public partial struct TweensTesterSystem : ISystem
 {
+    [BurstCompile]
+    void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<TweensTester>();
+    }
+
     [BurstCompile]
     void OnUpdate(ref SystemState state)
     {

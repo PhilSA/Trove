@@ -63,7 +63,7 @@ public partial struct StateMachineSystem : ISystem
                     bool hasFinished = false;
                     while (!hasFinished)
                     {
-                        IStateManager.OnStateMachineInitialize(stateElementBuffer, readIndex, out int readSize, out hasFinished, ref random, ref stateMachine, ref data);
+                        IStateManager.OnStateMachineInitialize(ref stateElementBuffer, readIndex, out int readSize, out hasFinished, ref random, ref stateMachine, ref data);
                         readIndex += readSize;
                     }
 
@@ -106,7 +106,7 @@ public partial struct StateMachineSystem : ISystem
             };
 
             // Update current state
-            IStateManager.OnUpdate(data.StateElementsBuffer, sm.ValueRW.CurrentStateByteStartIndex, out _, out _, sm.ValueRO.Speed, ref sm.ValueRW, ref data);
+            IStateManager.OnUpdate(ref data.StateElementsBuffer, sm.ValueRW.CurrentStateByteStartIndex, out _, out _, sm.ValueRO.Speed, ref sm.ValueRW, ref data);
         }
     }
 } 

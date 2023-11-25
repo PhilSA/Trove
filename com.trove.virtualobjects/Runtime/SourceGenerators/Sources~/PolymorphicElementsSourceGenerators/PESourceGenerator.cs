@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis.Text;
 using System.Text;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Linq;
 using System.IO;
 
 namespace PolymorphicElementsSourceGenerators
@@ -617,7 +616,7 @@ namespace PolymorphicElementsSourceGenerators
             }
 
             writer.WriteLine($"{AggressiveInline}");
-            writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{allGenericTypes}({readerTypeName} {readerName}, {extraParameters}out bool hasFinished{parametersStringDeclarationAfterOtherParameters}){allGenericTypeConstraints}");
+            writer.WriteLine($"public static {functionData.ReturnType} {functionData.Name}{allGenericTypes}(ref {readerTypeName} {readerName}, {extraParameters}out bool hasFinished{parametersStringDeclarationAfterOtherParameters}){allGenericTypeConstraints}");
             writer.WriteInScope(() =>
             {         
                 switch(readerType)
