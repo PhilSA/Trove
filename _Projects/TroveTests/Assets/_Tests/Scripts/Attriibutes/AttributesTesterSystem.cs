@@ -16,12 +16,10 @@ public struct ChangingAttribute : IComponentData
     public AttributeType AttributeType;
 }
 
-[BurstCompile]
 public partial struct AttributesTesterSystem : ISystem
 {
     private AttributeChanger _attributeChanger;
 
-    [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _attributeChanger = new AttributeChanger(ref state);
@@ -29,11 +27,9 @@ public partial struct AttributesTesterSystem : ISystem
         state.RequireForUpdate<AttributesTester>();
     }
 
-    [BurstCompile]
     public void OnDestroy(ref SystemState state)
     { }
 
-    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         _attributeChanger.UpdateData(ref state);

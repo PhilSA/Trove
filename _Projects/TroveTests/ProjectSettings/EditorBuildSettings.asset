@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/_VirtualObjects/4_StateMachines/StateMachineTest.unity
-    guid: 193a897907855234d8113591aab4a89d
+    path: Assets/_VirtualObjects/1_Events/EventTests.unity
+    guid: 2d239b0af9f995f41887271fbfa9df08
   m_configObjects: {}

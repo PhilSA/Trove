@@ -170,7 +170,7 @@ MonoBehaviour:
   EventsTest:
     UseUnionEvents: 0
     EnableStressTestEventsTest: 1
-    TransformEventsCount: 1
+    TransformEventsCount: 500000
     ColorEventsCount: 500000
     EnableManagedEventsTest: 0
     EnableEntityManagerEventsTest: 0
