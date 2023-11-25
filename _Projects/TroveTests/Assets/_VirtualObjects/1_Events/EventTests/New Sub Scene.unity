@@ -168,8 +168,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EventsTest:
-    UseUnionEvents: 0
     EnableStressTestEventsTest: 1
+    UseUnionEvents: 0
+    UseParallelEvents: 1
+    ParallelThreadCount: 16
     TransformEventsCount: 500000
     ColorEventsCount: 500000
     EnableManagedEventsTest: 0

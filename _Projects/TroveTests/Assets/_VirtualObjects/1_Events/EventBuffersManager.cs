@@ -62,8 +62,8 @@ public unsafe struct EventBuffersManager
     {
         Data->EventListsClearingDep.Complete();
 
-        UnsafeList<byte> newList = new UnsafeList<byte>(initialCapacity, Allocator.Persistent);
-        Data->EventLists.Add(newList); // todo: allocator
+        UnsafeList<byte> newList = new UnsafeList<byte>(initialCapacity, Data->Allocator);
+        Data->EventLists.Add(newList); 
 
         EventWriterSingle eventWriter = new EventWriterSingle
         {
@@ -77,8 +77,8 @@ public unsafe struct EventBuffersManager
     {
         Data->EventListsClearingDep.Complete();
 
-        UnsafeStream newStream = new UnsafeStream(bufferCount, Allocator.Persistent);
-        Data->EventStreams.Add(newStream); // todo: allocator
+        UnsafeStream newStream = new UnsafeStream(bufferCount, Data->Allocator);
+        Data->EventStreams.Add(newStream); 
 
         EventWriterParallel eventWriter = new EventWriterParallel
         {
@@ -96,12 +96,14 @@ public unsafe struct EventBuffersManagerData
     [ReadOnly]
     internal NativeList<UnsafeStream> EventStreams;
     internal JobHandle EventListsClearingDep;
+    internal Allocator Allocator;
 
     public EventBuffersManagerData(ref SystemState state)
     {
         EventLists = new NativeList<UnsafeList<byte>>(Allocator.Persistent);
         EventStreams = new NativeList<UnsafeStream>(Allocator.Persistent);
         EventListsClearingDep = default;
+        Allocator = state.WorldUpdateAllocator;
     }
 
     public JobHandle DisposeAll(JobHandle dep = default)

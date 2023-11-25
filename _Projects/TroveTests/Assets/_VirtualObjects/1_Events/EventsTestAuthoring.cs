@@ -11,9 +11,10 @@ public struct EventsTest : IComponentData
     public Entity CubePrefab;
     public Entity MainCubeInstance;
 
-    public bool UseUnionEvents;
-
     public bool EnableStressTestEventsTest;
+    public bool UseUnionEvents;
+    public bool UseParallelEvents;
+    public int ParallelThreadCount;
     public int TransformEventsCount;
     public int ColorEventsCount;
 

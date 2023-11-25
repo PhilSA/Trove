@@ -141,32 +141,101 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
         if (!singleton.EnableStressTestEventsTest || !state.EntityManager.Exists(singleton.MainCubeInstance))
             return;
 
-        TransformEventJob job = new TransformEventJob
+        if (singleton.UseParallelEvents)
         {
-            EventsCount = singleton.TransformEventsCount,
-            Time = (float)SystemAPI.Time.ElapsedTime,
-            Singleton = singleton,
+            int eventsPerThread = singleton.TransformEventsCount / singleton.ParallelThreadCount;
+            int eventsSurplus = singleton.TransformEventsCount % singleton.ParallelThreadCount;
 
-            EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriterParallel(1, ref state),
-        };
-        state.Dependency = job.Schedule(state.Dependency);
+            TransformEventParallelJob job = new TransformEventParallelJob
+            {
+                EventsCount = eventsPerThread,
+                EventsSurplus = eventsSurplus,
+                Time = (float)SystemAPI.Time.ElapsedTime,
+                Singleton = singleton,
+
+                EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriterParallel(singleton.ParallelThreadCount, ref state),
+            };
+            state.Dependency = job.Schedule(singleton.ParallelThreadCount, 1, state.Dependency);
+        }
+        else
+        {
+            TransformEventSingleJob job = new TransformEventSingleJob
+            {
+                EventsCount = singleton.TransformEventsCount,
+                Time = (float)SystemAPI.Time.ElapsedTime,
+                Singleton = singleton,
+
+                EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriterSingle(100, ref state),
+            };
+            state.Dependency = job.Schedule(state.Dependency);
+        }
     }
 
     [BurstCompile]
-    public partial struct TransformEventJob : IJob
+    public partial struct TransformEventSingleJob : IJob
     {
         public int EventsCount;
         public float Time;
         public EventsTest Singleton;
 
-        public EventWriterParallel EventWriter;
+        public EventWriterSingle EventWriter;
 
         public void Execute()
         {
             Random random = Random.CreateFromIndex((uint)(Time * 10000f));
 
-            EventWriter.BeginForEachIndex(0);
             for (int i = 0; i < EventsCount; i++)
+            {
+                switch (i % 3)
+                {
+                    case 0:
+                        PolymorphicElementsUtility.AddElement(ref EventWriter, new StressTestEvent_SetPosition
+                        {
+                            Entity = Singleton.MainCubeInstance,
+                            Position = random.NextFloat3(new float3(-3f), new float3(3f)),
+                        });
+                        break;
+                    case 1:
+                        PolymorphicElementsUtility.AddElement(ref EventWriter, new StressTestEvent_SetRotation
+                        {
+                            Entity = Singleton.MainCubeInstance,
+                            Rotation = random.NextQuaternionRotation(),
+                        });
+                        break;
+                    case 2:
+                        PolymorphicElementsUtility.AddElement(ref EventWriter, new StressTestEvent_SetScale
+                        {
+                            Entity = Singleton.MainCubeInstance,
+                            Scale = random.NextFloat(0.5f, 2f),
+                        });
+                        break;
+                }
+            }
+        }
+    }
+
+    [BurstCompile]
+    public partial struct TransformEventParallelJob : IJobParallelFor
+    {
+        public int EventsCount;
+        public int EventsSurplus;
+        public float Time;
+        public EventsTest Singleton;
+
+        public EventWriterParallel EventWriter;
+
+        public void Execute(int index)
+        {
+            Random random = Random.CreateFromIndex((uint)(index + (Time * 10000f)));
+
+            int realEventsCount = EventsCount;
+            if (index == 0)
+            {
+                realEventsCount += EventsSurplus;
+            }
+
+            EventWriter.BeginForEachIndex(index);
+            for (int i = 0; i < realEventsCount; i++)
             {
                 switch (i % 3)
                 {
@@ -217,25 +286,44 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
         if (!singleton.EnableStressTestEventsTest || !state.EntityManager.Exists(singleton.MainCubeInstance))
             return;
 
-        ColorEventsJob job = new ColorEventsJob
+        if (singleton.UseParallelEvents)
         {
-            EventsCount = singleton.ColorEventsCount,
-            Time = (float)SystemAPI.Time.ElapsedTime,
-            Singleton = singleton,
+            int eventsPerThread = singleton.ColorEventsCount / singleton.ParallelThreadCount;
+            int eventsSurplus = singleton.ColorEventsCount % singleton.ParallelThreadCount;
 
-            EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriterParallel(1, ref state),
-        };
-        state.Dependency = job.Schedule(state.Dependency);
+            ColorEventsParallelJob job = new ColorEventsParallelJob
+            {
+                EventsCount = eventsPerThread,
+                EventsSurplus = eventsSurplus,
+                Time = (float)SystemAPI.Time.ElapsedTime,
+                Singleton = singleton,
+
+                EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriterParallel(singleton.ParallelThreadCount, ref state),
+            };
+            state.Dependency = job.Schedule(singleton.ParallelThreadCount, 1, state.Dependency);
+        }
+        else
+        {
+            ColorEventsSingleJob job = new ColorEventsSingleJob
+            {
+                EventsCount = singleton.ColorEventsCount,
+                Time = (float)SystemAPI.Time.ElapsedTime,
+                Singleton = singleton,
+
+                EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriterSingle(singleton.ColorEventsCount * 30, ref state),
+            };
+            state.Dependency = job.Schedule(state.Dependency);
+        }
     }
 
     [BurstCompile]
-    public partial struct ColorEventsJob : IJob
+    public partial struct ColorEventsSingleJob : IJob
     {
         public int EventsCount;
         public float Time;
         public EventsTest Singleton;
 
-        public EventWriterParallel EventWriter;
+        public EventWriterSingle EventWriter;
 
         const float ColorStrength = 1f;
 
@@ -243,8 +331,41 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
         {
             Random random = Random.CreateFromIndex((uint)(Time * 10000f));
 
-            EventWriter.BeginForEachIndex(0);
             for (int i = 0; i < EventsCount; i++)
+            {
+                PolymorphicElementsUtility.AddElement(ref EventWriter, new StressTestEvent_SetColor
+                {
+                    Entity = Singleton.MainCubeInstance,
+                    Color = new float4(random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), random.NextFloat(0f, ColorStrength), 1f),
+                });
+            }
+        }
+    }
+
+    [BurstCompile]
+    public partial struct ColorEventsParallelJob : IJobParallelFor
+    {
+        public int EventsCount;
+        public int EventsSurplus;
+        public float Time;
+        public EventsTest Singleton;
+
+        public EventWriterParallel EventWriter;
+
+        const float ColorStrength = 1f;
+
+        public void Execute(int index)
+        {
+            Random random = Random.CreateFromIndex((uint)(index + (Time * 10000f)));
+
+            int realEventsCount = EventsCount;
+            if (index == 0)
+            {
+                realEventsCount += EventsSurplus;
+            }
+
+            EventWriter.BeginForEachIndex(index);
+            for (int i = 0; i < realEventsCount; i++)
             {
                 PolymorphicElementsUtility.AddStreamElement(ref EventWriter, new StressTestEvent_SetColor
                 {
