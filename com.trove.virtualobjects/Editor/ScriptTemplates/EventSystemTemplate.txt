@@ -1,0 +1,79 @@
+using Unity.Burst;
+using Unity.Entities;
+using Unity.Jobs;
+using Unity.Mathematics;
+using Trove.PolymorphicElements;
+using System;
+using Unity.Collections.LowLevel.Unsafe;
+
+[BurstCompile]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+public partial struct #SCRIPTNAME# : ISystem
+{
+    public struct Singleton : IComponentData
+    {
+        public EventBuffersManager EventBuffersManager;
+    }
+
+    private EventBuffersManagerData _eventBuffersManagerData;
+
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<Singleton>();
+        _eventBuffersManagerData = new EventBuffersManagerData(ref state);
+        state.EntityManager.AddComponentData(state.EntityManager.CreateEntity(), new Singleton { EventBuffersManager = new EventBuffersManager(ref _eventBuffersManagerData) });
+    }
+
+    [BurstCompile]
+    public void OnDestroy(ref SystemState state)
+    {
+        _eventBuffersManagerData.DisposeAll();
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        ExecuteEventsJob job = new ExecuteEventsJob
+        {
+            EventBuffersManagerData = _eventBuffersManagerData,
+        };
+        state.Dependency = job.Schedule(state.Dependency);
+
+        _eventBuffersManagerData.AfterEventsProcessed(ref state);
+    }
+
+    [BurstCompile]
+    public struct ExecuteEventsJob : IJob
+    {
+        public EventBuffersManagerData EventBuffersManagerData;
+
+        public void Execute()
+        {
+            // Execute
+            {
+                // Lists
+                for (int i = 0; i < EventBuffersManagerData.EventLists.Length; i++)
+                {
+                    UnsafeList<byte> list = EventBuffersManagerData.EventLists[i];
+
+                    // TODO: Execute events list
+                }
+
+                // Streams
+                for (int i = 0; i < EventBuffersManagerData.EventStreams.Length; i++)
+                {
+                    UnsafeStream.Reader streamReader = EventBuffersManagerData.EventStreams[i].AsReader();
+                    for (int j = 0; j < streamReader.ForEachCount; j++)
+                    {
+                        streamReader.BeginForEachIndex(j);
+
+                        //  TODO: Execute events stream
+                            
+                        streamReader.EndForEachIndex();
+                    }
+                }
+            }
+        }
+    }
+}
