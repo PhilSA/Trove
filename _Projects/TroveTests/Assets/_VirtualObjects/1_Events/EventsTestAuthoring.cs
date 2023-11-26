@@ -15,6 +15,7 @@ public struct EventsTest : IComponentData
     public bool UseUnionEvents;
     public bool UseParallelEvents;
     public int ParallelThreadCount;
+    public int SingleWritersCount;
     public int TransformEventsCount;
     public int ColorEventsCount;
 

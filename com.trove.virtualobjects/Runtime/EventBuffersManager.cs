@@ -145,14 +145,17 @@ namespace Trove.PolymorphicElements
     public unsafe struct EventBuffersManagerData
     {
         [ReadOnly]
-        public NativeList<UnsafeList<byte>> EventLists;
+        internal NativeList<UnsafeList<byte>> EventLists;
         [ReadOnly]
-        public NativeList<UnsafeStream> EventStreams;
+        internal NativeList<UnsafeStream> EventStreams;
         [ReadOnly]
         internal NativeList<SystemHandle> EventWriterHandles;
         internal bool EventListsClearingDepWasCompleted;
         internal JobHandle EventListsClearingDep;
         internal Allocator Allocator;
+
+        private int _listWriterIterator;
+        private int _streamWriterIterator;
 
         public EventBuffersManagerData(ref SystemState state)
         {
@@ -162,6 +165,9 @@ namespace Trove.PolymorphicElements
             EventListsClearingDepWasCompleted = false;
             EventListsClearingDep = default;
             Allocator = state.WorldUpdateAllocator;
+
+            _listWriterIterator = 0;
+            _streamWriterIterator = 0;
         }
 
         public JobHandle DisposeAll(JobHandle dep = default)
@@ -223,6 +229,36 @@ namespace Trove.PolymorphicElements
             EventListsClearingDepWasCompleted = false;
 
             state.Dependency = returnDep;
+        }
+
+        public void BeginReadEvents()
+        {
+            _listWriterIterator = 0;
+            _streamWriterIterator = 0;
+        }
+
+        public bool NextEventsList(out UnsafeList<byte> eventsList)
+        {
+            if(_listWriterIterator < EventLists.Length)
+            {
+                eventsList = EventLists[_listWriterIterator];
+                _listWriterIterator++;
+                return true;
+            }
+            eventsList = default;
+            return false;
+        }
+
+        public bool NextEventsStreamReader(out UnsafeStream.Reader eventsStreamReader)
+        {
+            if (_streamWriterIterator < EventStreams.Length)
+            {
+                eventsStreamReader = EventStreams[_streamWriterIterator].AsReader();
+                _streamWriterIterator++;
+                return true;
+            }
+            eventsStreamReader = default;
+            return false;
         }
 
         [BurstCompile]

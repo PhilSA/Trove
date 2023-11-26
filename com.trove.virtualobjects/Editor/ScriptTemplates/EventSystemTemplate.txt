@@ -52,28 +52,22 @@ public partial struct #SCRIPTNAME# : ISystem
 
         public void Execute()
         {
-            // Execute
+            EventBuffersManagerData.BeginReadEvents();
+
+            while (EventBuffersManagerData.NextEventsList(out UnsafeList<byte> eventsList))
             {
-                // Lists
-                for (int i = 0; i < EventBuffersManagerData.EventLists.Length; i++)
+                // TODO: Execute events list
+            }
+
+            while (EventBuffersManagerData.NextEventsStreamReader(out UnsafeStream.Reader eventsStreamReader))
+            {
+                for (int j = 0; j < eventsStreamReader.ForEachCount; j++)
                 {
-                    UnsafeList<byte> list = EventBuffersManagerData.EventLists[i];
+                    eventsStreamReader.BeginForEachIndex(j);
 
-                    // TODO: Execute events list
-                }
+                    //  TODO: Execute events stream
 
-                // Streams
-                for (int i = 0; i < EventBuffersManagerData.EventStreams.Length; i++)
-                {
-                    UnsafeStream.Reader streamReader = EventBuffersManagerData.EventStreams[i].AsReader();
-                    for (int j = 0; j < streamReader.ForEachCount; j++)
-                    {
-                        streamReader.BeginForEachIndex(j);
-
-                        //  TODO: Execute events stream
-                            
-                        streamReader.EndForEachIndex();
-                    }
+                    eventsStreamReader.EndForEachIndex();
                 }
             }
         }

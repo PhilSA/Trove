@@ -163,52 +163,30 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
         }
         else
         {
-            TransformEventSingleJob job = new TransformEventSingleJob
+            int eventsPerWriter = singleton.TransformEventsCount / singleton.SingleWritersCount;
+            int eventsSurplus = singleton.TransformEventsCount % singleton.SingleWritersCount;
+            JobHandle initDep = state.Dependency;
+
+            for (int i = 0; i < singleton.SingleWritersCount; i++)
             {
-                EventsCount = singleton.TransformEventsCount,
-                Time = (float)SystemAPI.Time.ElapsedTime,
-                Singleton = singleton,
+                int totalEventsCount = eventsPerWriter;
+                if(i == 0)
+                {
+                    totalEventsCount += eventsSurplus;
+                }
 
-                EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.TransformEventsCount * 30, ref state),
-            };
-            state.Dependency = job.Schedule(state.Dependency);
+                TransformEventSingleJob job = new TransformEventSingleJob
+                {
+                    EventsCount = totalEventsCount,
+                    Time = (float)SystemAPI.Time.ElapsedTime,
+                    Singleton = singleton,
 
+                    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.TransformEventsCount * 30, ref state),
+                };
+                JobHandle singleWriterDep = job.Schedule(initDep);
 
-            //JobHandle initDep = state.Dependency;
-
-            //TransformEventSingleJob job1 = new TransformEventSingleJob
-            //{
-            //    EventsCount = singleton.TransformEventsCount,
-            //    Time = (float)SystemAPI.Time.ElapsedTime,
-            //    Singleton = singleton,
-
-            //    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.TransformEventsCount * 30, ref state),
-            //};
-            //JobHandle d1 = job1.Schedule(initDep);
-
-            //TransformEventSingleJob job2 = new TransformEventSingleJob
-            //{
-            //    EventsCount = singleton.TransformEventsCount,
-            //    Time = (float)SystemAPI.Time.ElapsedTime,
-            //    Singleton = singleton,
-
-            //    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.TransformEventsCount * 30, ref state),
-            //};
-            //JobHandle d2 = job2.Schedule(initDep);
-
-            //TransformEventSingleJob job3 = new TransformEventSingleJob
-            //{
-            //    EventsCount = singleton.TransformEventsCount,
-            //    Time = (float)SystemAPI.Time.ElapsedTime,
-            //    Singleton = singleton,
-
-            //    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.TransformEventsCount * 30, ref state),
-            //};
-            //JobHandle d3 = job3.Schedule(initDep);
-
-            //state.Dependency = JobHandle.CombineDependencies(state.Dependency, d1);
-            //state.Dependency = JobHandle.CombineDependencies(state.Dependency, d2);
-            //state.Dependency = JobHandle.CombineDependencies(state.Dependency, d3);
+                state.Dependency = JobHandle.CombineDependencies(state.Dependency, singleWriterDep);
+            }
         }
     }
 
@@ -343,17 +321,32 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
             };
             state.Dependency = job.Schedule(singleton.ParallelThreadCount, 1, state.Dependency);
         }
-        else 
+        else
         {
-            ColorEventsSingleJob job = new ColorEventsSingleJob
-            {
-                EventsCount = singleton.ColorEventsCount,
-                Time = (float)SystemAPI.Time.ElapsedTime,
-                Singleton = singleton,
+            int eventsPerWriter = singleton.ColorEventsCount / singleton.SingleWritersCount;
+            int eventsSurplus = singleton.ColorEventsCount % singleton.SingleWritersCount;
+            JobHandle initDep = state.Dependency;
 
-                EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.ColorEventsCount * 30, ref state),
-            };
-            state.Dependency = job.Schedule(state.Dependency);
+            for (int i = 0; i < singleton.SingleWritersCount; i++)
+            {
+                int totalEventsCount = eventsPerWriter;
+                if (i == 0)
+                {
+                    totalEventsCount += eventsSurplus;
+                }
+
+                ColorEventsSingleJob job = new ColorEventsSingleJob
+                {
+                    EventsCount = totalEventsCount,
+                    Time = (float)SystemAPI.Time.ElapsedTime,
+                    Singleton = singleton,
+
+                    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.ColorEventsCount * 30, ref state),
+                };
+                JobHandle singleWriterDep = job.Schedule(initDep);
+
+                state.Dependency = JobHandle.CombineDependencies(state.Dependency, singleWriterDep);
+            }
         }
     }
 
@@ -485,34 +478,30 @@ public partial struct MyEventSystem : ISystem
 
             // Execute
             {
-                // Lists
-                for (int i = 0; i < EventBuffersManagerData.EventLists.Length; i++)
+                EventBuffersManagerData.BeginReadEvents();
+                while (EventBuffersManagerData.NextEventsList(out UnsafeList<byte> eventsList))
                 {
-                    UnsafeList<byte> list = EventBuffersManagerData.EventLists[i];
                     int readByteIndex = 0;
                     bool hasFinished = false;
                     while (!hasFinished)
                     {
-                        IStressTestEventManager.Execute(ref list, readByteIndex, out int readSize, out hasFinished, ref data);
+                        IStressTestEventManager.Execute(ref eventsList, readByteIndex, out int readSize, out hasFinished, ref data);
                         readByteIndex += readSize;
                         executedCount++;
                     }
                 }
-
-                // Streams
-                for (int i = 0; i < EventBuffersManagerData.EventStreams.Length; i++)
+                while (EventBuffersManagerData.NextEventsStreamReader(out UnsafeStream.Reader eventsStreamReader))
                 {
-                    UnsafeStream.Reader streamReader = EventBuffersManagerData.EventStreams[i].AsReader();
-                    for (int j = 0; j < streamReader.ForEachCount; j++)
+                    for (int j = 0; j < eventsStreamReader.ForEachCount; j++)
                     {
-                        streamReader.BeginForEachIndex(j);
+                        eventsStreamReader.BeginForEachIndex(j);
                         bool hasFinished = false;
                         while (!hasFinished)
                         {
-                            IStressTestEventManager.Execute(ref streamReader, out hasFinished, ref data);
+                            IStressTestEventManager.Execute(ref eventsStreamReader, out hasFinished, ref data);
                             executedCount++;
                         }
-                        streamReader.EndForEachIndex();
+                        eventsStreamReader.EndForEachIndex();
                     }
                 }
             }
