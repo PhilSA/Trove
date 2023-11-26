@@ -181,7 +181,7 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
                     Time = (float)SystemAPI.Time.ElapsedTime,
                     Singleton = singleton,
 
-                    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.TransformEventsCount * 30, ref state),
+                    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(totalEventsCount * 30, ref state),
                 };
                 JobHandle singleWriterDep = job.Schedule(initDep);
 
@@ -341,7 +341,7 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
                     Time = (float)SystemAPI.Time.ElapsedTime,
                     Singleton = singleton,
 
-                    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.ColorEventsCount * 30, ref state),
+                    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(totalEventsCount * 30, ref state),
                 };
                 JobHandle singleWriterDep = job.Schedule(initDep);
 
