@@ -30,7 +30,7 @@ public partial struct StressTestEvent_SetPosition : IStressTestEvent
     public Entity Entity;
     public float3 Position;
 
-    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Execute(ref StressTestEventsData data)
     {
         RefRW<LocalTransform> transformRef = data.LocalTransformLookup.GetRefRW(Entity);
@@ -47,7 +47,7 @@ public partial struct StressTestEvent_SetRotation : IStressTestEvent
     public Entity Entity;
     public quaternion Rotation;
 
-    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Execute(ref StressTestEventsData data)
     {
         RefRW<LocalTransform> transformRef = data.LocalTransformLookup.GetRefRW(Entity);
@@ -64,7 +64,7 @@ public partial struct StressTestEvent_SetScale : IStressTestEvent
     public Entity Entity;
     public float Scale;
 
-    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Execute(ref StressTestEventsData data)
     {
         RefRW<LocalTransform> transformRef = data.LocalTransformLookup.GetRefRW(Entity);
@@ -81,7 +81,7 @@ public partial struct StressTestEvent_SetColor : IStressTestEvent
     public Entity Entity;
     public float4 Color;
 
-    //[MethodImpl(MethodImplOptions.AggressiveInlining)] 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)] 
     public void Execute(ref StressTestEventsData data)
     {
         RefRW<URPMaterialPropertyEmissionColor> colorRef = data.EmissionColorLookup.GetRefRW(Entity);
