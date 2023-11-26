@@ -10,17 +10,58 @@ using System.Runtime.CompilerServices;
 
 namespace Trove.PolymorphicElements
 {
+    [NativeContainer]
     public unsafe struct EventWriterSingle : IByteList
     {
         [NativeDisableUnsafePtrRestriction]
         internal UnsafeList<byte>* List;
 
-        public int Length => List->Length;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        internal AtomicSafetyHandle m_Safety;
+        internal static readonly SharedStatic<int> _staticSafetyId = SharedStatic<int>.GetOrCreate<EventWriterSingle>();
+#endif
 
-        public byte* Ptr => List->Ptr;
+        public EventWriterSingle(AllocatorManager.AllocatorHandle allocatorHandle, UnsafeList<byte>* list)
+        {
+            List = list;
 
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            m_Safety = CollectionHelper.CreateSafetyHandle(allocatorHandle);
+            CollectionHelper.SetStaticSafetyId<EventWriterSingle>(ref m_Safety, ref _staticSafetyId.Data);
+            AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
+#endif
+        }
+
+        public unsafe int Length
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
+#endif
+                return List->Length;
+            }
+        }
+
+        public byte* Ptr
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+#endif
+                return List->Ptr;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(int newLength, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+#endif
             List->Resize(newLength, options);
         }
     }
@@ -71,10 +112,8 @@ namespace Trove.PolymorphicElements
             UnsafeList<byte> newList = new UnsafeList<byte>(initialCapacity, Data->Allocator);
             Data->EventLists.Add(newList);
 
-            EventWriterSingle eventWriter = new EventWriterSingle
-            {
-                List = (Data->EventLists.GetUnsafePtr() + (long)(Data->EventLists.Length - 1)),
-            };
+            EventWriterSingle eventWriter = new EventWriterSingle(Data->Allocator,
+                (Data->EventLists.GetUnsafePtr() + (long)(Data->EventLists.Length - 1)));
 
             Data->EventWriterHandles.Add(state.SystemHandle);
 

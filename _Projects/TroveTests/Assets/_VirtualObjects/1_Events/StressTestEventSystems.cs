@@ -182,7 +182,7 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
             //    Time = (float)SystemAPI.Time.ElapsedTime,
             //    Singleton = singleton,
 
-            //    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(100, ref state),
+            //    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.TransformEventsCount * 30, ref state),
             //};
             //JobHandle d1 = job1.Schedule(initDep);
 
@@ -192,7 +192,7 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
             //    Time = (float)SystemAPI.Time.ElapsedTime,
             //    Singleton = singleton,
 
-            //    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(100, ref state),
+            //    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.TransformEventsCount * 30, ref state),
             //};
             //JobHandle d2 = job2.Schedule(initDep);
 
@@ -202,7 +202,7 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
             //    Time = (float)SystemAPI.Time.ElapsedTime,
             //    Singleton = singleton,
 
-            //    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(100, ref state),
+            //    EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.TransformEventsCount * 30, ref state),
             //};
             //JobHandle d3 = job3.Schedule(initDep);
 
