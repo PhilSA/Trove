@@ -141,7 +141,7 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
         if (!singleton.EnableStressTestEventsTest || !state.EntityManager.Exists(singleton.MainCubeInstance))
             return;
 
-        if (singleton.UseParallelEvents)
+        //if (singleton.UseParallelEvents)
         {
             int eventsPerThread = singleton.TransformEventsCount / singleton.ParallelThreadCount;
             int eventsSurplus = singleton.TransformEventsCount % singleton.ParallelThreadCount;
@@ -153,21 +153,47 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
                 Time = (float)SystemAPI.Time.ElapsedTime,
                 Singleton = singleton,
 
-                EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriterParallel(singleton.ParallelThreadCount, ref state),
+                EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterParallel(singleton.ParallelThreadCount, ref state),
             };
             state.Dependency = job.Schedule(singleton.ParallelThreadCount, 1, state.Dependency);
         }
-        else
+        //else
         {
+            JobHandle initDep = state.Dependency;
+
             TransformEventSingleJob job = new TransformEventSingleJob
             {
                 EventsCount = singleton.TransformEventsCount,
                 Time = (float)SystemAPI.Time.ElapsedTime,
                 Singleton = singleton,
 
-                EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriterSingle(100, ref state),
+                EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(100, ref state),
             };
-            state.Dependency = job.Schedule(state.Dependency);
+            JobHandle d1 = job.Schedule(initDep);
+
+            TransformEventSingleJob job2 = new TransformEventSingleJob
+            {
+                EventsCount = singleton.TransformEventsCount,
+                Time = (float)SystemAPI.Time.ElapsedTime,
+                Singleton = singleton,
+
+                EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(100, ref state),
+            };
+            JobHandle d2 = job2.Schedule(initDep);
+
+            TransformEventSingleJob job3 = new TransformEventSingleJob
+            {
+                EventsCount = singleton.TransformEventsCount,
+                Time = (float)SystemAPI.Time.ElapsedTime,
+                Singleton = singleton,
+
+                EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(100, ref state),
+            };
+            JobHandle d3 = job3.Schedule(initDep);
+
+            state.Dependency = JobHandle.CombineDependencies(state.Dependency, d1);
+            state.Dependency = JobHandle.CombineDependencies(state.Dependency, d2);
+            state.Dependency = JobHandle.CombineDependencies(state.Dependency, d3);
         }
     }
 
@@ -286,7 +312,7 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
         if (!singleton.EnableStressTestEventsTest || !state.EntityManager.Exists(singleton.MainCubeInstance))
             return;
 
-        if (singleton.UseParallelEvents)
+        //if (singleton.UseParallelEvents)
         {
             int eventsPerThread = singleton.ColorEventsCount / singleton.ParallelThreadCount;
             int eventsSurplus = singleton.ColorEventsCount % singleton.ParallelThreadCount;
@@ -298,11 +324,11 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
                 Time = (float)SystemAPI.Time.ElapsedTime,
                 Singleton = singleton,
 
-                EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriterParallel(singleton.ParallelThreadCount, ref state),
+                EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterParallel(singleton.ParallelThreadCount, ref state),
             };
             state.Dependency = job.Schedule(singleton.ParallelThreadCount, 1, state.Dependency);
         }
-        else
+        //else 
         {
             ColorEventsSingleJob job = new ColorEventsSingleJob
             {
@@ -310,7 +336,7 @@ public partial struct StressTestColorEventCreatorSystem : ISystem
                 Time = (float)SystemAPI.Time.ElapsedTime,
                 Singleton = singleton,
 
-                EventWriter = SystemAPI.GetSingletonRW<MyEventSystem.Singleton>().ValueRW.EventBuffersManager.CreateEventWriterSingle(singleton.ColorEventsCount * 30, ref state),
+                EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.ColorEventsCount * 30, ref state),
             };
             state.Dependency = job.Schedule(state.Dependency);
         }
@@ -407,6 +433,8 @@ public partial struct MyEventSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        _eventBuffersManagerData.BeforeEventsProcessed(ref state);
+
         EventsTest eventTestSingleton = SystemAPI.GetSingleton<EventsTest>();
         ExecuteEventsJob job = new ExecuteEventsJob
         {
@@ -416,6 +444,7 @@ public partial struct MyEventSystem : ISystem
             EventBuffersManagerData = _eventBuffersManagerData,
         };
         state.Dependency = job.Schedule(state.Dependency);
+
         _eventBuffersManagerData.AfterEventsProcessed(ref state);
     }
 
@@ -473,7 +502,7 @@ public partial struct MyEventSystem : ISystem
                 }
             }
 
-            //Log.Debug($"Executed events; {executedCount}");
+            Log.Debug($"Executed events; {executedCount}");
         }
     }
 }

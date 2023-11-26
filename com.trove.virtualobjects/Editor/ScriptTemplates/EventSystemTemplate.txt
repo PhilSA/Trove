@@ -34,6 +34,8 @@ public partial struct #SCRIPTNAME# : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        _eventBuffersManagerData.BeforeEventsProcessed(ref state);
+
         ExecuteEventsJob job = new ExecuteEventsJob
         {
             EventBuffersManagerData = _eventBuffersManagerData,

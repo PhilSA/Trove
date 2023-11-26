@@ -62,7 +62,11 @@ namespace Trove.PolymorphicElements
 
         public EventWriterSingle CreateEventWriterSingle(int initialCapacity, ref SystemState state)
         {
-            Data->EventListsClearingDep.Complete();
+            if (!Data->EventListsClearingDepWasCompleted)
+            {
+                Data->EventListsClearingDep.Complete();
+                Data->EventListsClearingDepWasCompleted = true;
+            }
 
             UnsafeList<byte> newList = new UnsafeList<byte>(initialCapacity, Data->Allocator);
             Data->EventLists.Add(newList);
@@ -72,12 +76,18 @@ namespace Trove.PolymorphicElements
                 List = (Data->EventLists.GetUnsafePtr() + (long)(Data->EventLists.Length - 1)),
             };
 
+            Data->EventWriterHandles.Add(state.SystemHandle);
+
             return eventWriter;
         }
 
         public EventWriterParallel CreateEventWriterParallel(int bufferCount, ref SystemState state)
         {
-            Data->EventListsClearingDep.Complete();
+            if (!Data->EventListsClearingDepWasCompleted)
+            {
+                Data->EventListsClearingDep.Complete();
+                Data->EventListsClearingDepWasCompleted = true;
+            }
 
             UnsafeStream newStream = new UnsafeStream(bufferCount, Data->Allocator);
             Data->EventStreams.Add(newStream);
@@ -86,6 +96,8 @@ namespace Trove.PolymorphicElements
             {
                 StreamWriter = newStream.AsWriter(),
             };
+
+            Data->EventWriterHandles.Add(state.SystemHandle);
 
             return eventWriter;
         }
@@ -97,6 +109,9 @@ namespace Trove.PolymorphicElements
         public NativeList<UnsafeList<byte>> EventLists;
         [ReadOnly]
         public NativeList<UnsafeStream> EventStreams;
+        [ReadOnly]
+        internal NativeList<SystemHandle> EventWriterHandles;
+        internal bool EventListsClearingDepWasCompleted;
         internal JobHandle EventListsClearingDep;
         internal Allocator Allocator;
 
@@ -104,6 +119,8 @@ namespace Trove.PolymorphicElements
         {
             EventLists = new NativeList<UnsafeList<byte>>(Allocator.Persistent);
             EventStreams = new NativeList<UnsafeStream>(Allocator.Persistent);
+            EventWriterHandles = new NativeList<SystemHandle>(Allocator.Persistent);
+            EventListsClearingDepWasCompleted = false;
             EventListsClearingDep = default;
             Allocator = state.WorldUpdateAllocator;
         }
@@ -119,11 +136,29 @@ namespace Trove.PolymorphicElements
             {
                 returnDep = EventStreams[i].Dispose(dep);
             }
+            if (EventLists.IsCreated)
+            {
+                returnDep = EventLists.Dispose(dep);
+            }
             if (EventStreams.IsCreated)
             {
                 returnDep = EventStreams.Dispose(dep);
             }
+            if (EventWriterHandles.IsCreated)
+            {
+                returnDep = EventWriterHandles.Dispose(dep);
+            }
             return returnDep;
+        }
+
+        public void BeforeEventsProcessed(ref SystemState state)
+        {
+            // Add output dep of all writers
+            for (int i = 0; i < EventWriterHandles.Length; i++)
+            {
+                ref SystemState writerState = ref state.WorldUnmanaged.ResolveSystemStateRef(EventWriterHandles[i]);
+                state.Dependency = JobHandle.CombineDependencies(state.Dependency, writerState.Dependency);
+            }
         }
 
         public void AfterEventsProcessed(ref SystemState state)
@@ -141,10 +176,13 @@ namespace Trove.PolymorphicElements
             {
                 EventLists = EventLists,
                 EventStreams = EventStreams,
+                EventWriterHandles = EventWriterHandles,
             };
             returnDep = clearJob.Schedule(returnDep);
 
             EventListsClearingDep = returnDep;
+            EventListsClearingDepWasCompleted = false;
+
             state.Dependency = returnDep;
         }
 
@@ -153,11 +191,13 @@ namespace Trove.PolymorphicElements
         {
             public NativeList<UnsafeList<byte>> EventLists;
             public NativeList<UnsafeStream> EventStreams;
+            public NativeList<SystemHandle> EventWriterHandles;
 
             public void Execute()
             {
                 EventLists.Clear();
                 EventStreams.Clear();
+                EventWriterHandles.Clear();
             }
         }
     }

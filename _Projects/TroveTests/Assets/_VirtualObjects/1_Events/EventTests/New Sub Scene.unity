@@ -170,7 +170,7 @@ MonoBehaviour:
   EventsTest:
     EnableStressTestEventsTest: 1
     UseUnionEvents: 0
-    UseParallelEvents: 1
+    UseParallelEvents: 0
     ParallelThreadCount: 16
     TransformEventsCount: 500000
     ColorEventsCount: 500000
