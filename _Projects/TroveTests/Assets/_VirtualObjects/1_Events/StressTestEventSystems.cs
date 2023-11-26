@@ -474,39 +474,7 @@ public partial struct MyEventSystem : ISystem
                 EmissionColorLookup = EmissionColorLookup,
             };
 
-            int executedCount = 0;
-
-            // Execute
-            {
-                EventBuffersManagerData.BeginReadEvents();
-                while (EventBuffersManagerData.NextEventsList(out UnsafeList<byte> eventsList))
-                {
-                    int readByteIndex = 0;
-                    bool hasFinished = false;
-                    while (!hasFinished)
-                    {
-                        IStressTestEventManager.Execute(ref eventsList, readByteIndex, out int readSize, out hasFinished, ref data);
-                        readByteIndex += readSize;
-                        executedCount++;
-                    }
-                }
-                while (EventBuffersManagerData.NextEventsStreamReader(out UnsafeStream.Reader eventsStreamReader))
-                {
-                    for (int j = 0; j < eventsStreamReader.ForEachCount; j++)
-                    {
-                        eventsStreamReader.BeginForEachIndex(j);
-                        bool hasFinished = false;
-                        while (!hasFinished)
-                        {
-                            IStressTestEventManager.Execute(ref eventsStreamReader, out hasFinished, ref data);
-                            executedCount++;
-                        }
-                        eventsStreamReader.EndForEachIndex();
-                    }
-                }
-            }
-
-            //Log.Debug($"Executed events; {executedCount}");
+            IStressTestEventManager.Execute_AllEvents(ref EventBuffersManagerData, ref data);
         }
     }
 }

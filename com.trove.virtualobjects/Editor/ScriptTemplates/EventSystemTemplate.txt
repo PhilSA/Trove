@@ -52,24 +52,8 @@ public partial struct #SCRIPTNAME# : ISystem
 
         public void Execute()
         {
-            EventBuffersManagerData.BeginReadEvents();
-
-            while (EventBuffersManagerData.NextEventsList(out UnsafeList<byte> eventsList))
-            {
-                // TODO: Execute events list
-            }
-
-            while (EventBuffersManagerData.NextEventsStreamReader(out UnsafeStream.Reader eventsStreamReader))
-            {
-                for (int j = 0; j < eventsStreamReader.ForEachCount; j++)
-                {
-                    eventsStreamReader.BeginForEachIndex(j);
-
-                    //  TODO: Execute events stream
-
-                    eventsStreamReader.EndForEachIndex();
-                }
-            }
+            // TODO: call codegen'd function for executing a function on all events:
+            // IMyEventsGroup.IMyFunction_AllEvents(ref EventBuffersManagerData, ...parameters)
         }
     }
 }

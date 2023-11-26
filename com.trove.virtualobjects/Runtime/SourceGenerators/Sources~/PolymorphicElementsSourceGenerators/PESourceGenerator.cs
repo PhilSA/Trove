@@ -30,9 +30,9 @@ namespace PolymorphicElementsSourceGenerators
         private const string GetElementTotalSize = "GetElementTotalSize";
         private const string UnionElement = "UnionElement";
         private const string IPolymorphicElementWriter = "IPolymorphicElementWriter";
-        private const string IPolymorphicElementReader = "IPolymorphicElementReader";
         private const string AggressiveInline = "[MethodImpl(MethodImplOptions.AggressiveInlining)]";
         private const string ByteCollectionUtility = "ByteCollectionUtility";
+        private const string EventBuffersManagerData = "EventBuffersManagerData";
         
 
         public void Initialize(GeneratorInitializationContext context)
@@ -134,6 +134,8 @@ namespace PolymorphicElementsSourceGenerators
                             {
                                 ParameterData parameterData = new ParameterData();
                                 parameterData.RefType = SourceGenUtils.RefKindToString(parameterSymbol.RefKind);
+                                parameterData.IsInOrRef = parameterSymbol.RefKind == RefKind.In || parameterSymbol.RefKind == RefKind.Ref;
+                                parameterData.IsOut = parameterSymbol.RefKind == RefKind.Out;
                                 parameterData.Type = $"{parameterSymbol.Type}";
                                 parameterData.Name = parameterSymbol.Name;
                                 functionData.ParameterDatas.Add(parameterData);
@@ -435,6 +437,48 @@ namespace PolymorphicElementsSourceGenerators
                             ReaderType.IByteList,
                             "L",
                             "list");
+                    }
+                    
+                    writer.WriteLine($"");
+
+                    // EventsManager
+                    {
+                        const string eventBuffersManagerData = "eventBuffersManagerData";
+
+                        writer.WriteLine($"{AggressiveInline}");
+                        writer.WriteLine($"public static void {functionData.Name}_AllEvents{allGenericTypes}(ref {EventBuffersManagerData} {eventBuffersManagerData}{parametersStringDeclarationAfterOtherParameters}){allGenericTypeConstraints}");
+                        writer.WriteInScope(() =>
+                        {   
+                            writer.WriteLine($"{eventBuffersManagerData}.BeginReadEvents();");
+                            writer.WriteLine($"while ({eventBuffersManagerData}.NextEventsList(out UnsafeList<byte> eventsList))");
+                            writer.WriteInScope(() =>
+                            {  
+                                writer.WriteLine($"int readByteIndex = 0;");
+                                writer.WriteLine($"bool hasFinished = false;");
+                                writer.WriteLine($"while (!hasFinished)");
+                                writer.WriteInScope(() =>
+                                {  
+                                    writer.WriteLine($"{groupData.GetGeneratedGroupName()}.{functionData.Name}(ref eventsList, readByteIndex, out int readSize, out hasFinished{parametersStringInvocationAfterOtherParameters});");
+                                    writer.WriteLine($"readByteIndex += readSize;");
+                                });
+                            });
+                            writer.WriteLine($"while ({eventBuffersManagerData}.NextEventsStreamReader(out UnsafeStream.Reader eventsStreamReader))");
+                            writer.WriteInScope(() =>
+                            {  
+                                writer.WriteLine($"for (int j = 0; j < eventsStreamReader.ForEachCount; j++)");
+                                writer.WriteInScope(() =>
+                                {  
+                                    writer.WriteLine($"eventsStreamReader.BeginForEachIndex(j);");
+                                    writer.WriteLine($"bool hasFinished = false;");
+                                    writer.WriteLine($"while (!hasFinished)");
+                                    writer.WriteInScope(() =>
+                                    {  
+                                        writer.WriteLine($"{groupData.GetGeneratedGroupName()}.{functionData.Name}(ref eventsStreamReader, out hasFinished{parametersStringInvocationAfterOtherParameters});");
+                                    });
+                                    writer.WriteLine($"eventsStreamReader.EndForEachIndex();");
+                                });
+                            });
+                        });
                     }
                     
                     writer.WriteLine($"");

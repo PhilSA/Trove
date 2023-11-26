@@ -53,6 +53,8 @@ namespace PolymorphicElementsSourceGenerators
 
     public class ParameterData
     {
+        public bool IsInOrRef;
+        public bool IsOut;
         public string RefType;
         public string Type;
         public string Name;
