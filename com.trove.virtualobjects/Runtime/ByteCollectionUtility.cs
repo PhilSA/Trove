@@ -114,7 +114,7 @@ namespace Trove.PolymorphicElements
         public static bool Read<T>(ref UnsafeList<byte> list, int startByteIndex, out int readSize, out T t)
             where T : unmanaged
         {
-            readSize = sizeof(T);
+            readSize = sizeof(T); 
             if (startByteIndex >= 0 && startByteIndex + readSize <= list.Length)
             {
                 byte* startPtr = list.Ptr + (long)startByteIndex;

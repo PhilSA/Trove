@@ -32,6 +32,7 @@ namespace Trove.PolymorphicElements
             stream.Write(writer);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AddStreamElement<T>(ref UnsafeStream.Writer stream, T writer)
             where T : unmanaged, IPolymorphicElementWriter
         {
@@ -39,6 +40,7 @@ namespace Trove.PolymorphicElements
             stream.Write(writer);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AddStreamElement<C, T>(ref C stream, T writer)
             where C : unmanaged, IStreamWriter
             where T : unmanaged, IPolymorphicElementWriter
