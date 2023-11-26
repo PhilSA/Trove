@@ -169,7 +169,7 @@ public partial struct StressTestTransformEventCreatorSystem : ISystem
                 Time = (float)SystemAPI.Time.ElapsedTime,
                 Singleton = singleton,
 
-                EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(100, ref state),
+                EventWriter = SystemAPI.GetSingleton<MyEventSystem.Singleton>().EventBuffersManager.CreateEventWriterSingle(singleton.TransformEventsCount * 30, ref state),
             };
             state.Dependency = job.Schedule(state.Dependency);
 
