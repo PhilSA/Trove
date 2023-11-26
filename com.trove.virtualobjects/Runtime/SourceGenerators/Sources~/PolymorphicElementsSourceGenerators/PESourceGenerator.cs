@@ -499,6 +499,7 @@ namespace PolymorphicElementsSourceGenerators
                 {
                     functionData.GetParameterStrings(out string parametersStringDeclaration, out string parametersStringInvocation);
 
+                    writer.WriteLine($"{AggressiveInline}");
                     writer.WriteLine($"public {functionData.ReturnType} {functionData.Name}{functionData.GenericTypesString}({parametersStringDeclaration}){functionData.GenericTypeConstraintsString}");
                     writer.WriteInScope(() =>
                     {
