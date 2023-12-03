@@ -11,7 +11,7 @@ namespace Trove.EntityVirtualObjects
     /// All elements guaranteed contiguous in memory
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public unsafe struct Array<T> : IEntityVirtualObject<Array<T>>
+    public unsafe struct Array<T> : IEntityVirtualObject
         where T : unmanaged
     {
         private int _length;
@@ -47,7 +47,7 @@ namespace Trove.EntityVirtualObjects
         {
             if(index >= 0 && index < Length)
             {
-                return new VirtualAddress { Value = DataHandle.Address.Value + (index * sizeof(T)) };
+                return new VirtualAddress(DataHandle.Address.StartByteIndex + (index * sizeof(T)));
             }
 
             throw new ArgumentOutOfRangeException("index is out of range.");
@@ -61,7 +61,7 @@ namespace Trove.EntityVirtualObjects
 
             if (lengthDiff < 0)
             {
-                VirtualAddress firstElementOutsideOfNewLengthAddress = new VirtualAddress { Value = DataHandle.Address.Value + LengthBytes };
+                VirtualAddress firstElementOutsideOfNewLengthAddress = new VirtualAddress(DataHandle.Address.StartByteIndex + LengthBytes);
                 manager.Free(firstElementOutsideOfNewLengthAddress, LengthBytes - oldLengthBytes);
                 DataHandle = new MemoryRangeHandle(DataHandle.Address, LengthBytes);
             }
@@ -74,7 +74,7 @@ namespace Trove.EntityVirtualObjects
             }
         }
 
-        public T ElementAt(ref VirtualObjectsManager manager, int index)
+        public T GetElementAt(ref VirtualObjectsManager manager, int index)
         {
             VirtualAddress readAddress = GetAddressOfElementAtIndex(index);
             if (readAddress.IsValid())
@@ -104,13 +104,13 @@ namespace Trove.EntityVirtualObjects
             }
         }
 
-        public void OnCreate(ref VirtualObjectsManager manager, ref ObjectHandle<Array<T>> handle)
+        public void OnCreate(ref VirtualObjectsManager manager)
         {
             // allocate list memory
             DataHandle = new MemoryRangeHandle(manager.Allocate(LengthBytes), LengthBytes);
         }
 
-        public void OnDestroy(ref VirtualObjectsManager manager, ref ObjectHandle<Array<T>> handle)
+        public void OnDestroy(ref VirtualObjectsManager manager)
         {
             // free data memory
             manager.Free(DataHandle);

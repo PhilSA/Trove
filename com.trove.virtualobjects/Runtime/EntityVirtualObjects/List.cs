@@ -11,7 +11,7 @@ namespace Trove.EntityVirtualObjects
     /// All elements guaranteed contiguous in memory
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public unsafe struct List<T> : IEntityVirtualObject<List<T>>
+    public unsafe struct List<T> : IEntityVirtualObject
         where T : unmanaged
     {
         private int _length;
@@ -48,7 +48,7 @@ namespace Trove.EntityVirtualObjects
                 }
             }
         }
-        public MemoryRangeHandle DataHandle { get; private set; }
+        public MemoryRangeHandle DataHandle { get; internal set; }
 
         public int LengthBytes { get; private set; }
         public int CapacityBytes { get; private set; }
@@ -71,7 +71,7 @@ namespace Trove.EntityVirtualObjects
         {
             if(index >= 0 && index < Length)
             {
-                return new VirtualAddress { Value = DataHandle.Address.Value + (index * sizeof(T)) };
+                return new VirtualAddress(DataHandle.Address.StartByteIndex + (index * sizeof(T)));
             }
 
             throw new ArgumentOutOfRangeException("index is out of range.");
@@ -93,7 +93,7 @@ namespace Trove.EntityVirtualObjects
             if (Capacity < Length)
             {
                 Length = Capacity;
-                VirtualAddress firstElementOutsideOfNewCapacityAddress = new VirtualAddress { Value = DataHandle.Address.Value + CapacityBytes };
+                VirtualAddress firstElementOutsideOfNewCapacityAddress = new VirtualAddress(DataHandle.Address.StartByteIndex + CapacityBytes);
                 manager.Free(firstElementOutsideOfNewCapacityAddress, LengthBytes - CapacityBytes);
                 DataHandle = new MemoryRangeHandle(DataHandle.Address, CapacityBytes);
             }
@@ -134,15 +134,15 @@ namespace Trove.EntityVirtualObjects
             if (writeAddress.IsValid())
             {
                 CheckModifyCapacityForAdd(ref manager, 1);
-                VirtualAddress copyDestinationAddress = new VirtualAddress { Value = writeAddress.Value + sizeof(T) };
-                int lengthToCopy = LengthBytes - writeAddress.Value;
+                VirtualAddress copyDestinationAddress = new VirtualAddress(writeAddress.StartByteIndex + sizeof(T));
+                int lengthToCopy = LengthBytes - writeAddress.StartByteIndex;
                 manager.Unsafe_MemCopy(copyDestinationAddress, writeAddress, lengthToCopy);
                 manager.Unsafe_Write(writeAddress, element);
                 Length += 1;
             }
         }
 
-        public T ElementAt(ref VirtualObjectsManager manager, int index)
+        public T GetElementAt(ref VirtualObjectsManager manager, int index)
         {
             VirtualAddress readAddress = GetAddressOfElementAtIndex(index);
             if (readAddress.IsValid())
@@ -177,8 +177,8 @@ namespace Trove.EntityVirtualObjects
             VirtualAddress removeAddress = GetAddressOfElementAtIndex(index);
             if (removeAddress.IsValid())
             {
-                VirtualAddress copySourceAddress = new VirtualAddress { Value = removeAddress.Value - sizeof(T) };
-                int lengthToCopy = LengthBytes - copySourceAddress.Value;
+                VirtualAddress copySourceAddress = new VirtualAddress(removeAddress.StartByteIndex - sizeof(T));
+                int lengthToCopy = LengthBytes - copySourceAddress.StartByteIndex;
                 manager.Unsafe_MemCopy(removeAddress, copySourceAddress, lengthToCopy);
                 Length -= 1;
             }
@@ -198,13 +198,13 @@ namespace Trove.EntityVirtualObjects
             }
         }
 
-        public void OnCreate(ref VirtualObjectsManager manager, ref ObjectHandle<List<T>> handle)
+        public void OnCreate(ref VirtualObjectsManager manager)
         {
             // allocate list memory
             DataHandle = new MemoryRangeHandle(manager.Allocate(CapacityBytes), CapacityBytes);
         }
 
-        public void OnDestroy(ref VirtualObjectsManager manager, ref ObjectHandle<List<T>> handle)
+        public void OnDestroy(ref VirtualObjectsManager manager)
         {
             // free data memory
             manager.Free(DataHandle);

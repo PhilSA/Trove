@@ -7,7 +7,7 @@ using Unity.Logging;
 
 namespace Trove.EntityVirtualObjects
 {
-    //public unsafe struct HashMap<K, V> : IEntityVirtualObject<HashMap<K, V>>
+    //public unsafe struct HashMap<K, V> : IEntityVirtualObject
     //    where K : unmanaged
     //    where V : unmanaged
     //{
@@ -63,14 +63,14 @@ namespace Trove.EntityVirtualObjects
     //        return -1;
     //    }
 
-    //    public void OnCreate(EntityVirtualObjectsManager manager, ref ObjectHandle<HashMap<K, V>> handle)
+    //    public void OnCreate(EntityVirtualObjectsManager manager)
     //    {
     //        _selfHandle = handle;
 
     //        // TODO: allocate data memory
     //    }
 
-    //    public void OnDestroy(EntityVirtualObjectsManager manager, ref ObjectHandle<HashMap<K, V>> handle)
+    //    public void OnDestroy(EntityVirtualObjectsManager manager)
     //    {
     //        // TODO: free data memory
     //    }
