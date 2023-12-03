@@ -9,9 +9,9 @@ using Unity.Entities;
 using Unity.Logging;
 using Unity.Mathematics;
 
-namespace Trove.EntityVirtualObjects
+namespace Trove.VirtualObjects
 {
-    public interface IEntityVirtualObject
+    public interface IVirtualObject
     {
         public void OnCreate(ref VirtualObjectsManager manager);
         public void OnDestroy(ref VirtualObjectsManager manager);
@@ -229,8 +229,8 @@ namespace Trove.EntityVirtualObjects
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ObjectHandle<T> CreateObject<T>(T newObject)
-            where T : unmanaged, IEntityVirtualObject
+        public ObjectHandle<T> CreateObject<T>(ref T newObject)
+            where T : unmanaged, IVirtualObject
         {
             VirtualAddress objectAddress = Allocate(sizeof(ObjectHeader) + sizeof(T));
 
@@ -255,7 +255,7 @@ namespace Trove.EntityVirtualObjects
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DestroyObject<T>(ObjectHandle<T> handle)
-            where T : unmanaged, IEntityVirtualObject
+            where T : unmanaged, IVirtualObject
         {
             // If this is false, it would mean we're trying to destroy an already-destroyed object
             if(GetObjectCopy(handle, out T objectInstance))
@@ -269,7 +269,7 @@ namespace Trove.EntityVirtualObjects
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsHandlePointingToValidObject<T>(ObjectHandle<T> handle)
-            where T : unmanaged, IEntityVirtualObject
+            where T : unmanaged, IVirtualObject
         {
             return handle.IsValid() && 
                 Unsafe_Read(handle.Address, out ObjectHeader header) &&
@@ -278,7 +278,7 @@ namespace Trove.EntityVirtualObjects
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool GetObjectCopy<T>(ObjectHandle<T> handle, out T result)
-            where T : unmanaged, IEntityVirtualObject
+            where T : unmanaged, IVirtualObject
         {
             if (IsHandlePointingToValidObject(handle))
             {
@@ -300,7 +300,7 @@ namespace Trove.EntityVirtualObjects
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Unsafe_GetObjectRef<T>(ObjectHandle<T> handle, out bool success)
-            where T : unmanaged, IEntityVirtualObject
+            where T : unmanaged, IVirtualObject
         {
             if (IsHandlePointingToValidObject(handle))
             {
@@ -313,7 +313,7 @@ namespace Trove.EntityVirtualObjects
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetObject<T>(ObjectHandle<T> handle, T value)
-            where T : unmanaged, IEntityVirtualObject
+            where T : unmanaged, IVirtualObject
         {
             if (IsHandlePointingToValidObject(handle))
             {

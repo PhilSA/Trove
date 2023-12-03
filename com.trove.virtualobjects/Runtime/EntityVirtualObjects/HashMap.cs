@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using Unity.Entities;
 using Unity.Logging;
 
-namespace Trove.EntityVirtualObjects
+namespace Trove.VirtualObjects
 {
     //public unsafe struct HashMap<K, V> : IEntityVirtualObject
     //    where K : unmanaged

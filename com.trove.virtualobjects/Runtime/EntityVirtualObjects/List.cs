@@ -5,13 +5,13 @@ using System.Runtime.InteropServices;
 using Unity.Entities;
 using Unity.Logging;
 
-namespace Trove.EntityVirtualObjects
+namespace Trove.VirtualObjects
 {
     /// <summary>
     /// All elements guaranteed contiguous in memory
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public unsafe struct List<T> : IEntityVirtualObject
+    public unsafe struct List<T> : IVirtualObject
         where T : unmanaged
     {
         private int _length;
