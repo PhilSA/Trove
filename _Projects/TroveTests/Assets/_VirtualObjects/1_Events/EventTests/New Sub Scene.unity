@@ -172,7 +172,7 @@ MonoBehaviour:
     UseUnionEvents: 0
     UseParallelEvents: 0
     ParallelThreadCount: 16
-    SingleWritersCount: 6
+    SingleWritersCount: 5
     TransformEventsCount: 500000
     ColorEventsCount: 500000
     EnableManagedEventsTest: 0

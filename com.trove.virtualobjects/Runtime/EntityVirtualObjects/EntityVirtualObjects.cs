@@ -1,6 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Logging;
@@ -11,8 +14,18 @@ namespace Trove.EntityVirtualObjects
     public interface IEntityVirtualObject<T>
         where T : unmanaged
     {
-        void OnCreate(EntityVirtualObjectsManager manager, ref ObjectHandle<T> objectHandle);
-        void OnDestroy(EntityVirtualObjectsManager manager, ref ObjectHandle<T> objectHandle);
+        public void OnCreate(ref EntityVirtualObjectsManager manager, ref ObjectHandle<T> objectHandle);
+        public void OnDestroy(ref EntityVirtualObjectsManager manager, ref ObjectHandle<T> objectHandle);
+    }
+
+    public struct VirtualAddress
+    {
+        public int Value;
+
+        public bool IsValid()
+        {
+            return Value != 0;
+        }
     }
 
     public struct EntityVirtualObjectsElement : IBufferElementData
@@ -24,34 +37,34 @@ namespace Trove.EntityVirtualObjects
         where T : unmanaged
     {
         public readonly ulong ObjectID;
-        public readonly int Index;
+        public readonly VirtualAddress Address;
 
-        public ObjectHandle(ulong objectID, int index)
+        public ObjectHandle(ulong objectID, VirtualAddress Address)
         {
             ObjectID = objectID;
-            Index = index;
+            this.Address = Address;
         }
 
         public bool IsValid()
         {
-            return Index > 0;
+            return Address.IsValid();
         }
     }
 
     public readonly struct MemoryRangeHandle
     {
-        public readonly int Index;
+        public readonly VirtualAddress Address;
         public readonly int Size;
 
-        public MemoryRangeHandle(int index, int size)
+        public MemoryRangeHandle(VirtualAddress address, int size)
         {
-            Index = index;
+            Address = address;
             Size = size;
         }
 
         public bool IsValid()
         {
-            return Index > 0 && Size > 0;
+            return Address.IsValid() && Size > 0;
         }
     }
 
@@ -124,17 +137,19 @@ namespace Trove.EntityVirtualObjects
             return manager;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void WriteBackChanges()
         {
-            Unsafe_Write(0, this);
+            Unsafe_Write(default, this); // Default address is the manager (starts at byte 0)
         }
 
-        public bool Unsafe_Read<T>(int index, out T element)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Unsafe_Read<T>(VirtualAddress address, out T element)
             where T : unmanaged
         {
-            if (index >= 0 && index + sizeof(T) <= _buffer.Length)
+            if (address.IsValid() && address.Value + sizeof(T) <= _buffer.Length)
             {
-                element = *(T*)(Unsafe_GetIndexPtr(index));
+                element = *(T*)(Unsafe_GetAddressPtr(address));
                 return true;
             }
 
@@ -142,12 +157,45 @@ namespace Trove.EntityVirtualObjects
             return false;
         }
 
-        public bool Unsafe_Write<T>(int index, T element)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T Unsafe_ReadAsRef<T>(VirtualAddress address, out bool success)
             where T : unmanaged
         {
-            if (index >= 0 && index + sizeof(T) <= _buffer.Length)
+            if (address.IsValid() && address.Value + sizeof(T) <= _buffer.Length)
             {
-                *(T*)(Unsafe_GetIndexPtr(index)) = element;
+                success = true;
+                return ref *(T*)(Unsafe_GetAddressPtr(address));
+            }
+
+            success = false;
+            return ref *(T*)_buffer.GetUnsafePtr();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Unsafe_Read<T>(VirtualAddress address, int offset, out T element)
+            where T : unmanaged
+        {
+            address.Value += offset;
+            return Unsafe_Read<T>(address, out element);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T Unsafe_ReadAsRef<T>(VirtualAddress address, int offset, out bool success)
+            where T : unmanaged
+        {
+            address.Value += offset;
+            return ref Unsafe_ReadAsRef<T>(address, out success);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Unsafe_Write<T>(VirtualAddress address, T element)
+            where T : unmanaged
+        {
+            // TODO: make it impossible to overwrite the manager at default address?
+
+            if (address.IsValid() && address.Value + sizeof(T) <= _buffer.Length)
+            {
+                *(T*)(Unsafe_GetAddressPtr(address)) = element;
                 return true;
             }
 
@@ -155,34 +203,54 @@ namespace Trove.EntityVirtualObjects
             return false;
         }
 
-        public byte* Unsafe_GetIndexPtr(int index)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Unsafe_Write<T>(VirtualAddress address, int offset, T element)
+            where T : unmanaged
         {
-            return (byte*)_buffer.GetUnsafePtr() + (long)(index);
+            address.Value += offset;
+            return Unsafe_Write<T>(address, element);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public byte* Unsafe_GetAddressPtr(VirtualAddress address)
+        {
+            return (byte*)_buffer.GetUnsafePtr() + (long)(address.Value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Unsafe_MemCopy(VirtualAddress destination, VirtualAddress source, int size)
+        {
+            if(size > 0 && destination.IsValid() && source.IsValid())
+            {
+                UnsafeUtility.MemCpy(Unsafe_GetAddressPtr(destination), Unsafe_GetAddressPtr(source), size);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ObjectHandle<T> CreateObject<T>(T newObject)
             where T : unmanaged, IEntityVirtualObject<T>
         {
-            int startIndex = Allocate(SizeOf_ObjectID + sizeof(T));
+            VirtualAddress objectAddress = Allocate(SizeOf_ObjectID + sizeof(T));
 
             // write ID
             ObjectIDCounter++;
-            Unsafe_Write(startIndex, ObjectIDCounter);
+            Unsafe_Write(objectAddress, ObjectIDCounter);
 
             // write object
-            Unsafe_Write(startIndex + SizeOf_ObjectID, newObject);
+            Unsafe_Write(objectAddress, SizeOf_ObjectID, newObject);
 
             // Create handle
-            ObjectHandle<T> handle = new ObjectHandle<T>(ObjectIDCounter, startIndex);
+            ObjectHandle<T> handle = new ObjectHandle<T>(ObjectIDCounter, objectAddress);
 
             // Call OnCreate
-            newObject.OnCreate(this, ref handle);
+            newObject.OnCreate(ref this, ref handle);
 
             WriteBackChanges();
 
             return handle;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DestroyObject<T>(ObjectHandle<T> handle)
             where T : unmanaged, IEntityVirtualObject<T>
         {
@@ -190,26 +258,30 @@ namespace Trove.EntityVirtualObjects
             if(GetObject(handle, out T objectInstance))
             {
                 // Call OnDestroy
-                objectInstance.OnDestroy(this, ref handle);
+                objectInstance.OnDestroy(ref this, ref handle);
 
-                Free(handle.Index, SizeOf_ObjectID + sizeof(T));
+                Free(handle.Address, SizeOf_ObjectID + sizeof(T));
+
+                WriteBackChanges();
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsHandlePointingToValidObject<T>(ObjectHandle<T> handle)
             where T : unmanaged, IEntityVirtualObject<T>
         {
             return handle.IsValid() && 
-                Unsafe_Read(handle.Index, out ulong idInMemory) && 
+                Unsafe_Read(handle.Address, out ulong idInMemory) && 
                 idInMemory == handle.ObjectID;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool GetObject<T>(ObjectHandle<T> handle, out T result)
             where T : unmanaged, IEntityVirtualObject<T>
         {
             if (IsHandlePointingToValidObject(handle))
             {
-                if (Unsafe_Read(handle.Index + SizeOf_ObjectID, out result))
+                if (Unsafe_Read(handle.Address, SizeOf_ObjectID, out result))
                 {
                     return true;
                 }
@@ -219,12 +291,27 @@ namespace Trove.EntityVirtualObjects
             return false;
         }
 
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T GetObjectRef<T>(ObjectHandle<T> handle, out bool success)
+            where T : unmanaged, IEntityVirtualObject<T>
+        {
+            if (IsHandlePointingToValidObject(handle))
+            {
+                return ref Unsafe_ReadAsRef<T>(handle.Address, SizeOf_ObjectID, out success);
+            }
+
+            success = false;
+            return ref *(T*)_buffer.GetUnsafePtr();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetObject<T>(ObjectHandle<T> handle, T value)
             where T : unmanaged, IEntityVirtualObject<T>
         {
             if (IsHandlePointingToValidObject(handle))
             {
-                if (Unsafe_Write(handle.Index + SizeOf_ObjectID, value))
+                if (Unsafe_Write(handle.Address, SizeOf_ObjectID, value))
                 {
                     return true;
                 }
@@ -233,8 +320,11 @@ namespace Trove.EntityVirtualObjects
             return false;
         }
 
-        public int Allocate(int size)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public VirtualAddress Allocate(int size)
         {
+            // INDEX 0 MUST MEAN INVALID BECAUSE THAT'S WHERE THE MANAGER IS
+
             GetObject(FreeMemoryRangesHandle, out LinkedBucketsList<FreeMemoryRange> freeRanges);
 
             //// Find first free range with enough size
@@ -296,19 +386,24 @@ namespace Trove.EntityVirtualObjects
             return default;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Free(MemoryRangeHandle memoryRangeHandle)
         {
-            Free(memoryRangeHandle.Index, memoryRangeHandle.Size);
+            NativeList<int>
+            Free(memoryRangeHandle.Address, memoryRangeHandle.Size);
         }
 
-        public void Free(int index, int size)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Free(VirtualAddress address, int sizeBytes)
         {
 
             // todo: add to free ranges (and potentially merge ranges)
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TrimMemory()
         {
+            // TODO: do this automatically on free?
             // todo: resize buffer capacity to fit required memory
         }
     }

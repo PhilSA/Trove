@@ -28,7 +28,7 @@ public partial struct StateMachineSystem : ISystem
         // Create state machines
         if (!HasInitialized)
         {
-            const float spacing = 2f;
+            const float spacing = 3.5f;
             Random random = Random.CreateFromIndex(1);
             int resolution = (int)math.ceil(math.sqrt(singleton.StateMachinesCount));
 
