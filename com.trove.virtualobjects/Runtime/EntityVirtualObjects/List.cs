@@ -77,15 +77,15 @@ namespace Trove.VirtualObjects
             throw new ArgumentOutOfRangeException("index is out of range.");
         }
 
-        private void CheckModifyCapacityForAdd(ref VirtualObjectsManager manager, int addedElementsCount)
+        private void CheckModifyCapacityForAdd(ref DynamicBuffer<byte> buffer, int addedElementsCount)
         {
             if (Length + addedElementsCount > Capacity)
             {
-                SetCapacity(ref manager, Length * 2);
+                SetCapacity(ref buffer, Length * 2);
             }
         }
 
-        public void SetCapacity(ref VirtualObjectsManager manager, int newCapacity)
+        public void SetCapacity(ref DynamicBuffer<byte> buffer, int newCapacity)
         {
             int oldCapacity = Capacity;
             Capacity = newCapacity;
@@ -94,38 +94,38 @@ namespace Trove.VirtualObjects
             {
                 Length = Capacity;
                 VirtualAddress firstElementOutsideOfNewCapacityAddress = new VirtualAddress(DataHandle.Address.StartByteIndex + CapacityBytes);
-                manager.Free(firstElementOutsideOfNewCapacityAddress, LengthBytes - CapacityBytes);
+                VirtualObjects.Free(ref buffer, firstElementOutsideOfNewCapacityAddress, LengthBytes - CapacityBytes);
                 DataHandle = new MemoryRangeHandle(DataHandle.Address, CapacityBytes);
             }
             else if (Capacity > oldCapacity)
             {
-                MemoryRangeHandle newDataHandle = new MemoryRangeHandle(manager.Allocate(CapacityBytes), CapacityBytes);
-                manager.Unsafe_MemCopy(newDataHandle.Address, DataHandle.Address, LengthBytes);
-                manager.Free(DataHandle);
+                MemoryRangeHandle newDataHandle = new MemoryRangeHandle(VirtualObjects.Allocate(ref buffer, CapacityBytes), CapacityBytes);
+                VirtualObjects.Unsafe_MemCopy(ref buffer, newDataHandle.Address, DataHandle.Address, LengthBytes);
+                VirtualObjects.Free(ref buffer, DataHandle);
                 DataHandle = newDataHandle;
             }
         }
 
-        public void Resize(ref VirtualObjectsManager manager, int newLength)
+        public void Resize(ref DynamicBuffer<byte> buffer, int newLength)
         {
             int lengthDiff = newLength - Length;
             Length += lengthDiff;
 
             if (lengthDiff > 0)
             {
-                CheckModifyCapacityForAdd(ref manager, lengthDiff);
+                CheckModifyCapacityForAdd(ref buffer, lengthDiff);
             }
         }
 
-        public void Add(ref VirtualObjectsManager manager, T element)
+        public void Add(ref DynamicBuffer<byte> buffer, T element)
         {
             int prevLength = Length;
             Length += 1;
             VirtualAddress writeAddress = GetAddressOfElementAtIndex(prevLength);
             if (writeAddress.IsValid())
             {
-                CheckModifyCapacityForAdd(ref manager, 1);
-                manager.Unsafe_Write(writeAddress, element);
+                CheckModifyCapacityForAdd(ref buffer, 1);
+                VirtualObjects.Unsafe_Write(ref buffer, writeAddress, element);
             }
             else
             {
@@ -133,18 +133,18 @@ namespace Trove.VirtualObjects
             }
         }
 
-        public void InsertAt(ref VirtualObjectsManager manager, int index, T element)
+        public void InsertAt(ref DynamicBuffer<byte> buffer, int index, T element)
         {
             int prevLength = Length;
             Length += 1;
             VirtualAddress writeAddress = GetAddressOfElementAtIndex(index);
             if (writeAddress.IsValid())
             {
-                CheckModifyCapacityForAdd(ref manager, 1);
+                CheckModifyCapacityForAdd(ref buffer, 1);
                 VirtualAddress copyDestinationAddress = new VirtualAddress(writeAddress.StartByteIndex + sizeof(T));
                 int lengthToCopy = LengthBytes - writeAddress.StartByteIndex;
-                manager.Unsafe_MemCopy(copyDestinationAddress, writeAddress, lengthToCopy);
-                manager.Unsafe_Write(writeAddress, element);
+                VirtualObjects.Unsafe_MemCopy(ref buffer, copyDestinationAddress, writeAddress, lengthToCopy);
+                VirtualObjects.Unsafe_Write(ref buffer, writeAddress, element);
             }
             else
             {
@@ -152,28 +152,28 @@ namespace Trove.VirtualObjects
             }
         }
 
-        public T GetElementAt(ref VirtualObjectsManager manager, int index)
+        public T GetElementAt(ref DynamicBuffer<byte> buffer, int index)
         {
             VirtualAddress readAddress = GetAddressOfElementAtIndex(index);
             if (readAddress.IsValid())
             {
-                if (manager.Unsafe_Read(readAddress, out T element))
+                if (VirtualObjects.Unsafe_Read(ref buffer, readAddress, out T element))
                 {
                     return element;
                 }
 
-                throw new Exception($"Could not read element of size {sizeof(T)} at address {readAddress.StartByteIndex} in buffer of length {manager._buffer->Length}");
+                throw new Exception($"Could not read element of size {sizeof(T)} at address {readAddress.StartByteIndex} in buffer of length {buffer.Length}");
             }
 
             return default;
         }
 
-        public void SetElementAt(ref VirtualObjectsManager manager, int index, T element)
+        public void SetElementAt(ref DynamicBuffer<byte> buffer, int index, T element)
         {
             VirtualAddress writeAddress = GetAddressOfElementAtIndex(index);
             if (writeAddress.IsValid())
             {
-                if (manager.Unsafe_Write(writeAddress, element))
+                if (VirtualObjects.Unsafe_Write(ref buffer, writeAddress, element))
                 {
                     return;
                 }
@@ -182,19 +182,19 @@ namespace Trove.VirtualObjects
             }
         }
 
-        public void RemoveAt(ref VirtualObjectsManager manager, int index)
+        public void RemoveAt(ref DynamicBuffer<byte> buffer, int index)
         {
             VirtualAddress removeAddress = GetAddressOfElementAtIndex(index);
             if (removeAddress.IsValid())
             {
                 VirtualAddress copySourceAddress = new VirtualAddress(removeAddress.StartByteIndex - sizeof(T));
                 int lengthToCopy = LengthBytes - copySourceAddress.StartByteIndex;
-                manager.Unsafe_MemCopy(removeAddress, copySourceAddress, lengthToCopy);
+                VirtualObjects.Unsafe_MemCopy(ref buffer, removeAddress, copySourceAddress, lengthToCopy);
                 Length -= 1;
             }
         }
 
-        public void RemoveAtSwapBack(ref VirtualObjectsManager manager, int index)
+        public void RemoveAtSwapBack(ref DynamicBuffer<byte> buffer, int index)
         {
             VirtualAddress removeAddress = GetAddressOfElementAtIndex(index);
             if (removeAddress.IsValid())
@@ -202,22 +202,22 @@ namespace Trove.VirtualObjects
                 if (Length > 1)
                 {
                     VirtualAddress lastElementAddress = GetAddressOfElementAtIndex(Length - 1);
-                    manager.Unsafe_MemCopy(removeAddress, lastElementAddress, sizeof(T));
+                    VirtualObjects.Unsafe_MemCopy(ref buffer, removeAddress, lastElementAddress, sizeof(T));
                 }
                 Length -= 1;
             }
         }
 
-        public void OnCreate(ref VirtualObjectsManager manager)
+        public void OnCreate(ref DynamicBuffer<byte> buffer)
         {
             // allocate list memory
-            DataHandle = new MemoryRangeHandle(manager.Allocate(CapacityBytes), CapacityBytes);
+            DataHandle = new MemoryRangeHandle(VirtualObjects.Allocate(ref buffer, CapacityBytes), CapacityBytes);
         }
 
-        public void OnDestroy(ref VirtualObjectsManager manager)
+        public void OnDestroy(ref DynamicBuffer<byte> buffer)
         {
             // free data memory
-            manager.Free(DataHandle);
+            VirtualObjects.Free(ref buffer, DataHandle);
         }
     }
 }

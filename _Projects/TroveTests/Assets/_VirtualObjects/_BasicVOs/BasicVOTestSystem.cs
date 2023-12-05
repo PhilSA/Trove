@@ -33,11 +33,11 @@ public struct BasicVOTestState : IVirtualObject
         Log.Debug($"State display: entity {entity.Index} value {DebugValue}");
     }
 
-    public void OnCreate(ref VirtualObjectsManager manager)
+    public void OnCreate(ref DynamicBuffer<byte> buffer)
     {
     }
 
-    public void OnDestroy(ref VirtualObjectsManager manager)
+    public void OnDestroy(ref DynamicBuffer<byte> buffer)
     {
     }
 }
@@ -90,28 +90,27 @@ public partial struct BasicVOTestSystem : ISystem
         void Execute(Entity entity, ref BasicVOComponent voComp, ref DynamicBuffer<BasicVOBufferElement> voBuffer)
         {
             DynamicBuffer<byte> bytesBuffer = voBuffer.Reinterpret<byte>();
-            VirtualObjectsManager voManager = VirtualObjectsManager.Get(ref bytesBuffer);
 
             if (!voComp.HasInitialized)
             {
                 Log.Debug($"About to create entity {entity.Index} test object ....");
                 List<BasicVOTestState> newStatesList = new List<BasicVOTestState>(10);
-                voComp.StatesListHandle = voManager.CreateObject(ref newStatesList);
-                newStatesList.Add(ref voManager, new BasicVOTestState { DebugValue = 3 });
-                newStatesList.Add(ref voManager, new BasicVOTestState { DebugValue = 6 });
-                newStatesList.Add(ref voManager, new BasicVOTestState { DebugValue = 9 });
-                voManager.SetObject(voComp.StatesListHandle, newStatesList);
+                voComp.StatesListHandle = VirtualObjects.CreateObject(ref bytesBuffer, ref newStatesList);
+                newStatesList.Add(ref bytesBuffer, new BasicVOTestState { DebugValue = 3 });
+                newStatesList.Add(ref bytesBuffer, new BasicVOTestState { DebugValue = 6 });
+                newStatesList.Add(ref bytesBuffer, new BasicVOTestState { DebugValue = 9 });
+                VirtualObjects.SetObject(ref bytesBuffer, voComp.StatesListHandle, newStatesList);
 
                 Log.Debug($"Created entity {entity.Index} test object of id {voComp.StatesListHandle.ObjectID} at address {voComp.StatesListHandle.Address.StartByteIndex}");
 
                 voComp.HasInitialized = true;
             }
 
-            if (voManager.GetObjectCopy(voComp.StatesListHandle, out List<BasicVOTestState> statesList))
+            if (VirtualObjects.GetObjectCopy(ref bytesBuffer, voComp.StatesListHandle, out List<BasicVOTestState> statesList))
             {
                 for (int i = 0; i < statesList.Length; i++)
                 {
-                    statesList.GetElementAt(ref voManager, i).DisplayValue(entity);
+                    statesList.GetElementAt(ref bytesBuffer, i).DisplayValue(entity);
                 }
             }
         }

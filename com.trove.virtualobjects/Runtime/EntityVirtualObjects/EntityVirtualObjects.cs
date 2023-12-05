@@ -13,8 +13,8 @@ namespace Trove.VirtualObjects
 {
     public interface IVirtualObject
     {
-        public void OnCreate(ref VirtualObjectsManager manager);
-        public void OnDestroy(ref VirtualObjectsManager manager);
+        public void OnCreate(ref DynamicBuffer<byte> buffer);
+        public void OnDestroy(ref DynamicBuffer<byte> buffer);
     }
 
     public struct VirtualAddress
@@ -84,76 +84,57 @@ namespace Trove.VirtualObjects
 
     public unsafe static class VirtualObjects
     {
-
-    }
-
-    // Struct always at byte index 0 in the buffer
-    public unsafe struct VirtualObjectsManager
-    {
-        public struct FreeMemoryRange
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static VirtualObjectsManagerData GetManagerData(ref DynamicBuffer<byte> buffer)
         {
-            public readonly int Start;
-            public readonly int End;
-            public readonly int AvailableSize;
-
-            public FreeMemoryRange(int start, int end)
-            {
-                Start = start;
-                End = end;
-                AvailableSize = end - start;
-            }
-        }
-
-        private bool IsCreated;
-        private ulong ObjectIDCounter;
-        private List<FreeMemoryRange> FreeMemoryRanges;
-        internal DynamicBuffer<byte>* _buffer;
-
-        private const int InitialFreeMemoryRangesCapacity = 100;
-        private const int InitialObjectMemorySizeBytes = 256;
-
-        public static VirtualObjectsManager Get(ref DynamicBuffer<byte> buffer)
-        {
-            int sizeOfSelf = sizeof(VirtualObjectsManager);
-
-            // Read the mamanger
-            VirtualObjectsManager manager = *(VirtualObjectsManager*)buffer.GetUnsafePtr();
-            manager._buffer = (DynamicBuffer<byte>*)UnsafeUtility.AddressOf(ref buffer);
+            VirtualObjectsManagerData managerData = *(VirtualObjectsManagerData*)buffer.GetUnsafePtr();
 
             // Creation
-            if (!manager.IsCreated)
+            if (!managerData.IsCreated)
             {
-                manager.ObjectIDCounter = 0;
+                int sizeOfSelf = sizeof(VirtualObjectsManagerData);
+
+                managerData.ObjectIDCounter = 0;
 
                 // Init free ranges list 
-                manager.FreeMemoryRanges = new List<FreeMemoryRange>(InitialFreeMemoryRangesCapacity);
-                int listBytesCapacity = manager.FreeMemoryRanges.CapacityBytes;
-                buffer.ResizeUninitialized(sizeOfSelf + listBytesCapacity + InitialObjectMemorySizeBytes);
-                manager.FreeMemoryRanges.DataHandle = new MemoryRangeHandle(new VirtualAddress(sizeOfSelf), listBytesCapacity);
-                manager.FreeMemoryRanges.Add(ref manager, new FreeMemoryRange(manager.FreeMemoryRanges.DataHandle.Address.StartByteIndex + manager.FreeMemoryRanges.DataHandle.Size, buffer.Length));
+                managerData.FreeMemoryRanges = new List<FreeMemoryRange>(VirtualObjectsManagerData.InitialFreeMemoryRangesCapacity);
+                int listBytesCapacity = managerData.FreeMemoryRanges.CapacityBytes;
+                buffer.ResizeUninitialized(sizeOfSelf + listBytesCapacity + VirtualObjectsManagerData.InitialObjectMemorySizeBytes);
+                managerData.FreeMemoryRanges.DataHandle = new MemoryRangeHandle(new VirtualAddress(sizeOfSelf), listBytesCapacity);
+                managerData.FreeMemoryRanges.Add(ref buffer, new FreeMemoryRange(managerData.FreeMemoryRanges.DataHandle.Address.StartByteIndex + managerData.FreeMemoryRanges.DataHandle.Size, buffer.Length));
 
-                manager.IsCreated = true;
-                manager.WriteBackChanges();
+                managerData.IsCreated = true;
+                SetManagerData(ref buffer, managerData);
 
-                Log.Debug($"Creating VOManager with free ranges {manager.FreeMemoryRanges.GetElementAt(ref manager, 0).Start} - {manager.FreeMemoryRanges.GetElementAt(ref manager, 0).End}");
+                Log.Debug($"Creating VOManager with free ranges {managerData.FreeMemoryRanges.GetElementAt(ref buffer, 0).Start} - {managerData.FreeMemoryRanges.GetElementAt(ref buffer, 0).End}");
             }
 
-            return manager;
+            if (buffer.Length < sizeof(VirtualObjectsManagerData))
+            {
+                Log.Error("Could not read VirtualObjectsManagerData");
+            }
+
+            return managerData;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void WriteBackChanges()
+        public static void SetManagerData(ref DynamicBuffer<byte> buffer, VirtualObjectsManagerData managerData)
         {
-            *(VirtualObjectsManager*)_buffer->GetUnsafePtr() = this;
+            if (buffer.Length < sizeof(VirtualObjectsManagerData))
+            {
+                Log.Error("Could not write VirtualObjectsManagerData");
+            }
+
+            *(VirtualObjectsManagerData*)buffer.GetUnsafePtr() = managerData;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Unsafe_Read<T>(VirtualAddress address, out T element)
+        public static bool Unsafe_Read<T>(ref DynamicBuffer<byte> buffer, VirtualAddress address, out T element)
             where T : unmanaged
         {
-            if (address.IsValid() && address.StartByteIndex + sizeof(T) <= _buffer->Length)
+            if (address.IsValid() && address.StartByteIndex + sizeof(T) <= buffer.Length)
             {
-                element = *(T*)(Unsafe_GetAddressPtr(address));
+                element = *(T*)(Unsafe_GetAddressPtr(ref buffer, address));
                 return true;
             }
 
@@ -162,44 +143,44 @@ namespace Trove.VirtualObjects
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Unsafe_ReadAsRef<T>(VirtualAddress address, out bool success)
+        public static ref T Unsafe_ReadAsRef<T>(ref DynamicBuffer<byte> buffer, VirtualAddress address, out bool success)
             where T : unmanaged
         {
-            if (address.IsValid() && address.StartByteIndex + sizeof(T) <= _buffer->Length)
+            if (address.IsValid() && address.StartByteIndex + sizeof(T) <= buffer.Length)
             {
                 success = true;
-                return ref *(T*)(Unsafe_GetAddressPtr(address));
+                return ref *(T*)(Unsafe_GetAddressPtr(ref buffer, address));
             }
 
             success = false;
-            return ref *(T*)_buffer->GetUnsafePtr();
+            return ref *(T*)buffer.GetUnsafePtr();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Unsafe_Read<T>(VirtualAddress address, int offset, out T element)
+        public static bool Unsafe_Read<T>(ref DynamicBuffer<byte> buffer, VirtualAddress address, int offset, out T element)
             where T : unmanaged
         {
             address.StartByteIndex += offset;
-            return Unsafe_Read<T>(address, out element);
+            return Unsafe_Read<T>(ref buffer, address, out element);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Unsafe_ReadAsRef<T>(VirtualAddress address, int offset, out bool success)
+        public static ref T Unsafe_ReadAsRef<T>(ref DynamicBuffer<byte> buffer, VirtualAddress address, int offset, out bool success)
             where T : unmanaged
         {
             address.StartByteIndex += offset;
-            return ref Unsafe_ReadAsRef<T>(address, out success);
+            return ref Unsafe_ReadAsRef<T>(ref buffer, address, out success);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Unsafe_Write<T>(VirtualAddress address, T element)
+        public static bool Unsafe_Write<T>(ref DynamicBuffer<byte> buffer, VirtualAddress address, T element)
             where T : unmanaged
         {
             // TODO: make it impossible to overwrite the manager at default address?
 
-            if (address.IsValid() && address.StartByteIndex + sizeof(T) <= _buffer->Length)
+            if (address.IsValid() && address.StartByteIndex + sizeof(T) <= buffer.Length)
             {
-                *(T*)(Unsafe_GetAddressPtr(address)) = element;
+                *(T*)(Unsafe_GetAddressPtr(ref buffer, address)) = element;
                 return true;
             }
 
@@ -208,83 +189,85 @@ namespace Trove.VirtualObjects
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Unsafe_Write<T>(VirtualAddress address, int offset, T element)
+        public static bool Unsafe_Write<T>(ref DynamicBuffer<byte> buffer, VirtualAddress address, int offset, T element)
             where T : unmanaged
         {
             address.StartByteIndex += offset;
-            return Unsafe_Write<T>(address, element);
+            return Unsafe_Write<T>(ref buffer, address, element);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public byte* Unsafe_GetAddressPtr(VirtualAddress address)
+        public static byte* Unsafe_GetAddressPtr(ref DynamicBuffer<byte> buffer, VirtualAddress address)
         {
-            return (byte*)_buffer->GetUnsafePtr() + (long)(address.StartByteIndex);
+            return (byte*)buffer.GetUnsafePtr() + (long)(address.StartByteIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Unsafe_MemCopy(VirtualAddress destination, VirtualAddress source, int size)
+        public static void Unsafe_MemCopy(ref DynamicBuffer<byte> buffer, VirtualAddress destination, VirtualAddress source, int size)
         {
             if (size > 0 && destination.IsValid() && source.IsValid())
             {
-                UnsafeUtility.MemCpy(Unsafe_GetAddressPtr(destination), Unsafe_GetAddressPtr(source), size);
+                UnsafeUtility.MemCpy(Unsafe_GetAddressPtr(ref buffer, destination), Unsafe_GetAddressPtr(ref buffer, source), size);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ObjectHandle<T> CreateObject<T>(ref T newObject)
+        public static ObjectHandle<T> CreateObject<T>(ref DynamicBuffer<byte> buffer, ref T newObject)
             where T : unmanaged, IVirtualObject
         {
-            VirtualAddress objectAddress = Allocate(sizeof(ObjectHeader) + sizeof(T));
+            VirtualObjectsManagerData managerData = GetManagerData(ref buffer);
+
+            VirtualAddress objectAddress = Allocate(ref buffer, sizeof(ObjectHeader) + sizeof(T));
 
             // write header
-            ObjectIDCounter++;
-            ObjectHeader header = new ObjectHeader(ObjectIDCounter);
-            Unsafe_Write(objectAddress, header);
+            managerData.ObjectIDCounter++;
+            ObjectHeader header = new ObjectHeader(managerData.ObjectIDCounter);
+            Unsafe_Write(ref buffer, objectAddress, header);
 
             // write object
-            Unsafe_Write(objectAddress, sizeof(ObjectHeader), newObject);
+            Unsafe_Write(ref buffer, objectAddress, sizeof(ObjectHeader), newObject);
 
             // Create handle
-            ObjectHandle<T> handle = new ObjectHandle<T>(ObjectIDCounter, objectAddress);
+            ObjectHandle<T> handle = new ObjectHandle<T>(managerData.ObjectIDCounter, objectAddress);
 
             // Call OnCreate
-            newObject.OnCreate(ref this);
+            newObject.OnCreate(ref buffer);
 
-            WriteBackChanges();
+            SetManagerData(ref buffer, managerData);
 
             return handle;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void DestroyObject<T>(ObjectHandle<T> handle)
+        public static void DestroyObject<T>(ref DynamicBuffer<byte> buffer, ObjectHandle<T> handle)
             where T : unmanaged, IVirtualObject
         {
             // If this is false, it would mean we're trying to destroy an already-destroyed object
-            if (GetObjectCopy(handle, out T objectInstance))
+            if (GetObjectCopy(ref buffer, handle, out T objectInstance))
             {
                 // Call OnDestroy
-                objectInstance.OnDestroy(ref this);
+                objectInstance.OnDestroy(ref buffer);
 
-                Free(handle.Address, sizeof(ObjectHeader) + sizeof(T));
+                Free(ref buffer, handle.Address, sizeof(ObjectHeader) + sizeof(T));
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsHandlePointingToValidObject<T>(ObjectHandle<T> handle)
+        private static bool IsHandlePointingToValidObject<T>(ref DynamicBuffer<byte> buffer, ObjectHandle<T> handle)
             where T : unmanaged, IVirtualObject
         {
             return handle.IsValid() &&
-                Unsafe_Read(handle.Address, out ObjectHeader header) &&
+                Unsafe_Read(ref buffer, handle.Address, out ObjectHeader header) &&
                 header.ObjectID == handle.ObjectID;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool GetObjectCopy<T>(ObjectHandle<T> handle, out T result)
+        public static bool GetObjectCopy<T>(ref DynamicBuffer<byte> buffer, ObjectHandle<T> handle, out T result)
             where T : unmanaged, IVirtualObject
         {
-            if (IsHandlePointingToValidObject(handle))
+            if (IsHandlePointingToValidObject(ref buffer, handle))
             {
-                if (Unsafe_Read(handle.Address, sizeof(ObjectHeader), out result))
+                if (Unsafe_Read(ref buffer, handle.Address, sizeof(ObjectHeader), out result))
                 {
                     return true;
                 }
@@ -301,25 +284,25 @@ namespace Trove.VirtualObjects
         /// Keep in mind adding elements to a list, for example, may create new allocations and therefore invalidate refs.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Unsafe_GetObjectRef<T>(ObjectHandle<T> handle, out bool success)
+        public static ref T Unsafe_GetObjectRef<T>(ref DynamicBuffer<byte> buffer, ObjectHandle<T> handle, out bool success)
             where T : unmanaged, IVirtualObject
         {
-            if (IsHandlePointingToValidObject(handle))
+            if (IsHandlePointingToValidObject(ref buffer, handle))
             {
-                return ref Unsafe_ReadAsRef<T>(handle.Address, sizeof(ObjectHeader), out success);
+                return ref Unsafe_ReadAsRef<T>(ref buffer, handle.Address, sizeof(ObjectHeader), out success);
             }
 
             success = false;
-            return ref *(T*)_buffer->GetUnsafePtr();
+            return ref *(T*)buffer.GetUnsafePtr();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool SetObject<T>(ObjectHandle<T> handle, T value)
+        public static bool SetObject<T>(ref DynamicBuffer<byte> buffer, ObjectHandle<T> handle, T value)
             where T : unmanaged, IVirtualObject
         {
-            if (IsHandlePointingToValidObject(handle))
+            if (IsHandlePointingToValidObject(ref buffer, handle))
             {
-                if (Unsafe_Write(handle.Address, sizeof(ObjectHeader), value))
+                if (Unsafe_Write(ref buffer, handle.Address, sizeof(ObjectHeader), value))
                 {
                     return true;
                 }
@@ -329,14 +312,16 @@ namespace Trove.VirtualObjects
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public VirtualAddress Allocate(int sizeBytes)
+        public static VirtualAddress Allocate(ref DynamicBuffer<byte> buffer, int sizeBytes)
         {
+            VirtualObjectsManagerData managerData = GetManagerData(ref buffer);
+
             // Find first free range with enough size
             FreeMemoryRange chosenRange = default;
             int chosenRangeIndex = -1;
-            for (int i = 0; i < FreeMemoryRanges.Length; i++)
+            for (int i = 0; i < managerData.FreeMemoryRanges.Length; i++)
             {
-                FreeMemoryRange evaluatedRange = FreeMemoryRanges.GetElementAt(ref this, i);
+                FreeMemoryRange evaluatedRange = managerData.FreeMemoryRanges.GetElementAt(ref buffer, i);
                 if (evaluatedRange.AvailableSize >= sizeBytes)
                 {
                     chosenRangeIndex = i;
@@ -349,30 +334,30 @@ namespace Trove.VirtualObjects
             if (chosenRangeIndex < 0)
             {
                 // Resize buffer
-                int prevLength = _buffer->Length;
-                int sizeIncrease = math.max(_buffer->Length, sizeBytes);
-                _buffer->ResizeUninitialized(_buffer->Length + sizeIncrease);
+                int prevLength = buffer.Length;
+                int sizeIncrease = math.max(buffer.Length, sizeBytes);
+                buffer.ResizeUninitialized(buffer.Length + sizeIncrease);
 
                 // Add new range
                 {
-                    FreeMemoryRange newRange = new FreeMemoryRange(prevLength, _buffer->Length);
-                    FreeMemoryRange lastCurrentRange = FreeMemoryRanges.GetElementAt(ref this, FreeMemoryRanges.Length - 1);
+                    FreeMemoryRange newRange = new FreeMemoryRange(prevLength, buffer.Length);
+                    FreeMemoryRange lastCurrentRange = managerData.FreeMemoryRanges.GetElementAt(ref buffer, managerData.FreeMemoryRanges.Length - 1);
 
                     // If the last free memory range ended where the new one would start, just expand the old one
                     if (lastCurrentRange.End == newRange.Start)
                     {
                         chosenRange = new FreeMemoryRange(lastCurrentRange.Start, newRange.End);
-                        FreeMemoryRanges.SetElementAt(ref this, FreeMemoryRanges.Length - 1, chosenRange);
+                        managerData.FreeMemoryRanges.SetElementAt(ref buffer, managerData.FreeMemoryRanges.Length - 1, chosenRange);
                     }
                     // Otherwise, create a new range
                     else
                     {
                         chosenRange = newRange;
-                        FreeMemoryRanges.Add(ref this, newRange);
+                        managerData.FreeMemoryRanges.Add(ref buffer, newRange);
                     }
                 }
 
-                chosenRangeIndex = FreeMemoryRanges.Length - 1;
+                chosenRangeIndex = managerData.FreeMemoryRanges.Length - 1;
             }
 
             Log.Debug($"Allocating.... chosenRangeIndex {chosenRangeIndex} chosenRange {chosenRange.Start} - {chosenRange.End}");
@@ -382,60 +367,62 @@ namespace Trove.VirtualObjects
             FreeMemoryRange modifiedChosenRange = new FreeMemoryRange(chosenRange.Start + sizeBytes, chosenRange.End);
             if (modifiedChosenRange.AvailableSize > 0)
             {
-                FreeMemoryRanges.SetElementAt(ref this, chosenRangeIndex, modifiedChosenRange);
+                managerData.FreeMemoryRanges.SetElementAt(ref buffer, chosenRangeIndex, modifiedChosenRange);
             }
             else
             {
-                FreeMemoryRanges.RemoveAt(ref this, chosenRangeIndex);
+                managerData.FreeMemoryRanges.RemoveAt(ref buffer, chosenRangeIndex);
             }
 
-            WriteBackChanges();
+            SetManagerData(ref buffer, managerData);
 
             return allocatedAddress;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Free(MemoryRangeHandle memoryRangeHandle)
+        public static void Free(ref DynamicBuffer<byte> buffer, MemoryRangeHandle memoryRangeHandle)
         {
-            Free(memoryRangeHandle.Address, memoryRangeHandle.Size);
+            Free(ref buffer, memoryRangeHandle.Address, memoryRangeHandle.Size);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Free(VirtualAddress address, int sizeBytes)
+        public static void Free(ref DynamicBuffer<byte> buffer, VirtualAddress address, int sizeBytes)
         {
             if (address.IsValid())
             {
+                VirtualObjectsManagerData managerData = GetManagerData(ref buffer);
+
                 FreeMemoryRange freedRange = new FreeMemoryRange(address.StartByteIndex, address.StartByteIndex + sizeBytes);
 
-                if (freedRange.End > _buffer->Length)
+                if (freedRange.End > buffer.Length)
                 {
                     throw new Exception("Tried to free memory that was outside the length of the buffer");
                 }
 
                 // Clear freed memory (this is required because valid object detection depends on it)
-                UnsafeUtility.MemClear(Unsafe_GetAddressPtr(address), sizeBytes);
+                UnsafeUtility.MemClear(Unsafe_GetAddressPtr(ref buffer, address), sizeBytes);
 
                 // Insert range in order
                 bool addedRange = false;
-                for (int i = 0; i < FreeMemoryRanges.Length; i++)
+                for (int i = 0; i < managerData.FreeMemoryRanges.Length; i++)
                 {
-                    FreeMemoryRange evaluatedRange = FreeMemoryRanges.GetElementAt(ref this, i);
+                    FreeMemoryRange evaluatedRange = managerData.FreeMemoryRanges.GetElementAt(ref buffer, i);
                     if (evaluatedRange.End == freedRange.Start)
                     {
-                        FreeMemoryRanges.SetElementAt(ref this, i, new FreeMemoryRange(evaluatedRange.Start, freedRange.End));
+                        managerData.FreeMemoryRanges.SetElementAt(ref buffer, i, new FreeMemoryRange(evaluatedRange.Start, freedRange.End));
                         addedRange = true;
                         break;
                     }
                     else if (freedRange.End == evaluatedRange.Start)
                     {
-                        FreeMemoryRanges.SetElementAt(ref this, i, new FreeMemoryRange(freedRange.Start, evaluatedRange.End));
+                        managerData.FreeMemoryRanges.SetElementAt(ref buffer, i, new FreeMemoryRange(freedRange.Start, evaluatedRange.End));
                         addedRange = true;
                         break;
                     }
                     // Insert before evaluated range that has a higher start index
                     else if (evaluatedRange.Start > freedRange.Start)
                     {
-                        FreeMemoryRanges.InsertAt(ref this, i, freedRange);
+                        managerData.FreeMemoryRanges.InsertAt(ref buffer, i, freedRange);
                         addedRange = true;
                         break;
                     }
@@ -443,28 +430,55 @@ namespace Trove.VirtualObjects
 
                 if (!addedRange)
                 {
-                    FreeMemoryRanges.Add(ref this, freedRange);
+                    managerData.FreeMemoryRanges.Add(ref buffer, freedRange);
                 }
 
-                WriteBackChanges();
+                SetManagerData(ref buffer, managerData);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void TrimBufferMemory(int maxFreeTrailingBytes)
+        public static void TrimBufferMemory(ref DynamicBuffer<byte> buffer, int maxFreeTrailingBytes)
         {
-            FreeMemoryRange lastFreeMemoryRange = FreeMemoryRanges.GetElementAt(ref this, FreeMemoryRanges.Length - 1);
-            if (lastFreeMemoryRange.End == _buffer->Length && lastFreeMemoryRange.AvailableSize > maxFreeTrailingBytes)
+            VirtualObjectsManagerData managerData = GetManagerData(ref buffer);
+            FreeMemoryRange lastFreeMemoryRange = managerData.FreeMemoryRanges.GetElementAt(ref buffer, managerData.FreeMemoryRanges.Length - 1);
+            if (lastFreeMemoryRange.End == buffer.Length && lastFreeMemoryRange.AvailableSize > maxFreeTrailingBytes)
             {
+
                 int newRangeEnd = lastFreeMemoryRange.Start + maxFreeTrailingBytes;
                 int trimBytesAmount = lastFreeMemoryRange.End - newRangeEnd;
                 lastFreeMemoryRange = new FreeMemoryRange(lastFreeMemoryRange.Start, newRangeEnd);
 
-                _buffer->ResizeUninitialized(newRangeEnd);
-                FreeMemoryRanges.SetElementAt(ref this, FreeMemoryRanges.Length - 1, lastFreeMemoryRange);
+                buffer.ResizeUninitialized(newRangeEnd);
+                managerData.FreeMemoryRanges.SetElementAt(ref buffer, managerData.FreeMemoryRanges.Length - 1, lastFreeMemoryRange);
 
-                WriteBackChanges();
+                SetManagerData(ref buffer, managerData);
             }
+        }
+    }
+
+    // Struct always at byte index 0 in the buffer
+    public unsafe struct VirtualObjectsManagerData
+    {
+        internal bool IsCreated;
+        internal ulong ObjectIDCounter;
+        internal List<FreeMemoryRange> FreeMemoryRanges;
+
+        internal const int InitialFreeMemoryRangesCapacity = 100;
+        internal const int InitialObjectMemorySizeBytes = 256;
+    }
+
+    public struct FreeMemoryRange
+    {
+        public readonly int Start;
+        public readonly int End;
+        public readonly int AvailableSize;
+
+        public FreeMemoryRange(int start, int end)
+        {
+            Start = start;
+            End = end;
+            AvailableSize = end - start;
         }
     }
 }
