@@ -61,7 +61,7 @@ public partial struct BasicVOTestSystem : ISystem
     [BurstCompile]
     void OnUpdate(ref SystemState state)
     {
-        if(!_hasInitialized)
+        if (!_hasInitialized)
         {
             Entity entityA = state.EntityManager.CreateEntity();
             Entity entityB = state.EntityManager.CreateEntity();
@@ -94,6 +94,7 @@ public partial struct BasicVOTestSystem : ISystem
 
             if (!voComp.HasInitialized)
             {
+                Log.Debug($"About to create entity {entity.Index} test object ....");
                 List<BasicVOTestState> newStatesList = new List<BasicVOTestState>(10);
                 voComp.StatesListHandle = voManager.CreateObject(ref newStatesList);
                 newStatesList.Add(ref voManager, new BasicVOTestState { DebugValue = 3 });
@@ -101,10 +102,12 @@ public partial struct BasicVOTestSystem : ISystem
                 newStatesList.Add(ref voManager, new BasicVOTestState { DebugValue = 9 });
                 voManager.SetObject(voComp.StatesListHandle, newStatesList);
 
+                Log.Debug($"Created entity {entity.Index} test object of id {voComp.StatesListHandle.ObjectID} at address {voComp.StatesListHandle.Address.StartByteIndex}");
+
                 voComp.HasInitialized = true;
             }
 
-            if(voManager.GetObjectCopy(voComp.StatesListHandle, out List<BasicVOTestState> statesList))
+            if (voManager.GetObjectCopy(voComp.StatesListHandle, out List<BasicVOTestState> statesList))
             {
                 for (int i = 0; i < statesList.Length; i++)
                 {

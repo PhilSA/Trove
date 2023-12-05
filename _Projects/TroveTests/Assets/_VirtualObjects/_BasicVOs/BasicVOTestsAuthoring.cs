@@ -11,8 +11,8 @@ public class BasicVOTestsAuthoring : MonoBehaviour
     {
         public override void Bake(BasicVOTestsAuthoring authoring)
         {
-            Entity entity = GetEntity(authoring, TransformUsageFlags.None);
-            AddComponent(entity, new BasicVOTests());
+        Entity entity = GetEntity(authoring, TransformUsageFlags.None);
+        AddComponent(entity, new BasicVOTests());
         }
     }
 }

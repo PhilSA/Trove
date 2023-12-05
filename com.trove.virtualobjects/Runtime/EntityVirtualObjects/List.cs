@@ -15,8 +15,8 @@ namespace Trove.VirtualObjects
         where T : unmanaged
     {
         private int _length;
-        public int Length 
-        { 
+        public int Length
+        {
             get
             {
                 return _length;
@@ -69,7 +69,7 @@ namespace Trove.VirtualObjects
 
         public VirtualAddress GetAddressOfElementAtIndex(int index)
         {
-            if(index >= 0 && index < Length)
+            if (index >= 0 && index < Length)
             {
                 return new VirtualAddress(DataHandle.Address.StartByteIndex + (index * sizeof(T)));
             }
@@ -79,7 +79,7 @@ namespace Trove.VirtualObjects
 
         private void CheckModifyCapacityForAdd(ref VirtualObjectsManager manager, int addedElementsCount)
         {
-            if(Length + addedElementsCount > Capacity)
+            if (Length + addedElementsCount > Capacity)
             {
                 SetCapacity(ref manager, Length * 2);
             }
@@ -97,7 +97,7 @@ namespace Trove.VirtualObjects
                 manager.Free(firstElementOutsideOfNewCapacityAddress, LengthBytes - CapacityBytes);
                 DataHandle = new MemoryRangeHandle(DataHandle.Address, CapacityBytes);
             }
-            else if(Capacity > oldCapacity)
+            else if (Capacity > oldCapacity)
             {
                 MemoryRangeHandle newDataHandle = new MemoryRangeHandle(manager.Allocate(CapacityBytes), CapacityBytes);
                 manager.Unsafe_MemCopy(newDataHandle.Address, DataHandle.Address, LengthBytes);
@@ -119,17 +119,24 @@ namespace Trove.VirtualObjects
 
         public void Add(ref VirtualObjectsManager manager, T element)
         {
-            VirtualAddress writeAddress = GetAddressOfElementAtIndex(Length);
+            int prevLength = Length;
+            Length += 1;
+            VirtualAddress writeAddress = GetAddressOfElementAtIndex(prevLength);
             if (writeAddress.IsValid())
             {
                 CheckModifyCapacityForAdd(ref manager, 1);
                 manager.Unsafe_Write(writeAddress, element);
-                Length += 1;
+            }
+            else
+            {
+                Length = prevLength;
             }
         }
 
         public void InsertAt(ref VirtualObjectsManager manager, int index, T element)
         {
+            int prevLength = Length;
+            Length += 1;
             VirtualAddress writeAddress = GetAddressOfElementAtIndex(index);
             if (writeAddress.IsValid())
             {
@@ -138,7 +145,10 @@ namespace Trove.VirtualObjects
                 int lengthToCopy = LengthBytes - writeAddress.StartByteIndex;
                 manager.Unsafe_MemCopy(copyDestinationAddress, writeAddress, lengthToCopy);
                 manager.Unsafe_Write(writeAddress, element);
-                Length += 1;
+            }
+            else
+            {
+                Length = prevLength;
             }
         }
 
@@ -147,12 +157,12 @@ namespace Trove.VirtualObjects
             VirtualAddress readAddress = GetAddressOfElementAtIndex(index);
             if (readAddress.IsValid())
             {
-                if(manager.Unsafe_Read(readAddress, out T element))
+                if (manager.Unsafe_Read(readAddress, out T element))
                 {
                     return element;
                 }
 
-                throw new Exception("Could not read element value.");
+                throw new Exception($"Could not read element of size {sizeof(T)} at address {readAddress.StartByteIndex} in buffer of length {manager._buffer->Length}");
             }
 
             return default;
@@ -163,7 +173,7 @@ namespace Trove.VirtualObjects
             VirtualAddress writeAddress = GetAddressOfElementAtIndex(index);
             if (writeAddress.IsValid())
             {
-                if(manager.Unsafe_Write(writeAddress, element))
+                if (manager.Unsafe_Write(writeAddress, element))
                 {
                     return;
                 }
