@@ -90,28 +90,23 @@ namespace Trove.VirtualObjects
             VirtualObjectsManagerData managerData = *(VirtualObjectsManagerData*)buffer.GetUnsafePtr();
 
             // Creation
-            if (!managerData.IsCreated)
+            if (buffer.Length < sizeof(VirtualObjectsManagerData)) // TODO: find better way to detect initialized
             {
                 int sizeOfSelf = sizeof(VirtualObjectsManagerData);
 
                 managerData.ObjectIDCounter = 0;
 
-                // Init free ranges list 
+                // Init free ranges list
                 managerData.FreeMemoryRanges = new List<FreeMemoryRange>(VirtualObjectsManagerData.InitialFreeMemoryRangesCapacity);
                 int listBytesCapacity = managerData.FreeMemoryRanges.CapacityBytes;
-                buffer.ResizeUninitialized(sizeOfSelf + listBytesCapacity + VirtualObjectsManagerData.InitialObjectMemorySizeBytes);
+                buffer.Resize(sizeOfSelf + listBytesCapacity + VirtualObjectsManagerData.InitialObjectMemorySizeBytes, NativeArrayOptions.ClearMemory);
                 managerData.FreeMemoryRanges.DataHandle = new MemoryRangeHandle(new VirtualAddress(sizeOfSelf), listBytesCapacity);
                 managerData.FreeMemoryRanges.Add(ref buffer, new FreeMemoryRange(managerData.FreeMemoryRanges.DataHandle.Address.StartByteIndex + managerData.FreeMemoryRanges.DataHandle.Size, buffer.Length));
 
                 managerData.IsCreated = true;
                 SetManagerData(ref buffer, managerData);
 
-                Log.Debug($"Creating VOManager with free ranges {managerData.FreeMemoryRanges.GetElementAt(ref buffer, 0).Start} - {managerData.FreeMemoryRanges.GetElementAt(ref buffer, 0).End}");
-            }
-
-            if (buffer.Length < sizeof(VirtualObjectsManagerData))
-            {
-                Log.Error("Could not read VirtualObjectsManagerData");
+                Log.Debug($"Creating VOManager with length {buffer.Length} free ranges {managerData.FreeMemoryRanges.GetElementAt(ref buffer, 0).Start} - {managerData.FreeMemoryRanges.GetElementAt(ref buffer, 0).End}");
             }
 
             return managerData;
@@ -122,7 +117,7 @@ namespace Trove.VirtualObjects
         {
             if (buffer.Length < sizeof(VirtualObjectsManagerData))
             {
-                Log.Error("Could not write VirtualObjectsManagerData");
+                Log.Error($"Could not write VirtualObjectsManagerData");
             }
 
             *(VirtualObjectsManagerData*)buffer.GetUnsafePtr() = managerData;
@@ -360,8 +355,6 @@ namespace Trove.VirtualObjects
                 chosenRangeIndex = managerData.FreeMemoryRanges.Length - 1;
             }
 
-            Log.Debug($"Allocating.... chosenRangeIndex {chosenRangeIndex} chosenRange {chosenRange.Start} - {chosenRange.End}");
-
             // Remove size from beginning of chosen range
             VirtualAddress allocatedAddress = new VirtualAddress(chosenRange.Start);
             FreeMemoryRange modifiedChosenRange = new FreeMemoryRange(chosenRange.Start + sizeBytes, chosenRange.End);
@@ -396,7 +389,7 @@ namespace Trove.VirtualObjects
 
                 if (freedRange.End > buffer.Length)
                 {
-                    throw new Exception("Tried to free memory that was outside the length of the buffer");
+                    Log.Error("Tried to free memory that was outside the length of the buffer");
                 }
 
                 // Clear freed memory (this is required because valid object detection depends on it)

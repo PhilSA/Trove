@@ -27,7 +27,7 @@ namespace Trove.VirtualObjects
                 LengthBytes = value * sizeof(T);
                 if (_length < 0)
                 {
-                    throw new Exception("Tried to resize array with negative length");
+                    Log.Error("Tried to resize array with negative length");
                 }
             }
         }
@@ -50,7 +50,8 @@ namespace Trove.VirtualObjects
                 return new VirtualAddress(DataHandle.Address.StartByteIndex + (index * sizeof(T)));
             }
 
-            throw new ArgumentOutOfRangeException("index is out of range.");
+            Log.Error("index is out of range.");
+            return default;
         }
 
         public void Resize(ref DynamicBuffer<byte> buffer, int newLength)
@@ -84,7 +85,7 @@ namespace Trove.VirtualObjects
                     return element;
                 }
 
-                throw new Exception("Could not read element value.");
+                Log.Error("Could not read element value.");
             }
 
             return default;
@@ -100,7 +101,7 @@ namespace Trove.VirtualObjects
                     return;
                 }
 
-                throw new Exception("Could not write element value.");
+                Log.Error("Could not write element value.");
             }
         }
 

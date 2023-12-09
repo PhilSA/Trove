@@ -64,12 +64,11 @@ public partial struct BasicVOTestSystem : ISystem
         if (!_hasInitialized)
         {
             Entity entityA = state.EntityManager.CreateEntity();
-            Entity entityB = state.EntityManager.CreateEntity();
-
             state.EntityManager.AddComponentData(entityA, new BasicVOComponent());
-            state.EntityManager.AddComponentData(entityB, new BasicVOComponent());
-
             state.EntityManager.AddBuffer<BasicVOBufferElement>(entityA);
+
+            Entity entityB = state.EntityManager.CreateEntity();
+            state.EntityManager.AddComponentData(entityB, new BasicVOComponent());
             state.EntityManager.AddBuffer<BasicVOBufferElement>(entityB);
 
             _hasInitialized = true;
@@ -93,15 +92,12 @@ public partial struct BasicVOTestSystem : ISystem
 
             if (!voComp.HasInitialized)
             {
-                Log.Debug($"About to create entity {entity.Index} test object ....");
                 List<BasicVOTestState> newStatesList = new List<BasicVOTestState>(10);
                 voComp.StatesListHandle = VirtualObjects.CreateObject(ref bytesBuffer, ref newStatesList);
                 newStatesList.Add(ref bytesBuffer, new BasicVOTestState { DebugValue = 3 });
                 newStatesList.Add(ref bytesBuffer, new BasicVOTestState { DebugValue = 6 });
                 newStatesList.Add(ref bytesBuffer, new BasicVOTestState { DebugValue = 9 });
                 VirtualObjects.SetObject(ref bytesBuffer, voComp.StatesListHandle, newStatesList);
-
-                Log.Debug($"Created entity {entity.Index} test object of id {voComp.StatesListHandle.ObjectID} at address {voComp.StatesListHandle.Address.StartByteIndex}");
 
                 voComp.HasInitialized = true;
             }
