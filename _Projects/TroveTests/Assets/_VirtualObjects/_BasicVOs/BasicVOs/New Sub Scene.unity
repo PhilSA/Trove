@@ -152,6 +152,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3832788ab89156b4d8724b32d4a90a7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  UseVirtualObjects: 1
+  EntitiesCount: 1000000
+  ElementsCount: 100
 --- !u!4 &1257752814
 Transform:
   m_ObjectHideFlags: 0

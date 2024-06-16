@@ -6,22 +6,38 @@ using Unity.Logging;
 using Unity.Collections;
 using System;
 using Trove.VirtualObjects;
+using Unity.Collections.LowLevel.Unsafe;
 
 
 public struct BasicVOTests : IComponentData
 {
+    public bool UseVirtualObjects;
+    public int EntitiesCount;
+    public int ElementsCount;
 
+    public bool _hasInitialized;
 }
 
 public struct BasicVOComponent : IComponentData
 {
+    public int Sum;
     public ObjectHandle<List<BasicVOTestState>> StatesListHandle;
-    public bool HasInitialized;
 }
 
 public struct BasicVOBufferElement : IBufferElementData
 {
     public byte Byte;
+}
+
+public struct BasicRegularComponent : IComponentData
+{
+    public int Sum;
+}
+
+[InternalBufferCapacity(0)]
+public struct BasicRegularBufferElement : IBufferElementData
+{
+    public BasicVOTestState State;
 }
 
 public struct BasicVOTestState : IVirtualObject
@@ -30,7 +46,7 @@ public struct BasicVOTestState : IVirtualObject
 
     public void DisplayValue(Entity entity)
     {
-        Log.Debug($"State display: entity {entity.Index} value {DebugValue}");
+        //Log.Debug($"State display: entity {entity.Index} value {DebugValue}");
     }
 
     public void OnCreate(ref DynamicBuffer<byte> buffer)
@@ -45,7 +61,6 @@ public struct BasicVOTestState : IVirtualObject
 [BurstCompile]
 public partial struct BasicVOTestSystem : ISystem
 {
-    private bool _hasInitialized;
 
     [BurstCompile]
     void OnCreate(ref SystemState state)
@@ -61,53 +76,85 @@ public partial struct BasicVOTestSystem : ISystem
     [BurstCompile]
     void OnUpdate(ref SystemState state)
     {
-        if (!_hasInitialized)
+        ref BasicVOTests tester = ref SystemAPI.GetSingletonRW<BasicVOTests>().ValueRW;
+
+        if (!tester._hasInitialized)
         {
-            Entity entityA = state.EntityManager.CreateEntity();
-            state.EntityManager.AddComponentData(entityA, new BasicVOComponent());
-            state.EntityManager.AddBuffer<BasicVOBufferElement>(entityA);
+            for (int i = 0; i < tester.EntitiesCount; i++)
+            {
+                Entity entity = state.EntityManager.CreateEntity();
+                if (tester.UseVirtualObjects)
+                {
+                    state.EntityManager.AddComponentData(entity, new BasicVOComponent());
+                    DynamicBuffer<byte> bytesBuffer = state.EntityManager.AddBuffer<BasicVOBufferElement>(entity).Reinterpret<byte>();
 
-            Entity entityB = state.EntityManager.CreateEntity();
-            state.EntityManager.AddComponentData(entityB, new BasicVOComponent());
-            state.EntityManager.AddBuffer<BasicVOBufferElement>(entityB);
+                    BasicVOComponent voComp = state.EntityManager.GetComponentData<BasicVOComponent>(entity);
+                    List<BasicVOTestState> newStatesList = new List<BasicVOTestState>(tester.ElementsCount);
+                    voComp.StatesListHandle = VirtualObjects.CreateObject(ref bytesBuffer, ref newStatesList);
+                    for (int e = 0; e < tester.ElementsCount; e++)
+                    {
+                        newStatesList.Add(ref bytesBuffer, new BasicVOTestState { DebugValue = e });
+                    }
+                    VirtualObjects.SetObject(ref bytesBuffer, voComp.StatesListHandle, newStatesList);
+                    state.EntityManager.SetComponentData(entity, voComp);
+                }
+                else
+                {
+                    state.EntityManager.AddComponentData(entity, new BasicRegularComponent());
+                    DynamicBuffer<BasicVOTestState> statesBuffer = state.EntityManager.AddBuffer<BasicRegularBufferElement>(entity).Reinterpret<BasicVOTestState>();
 
-            _hasInitialized = true;
+                    for (int e = 0; e < tester.ElementsCount; e++)
+                    {
+                        statesBuffer.Add(new BasicVOTestState
+                        {
+                            DebugValue = e,
+                        });
+                    }
+                }
+            }
+
+            tester._hasInitialized = true;
         }
 
-        BasicVOTestSystemJob job = new BasicVOTestSystemJob
+        BasicVOTestSystemJob jobVO = new BasicVOTestSystemJob
         {
-            DeltaTime = SystemAPI.Time.DeltaTime,
         };
-        state.Dependency = job.Schedule(state.Dependency);
+        state.Dependency = jobVO.Schedule(state.Dependency);
+
+        BasicRegularTestSystemJob jobReg = new BasicRegularTestSystemJob
+        {
+        };
+        state.Dependency = jobReg.Schedule(state.Dependency);
     }
 
     [BurstCompile]
     public partial struct BasicVOTestSystemJob : IJobEntity
     {
-        public float DeltaTime;
-
         void Execute(Entity entity, ref BasicVOComponent voComp, ref DynamicBuffer<BasicVOBufferElement> voBuffer)
         {
+            voComp.Sum = 0;
             DynamicBuffer<byte> bytesBuffer = voBuffer.Reinterpret<byte>();
-
-            if (!voComp.HasInitialized)
-            {
-                List<BasicVOTestState> newStatesList = new List<BasicVOTestState>(10);
-                voComp.StatesListHandle = VirtualObjects.CreateObject(ref bytesBuffer, ref newStatesList);
-                newStatesList.Add(ref bytesBuffer, new BasicVOTestState { DebugValue = 3 });
-                newStatesList.Add(ref bytesBuffer, new BasicVOTestState { DebugValue = 6 });
-                newStatesList.Add(ref bytesBuffer, new BasicVOTestState { DebugValue = 9 });
-                VirtualObjects.SetObject(ref bytesBuffer, voComp.StatesListHandle, newStatesList);
-
-                voComp.HasInitialized = true;
-            }
-
             if (VirtualObjects.GetObjectCopy(ref bytesBuffer, voComp.StatesListHandle, out List<BasicVOTestState> statesList))
             {
-                for (int i = 0; i < statesList.Length; i++)
+                UnsafeList<BasicVOTestState> readOnlyList = statesList.AsReadOnlyUnsafeList(ref bytesBuffer);
+                for (int i = 0; i < readOnlyList.Length; i++)
                 {
-                    statesList.GetElementAt(ref bytesBuffer, i).DisplayValue(entity);
+                    voComp.Sum += readOnlyList[i].DebugValue;
+                    //voComp.Sum += statesList.GetElementAt(ref bytesBuffer, i).DebugValue;
                 }
+            }
+        }
+    }
+
+    [BurstCompile]
+    public partial struct BasicRegularTestSystemJob : IJobEntity
+    {
+        void Execute(Entity entity, ref BasicRegularComponent regComp, ref DynamicBuffer<BasicRegularBufferElement> regBuffer)
+        {
+            regComp.Sum = 0;
+            for (int i = 0; i < regBuffer.Length; i++)
+            {
+                regComp.Sum += regBuffer[i].State.DebugValue;
             }
         }
     }

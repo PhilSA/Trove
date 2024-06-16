@@ -16,6 +16,14 @@
         "com.unity.entities": "1.2.0-exp.3"
       }
     },
+    "com.trove.particles": {
+      "version": "file:../../../com.trove.particles",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.unity.entities": "1.2.0-exp.3"
+      }
+    },
     "com.trove.tweens": {
       "version": "file:../../../com.trove.tweens",
       "depth": 0,

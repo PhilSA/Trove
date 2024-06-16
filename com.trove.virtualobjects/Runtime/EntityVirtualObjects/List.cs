@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Logging;
 
@@ -67,6 +69,7 @@ namespace Trove.VirtualObjects
             Capacity = _capacity;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public VirtualAddress GetAddressOfElementAtIndex(int index)
         {
             if (index >= 0 && index < Length)
@@ -153,35 +156,27 @@ namespace Trove.VirtualObjects
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T GetElementAt(ref DynamicBuffer<byte> buffer, int index)
         {
             VirtualAddress readAddress = GetAddressOfElementAtIndex(index);
-            if (readAddress.IsValid())
+            if (VirtualObjects.Unsafe_Read(ref buffer, readAddress, out T element))
             {
-                if (VirtualObjects.Unsafe_Read(ref buffer, readAddress, out T element))
-                {
-                    return element;
-                }
-
-                throw new Exception($"Could not read element of size {sizeof(T)} at address {readAddress.StartByteIndex} in buffer of length {buffer.Length}");
-                Log.Error($"Could not read element of size {sizeof(T)} at address {readAddress.StartByteIndex} in buffer of length {buffer.Length}");
+                return element;
             }
 
-            return default;
+            throw new Exception($"Could not read element of size {sizeof(T)} at address {readAddress.StartByteIndex} in buffer of length {buffer.Length}");
         }
 
         public void SetElementAt(ref DynamicBuffer<byte> buffer, int index, T element)
         {
             VirtualAddress writeAddress = GetAddressOfElementAtIndex(index);
-            if (writeAddress.IsValid())
+            if (VirtualObjects.Unsafe_Write(ref buffer, writeAddress, element))
             {
-                if (VirtualObjects.Unsafe_Write(ref buffer, writeAddress, element))
-                {
-                    return;
-                }
-
-                Log.Error("Could not write element value.");
+                return;
             }
+
+            throw new Exception($"Could not write element value.");
         }
 
         public void RemoveAt(ref DynamicBuffer<byte> buffer, int index)
@@ -208,6 +203,13 @@ namespace Trove.VirtualObjects
                 }
                 Length -= 1;
             }
+        }
+
+        public UnsafeList<T> AsReadOnlyUnsafeList(ref DynamicBuffer<byte> buffer)
+        {
+            VirtualAddress startAddress = GetAddressOfElementAtIndex(0);
+            T* dataPtr = (T*)VirtualObjects.Unsafe_GetAddressPtr(ref buffer, startAddress);
+            return new UnsafeList<T>(dataPtr, Length);
         }
 
         public void OnCreate(ref DynamicBuffer<byte> buffer)

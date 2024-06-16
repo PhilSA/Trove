@@ -26,6 +26,7 @@ namespace Trove.VirtualObjects
             StartByteIndex = startByteIndex;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsValid()
         {
             return StartByteIndex > 0;
@@ -59,6 +60,7 @@ namespace Trove.VirtualObjects
             this.Address = Address;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsValid()
         {
             return Address.IsValid();
@@ -76,6 +78,7 @@ namespace Trove.VirtualObjects
             Size = size;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsValid()
         {
             return Address.IsValid() && Size > 0;
@@ -105,8 +108,6 @@ namespace Trove.VirtualObjects
 
                 managerData.IsCreated = true;
                 SetManagerData(ref buffer, managerData);
-
-                Log.Debug($"Creating VOManager with length {buffer.Length} free ranges {managerData.FreeMemoryRanges.GetElementAt(ref buffer, 0).Start} - {managerData.FreeMemoryRanges.GetElementAt(ref buffer, 0).End}");
             }
 
             return managerData;
