@@ -48,7 +48,6 @@ namespace Trove.Attributes
         public Entity EntityA;
         public Entity EntityB;
 
-        [BurstCompile]
         public static AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter> Create_SetBaseValue(AttributeReference attribute, float newBaseValue, bool autoRecalculate = true)
         {
             return new AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter>
@@ -60,7 +59,6 @@ namespace Trove.Attributes
             };
         }
 
-        [BurstCompile]
         public static AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter> Create_AddBaseValue(AttributeReference attribute, float addValue, bool autoRecalculate = true)
         {
             return new AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter>
@@ -72,7 +70,6 @@ namespace Trove.Attributes
             };
         }
 
-        [BurstCompile]
         public static AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter> Create_RecalculateAttributeAndAllObservers(AttributeReference attribute)
         {
             return new AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter>
@@ -82,7 +79,6 @@ namespace Trove.Attributes
             };
         }
 
-        [BurstCompile]
         public static AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter> Create_RecalculateAllObservers(AttributeReference attribute)
         {
             return new AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter>
@@ -92,7 +88,6 @@ namespace Trove.Attributes
             };
         }
 
-        [BurstCompile]
         public static AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter> Create_AddModifier(AttributeReference attribute, TAttributeModifier modifier, Entity modifierReferenceNotificationTarget = default, int notificationID = -1, bool autoRecalculate = true)
         {
             return new AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter>
@@ -106,7 +101,6 @@ namespace Trove.Attributes
             };
         }
 
-        [BurstCompile]
         public static AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter> Create_RemoveModifier(ModifierReference modifierReference, bool autoRecalculate = true)
         {
             return new AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter>
@@ -117,7 +111,6 @@ namespace Trove.Attributes
             };
         }
 
-        [BurstCompile]
         public static AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter> Create_RemoveAllModifiers(Entity onEntity, bool autoRecalculate = true)
         {
             return new AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter>
@@ -128,7 +121,6 @@ namespace Trove.Attributes
             };
         }
 
-        [BurstCompile]
         public static AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter> Create_RemoveAllModifiersAffectingAttribute(AttributeReference attribute, bool autoRecalculate = true)
         {
             return new AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter>
@@ -139,7 +131,6 @@ namespace Trove.Attributes
             };
         }
 
-        [BurstCompile]
         public static AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter> Create_RemoveAllModifiersObservingEntityOnEntity(Entity observedEntity, Entity onEntity, bool autoRecalculate = true)
         {
             return new AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter>
@@ -151,7 +142,6 @@ namespace Trove.Attributes
             };
         }
 
-        [BurstCompile]
         public static AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter> Create_RemoveAllModifiersObservingAttribute(AttributeReference attribute, bool autoRecalculate = true)
         {
             return new AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter>
@@ -162,7 +152,6 @@ namespace Trove.Attributes
             };
         }
 
-        [BurstCompile]
         public static AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter> Create_RemoveAllModifiersObservingAttributeOnEntity(Entity onEntity, AttributeReference attribute, bool autoRecalculate = true)
         {
             return new AttributeCommand<TAttributeModifier, TAttributeModifierStack, TAttributeGetterSetter>

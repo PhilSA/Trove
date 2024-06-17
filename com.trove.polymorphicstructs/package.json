@@ -1,13 +1,11 @@
 {
   "displayName": "Trove Polymorphic Structs",
   "description": "Trove Polymorphic Structs provides a codegen tool for polymorphic behaviour in burstable unmanaged code. They can be used to solve a variety of problems that aren't so obvious to solve in ECS, such as ordered events or state machines without structural changes.",
-  "dependencies": {
-  },
   "name": "com.trove.polymorphicstructs",
   "author": {
     "name": "Philippe St-Amand"
   },
-  "unity": "2022.3",
+  "unity": "6000.1",
   "unityRelease": "0f1",
-  "version": "0.2.0"
+  "version": "0.3.0"
 }

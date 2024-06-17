@@ -1,0 +1,178 @@
+
+using System.Runtime.CompilerServices;
+using Trove.EventSystems;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
+using Unity.Jobs;
+
+// See all TODO comments for things you are expected to modify.
+
+// Register generic job types
+[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToListJob<#SCRIPTNAME#Manager>))]
+
+/// <summary>
+/// This is the singleton containing a manager for this event type.
+/// It is automatically created by the event system for this event type.
+/// Event writers access the event manager in this singleton in order to get streams to write events in.
+/// Event readers access the event manager in this singleton in order to get a list of events to read.
+/// </summary>
+public struct #SCRIPTNAME#sSingleton : IComponentData, IGlobalPolymorphicEventsSingleton
+{
+    public StreamEventsManager StreamEventsManager { get; set; }
+    public NativeList<byte> EventsList { get; set; }
+}
+
+/// <summary>
+/// This is an example polymorphic event type. You can create more of these containing different data.
+/// </summary>
+public struct #SCRIPTNAME#A
+{
+    // TODO: Define event data
+    public int Val;
+}
+
+/// <summary>
+/// This is an example polymorphic event type. You can create more of these containing different data.
+/// </summary>
+public struct #SCRIPTNAME#B
+{
+    // TODO: Define event data
+    public int Val1;
+    public int Val2;
+    public int Val3;
+}
+
+// TODO: Define more polymorphic event structs
+
+/// <summary>
+/// This is a manager that knows how to write, read, and interpret polymorphic events.
+/// When you want to create a new polymorphic event, you must:
+/// - Create a new struct representing your event and its data.
+/// - Add a new element to the "TypeId" enum for this struct (this gives it a unique Id).
+/// - Add a switch case for this new event TypeId in "GetSizeForTypeId", and make it return the size of that event
+///   struct.
+/// - Add a "Write" method for that new event struct (you can take inspiration from the existing "Write" method for the
+///   example event type in the manager.
+/// - Add a switch case for this new event TypeId in "ExecuteNextEvent", in order to read and execute the event. (you
+///   can take inspiration from the example event execution already in "ExecuteNextEvent".
+///
+/// If your events need parameters for their execution, you are free to add extra parameters to the "ExecuteNextEvent"
+/// function. Your event execution may also return data via an "out" parameter.
+/// </summary>
+public unsafe struct #SCRIPTNAME#Manager : IPolymorphicEventTypeManager
+{
+    // Event types
+    public enum TypeId
+    {
+        #SCRIPTNAME#A = 1,
+        #SCRIPTNAME#B = 2,
+        // TODO: add more event types here
+    }
+    
+    // Event sizes
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int GetSizeForTypeId(int typeId)
+    {
+        switch ((TypeId)typeId)
+        {
+            case TypeId.#SCRIPTNAME#A:
+                return UnsafeUtility.SizeOf<#SCRIPTNAME#A>();
+            case TypeId.#SCRIPTNAME#B:
+                return UnsafeUtility.SizeOf<#SCRIPTNAME#B>();
+            // TODO: add more cases for other event types here
+        }
+
+        return 0;
+    }
+
+    // Event writers
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(ref NativeStream.Writer streamWriter, #SCRIPTNAME#A e)
+    {
+        streamWriter.Write<int>((int)TypeId.#SCRIPTNAME#A); // First we write the event type Id
+        streamWriter.Write(e); // Then we write the event data
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(ref NativeStream.Writer streamWriter, #SCRIPTNAME#B e)
+    {
+        streamWriter.Write<int>((int)TypeId.#SCRIPTNAME#B); // First we write the event type Id
+        streamWriter.Write(e); // Then we write the event data
+    }
+    
+    // TODO: add more event Write methods here for other event types
+
+    // Event readers and executors
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool ExecuteNextEvent(byte* byteArrayPtr, int byteArrayLength, ref int index)
+    {
+        if (PolymorphicUtilities.CanRead<int>(byteArrayLength, index))
+        {
+            // First we read the event type Id
+            PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out int typeId);
+            
+            // Then, depending on type Id, we read the event data in different ways and execute the event
+            switch ((TypeId)typeId)
+            {
+                // Event A
+                case TypeId.#SCRIPTNAME#A:
+                {
+                    if (PolymorphicUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<#SCRIPTNAME#A>()))
+                    {
+                        PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out #SCRIPTNAME#A e);
+                        // TODO: execute event
+                        return true;
+                    }
+                    return false;
+                }
+                // Event B
+                case TypeId.#SCRIPTNAME#B:
+                {
+                    if (PolymorphicUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<#SCRIPTNAME#B>()))
+                    {
+                        PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out #SCRIPTNAME#B e);
+                        // TODO: execute event
+                        return true;
+                    }
+                    return false;
+                }
+                // TODO: add more cases for other event types here
+            }
+        }
+        
+        return false;
+    }
+}
+
+/// <summary>
+/// This is the event system that transfers events from the streams to the global events list.
+/// It also clears the events list before adding to it, meaning events from the previous frame are still valid
+/// until this system updates.
+/// All event writer systems should update before this system, and all event reader systems should update after this system.
+/// </summary>
+partial struct #SCRIPTNAME#System : ISystem
+{
+    private GlobalPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, #SCRIPTNAME#Manager> _subSystem;
+
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        _subSystem =
+            new GlobalPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, #SCRIPTNAME#Manager>(
+                ref state, 32, 1000); // TODO: tweak initial capacities
+    }
+
+    [BurstCompile]
+    public void OnDestroy(ref SystemState state)
+    {
+        _subSystem.OnDestroy(ref state);
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        _subSystem.OnUpdate(ref state);
+    }
+}
