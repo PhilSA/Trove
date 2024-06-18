@@ -44,11 +44,10 @@ Package statuses:
 * ⚠️: Experimental
 * ⛔: Too experimental
 
-
 | **Name** | **Install URLs** | **Description** | **Status** |
 | :--- | :--- | :--- | :--- |
 | **Common** | `https://github.com/PhilSA/Trove.git?path=/com.trove.common` | Trove Common provides various tools and utilities that may be used by other packages or projects. <br> ([Documentation](./com.trove.common/Documentation~/index.md)) | ✅ |
-| **Event Systems** | `https://github.com/PhilSA/Trove.git?path=/com.trove.eventsystems` | Trove Event Systems provides various types of event systems to facilitate deferred logic and communication between systems and entities. <br> ([Documentation](./com.trove.eventsystems/Documentation~/index.md)) | ✅ |
+| **Event Systems** | `https://github.com/PhilSA/Trove.git?path=/com.trove.eventsystems` | Trove Event Systems provides various types of event systems to facilitate deferred logic and communication between systems and entities. <br> ([Documentation](./com.trove.eventsystems/Documentation~/index.md)) | ⚠️ |
 | **Attributes** | `https://github.com/PhilSA/Trove.git?path=/com.trove.attributes` | Trove Attributes allows you to define identifiable "numbers" (attributes) on entities, and add/remove "rules" (modifiers) that affect the evaluation of these numbers' values. This tool can be used to effortlessly setup gameplay mechanics such as RPG character/equipment attributes, buffs, effects, roguelike-style stackable powerups and synergies, etc... <br> ([Documentation](./com.trove.attributes/Documentation~/index.md)) | ⚠️ |
 | **Utility AI** | First, install: <br> `https://github.com/PhilSA/Trove.git?path=/com.trove.common` <br><br> Then, install: <br> `https://github.com/PhilSA/Trove.git?path=/com.trove.utilityai` | Trove Utility AI provides a flexible and efficient decision-making system for ECS. <br> ([Documentation](./com.trove.utilityai/Documentation~/index.md)) | ⚠️ |
 | **Tweens** | First, install: <br> `https://github.com/PhilSA/Trove.git?path=/com.trove.common` <br><br> Then, install: <br> `https://github.com/PhilSA/Trove.git?path=/com.trove.tweens` | Trove Tweens is a simple tweening tool that allows you to create your own highly-efficient custom tweens. <br> ([Documentation](./com.trove.tweens/Documentation~/index.md)) | ⚠️ |
