@@ -94,6 +94,7 @@ namespace Trove.EventSystems
         public void Execute()
         {
             int writeIndex = EventList.Length;
+            byte* listPtr = EventList.GetUnsafePtr();
 
             for (int i = 0; i < EventsStream.ForEachCount; i++)
             {
@@ -115,8 +116,8 @@ namespace Trove.EventSystems
                     EventList.ResizeUninitialized(newListSize);
 
                     // Write to list
-                    PolymorphicUtilities.WriteValue(EventList.GetUnsafePtr(), ref writeIndex, typeId);
-                    PolymorphicUtilities.WriteValue(EventList.GetUnsafePtr(), ref writeIndex, eventData, dataSize);
+                    PolymorphicUtilities.WriteValue(listPtr, ref writeIndex, typeId);
+                    PolymorphicUtilities.WriteValue(listPtr, ref writeIndex, eventData, dataSize);
                 }
                 EventsStream.EndForEachIndex();
             }

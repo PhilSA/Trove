@@ -118,12 +118,14 @@ namespace Trove.EventSystems.Tests
 
         // Event readers and executors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool ExecuteNextEvent(byte* byteArrayPtr, int byteArrayLength, ref int index, ref EntityEventReceiver eventReceiver)
+        public static bool ExecuteNextEvent(byte* byteArrayPtr, int byteArrayLength, ref int index, ref EntityEventReceiver eventReceiver, int contextType)
         {
             if (PolymorphicUtilities.CanRead<int>(byteArrayLength, index))
             {
                 // First we read the event type Id
                 PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out int typeId);
+
+                UnityEngine.Debug.Log($"Trye read event of type {typeId}");
 
                 // Then, depending on type Id, we read the event data in different ways and execute the event
                 switch ((TypeId)typeId)
@@ -134,26 +136,92 @@ namespace Trove.EventSystems.Tests
                             if (PolymorphicUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<TestEntityPolymorphicEventA>()))
                             {
                                 PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out TestEntityPolymorphicEventA e);
-                                UnityEngine.Debug.Log($"execute entity event A {e.Val}");
+                                UnityEngine.Debug.Log($"read event of val {e.Val}");
                                 switch (e.Val)
                                 {
                                     case 1:
-                                        eventReceiver.MainThread_EventCounterVal1++;
+                                        switch (contextType)
+                                        {
+                                            case 1:
+                                                eventReceiver.MainThread_EventCounterVal1++;
+                                                break;
+                                            case 2:
+                                                eventReceiver.SingleJob_EventCounterVal1++;
+                                                break;
+                                            case 3:
+                                                eventReceiver.ParallelJob_EventCounterVal1++;
+                                                break;
+                                        }
                                         break;
                                     case 2:
-                                        eventReceiver.MainThread_EventCounterVal2++;
+                                        switch (contextType)
+                                        {
+                                            case 1:
+                                                eventReceiver.MainThread_EventCounterVal2++;
+                                                break;
+                                            case 2:
+                                                eventReceiver.SingleJob_EventCounterVal2++;
+                                                break;
+                                            case 3:
+                                                eventReceiver.ParallelJob_EventCounterVal2++;
+                                                break;
+                                        }
                                         break;
                                     case 3:
-                                        eventReceiver.MainThread_EventCounterVal3++;
+                                        switch (contextType)
+                                        {
+                                            case 1:
+                                                eventReceiver.MainThread_EventCounterVal3++;
+                                                break;
+                                            case 2:
+                                                eventReceiver.SingleJob_EventCounterVal3++;
+                                                break;
+                                            case 3:
+                                                eventReceiver.ParallelJob_EventCounterVal3++;
+                                                break;
+                                        }
                                         break;
                                     case 4:
-                                        eventReceiver.MainThread_EventCounterVal4++;
+                                        switch (contextType)
+                                        {
+                                            case 1:
+                                                eventReceiver.MainThread_EventCounterVal4++;
+                                                break;
+                                            case 2:
+                                                eventReceiver.SingleJob_EventCounterVal4++;
+                                                break;
+                                            case 3:
+                                                eventReceiver.ParallelJob_EventCounterVal4++;
+                                                break;
+                                        }
                                         break;
                                     case 5:
-                                        eventReceiver.MainThread_EventCounterVal5++;
+                                        switch (contextType)
+                                        {
+                                            case 1:
+                                                eventReceiver.MainThread_EventCounterVal5++;
+                                                break;
+                                            case 2:
+                                                eventReceiver.SingleJob_EventCounterVal5++;
+                                                break;
+                                            case 3:
+                                                eventReceiver.ParallelJob_EventCounterVal5++;
+                                                break;
+                                        }
                                         break;
                                     case 6:
-                                        eventReceiver.MainThread_EventCounterVal6++;
+                                        switch (contextType)
+                                        {
+                                            case 1:
+                                                eventReceiver.MainThread_EventCounterVal6++;
+                                                break;
+                                            case 2:
+                                                eventReceiver.SingleJob_EventCounterVal6++;
+                                                break;
+                                            case 3:
+                                                eventReceiver.ParallelJob_EventCounterVal6++;
+                                                break;
+                                        }
                                         break;
                                 }
                                 return true;
@@ -166,26 +234,92 @@ namespace Trove.EventSystems.Tests
                             if (PolymorphicUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<TestEntityPolymorphicEventB>()))
                             {
                                 PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out TestEntityPolymorphicEventB e);
-                                UnityEngine.Debug.Log($"execute entity event B {e.Val3}");
+                                UnityEngine.Debug.Log($"read event of val {e.Val3}");
                                 switch (e.Val3)
                                 {
                                     case 1:
-                                        eventReceiver.MainThread_EventCounterVal1++;
+                                        switch (contextType)
+                                        {
+                                            case 1:
+                                                eventReceiver.MainThread_EventCounterVal1++;
+                                                break;
+                                            case 2:
+                                                eventReceiver.SingleJob_EventCounterVal1++;
+                                                break;
+                                            case 3:
+                                                eventReceiver.ParallelJob_EventCounterVal1++;
+                                                break;
+                                        }
                                         break;
                                     case 2:
-                                        eventReceiver.MainThread_EventCounterVal2++;
+                                        switch (contextType)
+                                        {
+                                            case 1:
+                                                eventReceiver.MainThread_EventCounterVal2++;
+                                                break;
+                                            case 2:
+                                                eventReceiver.SingleJob_EventCounterVal2++;
+                                                break;
+                                            case 3:
+                                                eventReceiver.ParallelJob_EventCounterVal2++;
+                                                break;
+                                        }
                                         break;
                                     case 3:
-                                        eventReceiver.MainThread_EventCounterVal3++;
+                                        switch (contextType)
+                                        {
+                                            case 1:
+                                                eventReceiver.MainThread_EventCounterVal3++;
+                                                break;
+                                            case 2:
+                                                eventReceiver.SingleJob_EventCounterVal3++;
+                                                break;
+                                            case 3:
+                                                eventReceiver.ParallelJob_EventCounterVal3++;
+                                                break;
+                                        }
                                         break;
                                     case 4:
-                                        eventReceiver.MainThread_EventCounterVal4++;
+                                        switch (contextType)
+                                        {
+                                            case 1:
+                                                eventReceiver.MainThread_EventCounterVal4++;
+                                                break;
+                                            case 2:
+                                                eventReceiver.SingleJob_EventCounterVal4++;
+                                                break;
+                                            case 3:
+                                                eventReceiver.ParallelJob_EventCounterVal4++;
+                                                break;
+                                        }
                                         break;
                                     case 5:
-                                        eventReceiver.MainThread_EventCounterVal5++;
+                                        switch (contextType)
+                                        {
+                                            case 1:
+                                                eventReceiver.MainThread_EventCounterVal5++;
+                                                break;
+                                            case 2:
+                                                eventReceiver.SingleJob_EventCounterVal5++;
+                                                break;
+                                            case 3:
+                                                eventReceiver.ParallelJob_EventCounterVal5++;
+                                                break;
+                                        }
                                         break;
                                     case 6:
-                                        eventReceiver.MainThread_EventCounterVal6++;
+                                        switch (contextType)
+                                        {
+                                            case 1:
+                                                eventReceiver.MainThread_EventCounterVal6++;
+                                                break;
+                                            case 2:
+                                                eventReceiver.SingleJob_EventCounterVal6++;
+                                                break;
+                                            case 3:
+                                                eventReceiver.ParallelJob_EventCounterVal6++;
+                                                break;
+                                        }
                                         break;
                                 }
                                 return true;

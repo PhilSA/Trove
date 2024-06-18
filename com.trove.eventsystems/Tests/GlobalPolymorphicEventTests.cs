@@ -18,7 +18,7 @@ namespace Trove.EventSystems.Tests
         public const int MainThreadStreamEventKeyB = 2;
         public const int SingleJobStreamEventKeyA = 3;
         public const int SingleJobStreamEventKeyB = 4;
-        public const int ParallelJobStreamEventKeyA = 4;
+        public const int ParallelJobStreamEventKeyA = 5;
         public const int ParallelJobStreamEventKeyB = 6;
 
         public World World => World.DefaultGameObjectInjectionWorld;

@@ -18,7 +18,7 @@ namespace Trove.EventSystems.Tests
         public const int MainThreadStreamEventKeyB = 2;
         public const int SingleJobStreamEventKeyA = 3;
         public const int SingleJobStreamEventKeyB = 4;
-        public const int ParallelJobStreamEventKeyA = 4;
+        public const int ParallelJobStreamEventKeyA = 5;
         public const int ParallelJobStreamEventKeyB = 6;
 
         public World World => World.DefaultGameObjectInjectionWorld;
@@ -64,6 +64,28 @@ namespace Trove.EventSystems.Tests
 
             Assert.IsTrue(World.EntityManager.IsComponentEnabled<HasTestEntityPolymorphicEvents>(receiverEntity1));
             Assert.IsTrue(World.EntityManager.IsComponentEnabled<HasTestEntityPolymorphicEvents>(receiverEntity2));
+
+            UnityEngine.Debug.Log($"Main" +
+                $"{eventReceiver1.MainThread_EventCounterVal1} " +
+                $"{eventReceiver1.MainThread_EventCounterVal2} " +
+                $"{eventReceiver1.MainThread_EventCounterVal3} " +
+                $"{eventReceiver1.MainThread_EventCounterVal4} " +
+                $"{eventReceiver1.MainThread_EventCounterVal5} " +
+                $"{eventReceiver1.MainThread_EventCounterVal6} " +
+                "Single" +
+                $"{eventReceiver1.SingleJob_EventCounterVal1} " +
+                $"{eventReceiver1.SingleJob_EventCounterVal2} " +
+                $"{eventReceiver1.SingleJob_EventCounterVal3} " +
+                $"{eventReceiver1.SingleJob_EventCounterVal4} " +
+                $"{eventReceiver1.SingleJob_EventCounterVal5} " +
+                $"{eventReceiver1.SingleJob_EventCounterVal6} " +
+                "Parallel" +
+                $"{eventReceiver1.ParallelJob_EventCounterVal1} " +
+                $"{eventReceiver1.ParallelJob_EventCounterVal2} " +
+                $"{eventReceiver1.ParallelJob_EventCounterVal3} " +
+                $"{eventReceiver1.ParallelJob_EventCounterVal4} " +
+                $"{eventReceiver1.ParallelJob_EventCounterVal5} " +
+                $"{eventReceiver1.ParallelJob_EventCounterVal6} ");
 
             {
                 Assert.AreEqual(EventsPerSystemOrThreadForR1, eventReceiver1.MainThread_EventCounterVal1);
@@ -332,7 +354,7 @@ namespace Trove.EventSystems.Tests
             {
                 int readIndex = 0;
                 byte* bufferPtr = (byte*)eventsBuffer.GetUnsafeReadOnlyPtr();
-                while (TestEntityPolymorphicEventManager.ExecuteNextEvent(bufferPtr, eventsBuffer.Length, ref readIndex, ref eventReceiver.ValueRW))
+                while (TestEntityPolymorphicEventManager.ExecuteNextEvent(bufferPtr, eventsBuffer.Length, ref readIndex, ref eventReceiver.ValueRW, 1))
                 { }
             }
         }
@@ -363,7 +385,7 @@ namespace Trove.EventSystems.Tests
             {
                 int readIndex = 0;
                 byte* bufferPtr = (byte*)eventsBuffer.GetUnsafeReadOnlyPtr();
-                while (TestEntityPolymorphicEventManager.ExecuteNextEvent(bufferPtr, eventsBuffer.Length, ref readIndex, ref eventReceiver))
+                while (TestEntityPolymorphicEventManager.ExecuteNextEvent(bufferPtr, eventsBuffer.Length, ref readIndex, ref eventReceiver, 2))
                 { }
             }
         }
@@ -394,7 +416,7 @@ namespace Trove.EventSystems.Tests
             {
                 int readIndex = 0;
                 byte* bufferPtr = (byte*)eventsBuffer.GetUnsafeReadOnlyPtr();
-                while (TestEntityPolymorphicEventManager.ExecuteNextEvent(bufferPtr, eventsBuffer.Length, ref readIndex, ref eventReceiver))
+                while (TestEntityPolymorphicEventManager.ExecuteNextEvent(bufferPtr, eventsBuffer.Length, ref readIndex, ref eventReceiver, 3))
                 { }
             }
         }

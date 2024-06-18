@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 2048
     height: 1060.8
   m_ShowMode: 4
-  m_Title: Project
+  m_Title: Scene
   m_RootView: {fileID: 3}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -47,7 +47,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 1
-  controlID: 118
+  controlID: 16
   draggingID: 0
 --- !u!114 &3
 MonoBehaviour:
@@ -145,7 +145,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 119
+  controlID: 17
   draggingID: 0
 --- !u!114 &7
 MonoBehaviour:
@@ -1825,7 +1825,7 @@ MonoBehaviour:
     x: 0
     y: 73.6
     width: 1054.2
-    height: 663
+    height: 661.4
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1880,9 +1880,9 @@ MonoBehaviour:
       x: 0
       y: 21
       width: 1054.2
-      height: 642
+      height: 640.4
     m_Scale: {x: 0.6863281, y: 0.6863281}
-    m_Translation: {x: 527.1, y: 321}
+    m_Translation: {x: 527.1, y: 320.2}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
@@ -1890,12 +1890,12 @@ MonoBehaviour:
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
       x: -768
-      y: -467.70633
+      y: -466.5407
       width: 1536
-      height: 935.41266
+      height: 933.0814
     m_MinimalGUI: 1
   m_defaultScale: 0.6863281
-  m_LastWindowPixelSize: {x: 1054.2, y: 663}
+  m_LastWindowPixelSize: {x: 1054.2, y: 661.4}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000
@@ -1980,7 +1980,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: d8faffff
+      m_ExpandedIDs: 16b1ffff4eb4fffffab6ffff32baffffccbeffff04c2ffffa6cbffffdeceffffccd6ffff04daffffc4dcfffffcdfffffb2f1ffff06f5ffffd8faffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -2052,8 +2052,7 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SkipHidden: 0
     m_SearchArea: 1
-    m_Folders:
-    - Packages/com.trove.eventsystems/Tests
+    m_Folders: []
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -2071,7 +2070,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 3af30000
     m_LastClickedID: 62266
-    m_ExpandedIDs: 0000000052bd000054bd000056bd000058bd00005abd00005cbd00005ebd000060bd000062bd000064bd000066bd000068bd00006abd0000
+    m_ExpandedIDs: 000000005abd00005cbd00005ebd000060bd000062bd000064bd000066bd000068bd00006abd00006cbd00006ebd000070bd000072bd0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -2097,10 +2096,10 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 574.6}
+    scrollPos: {x: 0, y: 583.39996}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 0000000052bd000054bd000056bd000058bd00005abd00005cbd00005ebd000060bd000062bd000064bd000066bd000068bd00006abd0000
+    m_ExpandedIDs: 000000005abd00005cbd00005ebd000060bd000062bd000064bd000066bd000068bd00006abd00006cbd00006ebd000070bd000072bd0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -2250,8 +2249,8 @@ MonoBehaviour:
     splitterInitialOffset: 707
     currentActiveSplitter: -1
     realSizes:
-    - 636
-    - 212
+    - 689.6
+    - 230.40002
     relativeSizes:
     - 0.75
     - 0.25
@@ -2261,7 +2260,7 @@ MonoBehaviour:
     maxSizes:
     - 0
     - 0
-    lastTotalSize: 848
+    lastTotalSize: 920
     splitSize: 6
     xOffset: 0
     m_Version: 1
@@ -2329,7 +2328,7 @@ MonoBehaviour:
       uniqueId: '[TroveTests][suite]'
       name: TroveTests
       fullName: TroveTests
-      resultStatus: 1
+      resultStatus: 2
       duration: 0
       messages: 
       output: 
@@ -2831,11 +2830,11 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1025
       parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
-    - id: 1034
+    - id: 1038
       uniqueId: '[com.trove.eventsystems.tests.dll][suite]'
       name: com.trove.eventsystems.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.eventsystems.tests.dll
-      resultStatus: 1
+      resultStatus: 2
       duration: 0
       messages: 
       output: 
@@ -2847,11 +2846,11 @@ MonoBehaviour:
       categories: []
       parentId: 1000
       parentUniqueId: '[TroveTests][suite]'
-    - id: 1035
+    - id: 1039
       uniqueId: 'com.trove.eventsystems.tests.dll/[Trove][suite]'
       name: Trove
       fullName: Trove
-      resultStatus: 1
+      resultStatus: 2
       duration: 0
       messages: 
       output: 
@@ -2861,13 +2860,13 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1034
+      parentId: 1038
       parentUniqueId: '[com.trove.eventsystems.tests.dll][suite]'
-    - id: 1036
+    - id: 1040
       uniqueId: 'com.trove.eventsystems.tests.dll/Trove/[EventSystems][suite]'
       name: EventSystems
       fullName: Trove.EventSystems
-      resultStatus: 1
+      resultStatus: 2
       duration: 0
       messages: 
       output: 
@@ -2877,13 +2876,13 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1035
+      parentId: 1039
       parentUniqueId: 'com.trove.eventsystems.tests.dll/[Trove][suite]'
-    - id: 1037
+    - id: 1041
       uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
       name: Tests
       fullName: Trove.EventSystems.Tests
-      resultStatus: 1
+      resultStatus: 2
       duration: 0
       messages: 
       output: 
@@ -2893,7 +2892,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1036
+      parentId: 1040
       parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/[EventSystems][suite]'
     - id: 1030
       uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityEventTests][suite]'
@@ -2909,14 +2908,14 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1037
+      parentId: 1041
       parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
     - id: 1031
       uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/EntityEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityEventTests.EntityEventTest1]'
       name: EntityEventTest1
       fullName: Trove.EventSystems.Tests.EntityEventTests.EntityEventTest1
       resultStatus: 1
-      duration: 0.0302487
+      duration: 0.0277465
       messages: 
       output: 
       stacktrace: 
@@ -2929,6 +2928,53 @@ MonoBehaviour:
       parentId: 1030
       parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityEventTests][suite]'
     - id: 1032
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityPolymorphicEventTests][suite]'
+      name: EntityPolymorphicEventTests
+      fullName: Trove.EventSystems.Tests.EntityPolymorphicEventTests
+      resultStatus: 2
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1041
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
+    - id: 1033
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/EntityPolymorphicEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1]'
+      name: EntityEventTest1
+      fullName: Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1
+      resultStatus: 2
+      duration: 0.0507169
+      messages: "  Expected: 3\r\n  But was:  0\r\n"
+      output: 'writing event 1
+
+        writing event 1
+
+        writing event 1
+
+        execute
+        entity event A 3
+
+        execute entity event A 3
+
+'
+      stacktrace: 'at Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1
+        () [0x001bb] in C:\Projects\Trove\com.trove.eventsystems\Tests\EntityPolymorphicEventTests.cs:69
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1032
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityPolymorphicEventTests][suite]'
+    - id: 1034
       uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalEventTests][suite]'
       name: GlobalEventTests
       fullName: Trove.EventSystems.Tests.GlobalEventTests
@@ -2942,14 +2988,14 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1037
+      parentId: 1041
       parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
     - id: 1033
       uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/GlobalEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalEventTests.GlobalEventTest1]'
       name: GlobalEventTest1
       fullName: Trove.EventSystems.Tests.GlobalEventTests.GlobalEventTest1
       resultStatus: 1
-      duration: 0.0071874
+      duration: 0.0160101
       messages: 
       output: 
       stacktrace: 
@@ -2961,7 +3007,43 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1032
       parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalEventTests][suite]'
-    - id: 1049
+    - id: 1036
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests][suite]'
+      name: GlobalPolymorphicEventTests
+      fullName: Trove.EventSystems.Tests.GlobalPolymorphicEventTests
+      resultStatus: 2
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1041
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
+    - id: 1037
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/GlobalPolymorphicEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalEventTest1]'
+      name: GlobalEventTest1
+      fullName: Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalEventTest1
+      resultStatus: 2
+      duration: 0.0074805
+      messages: "  Expected: 5\r\n  But was:  20\r\n"
+      output: 
+      stacktrace: 'at Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalEventTest1
+        () [0x0019a] in C:\Projects\Trove\com.trove.eventsystems\Tests\GlobalPolymorphicEventTests.cs:72
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1036
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests][suite]'
+    - id: 1053
       uniqueId: '[com.trove.polymorphicstructs.tests.dll][suite]'
       name: com.trove.polymorphicstructs.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.polymorphicstructs.tests.dll
@@ -2977,7 +3059,7 @@ MonoBehaviour:
       categories: []
       parentId: 1000
       parentUniqueId: '[TroveTests][suite]'
-    - id: 1050
+    - id: 1054
       uniqueId: 'com.trove.polymorphicstructs.tests.dll/[Trove][suite]'
       name: Trove
       fullName: Trove
@@ -2991,9 +3073,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1049
+      parentId: 1053
       parentUniqueId: '[com.trove.polymorphicstructs.tests.dll][suite]'
-    - id: 1051
+    - id: 1055
       uniqueId: 'com.trove.polymorphicstructs.tests.dll/Trove/[PolymorphicStructs][suite]'
       name: PolymorphicStructs
       fullName: Trove.PolymorphicStructs
@@ -3007,9 +3089,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1050
+      parentId: 1054
       parentUniqueId: 'com.trove.polymorphicstructs.tests.dll/[Trove][suite]'
-    - id: 1052
+    - id: 1056
       uniqueId: 'com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests][suite]'
       name: Tests
       fullName: Trove.PolymorphicStructs.Tests
@@ -3023,9 +3105,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1051
+      parentId: 1055
       parentUniqueId: 'com.trove.polymorphicstructs.tests.dll/Trove/[PolymorphicStructs][suite]'
-    - id: 1038
+    - id: 1042
       uniqueId: 'com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]'
       name: PolymorphicStructsTests
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests
@@ -3039,7 +3121,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1052
+      parentId: 1056
       parentUniqueId: 'com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests][suite]'
     - id: 1052
       uniqueId: 'com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/PolymorphicStructsTests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.AddToGeneric]'
@@ -3211,7 +3293,7 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1043
       parentUniqueId: 'com.trove.polymorphicstructs.tests.dll/Trove/PolymorphicStructs/Tests/[com.trove.polymorphicstructs.tests][Trove.PolymorphicStructs.Tests.PolymorphicStructsTests][suite]'
-    - id: 1055
+    - id: 1059
       uniqueId: '[com.trove.tweens.tests.dll][suite]'
       name: com.trove.tweens.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.tweens.tests.dll
@@ -3227,7 +3309,7 @@ MonoBehaviour:
       categories: []
       parentId: 1000
       parentUniqueId: '[TroveTests][suite]'
-    - id: 1056
+    - id: 1060
       uniqueId: 'com.trove.tweens.tests.dll/[Trove][suite]'
       name: Trove
       fullName: Trove
@@ -3241,9 +3323,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1055
+      parentId: 1059
       parentUniqueId: '[com.trove.tweens.tests.dll][suite]'
-    - id: 1057
+    - id: 1061
       uniqueId: 'com.trove.tweens.tests.dll/Trove/[Tweens][suite]'
       name: Tweens
       fullName: Trove.Tweens
@@ -3257,9 +3339,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1056
+      parentId: 1060
       parentUniqueId: 'com.trove.tweens.tests.dll/[Trove][suite]'
-    - id: 1058
+    - id: 1062
       uniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/[com.trove.tweens.tests][Trove.Tweens.Tests][suite]'
       name: Tests
       fullName: Trove.Tweens.Tests
@@ -3273,9 +3355,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1057
+      parentId: 1061
       parentUniqueId: 'com.trove.tweens.tests.dll/Trove/[Tweens][suite]'
-    - id: 1053
+    - id: 1057
       uniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/Tests/[com.trove.tweens.tests][Trove.Tweens.Tests.TweenTests][suite]'
       name: TweenTests
       fullName: Trove.Tweens.Tests.TweenTests
@@ -3289,7 +3371,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1058
+      parentId: 1062
       parentUniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/[com.trove.tweens.tests][Trove.Tweens.Tests][suite]'
     - id: 1059
       uniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/Tests/TweenTests/[com.trove.tweens.tests][Trove.Tweens.Tests.TweenTests.Test]'
@@ -3308,7 +3390,7 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1058
       parentUniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/Tests/[com.trove.tweens.tests][Trove.Tweens.Tests.TweenTests][suite]'
-    - id: 1066
+    - id: 1070
       uniqueId: '[com.trove.utilityai.tests.dll][suite]'
       name: com.trove.utilityai.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.utilityai.tests.dll
@@ -3324,7 +3406,7 @@ MonoBehaviour:
       categories: []
       parentId: 1000
       parentUniqueId: '[TroveTests][suite]'
-    - id: 1067
+    - id: 1071
       uniqueId: 'com.trove.utilityai.tests.dll/[Trove][suite]'
       name: Trove
       fullName: Trove
@@ -3338,9 +3420,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1066
+      parentId: 1070
       parentUniqueId: '[com.trove.utilityai.tests.dll][suite]'
-    - id: 1068
+    - id: 1072
       uniqueId: 'com.trove.utilityai.tests.dll/Trove/[UtilityAI][suite]'
       name: UtilityAI
       fullName: Trove.UtilityAI
@@ -3354,9 +3436,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1067
+      parentId: 1071
       parentUniqueId: 'com.trove.utilityai.tests.dll/[Trove][suite]'
-    - id: 1069
+    - id: 1073
       uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/[com.trove.utilityai.tests][Trove.UtilityAI.Tests][suite]'
       name: Tests
       fullName: Trove.UtilityAI.Tests
@@ -3370,9 +3452,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1068
+      parentId: 1072
       parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/[UtilityAI][suite]'
-    - id: 1059
+    - id: 1063
       uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
       name: ReasonerTests
       fullName: Trove.UtilityAI.Tests.ReasonerTests
@@ -3386,7 +3468,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1069
+      parentId: 1073
       parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/[com.trove.utilityai.tests][Trove.UtilityAI.Tests][suite]'
     - id: 1070
       uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.ActionSelectors]'
@@ -3490,13 +3572,21 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1064
       parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
-    m_ResultText: com.trove.eventsystems.tests.dll (2 tests) (0.000s)
-    m_ResultStacktrace: 
+    m_ResultText: "EntityEventTest1 (0.051s)\n---\n  Expected: 3\r\n  But was:  0\r\n\n---\nat
+      Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1 () [0x001bb]
+      in <color=#40a0ff><a href=\"C:\\Projects\\Trove\\com.trove.eventsystems\\Tests\\EntityPolymorphicEventTests.cs\"
+      line=\"69\r\">..\\..\\com.trove.eventsystems\\Tests\\EntityPolymorphicEventTests.cs:69\r</a></color>\n\n---\nwriting
+      event 1\r\nwriting event 1\r\nwriting event 1\r\nexecute entity event A 3\r\nexecute
+      entity event A 3"
+    m_ResultStacktrace: 'at Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1
+      () [0x001bb] in C:\Projects\Trove\com.trove.eventsystems\Tests\EntityPolymorphicEventTests.cs:69
+
+'
     m_TestListState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 7613cbd6
-      m_LastClickedID: -691334282
-      m_ExpandedIDs: 4cafbb80393fb88fec9aa3cf7613cbd68f1870dffc38c30c781a9322511b1645be3d137affffff7f
+      m_SelectedIDs: 558a7645
+      m_LastClickedID: 1165396565
+      m_ExpandedIDs: 4cafbb80393fb88f8407cdb8348fddc7ec9aa3cf7613cbd68f1870dffc38c30c781a9322511b1645be3d137affffff7f
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 

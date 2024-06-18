@@ -111,18 +111,19 @@ namespace Trove.EventSystems
             for (int i = 0; i < EventsStream.ForEachCount; i++)
             {
                 EventsStream.BeginForEachIndex(i);
-                while (EventsStream.RemainingItemCount > 1)
+                while (EventsStream.RemainingItemCount > 2)
                 {
                     // Read from stream
                     Entity affectedEntity = EventsStream.Read<Entity>();
                     int typeId = EventsStream.Read<int>();
                     int dataSize = PolymorphicTypeManager.GetSizeForTypeId(typeId);
-                    int totalWrittenDataSize = sizeof(int) + sizeof(Entity) + dataSize;
+                    int totalWrittenDataSize = sizeof(Entity) + sizeof(int) + dataSize;
                     byte* eventData = EventsStream.ReadUnsafePtr(dataSize);
 
                     if (EventBufferLookup.TryGetBuffer(affectedEntity, out DynamicBuffer<B> eventBuffer))
                     {
                         int writeIndex = eventBuffer.Length;
+                        byte* bufferPtr = (byte*)eventBuffer.GetUnsafePtr();
 
                         // Buffer resize
                         int newListSize = eventBuffer.Length + totalWrittenDataSize;
@@ -130,13 +131,11 @@ namespace Trove.EventSystems
                         {
                             eventBuffer.EnsureCapacity(newListSize * 2);
                         }
-
                         eventBuffer.ResizeUninitialized(newListSize);
 
                         // Write to buffer
-                        PolymorphicUtilities.WriteValue((byte*)eventBuffer.GetUnsafePtr(), ref writeIndex, typeId);
-                        PolymorphicUtilities.WriteValue((byte*)eventBuffer.GetUnsafePtr(), ref writeIndex, eventData,
-                            dataSize);
+                        PolymorphicUtilities.WriteValue(bufferPtr, ref writeIndex, typeId);
+                        PolymorphicUtilities.WriteValue(bufferPtr, ref writeIndex, eventData, dataSize);
 
                         // Mark as having events
                         HasEventsLookup.SetComponentEnabled(affectedEntity, true);
