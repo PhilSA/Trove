@@ -34,7 +34,7 @@ namespace Trove.EventSystems.Tests
         }
 
         [Test]
-        public void GlobalEventTest1()
+        public void GlobalPolymorphicEventTest1()
         {
             NativeHashMap<int, int> eventsCounter_MainThread = new NativeHashMap<int, int>(10, Allocator.Persistent);
             NativeHashMap<int, int> eventsCounter_SingleJob = new NativeHashMap<int, int>(10, Allocator.Persistent);

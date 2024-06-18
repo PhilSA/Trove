@@ -1,6 +1,7 @@
 
 
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -20,7 +21,7 @@ namespace Trove.EventSystems
             where T : unmanaged
         {
             byte* startPtr = byteArrayPtr + (long)byteIndex;
-            *(T*)(startPtr) = value;
+            UnsafeUtility.AsRef<T>(startPtr) = value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -28,8 +29,8 @@ namespace Trove.EventSystems
             where T : unmanaged
         {
             byte* startPtr = byteArrayPtr + (long)byteIndex;
-            *(T*)(startPtr) = value;
-            byteIndex += sizeof(T);
+            UnsafeUtility.AsRef<T>(startPtr) = value;
+            byteIndex += UnsafeUtility.SizeOf<T>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -52,7 +53,7 @@ namespace Trove.EventSystems
             where T : unmanaged
         {
             byte* startPtr = byteArrayPtr + (long)byteIndex;
-            value = *(T*)startPtr;
+            UnsafeUtility.CopyPtrToStructure(startPtr, out value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -60,8 +61,8 @@ namespace Trove.EventSystems
             where T : unmanaged
         {
             byte* startPtr = byteArrayPtr + (long)byteIndex;
-            value = *(T*)startPtr;
-            byteIndex += sizeof(T);
+            UnsafeUtility.CopyPtrToStructure(startPtr, out value);
+            byteIndex += UnsafeUtility.SizeOf<T>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -81,7 +82,7 @@ namespace Trove.EventSystems
         public static bool CanRead<T>(int byteArrayLength, int byteIndex)
             where T : unmanaged
         {
-            return byteArrayLength >= byteIndex + sizeof(T);
+            return byteArrayLength >= byteIndex + UnsafeUtility.SizeOf<T>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

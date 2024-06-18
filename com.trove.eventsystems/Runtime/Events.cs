@@ -47,18 +47,21 @@ namespace Trove.EventSystems
 
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
         {
-            BufferAccessor<B> eventsBufferAccessor = chunk.GetBufferAccessor(ref EventBufferType);
-            EnabledMask doesEntityHaveEvents = chunk.GetEnabledMask(ref HasEventType);
-            ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
-
-            while (entityEnumerator.NextEntityIndex(out int i))
+            if (chunkEnabledMask.ULong0 > 0 || chunkEnabledMask.ULong1 > 0)
             {
-                if (!doesEntityHaveEvents[i])
-                    continue;
+                BufferAccessor<B> eventsBufferAccessor = chunk.GetBufferAccessor(ref EventBufferType);
+                EnabledMask doesEntityHaveEvents = chunk.GetEnabledMask(ref HasEventType);
+                ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
 
-                DynamicBuffer<B> eventsBuffer = eventsBufferAccessor[i];
-                eventsBuffer.Clear();
-                doesEntityHaveEvents[i] = false;
+                while (entityEnumerator.NextEntityIndex(out int i))
+                {
+                    if (!doesEntityHaveEvents[i])
+                        continue;
+
+                    DynamicBuffer<B> eventsBuffer = eventsBufferAccessor[i];
+                    eventsBuffer.Clear();
+                    doesEntityHaveEvents[i] = false;
+                }
             }
         }
     }

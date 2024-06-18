@@ -34,7 +34,7 @@ namespace Trove.EventSystems.Tests
         }
 
         [Test]
-        public void EntityEventTest1()
+        public void EntityPolymorphicEventTest1()
         {
             // Create event receivers
             Entity receiverEntity1 = EventTestUtilities.CreateTestEntity(World.EntityManager);
@@ -64,28 +64,6 @@ namespace Trove.EventSystems.Tests
 
             Assert.IsTrue(World.EntityManager.IsComponentEnabled<HasTestEntityPolymorphicEvents>(receiverEntity1));
             Assert.IsTrue(World.EntityManager.IsComponentEnabled<HasTestEntityPolymorphicEvents>(receiverEntity2));
-
-            UnityEngine.Debug.Log($"Main" +
-                $"{eventReceiver1.MainThread_EventCounterVal1} " +
-                $"{eventReceiver1.MainThread_EventCounterVal2} " +
-                $"{eventReceiver1.MainThread_EventCounterVal3} " +
-                $"{eventReceiver1.MainThread_EventCounterVal4} " +
-                $"{eventReceiver1.MainThread_EventCounterVal5} " +
-                $"{eventReceiver1.MainThread_EventCounterVal6} " +
-                "Single" +
-                $"{eventReceiver1.SingleJob_EventCounterVal1} " +
-                $"{eventReceiver1.SingleJob_EventCounterVal2} " +
-                $"{eventReceiver1.SingleJob_EventCounterVal3} " +
-                $"{eventReceiver1.SingleJob_EventCounterVal4} " +
-                $"{eventReceiver1.SingleJob_EventCounterVal5} " +
-                $"{eventReceiver1.SingleJob_EventCounterVal6} " +
-                "Parallel" +
-                $"{eventReceiver1.ParallelJob_EventCounterVal1} " +
-                $"{eventReceiver1.ParallelJob_EventCounterVal2} " +
-                $"{eventReceiver1.ParallelJob_EventCounterVal3} " +
-                $"{eventReceiver1.ParallelJob_EventCounterVal4} " +
-                $"{eventReceiver1.ParallelJob_EventCounterVal5} " +
-                $"{eventReceiver1.ParallelJob_EventCounterVal6} ");
 
             {
                 Assert.AreEqual(EventsPerSystemOrThreadForR1, eventReceiver1.MainThread_EventCounterVal1);

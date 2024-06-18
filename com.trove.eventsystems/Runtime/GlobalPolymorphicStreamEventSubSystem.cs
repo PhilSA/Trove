@@ -103,21 +103,21 @@ namespace Trove.EventSystems
                 {
                     // Read from stream
                     int typeId = EventsStream.Read<int>();
-                    int dataSize = PolymorphicTypeManager.GetSizeForTypeId(typeId);
-                    int totalWrittenDataSize = sizeof(int) + dataSize;
-                    byte* eventData = EventsStream.ReadUnsafePtr(dataSize);
+                    int eventDataSize = PolymorphicTypeManager.GetSizeForTypeId(typeId);
+                    byte* eventData = EventsStream.ReadUnsafePtr(eventDataSize);
 
                     // List resize
-                    int newListSize = EventList.Length + totalWrittenDataSize;
+                    int newListSize = EventList.Length + UnsafeUtility.SizeOf<int>() + eventDataSize;
                     if (newListSize > EventList.Capacity)
                     {
                         EventList.SetCapacity(newListSize * 2);
+                        listPtr = EventList.GetUnsafePtr();
                     }
                     EventList.ResizeUninitialized(newListSize);
 
                     // Write to list
                     PolymorphicUtilities.WriteValue(listPtr, ref writeIndex, typeId);
-                    PolymorphicUtilities.WriteValue(listPtr, ref writeIndex, eventData, dataSize);
+                    PolymorphicUtilities.WriteValue(listPtr, ref writeIndex, eventData, eventDataSize);
                 }
                 EventsStream.EndForEachIndex();
             }

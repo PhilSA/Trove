@@ -1,5 +1,6 @@
 
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Trove.EventSystems;
 using Trove.EventSystems.Tests;
 using Unity.Burst;
@@ -24,6 +25,7 @@ namespace Trove.EventSystems.Tests
         public StreamEventsManager StreamEventsManager { get; set; }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
     /// <summary>
     /// This is an example polymorphic event type. You can create more of these containing different data.
     /// </summary>
@@ -35,6 +37,7 @@ namespace Trove.EventSystems.Tests
     /// <summary>
     /// This is an example polymorphic event type. You can create more of these containing different data.
     /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
     public struct TestEntityPolymorphicEventB
     {
         public int Val1;
@@ -125,8 +128,6 @@ namespace Trove.EventSystems.Tests
                 // First we read the event type Id
                 PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out int typeId);
 
-                UnityEngine.Debug.Log($"Trye read event of type {typeId}");
-
                 // Then, depending on type Id, we read the event data in different ways and execute the event
                 switch ((TypeId)typeId)
                 {
@@ -136,7 +137,6 @@ namespace Trove.EventSystems.Tests
                             if (PolymorphicUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<TestEntityPolymorphicEventA>()))
                             {
                                 PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out TestEntityPolymorphicEventA e);
-                                UnityEngine.Debug.Log($"read event of val {e.Val}");
                                 switch (e.Val)
                                 {
                                     case 1:
@@ -234,7 +234,6 @@ namespace Trove.EventSystems.Tests
                             if (PolymorphicUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<TestEntityPolymorphicEventB>()))
                             {
                                 PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out TestEntityPolymorphicEventB e);
-                                UnityEngine.Debug.Log($"read event of val {e.Val3}");
                                 switch (e.Val3)
                                 {
                                     case 1:

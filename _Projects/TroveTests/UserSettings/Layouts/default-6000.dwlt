@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 2048
     height: 1060.8
   m_ShowMode: 4
-  m_Title: Scene
+  m_Title: Console
   m_RootView: {fileID: 3}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -166,7 +166,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1055.2
+    width: 1037.6
     height: 1010.80005
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
@@ -190,7 +190,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1055.2
+    width: 1037.6
     height: 682.4
   m_MinSize: {x: 201, y: 221}
   m_MaxSize: {x: 4001, y: 4021}
@@ -219,7 +219,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 682.4
-    width: 1055.2
+    width: 1037.6
     height: 328.40002
   m_MinSize: {x: 101, y: 121}
   m_MaxSize: {x: 4001, y: 4021}
@@ -245,9 +245,9 @@ MonoBehaviour:
   - {fileID: 12}
   m_Position:
     serializedVersion: 2
-    x: 1055.2
+    x: 1037.6
     y: 0
-    width: 389.6001
+    width: 407.20007
     height: 1010.80005
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
@@ -271,7 +271,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 389.6001
+    width: 407.20007
     height: 463.2
   m_MinSize: {x: 202, y: 221}
   m_MaxSize: {x: 4002, y: 4021}
@@ -297,7 +297,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 463.2
-    width: 389.6001
+    width: 407.20007
     height: 547.60004
   m_MinSize: {x: 232, y: 271}
   m_MaxSize: {x: 10002, y: 10021}
@@ -1285,7 +1285,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 19
-    width: 1054.2
+    width: 1036.6
     height: 661.4
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1767,9 +1767,9 @@ MonoBehaviour:
     speed: 2
     m_Value: {x: -0.08530571, y: 0.9060357, z: -0.22000353, w: -0.35131267}
   m_Size:
-    m_Target: 10
+    m_Target: 9.55
     speed: 2
-    m_Value: 10
+    m_Value: 9.55
   m_Ortho:
     m_Target: 0
     speed: 2
@@ -1824,7 +1824,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 73.6
-    width: 1054.2
+    width: 1036.6
     height: 661.4
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1879,10 +1879,10 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 1054.2
+      width: 1036.6
       height: 640.4
-    m_Scale: {x: 0.6863281, y: 0.6863281}
-    m_Translation: {x: 527.1, y: 320.2}
+    m_Scale: {x: 0.6748698, y: 0.6748698}
+    m_Translation: {x: 518.3, y: 320.2}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
@@ -1890,12 +1890,12 @@ MonoBehaviour:
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
       x: -768
-      y: -466.5407
+      y: -474.4619
       width: 1536
-      height: 933.0814
+      height: 948.9238
     m_MinimalGUI: 1
-  m_defaultScale: 0.6863281
-  m_LastWindowPixelSize: {x: 1054.2, y: 661.4}
+  m_defaultScale: 0.6748698
+  m_LastWindowPixelSize: {x: 1036.6, y: 661.4}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000
@@ -1925,7 +1925,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 701.4
-    width: 1054.2
+    width: 1036.6
     height: 307.40002
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1962,7 +1962,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 1
     y: 19
-    width: 387.6001
+    width: 405.20007
     height: 442.2
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1980,7 +1980,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 16b1ffff4eb4fffffab6ffff32baffffccbeffff04c2ffffa6cbffffdeceffffccd6ffff04daffffc4dcfffffcdfffffb2f1ffff06f5ffffd8faffff
+      m_ExpandedIDs: 104bffff484effff3c56ffff7459ffff7c62ffffb465ffffee6affff266effff3a74ffff7277ffff0a7cffff427fffffa082ffffd885ffff9488ffffcc8bffff408effff7891ffff5c97ffff949affff8ea0ffffc6a3ffff6aa6ffffa2a9ffff1aacffff52afffff7eb4ffffb6b7ffff52baffff8abdffffd6c4ffff0ac8ffff2cc9ffff64ccffffd8d0ffff10d4ffffa8e1ffffe0e4ffff0ce9ffff3aecffff02edffff30f0fffff8f0ffff2cf4ffff02f5ffff56f8ffffd8faffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -2029,7 +2029,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 1
     y: 482.2
-    width: 387.6001
+    width: 405.20007
     height: 526.60004
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -2096,7 +2096,7 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 583.39996}
+    scrollPos: {x: 0, y: 480}
     m_SelectedIDs: 
     m_LastClickedID: 0
     m_ExpandedIDs: 000000005abd00005cbd00005ebd000060bd000062bd000064bd000066bd000068bd00006abd00006cbd00006ebd000070bd000072bd0000
@@ -2354,7 +2354,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1000
+      parentId: 1077
       parentUniqueId: '[TroveTests][suite]'
     - id: 1015
       uniqueId: 'com.trove.attributes.tests.dll/[Trove][suite]'
@@ -2644,7 +2644,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1000
+      parentId: 1077
       parentUniqueId: '[TroveTests][suite]'
     - id: 1029
       uniqueId: 'com.trove.common.tests.dll/[com.trove.common.tests][Trove][suite]'
@@ -2844,7 +2844,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1000
+      parentId: 1077
       parentUniqueId: '[TroveTests][suite]'
     - id: 1039
       uniqueId: 'com.trove.eventsystems.tests.dll/[Trove][suite]'
@@ -2915,7 +2915,7 @@ MonoBehaviour:
       name: EntityEventTest1
       fullName: Trove.EventSystems.Tests.EntityEventTests.EntityEventTest1
       resultStatus: 1
-      duration: 0.0277465
+      duration: 0.0341955
       messages: 
       output: 
       stacktrace: 
@@ -2948,22 +2948,14 @@ MonoBehaviour:
       name: EntityEventTest1
       fullName: Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1
       resultStatus: 2
-      duration: 0.0507169
+      duration: 0.0405967
       messages: "  Expected: 3\r\n  But was:  0\r\n"
-      output: 'writing event 1
-
-        writing event 1
-
-        writing event 1
-
-        execute
-        entity event A 3
-
-        execute entity event A 3
-
-'
+      output: "Trye read event of type 1\r\nread event of val 3\r\nTrye read event
+        of type -861711640\r\nTrye read event of type 1\r\nread event of val 3\r\nTrye
+        read event of type 1909017412\r\nMain0 0 1 0 0 0 Single0 0 1 0 0 0 Parallel0
+        0 1 0 0 0 \r\n"
       stacktrace: 'at Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1
-        () [0x001bb] in C:\Projects\Trove\com.trove.eventsystems\Tests\EntityPolymorphicEventTests.cs:69
+        () [0x003a0] in C:\Projects\Trove\com.trove.eventsystems\Tests\EntityPolymorphicEventTests.cs:91
 
 '
       notRunnable: 0
@@ -2995,7 +2987,7 @@ MonoBehaviour:
       name: GlobalEventTest1
       fullName: Trove.EventSystems.Tests.GlobalEventTests.GlobalEventTest1
       resultStatus: 1
-      duration: 0.0160101
+      duration: 0.0100217
       messages: 
       output: 
       stacktrace: 
@@ -3011,7 +3003,7 @@ MonoBehaviour:
       uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests][suite]'
       name: GlobalPolymorphicEventTests
       fullName: Trove.EventSystems.Tests.GlobalPolymorphicEventTests
-      resultStatus: 2
+      resultStatus: 1
       duration: 0
       messages: 
       output: 
@@ -3027,14 +3019,131 @@ MonoBehaviour:
       uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/GlobalPolymorphicEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalEventTest1]'
       name: GlobalEventTest1
       fullName: Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalEventTest1
-      resultStatus: 2
-      duration: 0.0074805
-      messages: "  Expected: 5\r\n  But was:  20\r\n"
-      output: 
-      stacktrace: 'at Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalEventTest1
-        () [0x0019a] in C:\Projects\Trove\com.trove.eventsystems\Tests\GlobalPolymorphicEventTests.cs:72
+      resultStatus: 1
+      duration: 0.0744092
+      messages: 
+      output: 'Executing event A val 1
+
+        Executing event B val 2
+
+        Executing
+        event A val 1
+
+        Executing event B val 2
+
+        Executing event A
+        val 1
+
+        Executing event B val 2
+
+        Executing event A val 1
+
+        Executing
+        event B val 2
+
+        Executing event A val 1
+
+        Executing event B
+        val 2
+
+        Executing event A val 3
+
+        Executing event B val 4
+
+        Executing
+        event A val 3
+
+        Executing event B val 4
+
+        Executing event A
+        val 3
+
+        Executing event B val 4
+
+        Executing event A val 3
+
+        Executing
+        event B val 4
+
+        Executing event A val 3
+
+        Executing event B
+        val 4
+
+        Executing event A val 5
+
+        Executing event B val 6
+
+        Executing
+        event A val 5
+
+        Executing event B val 6
+
+        Executing event A
+        val 5
+
+        Executing event B val 6
+
+        Executing event A val 5
+
+        Executing
+        event B val 6
+
+        Executing event A val 5
+
+        Executing event B
+        val 6
+
+        Executing event A val 5
+
+        Executing event B val 6
+
+        Executing
+        event A val 5
+
+        Executing event B val 6
+
+        Executing event A
+        val 5
+
+        Executing event B val 6
+
+        Executing event A val 5
+
+        Executing
+        event B val 6
+
+        Executing event A val 5
+
+        Executing event B
+        val 6
+
+        Executing event A val 5
+
+        Executing event B val 6
+
+        Executing
+        event A val 5
+
+        Executing event B val 6
+
+        Executing event A
+        val 5
+
+        Executing event B val 6
+
+        Executing event A val 5
+
+        Executing
+        event B val 6
+
+        Executing event A val 5
+
+        Executing event B
+        val 6
 
 '
+      stacktrace: 
       notRunnable: 0
       ignoredOrSkipped: 0
       description: 
@@ -3057,7 +3166,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1000
+      parentId: 1077
       parentUniqueId: '[TroveTests][suite]'
     - id: 1054
       uniqueId: 'com.trove.polymorphicstructs.tests.dll/[Trove][suite]'
@@ -3307,7 +3416,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1000
+      parentId: 1077
       parentUniqueId: '[TroveTests][suite]'
     - id: 1060
       uniqueId: 'com.trove.tweens.tests.dll/[Trove][suite]'
@@ -3404,7 +3513,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1000
+      parentId: 1077
       parentUniqueId: '[TroveTests][suite]'
     - id: 1071
       uniqueId: 'com.trove.utilityai.tests.dll/[Trove][suite]'
@@ -3572,14 +3681,15 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1064
       parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
-    m_ResultText: "EntityEventTest1 (0.051s)\n---\n  Expected: 3\r\n  But was:  0\r\n\n---\nat
-      Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1 () [0x001bb]
+    m_ResultText: "EntityEventTest1 (0.041s)\n---\n  Expected: 3\r\n  But was:  0\r\n\n---\nat
+      Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1 () [0x003a0]
       in <color=#40a0ff><a href=\"C:\\Projects\\Trove\\com.trove.eventsystems\\Tests\\EntityPolymorphicEventTests.cs\"
-      line=\"69\r\">..\\..\\com.trove.eventsystems\\Tests\\EntityPolymorphicEventTests.cs:69\r</a></color>\n\n---\nwriting
-      event 1\r\nwriting event 1\r\nwriting event 1\r\nexecute entity event A 3\r\nexecute
-      entity event A 3"
+      line=\"91\r\">..\\..\\com.trove.eventsystems\\Tests\\EntityPolymorphicEventTests.cs:91\r</a></color>\n\n---\nTrye
+      read event of type 1\r\nread event of val 3\r\nTrye read event of type -861711640\r\nTrye
+      read event of type 1\r\nread event of val 3\r\nTrye read event of type 1909017412\r\nMain0
+      0 1 0 0 0 Single0 0 1 0 0 0 Parallel0 0 1 0 0 0"
     m_ResultStacktrace: 'at Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1
-      () [0x001bb] in C:\Projects\Trove\com.trove.eventsystems\Tests\EntityPolymorphicEventTests.cs:69
+      () [0x003a0] in C:\Projects\Trove\com.trove.eventsystems\Tests\EntityPolymorphicEventTests.cs:91
 
 '
     m_TestListState:
