@@ -169,14 +169,14 @@ namespace PolymorphicElementsSourceGenerators
                 FileWriter writer = new FileWriter();
                 writer.WriteInNamespace(NamespaceName_Generated, () =>
                 {
-                    writer.WriteLine($"internal class {TypeName_PolymorphicTypeManagerAttribute}<T>: System.Attribute where T : unmanaged {{}}");
+                    writer.WriteLine($"internal class {TypeName_PolymorphicTypeManagerAttribute} : System.Attribute {{}}");
                 });
                 i.AddSource(FileName_PolymorphicTypeManagerAttribute, writer.FileContents);
 
                 writer = new FileWriter();
                 writer.WriteInNamespace(NamespaceName_Generated, () =>
                 {
-                    writer.WriteLine($"internal class {TypeName_PolymorphicTypeManagerAttribute}<T>: System.Attribute where T : unmanaged {{}}");
+                    writer.WriteLine($"internal class {TypeName_PolymorphicUnionStructAttribute} : System.Attribute {{}}");
                 });
                 i.AddSource(FileName_PolymorphiUnionStructAttribute, writer.FileContents);
 

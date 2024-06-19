@@ -9,6 +9,7 @@ using Unity.Entities;
 public interface TestPolyInterface
 {
     public void DoSomething(int a);
+    public void DoSomethingA(int a);
 }
 
 
