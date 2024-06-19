@@ -2,7 +2,8 @@
   "displayName": "Trove Object Handles",
   "description": "Tool for storing unmanaged handles to objects, used for fast lookups",
   "dependencies": {
-    "com.unity.entities": "1.2.3"
+    "com.unity.entities": "1.2.3",
+    "com.unity.mathematics": "1.3.2"
   },
   "name": "com.trove.objecthandles",
   "author": {

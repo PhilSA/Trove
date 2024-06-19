@@ -6,6 +6,7 @@
     "com.trove.polymorphicstructs": "file:../../../com.trove.polymorphicstructs",
     "com.trove.tweens": "file:../../../com.trove.tweens",
     "com.trove.utilityai": "file:../../../com.trove.utilityai",
+    "com.trove.objecthandles": "file:../../../com.trove.objecthandles",
     "com.unity.collab-proxy": "2.3.1",
     "com.unity.entities.graphics": "1.2.3",
     "com.unity.ide.rider": "3.0.28",
