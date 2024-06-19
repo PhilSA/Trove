@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
-namespace PolymorphicElementsSourceGenerators
+namespace PolymorphicStructsSourceGenerators
 {
     public class CompiledPolyStructsAndInterfaceData
     {
@@ -80,7 +80,7 @@ namespace PolymorphicElementsSourceGenerators
 
 
     [Generator]
-    public class PolymorphicStructGenerator : IIncrementalGenerator
+    public class PolymorphicStructsGenerator : IIncrementalGenerator
     {
         public const string NamespaceName_Package = "Trove.PolymorphicStructs";
         public const string NamespaceName_Generated = NamespaceName_Package + ".Generated";
@@ -212,7 +212,7 @@ namespace PolymorphicElementsSourceGenerators
         {
             // TODO: should this be there
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             return CommonInterfaceValuesProviderTransform(generatorAttributeSyntaxContext, cancellationToken, true);
         }
 
@@ -248,7 +248,7 @@ namespace PolymorphicElementsSourceGenerators
             };
         }
         private static PolyInterfaceModel CommonInterfaceValuesProviderTransform(
-            GeneratorAttributeSyntaxContext generatorAttributeSyntaxContext, 
+            GeneratorAttributeSyntaxContext generatorAttributeSyntaxContext,
             System.Threading.CancellationToken cancellationToken,
             bool requireTargetStructHasNoFields)
         {
@@ -263,7 +263,7 @@ namespace PolymorphicElementsSourceGenerators
             StructModel targetStructModel = new StructModel();
             {
                 // Error if the attribute appears multiple times
-                if(generatorAttributeSyntaxContext.Attributes.Length > 1)
+                if (generatorAttributeSyntaxContext.Attributes.Length > 1)
                 {
                     errors.Add($"{Name_ErrorIntro} Cannot have polymorphic struct/interface attributes multiple times on the same type.");
                 }
@@ -402,7 +402,7 @@ namespace PolymorphicElementsSourceGenerators
                         int parametersCounter = 0;
                         foreach (IParameterSymbol parameterSymbol in methodSymbol.Parameters)
                         {
-                            if(parametersCounter > 0)
+                            if (parametersCounter > 0)
                             {
                                 methodModel.MethodParametersDefinition += $", ";
                                 methodModel.MethodParametersInvoke += $", ";
@@ -630,7 +630,7 @@ namespace PolymorphicElementsSourceGenerators
                                 writer.WriteLine($"{Name_ByteIndex} += {ByteSizeOfTypeId};");
 
                                 writer.WriteLine($"");
-                                
+
                                 // Switch over typeId
                                 writer.WriteLine($"switch (({Name_Enum_TypeId})typeId)");
                                 writer.WriteInScope(() =>

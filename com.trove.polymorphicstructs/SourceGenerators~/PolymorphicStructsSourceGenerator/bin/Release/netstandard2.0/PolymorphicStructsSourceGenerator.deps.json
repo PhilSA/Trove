@@ -7,13 +7,13 @@
   "targets": {
     ".NETStandard,Version=v2.0": {},
     ".NETStandard,Version=v2.0/": {
-      "PolymorphicElementsSourceGenerator/1.0.0": {
+      "PolymorphicStructsSourceGenerator/1.0.0": {
         "dependencies": {
           "Microsoft.CodeAnalysis.CSharp": "4.3.1",
           "NETStandard.Library": "2.0.3"
         },
         "runtime": {
-          "PolymorphicElementsSourceGenerator.dll": {}
+          "PolymorphicStructsSourceGenerator.dll": {}
         }
       },
       "Microsoft.CodeAnalysis.Analyzers/3.3.3": {},
@@ -219,7 +219,7 @@
     }
   },
   "libraries": {
-    "PolymorphicElementsSourceGenerator/1.0.0": {
+    "PolymorphicStructsSourceGenerator/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PolymorphicElementsSourceGenerators
+namespace PolymorphicStructsSourceGenerators
 {
     public class FileWriter
     {
