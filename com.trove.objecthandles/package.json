@@ -1,0 +1,14 @@
+{
+  "displayName": "Trove Object Handles",
+  "description": "Tool for storing unmanaged handles to objects, used for fast lookups",
+  "dependencies": {
+    "com.unity.entities": "1.2.3"
+  },
+  "name": "com.trove.objecthandles",
+  "author": {
+    "name": "Philippe St-Amand"
+  },
+  "unity": "6000.1",
+  "unityRelease": "0f1",
+  "version": "0.3.0"
+}

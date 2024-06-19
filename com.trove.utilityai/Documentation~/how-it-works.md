@@ -1,5 +1,5 @@
 
-[Home](./index.md)
+[Home](../README.md)
 
 # How it works
 

@@ -1,10 +1,10 @@
 {
-    "name": "com.trove.polymorphicstructs",
+    "name": "com.trove.objecthandles",
     "rootNamespace": "",
     "references": [
-        "GUID:d8b63aba1907145bea998dd612889d6b",
-        "GUID:e0cd26848372d4e5c891c569017e11f1",
-        "GUID:734d92eba21c94caba915361bd5ac177"
+        "Unity.Entities",
+        "Unity.Collections",
+        "Unity.Burst"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

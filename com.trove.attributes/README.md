@@ -13,7 +13,7 @@ As an example, a game could define `Intelligence` and `MagicDefense` attributes 
 
 ## Table Of Contents
 
-* [Example usage scenario](./examplescenario.md)
-* [Usability and performance](./usability-performance.md)
-* [How it works](./how-it-works.md)
-* [Advanced topics](./advanced.md)
+* [Example usage scenario](./Documentation~/examplescenario.md)
+* [Usability and performance](./Documentation~/usability-performance.md)
+* [How it works](./Documentation~/how-it-works.md)
+* [Advanced topics](./Documentation~/advanced.md)

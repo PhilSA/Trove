@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 2048
     height: 1060.8
   m_ShowMode: 4
-  m_Title: Console
+  m_Title: Hierarchy
   m_RootView: {fileID: 3}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -47,7 +47,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 1
-  controlID: 16
+  controlID: 25
   draggingID: 0
 --- !u!114 &3
 MonoBehaviour:
@@ -145,7 +145,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 17
+  controlID: 26
   draggingID: 0
 --- !u!114 &7
 MonoBehaviour:
@@ -171,7 +171,7 @@ MonoBehaviour:
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 18
+  controlID: 27
   draggingID: 0
 --- !u!114 &8
 MonoBehaviour:
@@ -316,7 +316,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 1
   m_Script: {fileID: 12006, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: TestRunnerWindow
+  m_Name: InspectorWindow
   m_EditorClassIdentifier: 
   m_Children: []
   m_Position:
@@ -325,14 +325,14 @@ MonoBehaviour:
     y: 0
     width: 603.19995
     height: 1010.80005
-  m_MinSize: {x: 101, y: 121}
+  m_MinSize: {x: 276, y: 71}
   m_MaxSize: {x: 4001, y: 4021}
-  m_ActualView: {fileID: 22}
+  m_ActualView: {fileID: 21}
   m_Panes:
   - {fileID: 21}
   - {fileID: 22}
-  m_Selected: 1
-  m_LastSelected: 0
+  m_Selected: 0
+  m_LastSelected: 1
 --- !u!114 &14
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -1980,7 +1980,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 104bffff484effff3c56ffff7459ffff7c62ffffb465ffffee6affff266effff3a74ffff7277ffff0a7cffff427fffffa082ffffd885ffff9488ffffcc8bffff408effff7891ffff5c97ffff949affff8ea0ffffc6a3ffff6aa6ffffa2a9ffff1aacffff52afffff7eb4ffffb6b7ffff52baffff8abdffffd6c4ffff0ac8ffff2cc9ffff64ccffffd8d0ffff10d4ffffa8e1ffffe0e4ffff0ce9ffff3aecffff02edffff30f0fffff8f0ffff2cf4ffff02f5ffff56f8ffffd8faffff
+      m_ExpandedIDs: 92dfffffcae2ffffbee6fffff6e9ffff4eecffff86efffff78f3ffffccf6ffffd8faffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -2070,7 +2070,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 3af30000
     m_LastClickedID: 62266
-    m_ExpandedIDs: 000000005abd00005cbd00005ebd000060bd000062bd000064bd000066bd000068bd00006abd00006cbd00006ebd000070bd000072bd0000
+    m_ExpandedIDs: 0000000068bd00006abd00006cbd00006ebd000070bd000072bd000074bd000076bd000078bd00007abd00007cbd00007ebd000080bd000082bd0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -2096,10 +2096,10 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 480}
+    scrollPos: {x: 0, y: 239.39996}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 000000005abd00005cbd00005ebd000060bd000062bd000064bd000066bd000068bd00006abd00006cbd00006ebd000070bd000072bd0000
+    m_ExpandedIDs: 0000000068bd00006abd00006cbd00006ebd000070bd000072bd000074bd000076bd000078bd00007abd00007cbd00007ebd000080bd000082bd0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -2179,8 +2179,8 @@ MonoBehaviour:
     m_TextWithWhitespace: "Inspector\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 1444.8
-    y: 73.6
+    x: 1445.8
+    y: 19
     width: 602.19995
     height: 989.80005
   m_SerializedDataModeController:
@@ -2229,8 +2229,8 @@ MonoBehaviour:
     m_TextWithWhitespace: "Test Runner\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 1445.8
-    y: 19
+    x: 1444.8
+    y: 73.6
     width: 602.19995
     height: 989.80005
   m_SerializedDataModeController:
@@ -2328,7 +2328,7 @@ MonoBehaviour:
       uniqueId: '[TroveTests][suite]'
       name: TroveTests
       fullName: TroveTests
-      resultStatus: 2
+      resultStatus: 1
       duration: 0
       messages: 
       output: 
@@ -2425,7 +2425,7 @@ MonoBehaviour:
       name: AttributeChanger
       fullName: Trove.Attributes.Tests.AttributeTests.AttributeChanger
       resultStatus: 1
-      duration: 0.0292317
+      duration: 0.0249643
       messages: 
       output: 
       stacktrace: 
@@ -2442,7 +2442,7 @@ MonoBehaviour:
       name: ComplexTree
       fullName: Trove.Attributes.Tests.AttributeTests.ComplexTree
       resultStatus: 1
-      duration: 0.0014793
+      duration: 0.0020668
       messages: 
       output: 
       stacktrace: 
@@ -2459,7 +2459,7 @@ MonoBehaviour:
       name: DestroyObservedAttribute
       fullName: Trove.Attributes.Tests.AttributeTests.DestroyObservedAttribute
       resultStatus: 1
-      duration: 0.0063567
+      duration: 0.0093752
       messages: 
       output: 
       stacktrace: 
@@ -2476,7 +2476,7 @@ MonoBehaviour:
       name: ECBCommands_Modifiers
       fullName: Trove.Attributes.Tests.AttributeTests.ECBCommands_Modifiers
       resultStatus: 1
-      duration: 0.0062998
+      duration: 0.0066928
       messages: 
       output: 
       stacktrace: 
@@ -2493,7 +2493,7 @@ MonoBehaviour:
       name: ECBCommands_Values
       fullName: Trove.Attributes.Tests.AttributeTests.ECBCommands_Values
       resultStatus: 1
-      duration: 0.0014262
+      duration: 0.0016622
       messages: 
       output: 
       stacktrace: 
@@ -2510,7 +2510,7 @@ MonoBehaviour:
       name: InfiniteObserversLoopPrevention
       fullName: Trove.Attributes.Tests.AttributeTests.InfiniteObserversLoopPrevention
       resultStatus: 1
-      duration: 0.0025293
+      duration: 0.002735
       messages: 
       output: 'WARNING: detected an infinite attribute observers loop and prevented
         adding the modifier that would''ve caused it
@@ -2530,7 +2530,7 @@ MonoBehaviour:
       name: ModifiersFiltering
       fullName: Trove.Attributes.Tests.AttributeTests.ModifiersFiltering
       resultStatus: 1
-      duration: 0.0005274
+      duration: 0.0006716
       messages: 
       output: 
       stacktrace: 
@@ -2547,7 +2547,7 @@ MonoBehaviour:
       name: ObserversFiltering
       fullName: Trove.Attributes.Tests.AttributeTests.ObserversFiltering
       resultStatus: 1
-      duration: 0.0013551
+      duration: 0.0015041
       messages: 
       output: 
       stacktrace: 
@@ -2564,7 +2564,7 @@ MonoBehaviour:
       name: SelfAttributeObserver
       fullName: Trove.Attributes.Tests.AttributeTests.SelfAttributeObserver
       resultStatus: 1
-      duration: 0.0007974
+      duration: 0.0008516
       messages: 
       output: 'WARNING: detected an infinite attribute observers loop and prevented
         adding the modifier that would''ve caused it
@@ -2584,7 +2584,7 @@ MonoBehaviour:
       name: SelfEntityObserver
       fullName: Trove.Attributes.Tests.AttributeTests.SelfEntityObserver
       resultStatus: 1
-      duration: 0.0004211
+      duration: 0.0004849
       messages: 
       output: 
       stacktrace: 
@@ -2601,7 +2601,7 @@ MonoBehaviour:
       name: SelfRemoveModifierAndObserver
       fullName: Trove.Attributes.Tests.AttributeTests.SelfRemoveModifierAndObserver
       resultStatus: 1
-      duration: 0.0014096
+      duration: 0.0014768
       messages: 
       output: 
       stacktrace: 
@@ -2618,7 +2618,7 @@ MonoBehaviour:
       name: ValidateLoopDetectionTakesObservedTypeIntoAccount
       fullName: Trove.Attributes.Tests.AttributeTests.ValidateLoopDetectionTakesObservedTypeIntoAccount
       resultStatus: 1
-      duration: 0.0006457
+      duration: 0.0007192
       messages: 
       output: 
       stacktrace: 
@@ -2683,7 +2683,7 @@ MonoBehaviour:
       name: Test
       fullName: Trove.BitUtilitiesTests.Test
       resultStatus: 1
-      duration: 0.0010737
+      duration: 0.0011073
       messages: 
       output: 
       stacktrace: 
@@ -2716,7 +2716,7 @@ MonoBehaviour:
       name: Bypass
       fullName: Trove.ParametricCurveTests.Bypass
       resultStatus: 1
-      duration: 0.0006494
+      duration: 0.0007027
       messages: 
       output: 
       stacktrace: 
@@ -2733,7 +2733,7 @@ MonoBehaviour:
       name: Exponential
       fullName: Trove.ParametricCurveTests.Exponential
       resultStatus: 1
-      duration: 0.0003148
+      duration: 0.0003336
       messages: 
       output: 
       stacktrace: 
@@ -2750,7 +2750,7 @@ MonoBehaviour:
       name: Linear
       fullName: Trove.ParametricCurveTests.Linear
       resultStatus: 1
-      duration: 0.0002167
+      duration: 0.0002128
       messages: 
       output: 
       stacktrace: 
@@ -2767,7 +2767,7 @@ MonoBehaviour:
       name: Logistic
       fullName: Trove.ParametricCurveTests.Logistic
       resultStatus: 1
-      duration: 0.000279
+      duration: 0.0002625
       messages: 
       output: 
       stacktrace: 
@@ -2784,7 +2784,7 @@ MonoBehaviour:
       name: Logit
       fullName: Trove.ParametricCurveTests.Logit
       resultStatus: 1
-      duration: 0.000197
+      duration: 0.0002019
       messages: 
       output: 
       stacktrace: 
@@ -2801,7 +2801,7 @@ MonoBehaviour:
       name: Sine
       fullName: Trove.ParametricCurveTests.Sine
       resultStatus: 1
-      duration: 0.0002524
+      duration: 0.0002724
       messages: 
       output: 
       stacktrace: 
@@ -2818,7 +2818,7 @@ MonoBehaviour:
       name: Step
       fullName: Trove.ParametricCurveTests.Step
       resultStatus: 1
-      duration: 0.0002164
+      duration: 0.0002743
       messages: 
       output: 
       stacktrace: 
@@ -2834,7 +2834,7 @@ MonoBehaviour:
       uniqueId: '[com.trove.eventsystems.tests.dll][suite]'
       name: com.trove.eventsystems.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.eventsystems.tests.dll
-      resultStatus: 2
+      resultStatus: 1
       duration: 0
       messages: 
       output: 
@@ -2850,7 +2850,7 @@ MonoBehaviour:
       uniqueId: 'com.trove.eventsystems.tests.dll/[Trove][suite]'
       name: Trove
       fullName: Trove
-      resultStatus: 2
+      resultStatus: 1
       duration: 0
       messages: 
       output: 
@@ -2866,7 +2866,7 @@ MonoBehaviour:
       uniqueId: 'com.trove.eventsystems.tests.dll/Trove/[EventSystems][suite]'
       name: EventSystems
       fullName: Trove.EventSystems
-      resultStatus: 2
+      resultStatus: 1
       duration: 0
       messages: 
       output: 
@@ -2882,7 +2882,7 @@ MonoBehaviour:
       uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
       name: Tests
       fullName: Trove.EventSystems.Tests
-      resultStatus: 2
+      resultStatus: 1
       duration: 0
       messages: 
       output: 
@@ -2915,7 +2915,7 @@ MonoBehaviour:
       name: EntityEventTest1
       fullName: Trove.EventSystems.Tests.EntityEventTests.EntityEventTest1
       resultStatus: 1
-      duration: 0.0341955
+      duration: 0.0168219
       messages: 
       output: 
       stacktrace: 
@@ -2931,7 +2931,7 @@ MonoBehaviour:
       uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityPolymorphicEventTests][suite]'
       name: EntityPolymorphicEventTests
       fullName: Trove.EventSystems.Tests.EntityPolymorphicEventTests
-      resultStatus: 2
+      resultStatus: 1
       duration: 0
       messages: 
       output: 
@@ -2944,20 +2944,14 @@ MonoBehaviour:
       parentId: 1041
       parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
     - id: 1033
-      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/EntityPolymorphicEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1]'
-      name: EntityEventTest1
-      fullName: Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1
-      resultStatus: 2
-      duration: 0.0405967
-      messages: "  Expected: 3\r\n  But was:  0\r\n"
-      output: "Trye read event of type 1\r\nread event of val 3\r\nTrye read event
-        of type -861711640\r\nTrye read event of type 1\r\nread event of val 3\r\nTrye
-        read event of type 1909017412\r\nMain0 0 1 0 0 0 Single0 0 1 0 0 0 Parallel0
-        0 1 0 0 0 \r\n"
-      stacktrace: 'at Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1
-        () [0x003a0] in C:\Projects\Trove\com.trove.eventsystems\Tests\EntityPolymorphicEventTests.cs:91
-
-'
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/EntityPolymorphicEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityPolymorphicEventTest1]'
+      name: EntityPolymorphicEventTest1
+      fullName: Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityPolymorphicEventTest1
+      resultStatus: 1
+      duration: 0.0046097
+      messages: 
+      output: 
+      stacktrace: 
       notRunnable: 0
       ignoredOrSkipped: 0
       description: 
@@ -2987,7 +2981,7 @@ MonoBehaviour:
       name: GlobalEventTest1
       fullName: Trove.EventSystems.Tests.GlobalEventTests.GlobalEventTest1
       resultStatus: 1
-      duration: 0.0100217
+      duration: 0.0075388
       messages: 
       output: 
       stacktrace: 
@@ -3016,133 +3010,13 @@ MonoBehaviour:
       parentId: 1041
       parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
     - id: 1037
-      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/GlobalPolymorphicEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalEventTest1]'
-      name: GlobalEventTest1
-      fullName: Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalEventTest1
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/GlobalPolymorphicEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalPolymorphicEventTest1]'
+      name: GlobalPolymorphicEventTest1
+      fullName: Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalPolymorphicEventTest1
       resultStatus: 1
-      duration: 0.0744092
+      duration: 0.0062628
       messages: 
-      output: 'Executing event A val 1
-
-        Executing event B val 2
-
-        Executing
-        event A val 1
-
-        Executing event B val 2
-
-        Executing event A
-        val 1
-
-        Executing event B val 2
-
-        Executing event A val 1
-
-        Executing
-        event B val 2
-
-        Executing event A val 1
-
-        Executing event B
-        val 2
-
-        Executing event A val 3
-
-        Executing event B val 4
-
-        Executing
-        event A val 3
-
-        Executing event B val 4
-
-        Executing event A
-        val 3
-
-        Executing event B val 4
-
-        Executing event A val 3
-
-        Executing
-        event B val 4
-
-        Executing event A val 3
-
-        Executing event B
-        val 4
-
-        Executing event A val 5
-
-        Executing event B val 6
-
-        Executing
-        event A val 5
-
-        Executing event B val 6
-
-        Executing event A
-        val 5
-
-        Executing event B val 6
-
-        Executing event A val 5
-
-        Executing
-        event B val 6
-
-        Executing event A val 5
-
-        Executing event B
-        val 6
-
-        Executing event A val 5
-
-        Executing event B val 6
-
-        Executing
-        event A val 5
-
-        Executing event B val 6
-
-        Executing event A
-        val 5
-
-        Executing event B val 6
-
-        Executing event A val 5
-
-        Executing
-        event B val 6
-
-        Executing event A val 5
-
-        Executing event B
-        val 6
-
-        Executing event A val 5
-
-        Executing event B val 6
-
-        Executing
-        event A val 5
-
-        Executing event B val 6
-
-        Executing event A
-        val 5
-
-        Executing event B val 6
-
-        Executing event A val 5
-
-        Executing
-        event B val 6
-
-        Executing event A val 5
-
-        Executing event B
-        val 6
-
-'
+      output: 
       stacktrace: 
       notRunnable: 0
       ignoredOrSkipped: 0
@@ -3237,7 +3111,7 @@ MonoBehaviour:
       name: AddToGeneric
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.AddToGeneric
       resultStatus: 1
-      duration: 0.00127
+      duration: 0.0011503
       messages: 
       output: 
       stacktrace: 
@@ -3254,7 +3128,7 @@ MonoBehaviour:
       name: CastingAndVariables
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.CastingAndVariables
       resultStatus: 1
-      duration: 0.0008782
+      duration: 0.0008579
       messages: 
       output: 
       stacktrace: 
@@ -3271,7 +3145,7 @@ MonoBehaviour:
       name: ChangeByRef
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ChangeByRef
       resultStatus: 1
-      duration: 0.0003333
+      duration: 0.0003426
       messages: 
       output: 
       stacktrace: 
@@ -3288,7 +3162,7 @@ MonoBehaviour:
       name: EmptyPolymorphicStructs
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.EmptyPolymorphicStructs
       resultStatus: 1
-      duration: 0.0000895
+      duration: 0.0001096
       messages: 
       output: 
       stacktrace: 
@@ -3305,7 +3179,7 @@ MonoBehaviour:
       name: GetResult
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.GetResult
       resultStatus: 1
-      duration: 0.0003807
+      duration: 0.0002938
       messages: 
       output: 
       stacktrace: 
@@ -3322,7 +3196,7 @@ MonoBehaviour:
       name: GetResultFromInData
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.GetResultFromInData
       resultStatus: 1
-      duration: 0.0003067
+      duration: 0.0002927
       messages: 
       output: 
       stacktrace: 
@@ -3339,7 +3213,7 @@ MonoBehaviour:
       name: ModifySelf
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ModifySelf
       resultStatus: 1
-      duration: 0.0003383
+      duration: 0.0003382
       messages: 
       output: 
       stacktrace: 
@@ -3356,7 +3230,7 @@ MonoBehaviour:
       name: Properties
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.Properties
       resultStatus: 1
-      duration: 0.0004531
+      duration: 0.0005384
       messages: 
       output: 
       stacktrace: 
@@ -3373,7 +3247,7 @@ MonoBehaviour:
       name: ReturnOutParam
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ReturnOutParam
       resultStatus: 1
-      duration: 0.00042
+      duration: 0.0004622
       messages: 
       output: 
       stacktrace: 
@@ -3390,7 +3264,7 @@ MonoBehaviour:
       name: ReturnUniqueOperationResult
       fullName: Trove.PolymorphicStructs.Tests.PolymorphicStructsTests.ReturnUniqueOperationResult
       resultStatus: 1
-      duration: 0.000281
+      duration: 0.000289
       messages: 
       output: 
       stacktrace: 
@@ -3487,7 +3361,7 @@ MonoBehaviour:
       name: Test
       fullName: Trove.Tweens.Tests.TweenTests.Test
       resultStatus: 1
-      duration: 0.000852
+      duration: 0.0009102
       messages: 
       output: 
       stacktrace: 
@@ -3584,7 +3458,7 @@ MonoBehaviour:
       name: ActionSelectors
       fullName: Trove.UtilityAI.Tests.ReasonerTests.ActionSelectors
       resultStatus: 1
-      duration: 0.0179754
+      duration: 0.0171505
       messages: 
       output: 
       stacktrace: 
@@ -3601,7 +3475,7 @@ MonoBehaviour:
       name: ActionVersions
       fullName: Trove.UtilityAI.Tests.ReasonerTests.ActionVersions
       resultStatus: 1
-      duration: 0.0007853
+      duration: 0.0008641
       messages: 
       output: 
       stacktrace: 
@@ -3618,7 +3492,7 @@ MonoBehaviour:
       name: ActionWithoutConsiderations
       fullName: Trove.UtilityAI.Tests.ReasonerTests.ActionWithoutConsiderations
       resultStatus: 1
-      duration: 0.0005265
+      duration: 0.0006012
       messages: 
       output: 
       stacktrace: 
@@ -3635,7 +3509,7 @@ MonoBehaviour:
       name: ConsiderationVersions
       fullName: Trove.UtilityAI.Tests.ReasonerTests.ConsiderationVersions
       resultStatus: 1
-      duration: 0.0007441
+      duration: 0.0008012
       messages: 
       output: 
       stacktrace: 
@@ -3652,7 +3526,7 @@ MonoBehaviour:
       name: FullWorkflow
       fullName: Trove.UtilityAI.Tests.ReasonerTests.FullWorkflow
       resultStatus: 1
-      duration: 0.0031624
+      duration: 0.0033995
       messages: 
       output: 
       stacktrace: 
@@ -3669,7 +3543,7 @@ MonoBehaviour:
       name: ScoreCompensation
       fullName: Trove.UtilityAI.Tests.ReasonerTests.ScoreCompensation
       resultStatus: 1
-      duration: 0.0006815
+      duration: 0.0007748
       messages: 
       output: 
       stacktrace: 
@@ -3681,22 +3555,13 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1064
       parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
-    m_ResultText: "EntityEventTest1 (0.041s)\n---\n  Expected: 3\r\n  But was:  0\r\n\n---\nat
-      Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1 () [0x003a0]
-      in <color=#40a0ff><a href=\"C:\\Projects\\Trove\\com.trove.eventsystems\\Tests\\EntityPolymorphicEventTests.cs\"
-      line=\"91\r\">..\\..\\com.trove.eventsystems\\Tests\\EntityPolymorphicEventTests.cs:91\r</a></color>\n\n---\nTrye
-      read event of type 1\r\nread event of val 3\r\nTrye read event of type -861711640\r\nTrye
-      read event of type 1\r\nread event of val 3\r\nTrye read event of type 1909017412\r\nMain0
-      0 1 0 0 0 Single0 0 1 0 0 0 Parallel0 0 1 0 0 0"
-    m_ResultStacktrace: 'at Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityEventTest1
-      () [0x003a0] in C:\Projects\Trove\com.trove.eventsystems\Tests\EntityPolymorphicEventTests.cs:91
-
-'
+    m_ResultText: TroveTests (41 tests) (0.000s)
+    m_ResultStacktrace: 
     m_TestListState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 558a7645
-      m_LastClickedID: 1165396565
-      m_ExpandedIDs: 4cafbb80393fb88f8407cdb8348fddc7ec9aa3cf7613cbd68f1870dffc38c30c781a9322511b1645be3d137affffff7f
+      m_SelectedIDs: 511b1645
+      m_LastClickedID: 1159076689
+      m_ExpandedIDs: 4cafbb80393fb88f8407cdb8348fddc7ec9aa3cf8f1870dffc38c30c781a9322511b1645be3d137affffff7f
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 

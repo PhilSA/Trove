@@ -1,6 +1,6 @@
 
 
-[Home](./index.md)
+[Home](../README.md)
 
 # Example usage scenario
 

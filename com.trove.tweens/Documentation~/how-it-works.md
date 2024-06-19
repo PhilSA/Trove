@@ -1,5 +1,5 @@
 
-[Home](./index.md)
+[Home](../README.md)
 
 Note: some example code and scenes are available in the Trove test project:
 * [Scenes](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Tests/Scenes/Tweens)
