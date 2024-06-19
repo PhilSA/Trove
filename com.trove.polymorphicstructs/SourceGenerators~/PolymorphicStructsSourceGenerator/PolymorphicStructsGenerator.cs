@@ -6,9 +6,6 @@ using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using System.Xml.Linq;
-using System.Threading;
-using System.Diagnostics;
 
 namespace PolymorphicStructsSourceGenerators
 {
@@ -184,16 +181,16 @@ namespace PolymorphicStructsSourceGenerators
         public const string TypeName_PolymorphicTypeManagerAttribute = "PolymorphicTypeManagerInterfaceAttribute";
         public const string TypeName_PolymorphicUnionStructAttribute = "PolymorphicUnionStructInterfaceAttribute";
         public const string TypeName_PolymorphicStructAttribute = "PolymorphicStructAttribute";
-        public const string TypeName_UnsafeUtility = "Unity.Collections.LowLevel.Unsafe.UnsafeUtility";
-        public const string TypeName_PolymorphicUtility = "Trove.PolymorphicStructs.PolymorphicUtility";
-        public const string TypeName_NativeStream_Writer = "Unity.Collections.NativeStream.Writer";
-        public const string TypeName_UnsafeStream_Writer = "Unity.Collections.LowLevel.Unsafe.UnsafeStream.Writer";
-        public const string TypeName_NativeStream_Reader = "Unity.Collections.NativeStream.Reader";
-        public const string TypeName_UnsafeStream_Reader = "Unity.Collections.LowLevel.Unsafe.UnsafeStream.Reader";
-        public const string TypeName_NativeList_Byte = "Unity.Collections.NativeList<byte>";
-        public const string TypeName_UnsafeList_Byte = "Unity.Collections.LowLevel.Unsafe.UnsafeList<byte>";
-        public const string TypeName_DynamicBuffer_Byte = "Unity.Entities.DynamicBuffer<byte>";
-        public const string TypeName_FieldOffset = "System.Runtime.InteropServices.FieldOffset";
+        public const string TypeName_UnsafeUtility = "UnsafeUtility";
+        public const string TypeName_PolymorphicUtilities = "PolymorphicUtilities";
+        public const string TypeName_NativeStream_Writer = "NativeStream.Writer";
+        public const string TypeName_UnsafeStream_Writer = "UnsafeStream.Writer";
+        public const string TypeName_NativeStream_Reader = "NativeStream.Reader";
+        public const string TypeName_UnsafeStream_Reader = "UnsafeStream.Reader";
+        public const string TypeName_NativeList_Byte = "NativeList<byte>";
+        public const string TypeName_UnsafeList_Byte = "UnsafeList<byte>";
+        public const string TypeName_DynamicBuffer_Byte = "DynamicBuffer<byte>";
+        public const string TypeName_FieldOffset = "FieldOffset";
         
         public const string MetaDataName_PolymorphicTypeManagerAttribute = NamespaceName_Generated + "." + TypeName_PolymorphicTypeManagerAttribute;
         public const string MetaDataName_PolymorphicUnionStructAttribute = NamespaceName_Generated + "." + TypeName_PolymorphicUnionStructAttribute;
@@ -206,8 +203,8 @@ namespace PolymorphicStructsSourceGenerators
         public const string FileName_PolymorphicStructAttribute = "PolymorphicStructAttribute" + FileName_GeneratedSuffixAndFileType;
 
         public const string Decorator_InitializeOnLoadMethod = "[UnityEditor.InitializeOnLoadMethod]";
-        public const string Decorator_MethodImpl_AggressiveInlining = "[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]";
-        public const string Decorator_StructLayout_Explicit = "[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Explicit)]";
+        public const string Decorator_MethodImpl_AggressiveInlining = "[MethodImpl(MethodImplOptions.AggressiveInlining)]";
+        public const string Decorator_StructLayout_Explicit = "[StructLayout(LayoutKind.Explicit)]";
 
         public const string Name_ErrorIntro = "PolymorphicStructs source generator error:";
         public const string Name_Method_GetSizeForTypeId = "GetSizeForTypeId";
@@ -511,7 +508,7 @@ namespace PolymorphicStructsSourceGenerators
             if (source.Left.Length > 0)
             {
                 string debug = "";
-                debug += $"UnionStructInterfaces: {source.Left.Length} \\n";
+                debug += $"TypeManagerInterfaces: {source.Left.Length} \\n";
                 debug += $"PolyStructs: {source.Right.Length} \\n";
 
                 for (int a = 0; a < source.Left.Length; a++)
@@ -522,40 +519,32 @@ namespace PolymorphicStructsSourceGenerators
                     debug += $"Compiled structs for: {polyInterfaceModel.MetaDataName} ({compiledCodeData.PolyStructModels.Count}) \\n";
                     for (int s = 0; s < compiledCodeData.PolyStructModels.Count; s++)
                     {
-                        debug += $"- {compiledCodeData.PolyStructModels[a].StructModel.MetaDataName} \\n";
+                        debug += $"- {compiledCodeData.PolyStructModels[s].StructModel.MetaDataName} \\n";
                     }
                     debug += $"Compiled methods for: {polyInterfaceModel.MetaDataName} ({polyInterfaceModel.InterfaceMethodModels.Count}) \\n";
                     for (int s = 0; s < polyInterfaceModel.InterfaceMethodModels.Count; s++)
                     {
-                        debug += $"- {polyInterfaceModel.InterfaceMethodModels[a].Name} \\n";
+                        debug += $"- {polyInterfaceModel.InterfaceMethodModels[s].Name} \\n";
                     }
 
-                    /*
-                    CompiledStructsForInterfaceData compiledCodeData = CreateCompiledStructsForInterfaceData(source.Left, source.Right);
+                    
                     FileWriter writer = new FileWriter();
-
+                    
                     // Usings
-                    writer.WriteUsingsAndRemoveDuplicates(new List<string>
-                    {
-                        $"System",
-                        $"{NamespaceName_Package}",
-                        $"Unity.Collections.LowLevel.Unsafe",
-                    });
+                    writer.WriteUsingsAndRemoveDuplicates(GetCommonUsings());
 
                     writer.WriteLine($"");
 
-                    PolyInterfaceModel polyInterfaceModel = compiledCodeData.PolyInterfaceModel;
-
                     writer.WriteInNamespace(polyInterfaceModel.TargetStructModel.Namespace, () =>
                     {
-                        writer.WriteLine($"public unsafe partial {polyInterfaceModel.TargetStructModel.Name}");
+                        writer.WriteLine($"public unsafe partial struct {polyInterfaceModel.TargetStructModel.Name}");
                         writer.WriteInScope(() =>
                         {
                             // Types enum
                             GenerateTypeIdEnum(writer, compiledCodeData.PolyStructModels);
 
                             writer.WriteLine($"");
-
+                            
                             // GetSizeForTypeId 
                             writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
                             writer.WriteLine($"public int {Name_Method_GetSizeForTypeId}({TypeName_TypeId} typeId)");
@@ -578,9 +567,9 @@ namespace PolymorphicStructsSourceGenerators
 
                                 writer.WriteLine($"return 0;");
                             });
-
+                            
                             writer.WriteLine($"");
-
+                            
                             // Writers
                             for (int i = 0; i < compiledCodeData.PolyStructModels.Count; i++)
                             {
@@ -592,7 +581,7 @@ namespace PolymorphicStructsSourceGenerators
                                 writer.WriteInScope(() =>
                                 {
                                     writer.WriteLine($"{Name_DataSize} = {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                    writer.WriteLine($"{TypeName_PolymorphicUtility}.WriteValues({Name_ByteArrayPtr}, {Name_ByteIndex}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
+                                    writer.WriteLine($"{TypeName_PolymorphicUtilities}.WriteValues({Name_ByteArrayPtr}, {Name_ByteIndex}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
                                 });
 
                                 writer.WriteLine($"");
@@ -603,7 +592,7 @@ namespace PolymorphicStructsSourceGenerators
                                 writer.WriteInScope(() =>
                                 {
                                     writer.WriteLine($"{Name_DataSize} = {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                    writer.WriteLine($"{TypeName_PolymorphicUtility}.AddValues(ref {Name_StreamWriter}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
+                                    writer.WriteLine($"{TypeName_PolymorphicUtilities}.AddValues(ref {Name_StreamWriter}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
                                 });
 
                                 writer.WriteLine($"");
@@ -614,7 +603,7 @@ namespace PolymorphicStructsSourceGenerators
                                 writer.WriteInScope(() =>
                                 {
                                     writer.WriteLine($"{Name_DataSize} = {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                    writer.WriteLine($"{TypeName_PolymorphicUtility}.AddValues(ref {Name_StreamWriter}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
+                                    writer.WriteLine($"{TypeName_PolymorphicUtilities}.AddValues(ref {Name_StreamWriter}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
                                 });
 
                                 writer.WriteLine($"");
@@ -626,7 +615,7 @@ namespace PolymorphicStructsSourceGenerators
                                 {
                                     writer.WriteLine($"{Name_ByteIndex} = {Name_ByteList}.Length;");
                                     writer.WriteLine($"{Name_DataSize} = {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                    writer.WriteLine($"{TypeName_PolymorphicUtility}.AddValues(ref {Name_ByteList}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
+                                    writer.WriteLine($"{TypeName_PolymorphicUtilities}.AddValues(ref {Name_ByteList}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
                                 });
 
                                 writer.WriteLine($"");
@@ -638,7 +627,7 @@ namespace PolymorphicStructsSourceGenerators
                                 {
                                     writer.WriteLine($"{Name_ByteIndex} = {Name_ByteList}.Length;");
                                     writer.WriteLine($"{Name_DataSize} = {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                    writer.WriteLine($"{TypeName_PolymorphicUtility}.AddValues(ref {Name_ByteList}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
+                                    writer.WriteLine($"{TypeName_PolymorphicUtilities}.AddValues(ref {Name_ByteList}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
                                 });
 
                                 writer.WriteLine($"");
@@ -650,10 +639,10 @@ namespace PolymorphicStructsSourceGenerators
                                 {
                                     writer.WriteLine($"{Name_ByteIndex} = {Name_ByteBuffer}.Length;");
                                     writer.WriteLine($"{Name_DataSize} = {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                    writer.WriteLine($"{TypeName_PolymorphicUtility}.AddValues(ref {Name_ByteBuffer}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
+                                    writer.WriteLine($"{TypeName_PolymorphicUtilities}.AddValues(ref {Name_ByteBuffer}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
                                 });
                             }
-
+                            /*
                             writer.WriteLine($"");
 
                             // Method executors
@@ -861,6 +850,7 @@ namespace PolymorphicStructsSourceGenerators
 
                                 writer.WriteLine($"");
                             }
+                            */
                         });
                     });
                     writer.WriteLine($"");
@@ -869,7 +859,6 @@ namespace PolymorphicStructsSourceGenerators
                     sourceProductionContext.AddSource($"{polyInterfaceModel.TargetStructModel.Name}{FileName_GeneratedSuffixAndFileType}", sourceText);
 
                     //OutputErrors(sourceProductionContext, compiledCodeData.PolyInterfaceModel.Errors);
-                    */
                 }
 
                 DebugOutputter(sourceProductionContext, debug);
@@ -890,12 +879,7 @@ namespace PolymorphicStructsSourceGenerators
                     FileWriter writer = new FileWriter();
 
                     // Usings
-                    writer.WriteUsingsAndRemoveDuplicates(new List<string>
-                    {
-                        "System",
-                        $"{NamespaceName_Package}",
-                        "Unity.Collections.LowLevel.Unsafe",
-                    });
+                    writer.WriteUsingsAndRemoveDuplicates(GetCommonUsings());
 
                     writer.WriteLine($"");
 
@@ -1066,6 +1050,20 @@ namespace PolymorphicStructsSourceGenerators
 
             SourceText sourceText = SourceText.From(writer.FileContents, Encoding.UTF8);
             sourceProductionContext.AddSource($"SourceGenDebugOutputter{FileName_GeneratedSuffixAndFileType}", sourceText);
+        }
+
+        private static List<string> GetCommonUsings()
+        {
+            return new List<string>
+            {
+                $"System",
+                $"Unity.Entities",
+                $"Unity.Collections",
+                $"{NamespaceName_Package}",
+                $"Unity.Collections.LowLevel.Unsafe",
+                $"System.Runtime.InteropServices",
+                $"System.Runtime.CompilerServices",
+            };
         }
     }
 }
