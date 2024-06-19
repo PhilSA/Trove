@@ -9,28 +9,29 @@ public interface IMyPolyInterfaceA
 
 [PolymorphicUnionStructInterface]
 public interface IMyPolyInterfaceB
-{
+{ 
     public void DoSomethingA(int a);
     public void DoSomethingB(int a); 
 }
 
-[PolymorphicStruct]  
+[PolymorphicStruct]
 public struct MyStructA : IMyPolyInterfaceA
 { 
     public int Value;
-
+     
     public void DoSomething(int a)
     {
     }
-}
+} 
 
 [PolymorphicStruct]
 public struct MyStructB : IMyPolyInterfaceA
 {
-    public int Value;
+    public int Value; 
 
     public void DoSomething(int a)
     {
+        UnionStruct_IMyPolyInterfaceA test;
     }
 }
 
