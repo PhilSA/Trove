@@ -3,14 +3,21 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 using Trove.PolymorphicStructs;
+using Trove.PolymorphicStructs.Generated;
 using NUnit.Framework;
 using Unity.Entities;
 
 public interface TestPolyInterface
 {
     public void DoSomething(int a);
-    public void DoSomethingA(int a);  
+    public void DoSomethingA(int a);
 }
+
+public struct MyStrudctA
+{
+    public int Value;
+}
+
 
 
 //namespace Trove.PolymorphicStructs.Tests

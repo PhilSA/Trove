@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System.Xml.Linq;
+using System.Threading;
 
 namespace PolymorphicStructsSourceGenerators
 {
@@ -235,26 +236,35 @@ namespace PolymorphicStructsSourceGenerators
             GenerateAttributes(context);
 
             // TODO: Test
-            {
-                context.RegisterPostInitializationOutput(i =>
-                {
-                    FileWriter writer = new FileWriter();
-                    writer.WriteLine($"");
-                    writer.WriteLine($"public static class SourceGenTests");
-                    writer.WriteInScope(() =>
-                    {
-                        writer.WriteLine($"{Decorator_InitializeOnLoadMethod}");
-                        writer.WriteLine($"public static void PolymorphicStructSourceGenTester()");
-                        writer.WriteInScope(() =>
-                        {
-                            writer.WriteLine($"UnityEngine.Debug.Log(\"Hiiiiiii\");");
-                        });
-                    });
+            //{
+            //    context.RegisterPostInitializationOutput(i =>
+            //    {
+            //        FileWriter writer = new FileWriter();
+            //        writer.WriteInNamespace(NamespaceName_Generated, () =>
+            //        {
+            //            writer.WriteLine($"internal static class SourceGenTests");
+            //            writer.WriteInScope(() =>
+            //            {
+            //                writer.WriteLine($"{Decorator_InitializeOnLoadMethod}");
+            //                writer.WriteLine($"public static void PolymorphicStructSourceGenTester()");
+            //                writer.WriteInScope(() =>
+            //                {
+            //                    writer.WriteLine($"UnityEngine.Debug.Log($\"Sourcgen Working on this assembly {{typeof(SourceGenTests).AssemblyQualifiedName}}\");");
+            //                });
+            //            });
+            //        });
 
-                    SourceText sourceText = SourceText.From(writer.FileContents, Encoding.UTF8);
-                    i.AddSource($"SourceGenTest{FileName_GeneratedSuffixAndFileType}", sourceText);
-                });
-            }
+            //        SourceText sourceText = SourceText.From(writer.FileContents, Encoding.UTF8);
+            //        i.AddSource($"SourceGenTest{FileName_GeneratedSuffixAndFileType}", sourceText);
+            //    });
+            //}
+
+            IncrementalValuesProvider<StructModel> testValuesProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+                MetaDataName_PolymorphicStructAttribute,
+                TestValuesProviderPredicate,
+                TestValuesProviderTransform);
+            IncrementalValueProvider<ImmutableArray<StructModel>> testValuesProviderCollected = testValuesProvider.Collect();
+            context.RegisterSourceOutput(testValuesProviderCollected, TestOutputter2);
 
 
             // Create the values provider for poly interfaces and structs
@@ -266,10 +276,10 @@ namespace PolymorphicStructsSourceGenerators
             //    TypeName_PolymorphicUnionStructAttribute,
             //    PolyUnionStructInterfaceValuesProviderPredicate,
             //    PolyUnionStructInterfaceValuesProviderTransform);
-            IncrementalValuesProvider<PolyStructModel> polyStructValuesProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
-                MetaDataName_PolymorphicStructAttribute,
-                PolyStructValuesProviderPredicate,
-                PolyStructValuesProviderTransform);
+            //IncrementalValuesProvider<PolyStructModel> polyStructValuesProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+            //    MetaDataName_PolymorphicStructAttribute,
+            //    PolyStructValuesProviderPredicate,
+            //    PolyStructValuesProviderTransform);
 
             // Collect poly structs into an array, and create combined value providers of (PolyInterface, PolyStructsArray)
             //IncrementalValueProvider<ImmutableArray<PolyStructModel>> polyStructsValueArrayProvider = polyStructValuesProvider.Collect();
@@ -280,21 +290,46 @@ namespace PolymorphicStructsSourceGenerators
             //context.RegisterSourceOutput(polyTypeManagerAndStructsValuesProvider, TypeManagerSourceOutputter);
             //context.RegisterSourceOutput(polyUnionStructAndStructsValuesProvider, UnionStructSourceOutputter);
 
-            context.RegisterSourceOutput(polyStructValuesProvider, TestOutputter);
         }
 
-        private static void TestOutputter(SourceProductionContext sourceProductionContext, PolyStructModel source)
+        //private static void TestOutputter(SourceProductionContext sourceProductionContext, PolyStructModel source)
+        //{
+        //    sourceProductionContext.CancellationToken.ThrowIfCancellationRequested();
+
+        //    FileWriter writer = new FileWriter();
+        //    writer.WriteLine($"internal static class PolyStructTestOutputt");
+        //    writer.WriteInScope(() =>
+        //    {
+        //        writer.WriteLine($"{Decorator_InitializeOnLoadMethod}");
+        //        writer.WriteLine($"public static void Tester()");
+        //        writer.WriteInScope(() =>
+        //        {
+        //            writer.WriteLine($"UnityEngine.Debug.Log($\"TEST OUTPUT \");");
+        //            writer.WriteLine($"UnityEngine.Debug.Log($\"Struct: {source.StructModel.MetaDataName}\");");
+        //        });
+        //    });
+
+        //    SourceText sourceText = SourceText.From(writer.FileContents, Encoding.UTF8);
+        //    sourceProductionContext.AddSource($"PolyStructTestOutputt{FileName_GeneratedSuffixAndFileType}", sourceText);
+        //}
+
+        private static void TestOutputter2(SourceProductionContext sourceProductionContext, ImmutableArray<StructModel> sources)
         {
+            //sourceProductionContext.CancellationToken.ThrowIfCancellationRequested();
+
             FileWriter writer = new FileWriter();
-            writer.WriteLine($"public static class PolyStructTestOutputt");
+            writer.WriteLine($"internal static class PolyStructTestOutputt");
             writer.WriteInScope(() =>
             {
                 writer.WriteLine($"{Decorator_InitializeOnLoadMethod}");
-                writer.WriteLine($"public static void PolyStructTestOutputtTester()");
+                writer.WriteLine($"public static void Tester()");
                 writer.WriteInScope(() =>
                 {
-                    writer.WriteLine($"UnityEngine.Debug.Log($\"TEST OUTPUT\");");
-                    writer.WriteLine($"UnityEngine.Debug.Log($\"Struct: {{{source.StructModel.MetaDataName}}}\");");
+                    writer.WriteLine($"UnityEngine.Debug.Log($\"TEST OUTPUT {sources.Length}  {{typeof(PolyStructTestOutputt).Assembly}}\");");
+                    for ( int i = 0; i < sources.Length; i++)
+                    {
+                        writer.WriteLine($"UnityEngine.Debug.Log($\"Struct: {sources[i].Name} {sources[i].MetaDataName}\");");
+                    }
                 });
             });
 
@@ -304,9 +339,6 @@ namespace PolymorphicStructsSourceGenerators
 
         private void GenerateAttributes(IncrementalGeneratorInitializationContext context)
         {
-            // Note: generated attributes should be internal so as to stop the attr from being generated in multiple projects
-            // https://andrewlock.net/creating-a-source-generator-part-7-solving-the-source-generator-marker-attribute-problem-part1/
-
             // Generate attributes used in codegen
             context.RegisterPostInitializationOutput(i =>
             {
@@ -340,7 +372,6 @@ namespace PolymorphicStructsSourceGenerators
 
         private static PolyInterfaceModel PolyTypeManagerInterfaceValuesProviderTransform(GeneratorAttributeSyntaxContext generatorAttributeSyntaxContext, System.Threading.CancellationToken cancellationToken)
         {
-            // TODO: should this be there
             cancellationToken.ThrowIfCancellationRequested();
 
             return CommonInterfaceValuesProviderTransform(generatorAttributeSyntaxContext, cancellationToken, false);
@@ -354,7 +385,6 @@ namespace PolymorphicStructsSourceGenerators
 
         private static PolyInterfaceModel PolyUnionStructInterfaceValuesProviderTransform(GeneratorAttributeSyntaxContext generatorAttributeSyntaxContext, System.Threading.CancellationToken cancellationToken)
         {
-            // TODO: should this be there
             cancellationToken.ThrowIfCancellationRequested();
 
             return CommonInterfaceValuesProviderTransform(generatorAttributeSyntaxContext, cancellationToken, true);
@@ -367,21 +397,38 @@ namespace PolymorphicStructsSourceGenerators
 
         private static PolyStructModel PolyStructValuesProviderTransform(GeneratorAttributeSyntaxContext generatorAttributeSyntaxContext, System.Threading.CancellationToken cancellationToken)
         {
-            // TODO: should this be there
             //cancellationToken.ThrowIfCancellationRequested();
 
-            INamedTypeSymbol structTypeSymbol = generatorAttributeSyntaxContext.TargetSymbol.ContainingType;
+            ISymbol structTypeSymbol = generatorAttributeSyntaxContext.TargetSymbol;
 
             // TODO: support interface hierarchies
             List<string> interfaceMetaDataNames = new List<string>();
-            foreach (INamedTypeSymbol structInterface in structTypeSymbol.Interfaces)
-            {
-                interfaceMetaDataNames.Add(structInterface.MetadataName);
-            }
+            //foreach (INamedTypeSymbol structInterface in structTypeSymbol.Interfaces)
+            //{
+            //    interfaceMetaDataNames.Add(structInterface.MetadataName);
+            //}
 
             // TODO: deal with global or nested namespaces
-            StructModel structModel = new StructModel(structTypeSymbol.Name, structTypeSymbol.MetadataName, structTypeSymbol.ContainingNamespace.MetadataName);
+            StructModel structModel = new StructModel(structTypeSymbol.Name, structTypeSymbol.ContainingNamespace.MetadataName, structTypeSymbol.MetadataName);
             return new PolyStructModel(structModel, interfaceMetaDataNames);
+        }
+
+        private static bool TestValuesProviderPredicate(SyntaxNode syntaxNode, System.Threading.CancellationToken cancellationToken)
+        {
+            return syntaxNode is StructDeclarationSyntax;
+        }
+
+        private static StructModel TestValuesProviderTransform(GeneratorAttributeSyntaxContext generatorAttributeSyntaxContext, System.Threading.CancellationToken cancellationToken)
+        {
+            ITypeSymbol structTypeSymbol = (ITypeSymbol)generatorAttributeSyntaxContext.TargetSymbol;
+            string sNamespace = string.Empty;
+            if (structTypeSymbol.ContainingNamespace != null)
+            {
+                sNamespace = structTypeSymbol.ContainingNamespace.MetadataName;
+            }
+            return new StructModel(structTypeSymbol.Name, sNamespace, structTypeSymbol.MetadataName);
+
+            //return default;
         }
 
         private static PolyInterfaceModel CommonInterfaceValuesProviderTransform(
@@ -392,7 +439,7 @@ namespace PolymorphicStructsSourceGenerators
             List<string> logs = new List<string>();
             List<string> errors = new List<string>();
 
-            INamedTypeSymbol interfaceTypeSymbol = generatorAttributeSyntaxContext.TargetSymbol.ContainingType;
+            ITypeSymbol interfaceTypeSymbol = (ITypeSymbol)generatorAttributeSyntaxContext.TargetSymbol;
 
             // TODO: support interface hierarchy? (could be costly?)
 
@@ -405,7 +452,7 @@ namespace PolymorphicStructsSourceGenerators
                     errors.Add($"{Name_ErrorIntro} Cannot have polymorphic struct/interface attributes multiple times on the same type.");
                 }
 
-                INamedTypeSymbol targetStructSymbol = generatorAttributeSyntaxContext.Attributes[0].AttributeClass.TypeParameters[0].ContainingType;
+                ITypeSymbol targetStructSymbol = (ITypeSymbol)generatorAttributeSyntaxContext.Attributes[0].AttributeClass.TypeParameters[0];
 
                 targetStructModel.Name = targetStructSymbol.Name;
                 targetStructModel.MetaDataName = targetStructSymbol.MetadataName;
@@ -597,6 +644,8 @@ namespace PolymorphicStructsSourceGenerators
 
         private static void TypeManagerSourceOutputter(SourceProductionContext sourceProductionContext, (PolyInterfaceModel Left, ImmutableArray<PolyStructModel> Right) source)
         {
+            sourceProductionContext.CancellationToken.ThrowIfCancellationRequested();
+
             CompiledPolyStructsAndInterfaceData compiledCodeData = CreateCompiledCodeData(source.Left, source.Right);
             FileWriter writer = new FileWriter();
 
@@ -939,6 +988,8 @@ namespace PolymorphicStructsSourceGenerators
 
         private static void UnionStructSourceOutputter(SourceProductionContext sourceProductionContext, (PolyInterfaceModel Left, ImmutableArray<PolyStructModel> Right) source)
         {
+            sourceProductionContext.CancellationToken.ThrowIfCancellationRequested();
+
             CompiledPolyStructsAndInterfaceData compiledCodeData = CreateCompiledCodeData(source.Left, source.Right);
 
             FileWriter writer = new FileWriter();
