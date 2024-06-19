@@ -11,10 +11,10 @@ using System.Threading;
 
 namespace PolymorphicStructsSourceGenerators
 {
-    public class CompiledPolyStructsAndInterfaceData
+    public class CompiledStructsForInterfaceData
     {
-        public PolyInterfaceModel PolyInterfaceModel = default;
-        public List<PolyStructModel> PolyStructModels = new List<PolyStructModel>();
+        public PolyInterfaceModel PolyInterfaceModel;
+        public List<PolyStructModel> PolyStructModels;
     }
 
     public struct PolyInterfaceModel : IEquatable<PolyInterfaceModel>
@@ -432,19 +432,143 @@ namespace PolymorphicStructsSourceGenerators
             string targetStructNamePrefix,
             bool requireTargetStructHasNoFields)
         {
-            return new PolyInterfaceModel("testName", new StructModel("A", "B", "C"), new List<MethodModel>(), new List<string>());
-
-            /*
             List<string> errors = new List<string>();
 
-            ISymbol interfaceTypeSymbol = (ISymbol)generatorAttributeSyntaxContext.TargetSymbol;
+            ITypeSymbol interfaceTypeSymbol = (ITypeSymbol)generatorAttributeSyntaxContext.TargetSymbol;
+
             string interfaceNamespaceMetadataName = SourceGenUtils.GetNamespaceMetaDataName(interfaceTypeSymbol);
+
+            // Target struct
+            string targetStructName = $"{targetStructNamePrefix}_{interfaceTypeSymbol.Name}";
+            StructModel targetStructModel = new StructModel(targetStructName, interfaceNamespaceMetadataName, $"{interfaceNamespaceMetadataName}.{targetStructName}");
+
+            // Get method infos
+            List<MethodModel> interfaceMethodModels = new List<MethodModel>();
+            foreach (ISymbol memberSymbol in interfaceTypeSymbol.GetMembers())
+            {
+                if (memberSymbol.Kind == SymbolKind.Method && memberSymbol is IMethodSymbol methodSymbol)
+                {
+                    MethodModel methodModel = new MethodModel();
+
+                    methodModel.Name = methodSymbol.Name;
+                    methodModel.HasNonVoidReturnType = methodSymbol.ReturnType.ToString() != TypeName_Void;
+                    methodModel.ReturnTypeMetaDataName = methodSymbol.ReturnType.MetadataName;
+
+                    // Generics
+                    ImmutableArray<ITypeParameterSymbol> genericTypeParameters = methodSymbol.TypeParameters;
+                    if (methodSymbol.IsGenericMethod && genericTypeParameters.Length > 0)
+                    {
+                        methodModel.MethodGenericTypesDeclaration = "";
+                        methodModel.MethodGenericTypesConstraint = "";
+
+                        string genericTypeName = "";
+                        int genericTypesCounter = 0;
+                        int genericTypeConstraintsCounterForType = 0;
+
+                        foreach (ITypeParameterSymbol genericTypeParam in genericTypeParameters)
+                        {
+                            genericTypeName = $"T{genericTypesCounter}";
+
+                            // Generic types declaration
+                            if (genericTypesCounter == 0)
+                            {
+                                methodModel.MethodGenericTypesDeclaration += $"<";
+                            }
+                            else
+                            {
+                                methodModel.MethodGenericTypesDeclaration += $",";
+                            }
+                            methodModel.MethodGenericTypesDeclaration += $"{genericTypeName}";
+
+                            // Generic type constraints
+                            {
+                                if (genericTypeParam.HasUnmanagedTypeConstraint)
+                                {
+                                    if (genericTypeConstraintsCounterForType == 0)
+                                    {
+                                        methodModel.MethodGenericTypesConstraint += $"where {genericTypeName} : ";
+                                    }
+                                    else
+                                    {
+                                        methodModel.MethodGenericTypesConstraint += $", ";
+                                    }
+                                    methodModel.MethodGenericTypesConstraint += $"unmanaged";
+                                    genericTypeConstraintsCounterForType++;
+                                }
+                                else if (genericTypeParam.HasValueTypeConstraint)
+                                {
+                                    if (genericTypeConstraintsCounterForType == 0)
+                                    {
+                                        methodModel.MethodGenericTypesConstraint += $"where {genericTypeName} : ";
+                                    }
+                                    else
+                                    {
+                                        methodModel.MethodGenericTypesConstraint += $", ";
+                                    }
+                                    methodModel.MethodGenericTypesConstraint += $"struct";
+                                    genericTypeConstraintsCounterForType++;
+                                }
+                                foreach (ITypeSymbol constraintType in genericTypeParam.ConstraintTypes)
+                                {
+                                    if (genericTypeConstraintsCounterForType == 0)
+                                    {
+                                        methodModel.MethodGenericTypesConstraint += $"where {genericTypeName} : ";
+                                    }
+                                    else
+                                    {
+                                        methodModel.MethodGenericTypesConstraint += $", ";
+                                    }
+                                    methodModel.MethodGenericTypesConstraint += $"{constraintType}";
+                                    genericTypeConstraintsCounterForType++;
+                                }
+                            }
+
+                            genericTypesCounter++;
+                        }
+                    }
+                    else
+                    {
+                        methodModel.MethodGenericTypesDeclaration = "";
+                        methodModel.MethodGenericTypesConstraint = "";
+                    }
+
+                    // Parameters
+                    {
+                        methodModel.MethodParametersDefinition = $"";
+                        methodModel.MethodParametersInvoke = $"";
+                        int parametersCounter = 0;
+                        foreach (IParameterSymbol parameterSymbol in methodSymbol.Parameters)
+                        {
+                            if (parametersCounter > 0)
+                            {
+                                methodModel.MethodParametersDefinition += $", ";
+                                methodModel.MethodParametersInvoke += $", ";
+                            }
+
+                            string refKindString = SourceGenUtils.RefKindToString(parameterSymbol.RefKind);
+                            methodModel.MethodParametersDefinition += $"{refKindString} ";
+                            methodModel.MethodParametersInvoke += $"{refKindString} ";
+
+                            methodModel.MethodParametersDefinition += $"{parameterSymbol.Type} ";
+
+                            methodModel.MethodParametersDefinition += $"{parameterSymbol.Name}";
+                            methodModel.MethodParametersInvoke += $"{parameterSymbol.Name}";
+
+                            parametersCounter++;
+                        }
+                    }
+
+                    methodModel.RecomputeValueHash();
+                    interfaceMethodModels.Add(methodModel);
+                }
+            }
+
+            return new PolyInterfaceModel(interfaceTypeSymbol.MetadataName, targetStructModel, interfaceMethodModels, errors);
+
+            /*
 
             // TODO: support interface hierarchy? (could be costly?)
 
-            // Get target struct
-            string targetStructName = $"{targetStructNamePrefix}_{interfaceTypeSymbol.Name}";
-            StructModel targetStructModel = new StructModel(targetStructName, interfaceNamespaceMetadataName, $"{interfaceNamespaceMetadataName}.{targetStructName}");
 
             //{
             //    // Error if the attribute appears multiple times
@@ -491,141 +615,22 @@ namespace PolymorphicStructsSourceGenerators
             //}
             //targetStructModel.RecomputeValueHash();
 
-            // Get method infos
-            List<MethodModel> interfaceMethodModels = new List<MethodModel>();
-            //foreach (ISymbol memberSymbol in interfaceTypeSymbol.GetMembers())
-            //{
-            //    if (memberSymbol.Kind == SymbolKind.Method && memberSymbol is IMethodSymbol methodSymbol)
-            //    {
-            //        MethodModel methodModel = new MethodModel();
-
-            //        methodModel.Name = methodSymbol.Name;
-            //        methodModel.HasNonVoidReturnType = methodSymbol.ReturnType.ToString() != TypeName_Void;
-            //        methodModel.ReturnTypeMetaDataName = methodSymbol.ReturnType.MetadataName;
-
-            //        // Generics
-            //        ImmutableArray<ITypeParameterSymbol> genericTypeParameters = methodSymbol.TypeParameters;
-            //        if (methodSymbol.IsGenericMethod && genericTypeParameters.Length > 0)
-            //        {
-            //            methodModel.MethodGenericTypesDeclaration = "";
-            //            methodModel.MethodGenericTypesConstraint = "";
-
-            //            string genericTypeName = "";
-            //            int genericTypesCounter = 0;
-            //            int genericTypeConstraintsCounterForType = 0;
-
-            //            foreach (ITypeParameterSymbol genericTypeParam in genericTypeParameters)
-            //            {
-            //                genericTypeName = $"T{genericTypesCounter}";
-
-            //                // Generic types declaration
-            //                if (genericTypesCounter == 0)
-            //                {
-            //                    methodModel.MethodGenericTypesDeclaration += $"<";
-            //                }
-            //                else
-            //                {
-            //                    methodModel.MethodGenericTypesDeclaration += $",";
-            //                }
-            //                methodModel.MethodGenericTypesDeclaration += $"{genericTypeName}";
-
-            //                // Generic type constraints
-            //                {
-            //                    if (genericTypeParam.HasUnmanagedTypeConstraint)
-            //                    {
-            //                        if (genericTypeConstraintsCounterForType == 0)
-            //                        {
-            //                            methodModel.MethodGenericTypesConstraint += $"where {genericTypeName} : ";
-            //                        }
-            //                        else
-            //                        {
-            //                            methodModel.MethodGenericTypesConstraint += $", ";
-            //                        }
-            //                        methodModel.MethodGenericTypesConstraint += $"unmanaged";
-            //                        genericTypeConstraintsCounterForType++;
-            //                    }
-            //                    else if (genericTypeParam.HasValueTypeConstraint)
-            //                    {
-            //                        if (genericTypeConstraintsCounterForType == 0)
-            //                        {
-            //                            methodModel.MethodGenericTypesConstraint += $"where {genericTypeName} : ";
-            //                        }
-            //                        else
-            //                        {
-            //                            methodModel.MethodGenericTypesConstraint += $", ";
-            //                        }
-            //                        methodModel.MethodGenericTypesConstraint += $"struct";
-            //                        genericTypeConstraintsCounterForType++;
-            //                    }
-            //                    foreach (ITypeSymbol constraintType in genericTypeParam.ConstraintTypes)
-            //                    {
-            //                        if (genericTypeConstraintsCounterForType == 0)
-            //                        {
-            //                            methodModel.MethodGenericTypesConstraint += $"where {genericTypeName} : ";
-            //                        }
-            //                        else
-            //                        {
-            //                            methodModel.MethodGenericTypesConstraint += $", ";
-            //                        }
-            //                        methodModel.MethodGenericTypesConstraint += $"{constraintType}";
-            //                        genericTypeConstraintsCounterForType++;
-            //                    }
-            //                }
-
-            //                genericTypesCounter++;
-            //            }
-            //        }
-            //        else
-            //        {
-            //            methodModel.MethodGenericTypesDeclaration = "";
-            //            methodModel.MethodGenericTypesConstraint = "";
-            //        }
-
-            //        // Parameters
-            //        {
-            //            methodModel.MethodParametersDefinition = $"";
-            //            methodModel.MethodParametersInvoke = $"";
-            //            int parametersCounter = 0;
-            //            foreach (IParameterSymbol parameterSymbol in methodSymbol.Parameters)
-            //            {
-            //                if (parametersCounter > 0)
-            //                {
-            //                    methodModel.MethodParametersDefinition += $", ";
-            //                    methodModel.MethodParametersInvoke += $", ";
-            //                }
-
-            //                string refKindString = SourceGenUtils.RefKindToString(parameterSymbol.RefKind);
-            //                methodModel.MethodParametersDefinition += $"{refKindString} ";
-            //                methodModel.MethodParametersInvoke += $"{refKindString} ";
-
-            //                methodModel.MethodParametersDefinition += $"{parameterSymbol.Type} ";
-
-            //                methodModel.MethodParametersDefinition += $"{parameterSymbol.Name}";
-            //                methodModel.MethodParametersInvoke += $"{parameterSymbol.Name}";
-
-            //                parametersCounter++;
-            //            }
-            //        }
-
-            //        methodModel.RecomputeValueHash();
-            //        interfaceMethodModels.Add(methodModel);
-            //    }
-            //}
 
             return new PolyInterfaceModel(interfaceTypeSymbol.MetadataName, targetStructModel, interfaceMethodModels, errors);
             */
         }
 
-        private static CompiledPolyStructsAndInterfaceData CreateCompiledCodeData(PolyInterfaceModel polyInterfaceModel, ImmutableArray<PolyStructModel> polyStructModels)
+        private static CompiledStructsForInterfaceData CreateCompiledStructsForInterfaceData(PolyInterfaceModel polyInterfaceModel, ImmutableArray<PolyStructModel> polyStructModels)
         {
-            CompiledPolyStructsAndInterfaceData compiledCodeData = new CompiledPolyStructsAndInterfaceData();
+            CompiledStructsForInterfaceData compiledStructsForInterfaceData = new CompiledStructsForInterfaceData();
+            compiledStructsForInterfaceData.PolyInterfaceModel = polyInterfaceModel;
+            compiledStructsForInterfaceData.PolyStructModels = new List<PolyStructModel>();
 
             // TODO: Sanity checks
             // - no return type on interface methods
             // - no 2 structs with same name (structModel.Name)
 
             // Add poly structs implementing this poly interface to a list
-            compiledCodeData.PolyStructModels.Clear();
             ImmutableArray<PolyStructModel>.Enumerator polyStructModelsEnumerator = polyStructModels.GetEnumerator();
             while (polyStructModelsEnumerator.MoveNext())
             {
@@ -633,22 +638,22 @@ namespace PolymorphicStructsSourceGenerators
                 for (int i = 0; i < structInterfaces.Count; i++)
                 {
                     // TODO: compare name hashes instead?
-                    if (structInterfaces[i] == polyInterfaceModel.MetaDataName)
+                    if (structInterfaces[i] == compiledStructsForInterfaceData.PolyInterfaceModel.MetaDataName)
                     {
-                        compiledCodeData.PolyStructModels.Add(polyStructModelsEnumerator.Current);
+                        compiledStructsForInterfaceData.PolyStructModels.Add(polyStructModelsEnumerator.Current);
                         break;
                     }
                 }
             }
 
-            return compiledCodeData;
+            return compiledStructsForInterfaceData;
         }
 
         private static void TypeManagerSourceOutputter(SourceProductionContext sourceProductionContext, (PolyInterfaceModel Left, ImmutableArray<PolyStructModel> Right) source)
         {
             sourceProductionContext.CancellationToken.ThrowIfCancellationRequested();
 
-            CompiledPolyStructsAndInterfaceData compiledCodeData = CreateCompiledCodeData(source.Left, source.Right);
+            CompiledStructsForInterfaceData compiledCodeData = CreateCompiledStructsForInterfaceData(source.Left, source.Right);
             FileWriter writer = new FileWriter();
 
             // Usings
@@ -992,127 +997,145 @@ namespace PolymorphicStructsSourceGenerators
         {
             sourceProductionContext.CancellationToken.ThrowIfCancellationRequested();
 
-            //CompiledPolyStructsAndInterfaceData compiledCodeData = CreateCompiledCodeData(source.Left, source.Right);
+            if (source.Left.Length > 0)
+            {
+                string debug = "";
+                debug += $"UnionStructInterfaces: {source.Left.Length} \\n";
+                debug += $"PolyStructs: {source.Right.Length} \\n";
 
-            string debug = "";
-            debug += $"UnionStructInterfaces: {source.Left.Length} \\n";
-            debug += $"PolyStructs: {source.Right.Length} \\n";
-            DebugOutputter(sourceProductionContext, debug);
+                for (int i = 0; i < source.Left.Length; i++)
+                {
+                    CompiledStructsForInterfaceData compiledCodeData = CreateCompiledStructsForInterfaceData(source.Left[i], source.Right);
 
-            //FileWriter writer = new FileWriter();
+                    debug += $"Compiled structs for: {compiledCodeData.PolyInterfaceModel.MetaDataName} ({compiledCodeData.PolyStructModels.Count}) \\n";
+                    for (int s = 0; s < compiledCodeData.PolyStructModels.Count; s++)
+                    {
+                        debug += $"- {compiledCodeData.PolyStructModels[i].StructModel.MetaDataName} \\n";
+                    }
+                    debug += $"Compiled methods for: {compiledCodeData.PolyInterfaceModel.MetaDataName} ({compiledCodeData.PolyInterfaceModel.InterfaceMethodModels.Count}) \\n";
+                    for (int s = 0; s < compiledCodeData.PolyInterfaceModel.InterfaceMethodModels.Count; s++)
+                    {
+                        debug += $"- {compiledCodeData.PolyInterfaceModel.InterfaceMethodModels[i].Name} \\n";
+                    }
 
-            //// Usings
-            //writer.WriteUsingsAndRemoveDuplicates(new List<string>
-            //{
-            //    "System",
-            //    $"{NamespaceName_Package}",
-            //    "Unity.Collections.LowLevel.Unsafe",
-            //});
+                    //FileWriter writer = new FileWriter();
 
-            //writer.WriteLine($"");
+                    //// Usings
+                    //writer.WriteUsingsAndRemoveDuplicates(new List<string>
+                    //{
+                    //    "System",
+                    //    $"{NamespaceName_Package}",
+                    //    "Unity.Collections.LowLevel.Unsafe",
+                    //});
 
-            //PolyInterfaceModel polyInterfaceModel = compiledCodeData.PolyInterfaceModel;
+                    //writer.WriteLine($"");
 
-            //writer.WriteInNamespace(polyInterfaceModel.TargetStructModel.Namespace, () =>
-            //{
-            //    writer.WriteLine($"[StructLayout(LayoutKind.Explicit)]");
-            //    writer.WriteLine($"public unsafe partial struct {polyInterfaceModel.TargetStructModel.Name}");
-            //    writer.WriteInScope(() =>
-            //    {
-            //        // Types enum
-            //        GenerateTypeIdEnum(writer, compiledCodeData.PolyStructModels);
+                    //PolyInterfaceModel polyInterfaceModel = compiledCodeData.PolyInterfaceModel;
 
-            //        writer.WriteLine($"");
+                    //writer.WriteInNamespace(polyInterfaceModel.TargetStructModel.Namespace, () =>
+                    //{
+                    //    writer.WriteLine($"[StructLayout(LayoutKind.Explicit)]");
+                    //    writer.WriteLine($"public unsafe partial struct {polyInterfaceModel.TargetStructModel.Name}");
+                    //    writer.WriteInScope(() =>
+                    //    {
+                    //        // Types enum
+                    //        GenerateTypeIdEnum(writer, compiledCodeData.PolyStructModels);
 
-            //        // Union fields
-            //        writer.WriteLine($"[FieldOffset(0)]");
-            //        writer.WriteLine($"public {TypeName_TypeId} TypeId;");
-            //        for (int i = 0; i < compiledCodeData.PolyStructModels.Count; i++)
-            //        {
-            //            PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[i];
-            //            writer.WriteLine($"[FieldOffset({SizeOf_TypeId})]");
-            //            writer.WriteLine($"public {polyStructModel.StructModel.MetaDataName} Field_{polyStructModel.StructModel.Name};");
-            //        }
+                    //        writer.WriteLine($"");
 
-            //        writer.WriteLine($"");
+                    //        // Union fields
+                    //        writer.WriteLine($"[FieldOffset(0)]");
+                    //        writer.WriteLine($"public {TypeName_TypeId} TypeId;");
+                    //        for (int i = 0; i < compiledCodeData.PolyStructModels.Count; i++)
+                    //        {
+                    //            PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[i];
+                    //            writer.WriteLine($"[FieldOffset({SizeOf_TypeId})]");
+                    //            writer.WriteLine($"public {polyStructModel.StructModel.MetaDataName} Field_{polyStructModel.StructModel.Name};");
+                    //        }
 
-            //        // Implicit casts
-            //        for (int i = 0; i < compiledCodeData.PolyStructModels.Count; i++)
-            //        {
-            //            PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[i];
+                    //        writer.WriteLine($"");
 
-            //            // Cast struct to union struct
-            //            writer.WriteLine($"public static implicit operator {polyInterfaceModel.TargetStructModel.Name}({polyStructModel.StructModel.MetaDataName} s)");
-            //            writer.WriteInScope(() =>
-            //            {
-            //                writer.WriteLine($"return new {polyInterfaceModel.TargetStructModel.Name}");
-            //                writer.WriteInScope(() =>
-            //                {
-            //                    writer.WriteLine($"TypeId = {Name_Enum_TypeId}.{polyStructModel.StructModel.Name},");
-            //                    writer.WriteLine($"Field_{polyStructModel.StructModel.Name} = s,;");
-            //                }, ";");
-            //            });
+                    //        // Implicit casts
+                    //        for (int i = 0; i < compiledCodeData.PolyStructModels.Count; i++)
+                    //        {
+                    //            PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[i];
 
-            //            writer.WriteLine($"");
+                    //            // Cast struct to union struct
+                    //            writer.WriteLine($"public static implicit operator {polyInterfaceModel.TargetStructModel.Name}({polyStructModel.StructModel.MetaDataName} s)");
+                    //            writer.WriteInScope(() =>
+                    //            {
+                    //                writer.WriteLine($"return new {polyInterfaceModel.TargetStructModel.Name}");
+                    //                writer.WriteInScope(() =>
+                    //                {
+                    //                    writer.WriteLine($"TypeId = {Name_Enum_TypeId}.{polyStructModel.StructModel.Name},");
+                    //                    writer.WriteLine($"Field_{polyStructModel.StructModel.Name} = s,;");
+                    //                }, ";");
+                    //            });
 
-            //            // Cast union struct to struct
-            //            writer.WriteLine($"public static implicit operator {polyStructModel.StructModel.MetaDataName}({polyInterfaceModel.TargetStructModel.Name} s)");
-            //            writer.WriteInScope(() =>
-            //            {
-            //                writer.WriteLine($"return Field_{polyStructModel.StructModel.Name};");
-            //            });
+                    //            writer.WriteLine($"");
 
-            //            writer.WriteLine($"");
-            //        }
+                    //            // Cast union struct to struct
+                    //            writer.WriteLine($"public static implicit operator {polyStructModel.StructModel.MetaDataName}({polyInterfaceModel.TargetStructModel.Name} s)");
+                    //            writer.WriteInScope(() =>
+                    //            {
+                    //                writer.WriteLine($"return Field_{polyStructModel.StructModel.Name};");
+                    //            });
 
-            //        writer.WriteLine($"");
+                    //            writer.WriteLine($"");
+                    //        }
 
-            //        // TODO: Methods
-            //        for (int i = 0; i < polyInterfaceModel.InterfaceMethodModels.Count; i++)
-            //        {
-            //            MethodModel methodModel = polyInterfaceModel.InterfaceMethodModels[i];
+                    //        writer.WriteLine($"");
 
-            //            writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-            //            writer.WriteLine($"public {methodModel.ReturnTypeMetaDataName} {methodModel.Name}{methodModel.MethodGenericTypesDeclaration}({methodModel.MethodParametersDefinition}){methodModel.MethodGenericTypesConstraint}");
-            //            writer.WriteInScope(() =>
-            //            {
-            //                // Switch over typeId
-            //                writer.WriteLine($"switch (TypeId)");
-            //                writer.WriteInScope(() =>
-            //                {
-            //                    for (int t = 0; t < compiledCodeData.PolyStructModels.Count; t++)
-            //                    {
-            //                        PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[t];
+                    //        // TODO: Methods
+                    //        for (int i = 0; i < polyInterfaceModel.InterfaceMethodModels.Count; i++)
+                    //        {
+                    //            MethodModel methodModel = polyInterfaceModel.InterfaceMethodModels[i];
 
-            //                        // Case
-            //                        writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
-            //                        writer.WriteInScope(() =>
-            //                        {
-            //                            // Invoke method on struct
-            //                            if (methodModel.HasNonVoidReturnType)
-            //                            {
-            //                                writer.WriteLine($"return Field_{polyStructModel.StructModel.Name}.{methodModel.Name}({methodModel.MethodParametersInvoke});");
-            //                            }
-            //                            else
-            //                            {
-            //                                writer.WriteLine($"Field_{polyStructModel.StructModel.Name}.{methodModel.Name}({methodModel.MethodParametersInvoke});");
-            //                                writer.WriteLine($"break;");
-            //                            }
-            //                        });
-            //                    }
-            //                });
-            //            });
+                    //            writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
+                    //            writer.WriteLine($"public {methodModel.ReturnTypeMetaDataName} {methodModel.Name}{methodModel.MethodGenericTypesDeclaration}({methodModel.MethodParametersDefinition}){methodModel.MethodGenericTypesConstraint}");
+                    //            writer.WriteInScope(() =>
+                    //            {
+                    //                // Switch over typeId
+                    //                writer.WriteLine($"switch (TypeId)");
+                    //                writer.WriteInScope(() =>
+                    //                {
+                    //                    for (int t = 0; t < compiledCodeData.PolyStructModels.Count; t++)
+                    //                    {
+                    //                        PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[t];
 
-            //            writer.WriteLine($"");
-            //        }
-            //    });
-            //});
-            //writer.WriteLine($"");
+                    //                        // Case
+                    //                        writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
+                    //                        writer.WriteInScope(() =>
+                    //                        {
+                    //                            // Invoke method on struct
+                    //                            if (methodModel.HasNonVoidReturnType)
+                    //                            {
+                    //                                writer.WriteLine($"return Field_{polyStructModel.StructModel.Name}.{methodModel.Name}({methodModel.MethodParametersInvoke});");
+                    //                            }
+                    //                            else
+                    //                            {
+                    //                                writer.WriteLine($"Field_{polyStructModel.StructModel.Name}.{methodModel.Name}({methodModel.MethodParametersInvoke});");
+                    //                                writer.WriteLine($"break;");
+                    //                            }
+                    //                        });
+                    //                    }
+                    //                });
+                    //            });
 
-            //SourceText sourceText = SourceText.From(writer.FileContents, Encoding.UTF8);
-            //sourceProductionContext.AddSource($"{polyInterfaceModel.TargetStructModel.Name}{FileName_GeneratedSuffixAndFileType}", sourceText);
+                    //            writer.WriteLine($"");
+                    //        }
+                    //    });
+                    //});
+                    //writer.WriteLine($"");
 
-            //OutputErrorsAndLogs(sourceProductionContext, compiledCodeData.PolyInterfaceModel.Logs, compiledCodeData.PolyInterfaceModel.Errors);
+                    //SourceText sourceText = SourceText.From(writer.FileContents, Encoding.UTF8);
+                    //sourceProductionContext.AddSource($"{polyInterfaceModel.TargetStructModel.Name}{FileName_GeneratedSuffixAndFileType}", sourceText);
+
+                    //OutputErrorsAndLogs(sourceProductionContext, compiledCodeData.PolyInterfaceModel.Logs, compiledCodeData.PolyInterfaceModel.Errors);
+                }
+
+                DebugOutputter(sourceProductionContext, debug);
+            }
         }
 
         private static void GenerateTypeIdEnum(FileWriter writer, List<PolyStructModel> polyStructModels)

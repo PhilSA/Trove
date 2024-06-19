@@ -8,37 +8,66 @@ public interface IMyPolyInterfaceA
 }
 
 [PolymorphicUnionStructInterface]
-public interface IMyPolyInterfaceB   
-{ 
-    public void DoSomething(int a); 
+public interface IMyPolyInterfaceB
+{
+    public void DoSomethingA(int a);
+    public void DoSomethingB(int a); 
 }
 
 [PolymorphicStruct]  
-public struct MyStructA
+public struct MyStructA : IMyPolyInterfaceA
 { 
     public int Value;
+
+    public void DoSomething(int a)
+    {
+    }
 }
 
 [PolymorphicStruct]
-public struct MyStructB
+public struct MyStructB : IMyPolyInterfaceA
 {
     public int Value;
+
+    public void DoSomething(int a)
+    {
+    }
 }
- 
-//[PolymorphicStruct]
-//public struct MyStructC
-//{
-//    public int Value;
-//}
 
-//[PolymorphicStruct]
-//public struct MyStructD
-//{
-//    public int Value;
-//}
+[PolymorphicStruct]
+public struct MyStructC : IMyPolyInterfaceA
+{
+    public int Value;
 
-//[PolymorphicStruct]
-//public struct MyStructE
-//{
-//    public int Value;
-//}
+    public void DoSomething(int a)
+    {
+    }
+}
+
+[PolymorphicStruct]
+public struct MyStructD : IMyPolyInterfaceB
+{
+    public int Value;
+
+    public void DoSomethingA(int a)
+    {
+    }
+
+    public void DoSomethingB(int a)
+    {
+    }
+}
+
+[PolymorphicStruct]
+public struct MyStructE : IMyPolyInterfaceB
+{
+    public int Value;
+
+    public void DoSomethingA(int a)
+    {
+    }
+
+    public void DoSomethingB(int a)
+    {
+    }
+}
