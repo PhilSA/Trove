@@ -36,5 +36,5 @@ sysinfo.txt
 *.apk
 
 # Whitelist
-!com.trove.polymorphicstructs/SourceGenerators/Sources~/PolymorphicElementsSourceGenerator.sln
-!com.trove.polymorphicstructs/SourceGenerators/Sources~/PolymorphicElementsSourceGenerator/PolymorphicElementsSourceGenerator.csproj
+!com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator.sln
+!com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerator.csproj
