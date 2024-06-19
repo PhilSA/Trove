@@ -86,6 +86,7 @@ namespace PolymorphicStructsSourceGenerators
         public const string NamespaceName_Generated = NamespaceName_Package + ".Generated";
 
         public const string TypeName_Void = "void";
+        public const string TypeName_TypeId = "ushort";
         public const string TypeName_PolymorphicTypeManagerAttribute = "PolymorphicTypeManagerInterfaceAttribute";
         public const string TypeName_PolymorphicUnionStructAttribute = "PolymorphicUnionStructInterfaceAttribute";
         public const string TypeName_PolymorphicStructAttribute = "PolymorphicStructAttribute";
@@ -127,7 +128,7 @@ namespace PolymorphicStructsSourceGenerators
         public const string Name_ByteIndex = "byteIndex";
         public const string Name_WriteBack = "writeBack";
 
-        public const string ByteSizeOfTypeId = "4";
+        public const string ByteSizeOfTypeId = "2";
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
@@ -492,7 +493,7 @@ namespace PolymorphicStructsSourceGenerators
 
                     // GetSizeForTypeId 
                     writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                    writer.WriteLine($"public int {Name_Method_GetSizeForTypeId}(int typeId)");
+                    writer.WriteLine($"public int {Name_Method_GetSizeForTypeId}({TypeName_TypeId} typeId)");
                     writer.WriteInScope(() =>
                     {
                         writer.WriteLine($"switch (({Name_Enum_TypeId})typeId)");
@@ -525,7 +526,7 @@ namespace PolymorphicStructsSourceGenerators
                         writer.WriteLine($"public static void {Name_Method_Write}(byte* {Name_DestinationPtr}, {polyStructModel.StructModel.MetaDataName} s)");
                         writer.WriteInScope(() =>
                         {
-                            writer.WriteLine($"{TypeName_UnsafeUtility}.AsRef<int>({Name_DestinationPtr}) = (int){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}");
+                            writer.WriteLine($"{TypeName_UnsafeUtility}.AsRef<{TypeName_TypeId}>({Name_DestinationPtr}) = ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}");
                             writer.WriteLine($"{Name_DestinationPtr} = {Name_DestinationPtr} + (long){ByteSizeOfTypeId}");
                             writer.WriteLine($"{TypeName_UnsafeUtility}.AsRef<{polyStructModel.StructModel.MetaDataName}>({Name_DestinationPtr}) = s");
                         });
@@ -626,7 +627,7 @@ namespace PolymorphicStructsSourceGenerators
                             {
                                 // Read typeId
                                 writer.WriteLine($"byte* readPtr = {Name_ByteArrayPtr} + (long){Name_ByteIndex};");
-                                writer.WriteLine($"{TypeName_UnsafeUtility}.CopyPtrToStructure(readPtr, out int typeId);");
+                                writer.WriteLine($"{TypeName_UnsafeUtility}.CopyPtrToStructure(readPtr, out {TypeName_TypeId} typeId);");
                                 writer.WriteLine($"{Name_ByteIndex} += {ByteSizeOfTypeId};");
 
                                 writer.WriteLine($"");
@@ -700,7 +701,7 @@ namespace PolymorphicStructsSourceGenerators
                             writer.WriteInScope(() =>
                             {
                                 // Read typeId
-                                writer.WriteLine($"int typeId = {Name_StreamReader}.Read<int>();");
+                                writer.WriteLine($"{TypeName_TypeId} typeId = {Name_StreamReader}.Read<int>();");
 
                                 writer.WriteLine($"");
 
@@ -750,7 +751,7 @@ namespace PolymorphicStructsSourceGenerators
                             writer.WriteInScope(() =>
                             {
                                 // Read typeId
-                                writer.WriteLine($"int typeId = {Name_StreamReader}.Read<int>();");
+                                writer.WriteLine($"{TypeName_TypeId} typeId = {Name_StreamReader}.Read<int>();");
 
                                 writer.WriteLine($"");
 
@@ -859,7 +860,7 @@ namespace PolymorphicStructsSourceGenerators
 
                     // Union fields
                     writer.WriteLine($"[FieldOffset(0)]");
-                    writer.WriteLine($"public int TypeId;");
+                    writer.WriteLine($"public {TypeName_TypeId} TypeId;");
                     for (int i = 0; i < compiledCodeData.PolyStructModels.Count; i++)
                     {
                         PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[i];
@@ -950,7 +951,7 @@ namespace PolymorphicStructsSourceGenerators
 
         private static void GenerateTypeIdEnum(FileWriter writer, List<PolyStructModel> polyStructModels)
         {
-            writer.WriteLine($"public enum {Name_Enum_TypeId}");
+            writer.WriteLine($"public enum {Name_Enum_TypeId} : {TypeName_TypeId}");
             writer.WriteInScope(() =>
             {
                 for (int i = 0; i < polyStructModels.Count; i++)
