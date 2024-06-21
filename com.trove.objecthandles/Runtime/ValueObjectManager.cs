@@ -4,19 +4,26 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine.UIElements;
 
 namespace Trove.ObjectHandles
 {
-    // TODO: handle object version
+    public struct ObjectValue<T> where T : unmanaged
+    {
+        public int Version;
+        public T Value;
+    }
 
     public struct ObjectHandle
     {
         public readonly int Index;
+        public readonly int Version;
 
-        public ObjectHandle(int index)
+        public ObjectHandle(int index, int version)
         {
             Index = index;
+            Version = version;
         }
     }
 
@@ -24,59 +31,15 @@ namespace Trove.ObjectHandles
     {
         public readonly int ByteIndex;
         public readonly int Size;
+        public readonly int Id;
+        internal int BufferVersion;
 
-        public VirtualObjectHandle(int byteIndex, int size)
+        public VirtualObjectHandle(int byteIndex, int size, int id, int bufferVersion)
         {
             ByteIndex = byteIndex;
             Size = size;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T As<T>(NativeList<byte> elementsByteBuffer) where T : unmanaged
-        {
-            Assert.IsTrue(Size == UnsafeUtility.SizeOf<T>());
-            byte* objPtr = elementsByteBuffer.GetUnsafePtr() + (long)ByteIndex;
-            return *(T*)objPtr;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T AsRef<T>(NativeList<byte> elementsByteBuffer) where T : unmanaged
-        {
-            Assert.IsTrue(Size == UnsafeUtility.SizeOf<T>());
-            byte* objPtr = elementsByteBuffer.GetUnsafePtr() + (long)ByteIndex;
-            return ref *(T*)objPtr;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T As<T>(UnsafeList<byte> elementsByteBuffer) where T : unmanaged
-        {
-            Assert.IsTrue(Size == UnsafeUtility.SizeOf<T>());
-            byte* objPtr = elementsByteBuffer.Ptr + (long)ByteIndex;
-            return *(T*)objPtr;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T AsRef<T>(UnsafeList<byte> elementsByteBuffer) where T : unmanaged
-        {
-            Assert.IsTrue(Size == UnsafeUtility.SizeOf<T>());
-            byte* objPtr = elementsByteBuffer.Ptr + (long)ByteIndex;
-            return ref *(T*)objPtr;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T As<T>(DynamicBuffer<byte> elementsByteBuffer) where T : unmanaged
-        {
-            Assert.IsTrue(Size == UnsafeUtility.SizeOf<T>());
-            byte* objPtr = (byte*)elementsByteBuffer.GetUnsafePtr() + (long)ByteIndex;
-            return *(T*)objPtr;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T AsRef<T>(DynamicBuffer<byte> elementsByteBuffer) where T : unmanaged
-        {
-            Assert.IsTrue(Size == UnsafeUtility.SizeOf<T>());
-            byte* objPtr = (byte*)elementsByteBuffer.GetUnsafePtr() + (long)ByteIndex;
-            return ref *(T*)objPtr;
+            Id = id;
+            BufferVersion = bufferVersion;
         }
     }
 
@@ -90,9 +53,18 @@ namespace Trove.ObjectHandles
     {
         private const float ObjectsCapacityGrowFactor = 2f;
 
+        private const int ByteIndex_BufferVersion = 0;
+        private const int ByteIndex_ObjectIdCounter = 4;
+        private const int ByteIndex_ObjectDataBlockSize = 8;
+        private const int RelativeByteIndex_ObjectIdCountInBlock = 0;
+        private const int RelativeByteIndex_NextObjectIdBlockIndex = 4;
+        private const int ByteIndex_ObjectIdList = 12;
+
+        private const int ByteIndex_ObjectIdListBlockCapacity = 64;
+
         public static void Initialize<T>(
             ref NativeList<IndexRangeElement> freeIndexRangesBuffer,
-            ref NativeList<T> elementsBuffer,
+            ref NativeList<ObjectValue<T>> elementsBuffer,
             int initialElementsCapacity)
             where T : unmanaged
         {
@@ -111,7 +83,7 @@ namespace Trove.ObjectHandles
         public static void Initialize(
             ref NativeList<IndexRangeElement> freeIndexRangesBuffer,
             ref NativeList<byte> elementsByteBuffer,
-            int initialElementBytesCapacity)
+            int objectDataBlockBytesSize)
         {
             freeIndexRangesBuffer.Clear();
             elementsByteBuffer.Clear();
@@ -119,15 +91,26 @@ namespace Trove.ObjectHandles
             freeIndexRangesBuffer.Add(new IndexRangeElement
             {
                 StartInclusive = 0,
-                EndExclusive = initialElementBytesCapacity,
+                EndExclusive = objectDataBlockBytesSize,
             });
 
-            elementsByteBuffer.Resize(initialElementBytesCapacity, NativeArrayOptions.ClearMemory);
+            int bufferSize = UnsafeUtility.SizeOf<int>() * 3;
+            bufferSize += UnsafeUtility.SizeOf<int>() * ByteIndex_ObjectIdListBlockCapacity;
+            bufferSize += objectDataBlockBytesSize;
+            elementsByteBuffer.Resize(bufferSize, NativeArrayOptions.ClearMemory);
+
+            // Write element buffer internal data
+            byte* bufferPtr = elementsByteBuffer.GetUnsafePtr();
+            WriteValue<int>(bufferPtr, ByteIndex_BufferVersion, 0);
+            WriteValue<int>(bufferPtr, ByteIndex_ObjectIdCounter, 0);
+            WriteValue<int>(bufferPtr, ByteIndex_ObjectDataBlockSize, objectDataBlockBytesSize);
+            WriteValue<int>(bufferPtr, ByteIndex_ObjectIdCount, 0);
+            WriteValue<int>(bufferPtr, ByteIndex_ObjectIdCapacity, initialObjectIdsCapacity);
         }
 
         public static void Initialize<T>(
             ref UnsafeList<IndexRangeElement> freeIndexRangesBuffer,
-            ref UnsafeList<T> elementsBuffer,
+            ref UnsafeList<ObjectValue<T>> elementsBuffer,
             int initialElementsCapacity)
             where T : unmanaged
         {
@@ -162,7 +145,7 @@ namespace Trove.ObjectHandles
 
         public static void Initialize<T>(
             ref DynamicBuffer<IndexRangeElement> freeIndexRangesBuffer,
-            ref DynamicBuffer<T> elementsBuffer,
+            ref DynamicBuffer<ObjectValue<T>> elementsBuffer,
             int initialElementsCapacity)
             where T : unmanaged
         {
@@ -197,7 +180,7 @@ namespace Trove.ObjectHandles
 
         public static ObjectHandle CreateObject<T>(
             ref NativeList<IndexRangeElement> freeIndexRangesBuffer,
-            ref NativeList<T> elementsBuffer,
+            ref NativeList<ObjectValue<T>> elementsBuffer,
             T objectValue)
             where T : unmanaged
         {
@@ -233,12 +216,13 @@ namespace Trove.ObjectHandles
                 }
             }
 
-            // TODO: bump version
+            // Write object and bump version
+            ObjectValue<T> value = elementsBuffer[consumedStartIndex];
+            value.Version++;
+            value.Value = objectValue;
+            elementsBuffer[consumedStartIndex] = value;
 
-            // Write object
-            elementsBuffer[consumedStartIndex] = objectValue;
-
-            return new ObjectHandle(consumedStartIndex);
+            return new ObjectHandle(consumedStartIndex, value.Version);
         }
 
         public static VirtualObjectHandle CreateObject(
@@ -279,13 +263,17 @@ namespace Trove.ObjectHandles
                 }
             }
 
-            // TODO: bump version
+            // Read and bump version
+            byte* bufferPtr = elementsByteBuffer.GetUnsafePtr();
+            int writeIndex = consumedStartIndex;
+            ReadValue<int>(bufferPtr, writeIndex, out int version);
+            version++;
+            WriteValue(bufferPtr, ref writeIndex, version);
 
             // Write object
-            byte* destinationPtr = elementsByteBuffer.GetUnsafePtr() + (long)consumedStartIndex;
-            UnsafeUtility.MemCpy(destinationPtr, objectValuePtr, objectSize);
+            WriteValue(bufferPtr, writeIndex, objectValuePtr, objectSize);
 
-            return new VirtualObjectHandle(consumedStartIndex, objectSize);
+            return new VirtualObjectHandle(consumedStartIndex, objectSize, version);
         }
 
         public static ObjectHandle CreateObject<T>(
@@ -326,10 +314,13 @@ namespace Trove.ObjectHandles
                 }
             }
 
-            // Write object
-            elementsBuffer[consumedStartIndex] = objectValue;
+            // Write object and bump version
+            ObjectValue<T> value = elementsBuffer[consumedStartIndex];
+            value.Version++;
+            value.Value = objectValue;
+            elementsBuffer[consumedStartIndex] = value;
 
-            return new ObjectHandle(consumedStartIndex);
+            return new ObjectHandle(consumedStartIndex, value.Version);
         }
 
         public static VirtualObjectHandle CreateObject(
@@ -415,10 +406,13 @@ namespace Trove.ObjectHandles
                 }
             }
 
-            // Write object
-            elementsBuffer[consumedStartIndex] = objectValue;
+            // Write object and bump version
+            ObjectValue<T> value = elementsBuffer[consumedStartIndex];
+            value.Version++;
+            value.Value = objectValue;
+            elementsBuffer[consumedStartIndex] = value;
 
-            return new ObjectHandle(consumedStartIndex);
+            return new ObjectHandle(consumedStartIndex, value.Version);
         }
 
         public static VirtualObjectHandle CreateObject(
@@ -800,6 +794,222 @@ namespace Trove.ObjectHandles
             }
         }
 
+        public static bool TryGetObjectValue<T>(
+            ref NativeList<IndexRangeElement> freeIndexRangesBuffer,
+            ref NativeList<T> elementsBuffer,
+            ObjectHandle objectHandle,
+            out T value)
+            where T : unmanaged
+        {
+            if (objectHandle.Index < elementsBuffer.Length)
+            {
+                // TODO; check version
+                value = elementsBuffer[objectHandle.Index];
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        public static bool TryGetObjectValue<T>(
+            ref NativeList<IndexRangeElement> freeIndexRangesBuffer,
+            ref NativeList<byte> elementsByteBuffer,
+            VirtualObjectHandle objectHandle,
+            out T value)
+            where T : unmanaged
+        {
+            if (objectHandle.ByteIndex + objectHandle.Size <= elementsByteBuffer.Length)
+            {
+                // TODO; check version
+                byte* objPtr = elementsByteBuffer.GetUnsafePtr() + (long)objectHandle.ByteIndex;
+                value = *(T*)objPtr;
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        public static bool TryGetObjectValue<T>(
+            ref UnsafeList<IndexRangeElement> freeIndexRangesBuffer,
+            ref UnsafeList<T> elementsBuffer,
+            ObjectHandle objectHandle,
+            out T value)
+            where T : unmanaged
+        {
+            if (objectHandle.Index < elementsBuffer.Length)
+            {
+                // TODO; check version
+                value = elementsBuffer[objectHandle.Index];
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        public static bool TryGetObjectValue<T>(
+            ref UnsafeList<IndexRangeElement> freeIndexRangesBuffer,
+            ref UnsafeList<byte> elementsByteBuffer,
+            VirtualObjectHandle objectHandle,
+            out T value)
+            where T : unmanaged
+        {
+            if (objectHandle.ByteIndex + objectHandle.Size <= elementsByteBuffer.Length)
+            {
+                // TODO; check version
+                byte* objPtr = elementsByteBuffer.Ptr + (long)objectHandle.ByteIndex;
+                value = *(T*)objPtr;
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        public static bool TryGetObjectValue<T>(
+            ref DynamicBuffer<IndexRangeElement> freeIndexRangesBuffer,
+            ref DynamicBuffer<T> elementsBuffer,
+            ObjectHandle objectHandle,
+            out T value)
+            where T : unmanaged
+        {
+            if (objectHandle.Index < elementsBuffer.Length)
+            {
+                // TODO; check version
+                value = elementsBuffer[objectHandle.Index];
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        public static bool TryGetObjectValue<T>(
+            ref DynamicBuffer<IndexRangeElement> freeIndexRangesBuffer,
+            ref DynamicBuffer<byte> elementsByteBuffer,
+            VirtualObjectHandle objectHandle,
+            out T value)
+            where T : unmanaged
+        {
+            if (objectHandle.ByteIndex + objectHandle.Size <= elementsByteBuffer.Length)
+            {
+                // TODO; check version
+                byte* objPtr = (byte*)elementsByteBuffer.GetUnsafePtr() + (long)objectHandle.ByteIndex;
+                value = *(T*)objPtr;
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        public static bool TrySetObjectValue<T>(
+            ref NativeList<IndexRangeElement> freeIndexRangesBuffer,
+            ref NativeList<T> elementsBuffer,
+            ObjectHandle objectHandle,
+            T value)
+            where T : unmanaged
+        {
+            if (objectHandle.Index < elementsBuffer.Length)
+            {
+                // TODO; check version
+                elementsBuffer[objectHandle.Index] = value;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool TrySetObjectValue<T>(
+            ref NativeList<IndexRangeElement> freeIndexRangesBuffer,
+            ref NativeList<byte> elementsByteBuffer,
+            VirtualObjectHandle objectHandle,
+            T value)
+            where T : unmanaged
+        {
+            if (objectHandle.ByteIndex + objectHandle.Size <= elementsByteBuffer.Length)
+            {
+                // TODO; check version
+                byte* objPtr = elementsByteBuffer.GetUnsafePtr() + (long)objectHandle.ByteIndex;
+                *(T*)objPtr = value;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool TrySetObjectValue<T>(
+            ref UnsafeList<IndexRangeElement> freeIndexRangesBuffer,
+            ref UnsafeList<T> elementsBuffer,
+            ObjectHandle objectHandle,
+            T value)
+            where T : unmanaged
+        {
+            if (objectHandle.Index < elementsBuffer.Length)
+            {
+                // TODO; check version
+                elementsBuffer[objectHandle.Index] = value;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool TrySetObjectValue<T>(
+            ref UnsafeList<IndexRangeElement> freeIndexRangesBuffer,
+            ref UnsafeList<byte> elementsByteBuffer,
+            VirtualObjectHandle objectHandle,
+            T value)
+            where T : unmanaged
+        {
+            if (objectHandle.ByteIndex + objectHandle.Size <= elementsByteBuffer.Length)
+            {
+                // TODO; check version
+                byte* objPtr = (byte*)elementsByteBuffer.Ptr + (long)objectHandle.ByteIndex;
+                *(T*)objPtr = value;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool TrySetObjectValue<T>(
+            ref DynamicBuffer<IndexRangeElement> freeIndexRangesBuffer,
+            ref DynamicBuffer<T> elementsBuffer,
+            ObjectHandle objectHandle,
+            T value)
+            where T : unmanaged
+        {
+            if (objectHandle.Index < elementsBuffer.Length)
+            {
+                // TODO; check version
+                elementsBuffer[objectHandle.Index] = value;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool TrySetObjectValue<T>(
+            ref DynamicBuffer<IndexRangeElement> freeIndexRangesBuffer,
+            ref DynamicBuffer<byte> elementsByteBuffer,
+            VirtualObjectHandle objectHandle,
+            T value)
+            where T : unmanaged
+        {
+            if (objectHandle.ByteIndex + objectHandle.Size <= elementsByteBuffer.Length)
+            {
+                // TODO; check version
+                byte* objPtr = (byte*)elementsByteBuffer.GetUnsafePtr() + (long)objectHandle.ByteIndex;
+                *(T*)objPtr = value;
+                return true;
+            }
+
+            return false;
+        }
+
         public static void TrimCapacity<T>(
             ref NativeList<IndexRangeElement> freeIndexRangesBuffer,
             ref NativeList<T> elementsBuffer,
@@ -1115,6 +1325,38 @@ namespace Trove.ObjectHandles
         private static bool RangesOverlap(int aStartInclusive, int aEndExclusive, int bStartInclusive, int bEndExclusive)
         {
             return aStartInclusive < bEndExclusive && bStartInclusive < aEndExclusive;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ReadValue<T>(byte* byteArrayPtr, int byteIndex, out T value)
+            where T : unmanaged
+        {
+            byte* startPtr = byteArrayPtr + (long)byteIndex;
+            UnsafeUtility.CopyPtrToStructure(startPtr, out value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteValue<T>(byte* byteArrayPtr, int byteIndex, T value)
+            where T : unmanaged
+        {
+            byte* startPtr = byteArrayPtr + (long)byteIndex;
+            UnsafeUtility.AsRef<T>(startPtr) = value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteValue<T>(byte* byteArrayPtr, ref int byteIndex, T value)
+            where T : unmanaged
+        {
+            byte* startPtr = byteArrayPtr + (long)byteIndex;
+            UnsafeUtility.AsRef<T>(startPtr) = value;
+            byteIndex += UnsafeUtility.SizeOf<T>();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteValue(byte* byteArrayPtr, int byteIndex, byte* value, int valueSize)
+        {
+            byte* startPtr = byteArrayPtr + (long)byteIndex;
+            UnsafeUtility.MemCpy(startPtr, value, valueSize);
         }
     }
 }
