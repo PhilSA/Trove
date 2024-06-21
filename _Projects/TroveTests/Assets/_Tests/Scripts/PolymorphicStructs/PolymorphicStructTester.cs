@@ -24,6 +24,7 @@ public interface IMyPolyInterfaceC
 public interface IMyPolyInterfaceD
 {
     public void DoSomethingA(int a);
+    [WriteBackStructData]
     public void DoSomethingB(int a);
 }
 
@@ -36,16 +37,18 @@ public struct MyStructA : IMyPolyInterfaceA, IMyPolyInterfaceC
     {
     }
 } 
-
+ 
 [PolymorphicStruct]
 public struct MyStructB : IMyPolyInterfaceA, IMyPolyInterfaceC
 {
     public int Value; 
 
     public void DoSomething(int a)
-    {
+    {  
         UnionStruct_IMyPolyInterfaceA testA;
+        UnionStruct_IMyPolyInterfaceB testB; 
         TypeManager_IMyPolyInterfaceC testC;
+        TypeManager_IMyPolyInterfaceD testD;  
     }
 }
 

@@ -511,6 +511,7 @@ namespace Trove.PolymorphicStructs
                 }
                 list.ResizeUninitialized(requiredLength);
                 InsertValue<T>(list.GetUnsafePtr(), byteIndex, lengthBeforeResize, value);
+                return true;
             }
             return false;
         }
@@ -529,6 +530,7 @@ namespace Trove.PolymorphicStructs
                 }
                 list.ResizeUninitialized(requiredLength);
                 InsertValues<T1, T2>(list.GetUnsafePtr(), byteIndex, lengthBeforeResize, value1, value2);
+                return true;
             }
             return false;
         }
@@ -546,6 +548,7 @@ namespace Trove.PolymorphicStructs
                 }
                 list.Resize(requiredLength);
                 InsertValue<T>(list.Ptr, byteIndex, lengthBeforeResize, value);
+                return true;
             }
             return false;
         }
@@ -564,6 +567,7 @@ namespace Trove.PolymorphicStructs
                 }
                 list.Resize(requiredLength);
                 InsertValues<T1, T2>(list.Ptr, byteIndex, lengthBeforeResize, value1, value2);
+                return true;
             }
             return false;
         }
@@ -581,6 +585,7 @@ namespace Trove.PolymorphicStructs
                 }
                 buffer.ResizeUninitialized(requiredLength);
                 InsertValue<T>((byte*)buffer.GetUnsafePtr(), byteIndex, lengthBeforeResize, value);
+                return true;
             }
             return false;
         }
@@ -599,6 +604,7 @@ namespace Trove.PolymorphicStructs
                 }
                 buffer.ResizeUninitialized(requiredLength);
                 InsertValues<T1, T2>((byte*)buffer.GetUnsafePtr(), byteIndex, lengthBeforeResize, value1, value2);
+                return true;
             }
             return false;
         }
@@ -636,6 +642,7 @@ namespace Trove.PolymorphicStructs
             {
                 RemoveValue<T>(list.Ptr, byteIndex, list.Length, out int newLength);
                 list.Resize(newLength);
+                return true;
             }
             return false;
         }
@@ -649,6 +656,7 @@ namespace Trove.PolymorphicStructs
             {
                 RemoveValues<T1, T2>(list.Ptr, byteIndex, list.Length, out int newLength);
                 list.Resize(newLength);
+                return true;
             }
             return false;
         }
@@ -661,6 +669,7 @@ namespace Trove.PolymorphicStructs
             {
                 RemoveValue<T>((byte*)buffer.GetUnsafePtr(), byteIndex, buffer.Length, out int newLength);
                 buffer.ResizeUninitialized(newLength);
+                return true;
             }
             return false;
         }
@@ -674,6 +683,7 @@ namespace Trove.PolymorphicStructs
             {
                 RemoveValues<T1, T2>((byte*)buffer.GetUnsafePtr(), byteIndex, buffer.Length, out int newLength);
                 buffer.ResizeUninitialized(newLength);
+                return true;
             }
             return false;
         }
