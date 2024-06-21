@@ -5,7 +5,8 @@
         "Unity.Entities",
         "Unity.Collections",
         "Unity.Burst",
-        "Unity.Mathematics"
+        "Unity.Mathematics",
+        "Unity.Logging"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
