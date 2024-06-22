@@ -3,9 +3,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Trove;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using Unity.Mathematics;
-using static UnityEditor.Experimental.GraphView.Port;
 
 namespace Trove.ObjectHandles
 {
