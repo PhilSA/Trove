@@ -8,7 +8,8 @@
         "Unity.Entities",
         "Unity.Collections",
         "Unity.Burst",
-        "Unity.Mathematics"
+        "Unity.Mathematics",
+        "com.trove.common"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

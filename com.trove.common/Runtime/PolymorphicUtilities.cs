@@ -6,7 +6,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
-namespace Trove.PolymorphicStructs
+namespace Trove
 {
     public static unsafe class PolymorphicUtilities
     {

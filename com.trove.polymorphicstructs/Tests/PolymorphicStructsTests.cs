@@ -2,8 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
-using Trove.PolymorphicStructs;
-using Trove.PolymorphicStructs.Generated;
+using Trove;
 using NUnit.Framework;
 using Unity.Entities;
 

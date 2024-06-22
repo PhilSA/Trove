@@ -19,6 +19,7 @@ namespace Trove.EventSystems
             ProjectWindowUtil.CreateScriptAssetFromTemplateFile($"{ScriptTemplatePath}EntityEventTemplate.txt", "NewEvent.cs");
         }
 
+#if USE_POLYMORPHICSTRUCTS
         [MenuItem("Assets/Create/Trove/EventSystems/Global Polymorphic Event", priority = 3)]
         static void NewGlobalPolymorphicEvent()
         {
@@ -30,5 +31,6 @@ namespace Trove.EventSystems
         {
             ProjectWindowUtil.CreateScriptAssetFromTemplateFile($"{ScriptTemplatePath}EntityPolymorphicEventTemplate.txt", "NewEvent.cs");
         }
+#endif
     }
 }

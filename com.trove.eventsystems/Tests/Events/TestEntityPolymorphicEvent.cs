@@ -123,7 +123,7 @@ namespace Trove.EventSystems.Tests
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool ExecuteNextEvent(byte* byteArrayPtr, int byteArrayLength, ref int index, ref EntityEventReceiver eventReceiver, int contextType)
         {
-            if (PolymorphicUtilities.CanRead<int>(byteArrayLength, index))
+            if (PolymorphicUtilities.CanReadValue<int>(byteArrayLength, index))
             {
                 // First we read the event type Id
                 PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out int typeId);
@@ -134,7 +134,7 @@ namespace Trove.EventSystems.Tests
                     // Event A
                     case TypeId.TestEntityPolymorphicEventA:
                         {
-                            if (PolymorphicUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<TestEntityPolymorphicEventA>()))
+                            if (PolymorphicUtilities.CanReadValue(byteArrayLength, index, UnsafeUtility.SizeOf<TestEntityPolymorphicEventA>()))
                             {
                                 PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out TestEntityPolymorphicEventA e);
                                 switch (e.Val)
@@ -231,7 +231,7 @@ namespace Trove.EventSystems.Tests
                     // Event B
                     case TypeId.TestEntityPolymorphicEventB:
                         {
-                            if (PolymorphicUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<TestEntityPolymorphicEventB>()))
+                            if (PolymorphicUtilities.CanReadValue(byteArrayLength, index, UnsafeUtility.SizeOf<TestEntityPolymorphicEventB>()))
                             {
                                 PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out TestEntityPolymorphicEventB e);
                                 switch (e.Val3)

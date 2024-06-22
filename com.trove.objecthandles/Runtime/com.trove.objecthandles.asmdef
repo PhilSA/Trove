@@ -6,7 +6,8 @@
         "Unity.Collections",
         "Unity.Burst",
         "Unity.Mathematics",
-        "Unity.Logging"
+        "Unity.Logging",
+        "com.trove.common"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

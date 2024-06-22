@@ -1,5 +1,6 @@
 
 using System.Runtime.CompilerServices;
+using Trove;
 using Trove.EventSystems;
 using Trove.EventSystems.Tests;
 using Unity.Burst;
@@ -101,7 +102,7 @@ namespace Trove.EventSystems.Tests
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool ExecuteNextEvent(byte* byteArrayPtr, int byteArrayLength, ref int index, ref NativeHashMap<int, int> eventsCounter)
         {
-            if (PolymorphicUtilities.CanRead<int>(byteArrayLength, index))
+            if (PolymorphicUtilities.CanReadValue<int>(byteArrayLength, index))
             {
                 // First we read the event type Id
                 PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out int typeId);
@@ -112,7 +113,7 @@ namespace Trove.EventSystems.Tests
                     // Event A
                     case TypeId.TestGlobalPolymorphicEventA:
                         {
-                            if (PolymorphicUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<TestGlobalPolymorphicEventA>()))
+                            if (PolymorphicUtilities.CanReadValue(byteArrayLength, index, UnsafeUtility.SizeOf<TestGlobalPolymorphicEventA>()))
                             {
                                 PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out TestGlobalPolymorphicEventA e);
                                 EventTestUtilities.AddEventToCounter(ref eventsCounter, e.Val);
@@ -123,7 +124,7 @@ namespace Trove.EventSystems.Tests
                     // Event B
                     case TypeId.TestGlobalPolymorphicEventB:
                         {
-                            if (PolymorphicUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<TestGlobalPolymorphicEventB>()))
+                            if (PolymorphicUtilities.CanReadValue(byteArrayLength, index, UnsafeUtility.SizeOf<TestGlobalPolymorphicEventB>()))
                             {
                                 PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out TestGlobalPolymorphicEventB e);
                                 EventTestUtilities.AddEventToCounter(ref eventsCounter, e.Val3);

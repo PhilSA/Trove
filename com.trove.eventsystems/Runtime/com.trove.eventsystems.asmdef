@@ -4,7 +4,8 @@
     "references": [
         "Unity.Entities",
         "Unity.Collections",
-        "Unity.Burst"
+        "Unity.Burst",
+        "com.trove.common"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -13,6 +14,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.trove.polymorphicstructs",
+            "expression": "",
+            "define": "USE_POLYMORPHICSTRUCTS"
+        }
+    ],
     "noEngineReferences": false
 }

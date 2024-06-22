@@ -168,8 +168,9 @@ namespace PolymorphicStructsSourceGenerators
     [Generator]
     public class PolymorphicStructsGenerator : IIncrementalGenerator
     {
-        public const string NamespaceName_Package = "Trove.PolymorphicStructs";
-        public const string NamespaceName_Generated = NamespaceName_Package + ".Generated";
+        public const string NamespaceName_Trove = "Trove";
+        public const string NamespaceName_PolymorphicStructs = NamespaceName_Trove + ".PolymorphicStructs";
+        public const string NamespaceName_Generated = NamespaceName_PolymorphicStructs + ".Generated";
 
         public const string TypeName_Void = "void";
         public const string TypeName_TypeId = "ushort";
@@ -1027,9 +1028,9 @@ namespace PolymorphicStructsSourceGenerators
             return new List<string>
             {
                 $"System",
+                $"{NamespaceName_Trove}",
                 $"Unity.Entities",
                 $"Unity.Collections",
-                $"{NamespaceName_Package}",
                 $"Unity.Collections.LowLevel.Unsafe",
                 $"System.Runtime.InteropServices",
                 $"System.Runtime.CompilerServices",
