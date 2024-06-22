@@ -151,16 +151,44 @@ namespace Trove.ObjectHandles
             SetObjectMetadatasCount(bufferPtr, 0);
 
             GetObjectDatasStartIndex(bufferPtr, out int objectDatasStartIndex);
-            dataFreeIndexRangesBuffer.Add(new IndexRangeElement
+            IndexRangeElement dataFreeRanges = new IndexRangeElement
             {
                 StartInclusive = objectDatasStartIndex,
                 EndExclusive = elementsByteBuffer.Length,
-            });
-            metaDataFreeIndexRangesBuffer.Add(new IndexRangeElement
+            };
+            IndexRangeElement metadataFreeRanges = new IndexRangeElement
             {
                 StartInclusive = ByteIndex_MetadatasStartIndex,
                 EndExclusive = objectDatasStartIndex,
-            });
+            };
+
+            // TODO: allocate virtual lists for free ranges
+
+            //ConsumeFreeRange(freeIndexRange, UnsafeUtility.SizeOf<VirtualObjectMetadata>(), out bool isFullyConsumed, out int consumedStartIndex);
+            //if (isFullyConsumed)
+            //{
+            //    if (indexOfFreeRange >= 0) // If the range was already stored, remove it
+            //    {
+            //        metaDataFreeIndexRangesBuffer.RemoveAt(indexOfFreeRange);
+            //    }
+            //}
+            //else
+            //{
+            //    if (indexOfFreeRange >= 0) // If the range was already stored, overwrite it
+            //    {
+            //        metaDataFreeIndexRangesBuffer[indexOfFreeRange] = freeIndexRange;
+            //    }
+            //    else // If the range wasn't stored, add it
+            //    {
+            //        metaDataFreeIndexRangesBuffer.Add(freeIndexRange);
+            //    }
+            //}
+
+            //metadataIndex = consumedStartIndex;
+
+
+            dataFreeIndexRangesBuffer.Add(dataFreeRanges);
+            metaDataFreeIndexRangesBuffer.Add(metadataFreeRanges);
         }
 
         public static VirtualObjectHandle<T> CreateObject<T>(
@@ -993,18 +1021,6 @@ namespace Trove.ObjectHandles
         private static void GetObjectMetadatasCount(byte* byteArrayPtr, out int value)
         {
             ReadValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCount, out value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int GetFreeMetadataRangesHandleStartIndex(byte* byteArrayPtr)
-        {
-            return ByteIndex_ObjectMetadataCount + UnsafeUtility.SizeOf<int>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int GetFreeDataRangesHandleStartIndex(byte* byteArrayPtr)
-        {
-            return GetFreeMetadataRangesHandleStartIndex(byteArrayPtr) + UnsafeUtility.SizeOf<VirtualObjectHandleRO<VirtualList<IndexRangeElement>>>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
