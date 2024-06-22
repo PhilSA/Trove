@@ -1,13 +1,10 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
-using static UnityEngine.Rendering.VirtualTexturing.Debugging;
 
 namespace Trove.ObjectHandles
 { 
