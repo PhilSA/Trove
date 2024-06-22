@@ -106,8 +106,11 @@ namespace Trove.ObjectHandles
 
         private const float ObjectsCapacityGrowFactor = 2f;
 
-        private const int ByteIndex_ObjectMetadataCapacity = 0;
-        private const int ByteIndex_ObjectMetadataCount = ByteIndex_ObjectMetadataCapacity + sizeof(int);
+        private static int ByteIndex_ObjectMetadataCapacity = 0;
+        private static int ByteIndex_ObjectMetadataCount = ByteIndex_ObjectMetadataCapacity + UnsafeUtility.SizeOf<int>();
+        private static int ByteIndex_MetadataFreeRangesHandle = ByteIndex_ObjectMetadataCount + UnsafeUtility.SizeOf<int>();
+        private static int ByteIndex_ObjectDataFreeRangesHandle = ByteIndex_MetadataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualObjectHandleRO<VirtualList<IndexRangeElement>>>();
+        private static int ByteIndex_MetadatasStartIndex = ByteIndex_ObjectDataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualObjectHandleRO<VirtualList<IndexRangeElement>>>();
 
         public static void Initialize<T>(
             ref DynamicBuffer<IndexRangeElement> freeIndexRangesBuffer,
@@ -139,8 +142,7 @@ namespace Trove.ObjectHandles
             elementsByteBuffer.Clear();
 
             byte* byteArrayPtr = (byte*)elementsByteBuffer.GetUnsafePtr();
-            int metadatasStartIndex = GetObjectMetadatasStartIndex(byteArrayPtr);
-            int bufferSize = metadatasStartIndex + (UnsafeUtility.SizeOf<VirtualObjectMetadata>() * objectsCapacity) + objectDataBytesCapacity;
+            int bufferSize = ByteIndex_MetadatasStartIndex + (UnsafeUtility.SizeOf<VirtualObjectMetadata>() * objectsCapacity) + objectDataBytesCapacity;
             elementsByteBuffer.Resize(bufferSize, NativeArrayOptions.ClearMemory);
 
             // Write element buffer internal data
@@ -156,7 +158,7 @@ namespace Trove.ObjectHandles
             });
             metaDataFreeIndexRangesBuffer.Add(new IndexRangeElement
             {
-                StartInclusive = metadatasStartIndex,
+                StartInclusive = ByteIndex_MetadatasStartIndex,
                 EndExclusive = objectDatasStartIndex,
             });
         }
@@ -213,7 +215,6 @@ namespace Trove.ObjectHandles
                 if (!FindFreeIndexRange(ref metaDataFreeIndexRangesBuffer, UnsafeUtility.SizeOf<VirtualObjectMetadata>(), out IndexRangeElement freeIndexRange, out int indexOfFreeRange))
                 {
                     bufferPtr = (byte*)elementsByteBuffer.GetUnsafePtr();
-                    int metadatasStartIndex = GetObjectMetadatasStartIndex(bufferPtr);
 
                     // Increase buffer capacity for expanded metadatas
                     int prevElementsBufferLength = elementsByteBuffer.Length;
@@ -233,7 +234,7 @@ namespace Trove.ObjectHandles
                     byte* startPtr = bufferPtr + (long)prevMetadatasCapacity;
                     UnsafeUtility.MemCpy(destPtr, startPtr, (prevElementsBufferLength - prevObjectDatasStartIndex));
                     ShiftFreeRanges(ref dataFreeIndexRangesBuffer, metadatasCapacityDiffInBytes);
-                    ShiftMetadataByteIndexes(bufferPtr, metadatasCapacityDiffInBytes, metadatasStartIndex, newObjectDatasStartIndex);
+                    ShiftMetadataByteIndexes(bufferPtr, metadatasCapacityDiffInBytes, newObjectDatasStartIndex);
 
                     GetExpandedFreeRange(ref metaDataFreeIndexRangesBuffer, prevObjectDatasStartIndex, newObjectDatasStartIndex,
                         out freeIndexRange, out indexOfFreeRange);
@@ -708,16 +709,15 @@ namespace Trove.ObjectHandles
             int minDataBytesCapacity)
         {
             byte* bufferPtr = (byte*)elementsByteBuffer.GetUnsafePtr();
-            int metadatasStartIndex = GetObjectMetadatasStartIndex(bufferPtr);
             int initialBufferLength = elementsByteBuffer.Length;
             GetObjectDatasStartIndex(bufferPtr, out int prevEndIndexOfMetadatasExclusive);
 
             // Metadatas
             int newSizeMetaDataBytes;
             {
-                FindLastUsedIndex(ref metadataFreeIndexRangesBuffer, metadatasStartIndex, prevEndIndexOfMetadatasExclusive, out int lastUsedIndex);
-                newSizeMetaDataBytes = math.max(0, math.max(minMetadatasCapacity * UnsafeUtility.SizeOf<VirtualObjectMetadata>(), (lastUsedIndex - metadatasStartIndex) + 1));
-                int newEndIndexOfMetadatasExclusive = metadatasStartIndex + newSizeMetaDataBytes;
+                FindLastUsedIndex(ref metadataFreeIndexRangesBuffer, ByteIndex_MetadatasStartIndex, prevEndIndexOfMetadatasExclusive, out int lastUsedIndex);
+                newSizeMetaDataBytes = math.max(0, math.max(minMetadatasCapacity * UnsafeUtility.SizeOf<VirtualObjectMetadata>(), (lastUsedIndex - ByteIndex_MetadatasStartIndex) + 1));
+                int newEndIndexOfMetadatasExclusive = ByteIndex_MetadatasStartIndex + newSizeMetaDataBytes;
 
                 // Clear ranges past new length
                 for (int i = metadataFreeIndexRangesBuffer.Length - 1; i >= 0; i--)
@@ -745,7 +745,7 @@ namespace Trove.ObjectHandles
                 byte* startPtr = bufferPtr + (long)prevEndIndexOfMetadatasExclusive;
                 UnsafeUtility.MemCpy(destPtr, startPtr, sizeDatas);
                 ShiftFreeRanges(ref dataFreeIndexRangesBuffer, metadatasCapacityDiffInBytes);
-                ShiftMetadataByteIndexes(bufferPtr, metadatasCapacityDiffInBytes, metadatasStartIndex, newEndIndexOfMetadatasExclusive);
+                ShiftMetadataByteIndexes(bufferPtr, metadatasCapacityDiffInBytes, newEndIndexOfMetadatasExclusive);
             }
 
             // Datas
@@ -753,7 +753,7 @@ namespace Trove.ObjectHandles
             {
                 FindLastUsedIndex(ref dataFreeIndexRangesBuffer, prevEndIndexOfMetadatasExclusive, initialBufferLength, out int lastUsedIndex);
                 newSizeDataBytes = math.max(0, math.max(minDataBytesCapacity, (lastUsedIndex - prevEndIndexOfMetadatasExclusive) + 1));
-                int newEndOfDatasExclusive = metadatasStartIndex + newSizeMetaDataBytes + newSizeDataBytes;
+                int newEndOfDatasExclusive = ByteIndex_MetadatasStartIndex + newSizeMetaDataBytes + newSizeDataBytes;
 
                 // Clear ranges past new length
                 for (int i = dataFreeIndexRangesBuffer.Length - 1; i >= 0; i--)
@@ -776,7 +776,7 @@ namespace Trove.ObjectHandles
             }
 
             // Resize from datas
-            int newSize = metadatasStartIndex + newSizeMetaDataBytes + newSizeDataBytes;
+            int newSize = ByteIndex_MetadatasStartIndex + newSizeMetaDataBytes + newSizeDataBytes;
             elementsByteBuffer.Resize(newSize, NativeArrayOptions.ClearMemory);
             elementsByteBuffer.Capacity = newSize;
         }
@@ -819,9 +819,9 @@ namespace Trove.ObjectHandles
             }
         }
 
-        private static void ShiftMetadataByteIndexes(byte* elementDataBufferPtr, int indexShift, int metadatasStartIndexInclusive, int metadatasEndIndexExclusive)
+        private static void ShiftMetadataByteIndexes(byte* elementDataBufferPtr, int indexShift, int metadatasEndIndexExclusive)
         {
-            for (int i = metadatasStartIndexInclusive; i < metadatasEndIndexExclusive; i += UnsafeUtility.SizeOf<VirtualObjectMetadata>())
+            for (int i = ByteIndex_MetadatasStartIndex; i < metadatasEndIndexExclusive; i += UnsafeUtility.SizeOf<VirtualObjectMetadata>())
             {
                 ReadValue(elementDataBufferPtr, i, out VirtualObjectMetadata metadata);
                 metadata.ByteIndex += indexShift;
@@ -1008,17 +1008,11 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int GetObjectMetadatasStartIndex(byte* byteArrayPtr)
-        {
-            return GetFreeDataRangesHandleStartIndex(byteArrayPtr) + UnsafeUtility.SizeOf<VirtualObjectHandleRO<VirtualList<IndexRangeElement>>>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         // TODO: ObjectDatasStartIndex could be cached as internal buffer data and updated whenever there's a resize of metadatas
         private static void GetObjectDatasStartIndex(byte* byteArrayPtr, out int value)
         {
             GetObjectMetadatasCapacity(byteArrayPtr, out int objectMetadatasCapacity);
-            value = GetObjectMetadatasStartIndex(byteArrayPtr) + (UnsafeUtility.SizeOf<VirtualObjectMetadata>() * objectMetadatasCapacity);
+            value = ByteIndex_MetadatasStartIndex + (UnsafeUtility.SizeOf<VirtualObjectMetadata>() * objectMetadatasCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
