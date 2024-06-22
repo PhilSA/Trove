@@ -324,6 +324,47 @@ namespace Trove.ObjectHandles
             }
         }
 
+        internal static void ReallocateObject(
+            VirtualObjectHandle handle,
+            ref DynamicBuffer<byte> byteBuffer,
+            int newSize)
+        {
+            byte* bufferPtr = (byte*)byteBuffer.GetUnsafePtr();
+
+            ref VirtualObjectMetadata objectMetadataRef = ref ByteArrayUtilities.ReadValueAsRef<VirtualObjectMetadata>(bufferPtr, handle.MetadataByteIndex);
+            int oldSize = objectMetadataRef.Size;
+
+            if (newSize != oldSize)
+            {
+                // - find a new place to allocate data (check if we can simply expand current range)
+                int newDataByteIndex = ;
+                bool dataByteIndexChanged = ;
+                bool newSizeIsSmaller = newSize < oldSize;
+
+                if (dataByteIndexChanged)
+                {
+                    // Copy data over to new location
+                    byte* oldDataPtr = bufferPtr + (long)objectMetadataRef.ByteIndex;
+                    byte* newDataPtr = bufferPtr + (long)newDataByteIndex;
+                    UnsafeUtility.MemCpy(newDataPtr, oldDataPtr, oldSize);
+
+                    // Make metadata byteindex point to new location
+                    objectMetadataRef.ByteIndex = newDataByteIndex;
+
+                    // - free old memory
+                    k
+                }
+                else if (newSizeIsSmaller)
+                {
+                    // - free superfluous memory
+                    g
+                }
+
+                // Update metadata size
+                objectMetadataRef.Size = newSize;
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetObjectValue<T>(
             ref DynamicBuffer<byte> elementsByteBuffer,
@@ -560,6 +601,7 @@ namespace Trove.ObjectHandles
             int capacity)
             where T : unmanaged
         {
+            aa
             // TODO
             //Assert.IsTrue(dataFreeIndexRange.EndExclusive - dataFreeIndexRange.StartInclusive > capacity);
             //Assert.IsTrue(metaDataFreeIndexRange.EndExclusive - metaDataFreeIndexRange.StartInclusive > capacity);

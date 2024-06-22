@@ -17,7 +17,7 @@ namespace Trove.ObjectHandles
         public int Capacity => _capacity;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetListDataSizeBytes()
+        public int GetDataCapacitySizeBytes()
         {
             return UnsafeUtility.SizeOf<T>() * _capacity;
         }
@@ -25,7 +25,7 @@ namespace Trove.ObjectHandles
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetSizeBytes()
         {
-            return UnsafeUtility.SizeOf<VirtualList<T>>() + GetListDataSizeBytes();
+            return UnsafeUtility.SizeOf<VirtualList<T>>() + GetDataCapacitySizeBytes();
         }
 
         public static VirtualListHandle<T> Allocate(
@@ -45,7 +45,7 @@ namespace Trove.ObjectHandles
 
             UnsafeUtility.CopyStructureToPtr(ref list, valueDestinationPtr);
             valueDestinationPtr += (long)UnsafeUtility.SizeOf<VirtualList<T>>();
-            UnsafeUtility.MemClear(valueDestinationPtr, list.GetListDataSizeBytes());
+            UnsafeUtility.MemClear(valueDestinationPtr, list.GetDataCapacitySizeBytes());
 
             return handle;
         }
@@ -212,7 +212,7 @@ namespace Trove.ObjectHandles
             return false;
         }
 
-        internal bool TryAsUnsafeList(
+        public bool TryAsUnsafeList(
             ref DynamicBuffer<byte> byteBuffer,
             out UnsafeList<T> unsafeList)
         {
@@ -242,10 +242,10 @@ namespace Trove.ObjectHandles
                 VirtualList<T> list = *(VirtualList<T>*)listPtr;
                 if (list._capacity != capacity)
                 {
-                    new VirtualList<T>(
-                        ref byteBuffer,
-                        capacity,
-                        out VirtualListHandle<T> newListHandle);
+                    VirtualObjectManager.ReallocateObject(
+                        new VirtualObjectHandle(this.MetadataByteIndex, this.Version), 
+                        ref byteBuffer, 
+                        capacity);
 
                     if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
                         ref byteBuffer,
@@ -267,8 +267,9 @@ namespace Trove.ObjectHandles
                             ref byteBuffer,
                             this);
 
-                        // Replace handle with new one
+                        // Replace handle with new one 
                         this = newListHandle;
+
                         return true;
                     }
                 }

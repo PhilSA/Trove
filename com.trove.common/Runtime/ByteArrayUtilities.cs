@@ -122,6 +122,14 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T ReadValueAsRef<T>(byte* byteArrayPtr, int byteIndex)
+            where T : unmanaged
+        {
+            byte* startPtr = byteArrayPtr + (long)byteIndex;
+            return ref *(T*)startPtr;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ReadValues<T1, T2>(byte* byteArrayPtr, int byteIndex, out T1 value1, out T2 value2)
             where T1 : unmanaged
             where T2 : unmanaged
