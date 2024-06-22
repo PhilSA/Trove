@@ -108,10 +108,10 @@ public unsafe struct #SCRIPTNAME#Manager : IPolymorphicEventTypeManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool ExecuteNextEvent(byte* byteArrayPtr, int byteArrayLength, ref int index)
     {
-        if (PolymorphicUtilities.CanRead<int>(byteArrayLength, index))
+        if (ByteArrayUtilities.CanRead<int>(byteArrayLength, index))
         {
             // First we read the event type Id
-            PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out int typeId);
+            ByteArrayUtilities.ReadValue(byteArrayPtr, ref index, out int typeId);
             
             // Then, depending on type Id, we read the event data in different ways and execute the event
             switch ((TypeId)typeId)
@@ -119,9 +119,9 @@ public unsafe struct #SCRIPTNAME#Manager : IPolymorphicEventTypeManager
                 // Event A
                 case TypeId.#SCRIPTNAME#A:
                 {
-                    if (PolymorphicUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<#SCRIPTNAME#A>()))
+                    if (ByteArrayUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<#SCRIPTNAME#A>()))
                     {
-                        PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out #SCRIPTNAME#A e);
+                        ByteArrayUtilities.ReadValue(byteArrayPtr, ref index, out #SCRIPTNAME#A e);
                         // TODO: execute event
                         return true;
                     }
@@ -130,9 +130,9 @@ public unsafe struct #SCRIPTNAME#Manager : IPolymorphicEventTypeManager
                 // Event B
                 case TypeId.#SCRIPTNAME#B:
                 {
-                    if (PolymorphicUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<#SCRIPTNAME#B>()))
+                    if (ByteArrayUtilities.CanRead(byteArrayLength, index, UnsafeUtility.SizeOf<#SCRIPTNAME#B>()))
                     {
-                        PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out #SCRIPTNAME#B e);
+                        ByteArrayUtilities.ReadValue(byteArrayPtr, ref index, out #SCRIPTNAME#B e);
                         // TODO: execute event
                         return true;
                     }

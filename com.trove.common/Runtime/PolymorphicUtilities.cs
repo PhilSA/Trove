@@ -8,7 +8,7 @@ using Unity.Entities;
 
 namespace Trove
 {
-    public static unsafe class PolymorphicUtilities
+    public static unsafe class ByteArrayUtilities
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte* GetByteElementPtr(byte* byteArrayPtr, int byteIndex)

@@ -20,7 +20,7 @@ namespace Trove.EventSystems
         {
             state.RequireForUpdate<S>();
             _singletonRWQuery = new EntityQueryBuilder(Allocator.Temp).WithAllRW<S>().Build(ref state);
-            
+
             _eventStreamsReference = new NativeReference<UnsafeList<NativeStream>>(
                 new UnsafeList<NativeStream>(initialStreamsCapacity, Allocator.Persistent),
                 Allocator.Persistent);
@@ -116,8 +116,8 @@ namespace Trove.EventSystems
                     EventList.ResizeUninitialized(newListSize);
 
                     // Write to list
-                    PolymorphicUtilities.WriteValue(listPtr, ref writeIndex, typeId);
-                    PolymorphicUtilities.WriteValue(listPtr, ref writeIndex, eventData, eventDataSize);
+                    ByteArrayUtilities.WriteValue(listPtr, ref writeIndex, typeId);
+                    ByteArrayUtilities.WriteValue(listPtr, ref writeIndex, eventData, eventDataSize);
                 }
                 EventsStream.EndForEachIndex();
             }

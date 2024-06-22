@@ -102,10 +102,10 @@ namespace Trove.EventSystems.Tests
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool ExecuteNextEvent(byte* byteArrayPtr, int byteArrayLength, ref int index, ref NativeHashMap<int, int> eventsCounter)
         {
-            if (PolymorphicUtilities.CanReadValue<int>(byteArrayLength, index))
+            if (ByteArrayUtilities.CanReadValue<int>(byteArrayLength, index))
             {
                 // First we read the event type Id
-                PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out int typeId);
+                ByteArrayUtilities.ReadValue(byteArrayPtr, ref index, out int typeId);
 
                 // Then, depending on type Id, we read the event data in different ways and execute the event
                 switch ((TypeId)typeId)
@@ -113,9 +113,9 @@ namespace Trove.EventSystems.Tests
                     // Event A
                     case TypeId.TestGlobalPolymorphicEventA:
                         {
-                            if (PolymorphicUtilities.CanReadValue(byteArrayLength, index, UnsafeUtility.SizeOf<TestGlobalPolymorphicEventA>()))
+                            if (ByteArrayUtilities.CanReadValue(byteArrayLength, index, UnsafeUtility.SizeOf<TestGlobalPolymorphicEventA>()))
                             {
-                                PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out TestGlobalPolymorphicEventA e);
+                                ByteArrayUtilities.ReadValue(byteArrayPtr, ref index, out TestGlobalPolymorphicEventA e);
                                 EventTestUtilities.AddEventToCounter(ref eventsCounter, e.Val);
                                 return true;
                             }
@@ -124,9 +124,9 @@ namespace Trove.EventSystems.Tests
                     // Event B
                     case TypeId.TestGlobalPolymorphicEventB:
                         {
-                            if (PolymorphicUtilities.CanReadValue(byteArrayLength, index, UnsafeUtility.SizeOf<TestGlobalPolymorphicEventB>()))
+                            if (ByteArrayUtilities.CanReadValue(byteArrayLength, index, UnsafeUtility.SizeOf<TestGlobalPolymorphicEventB>()))
                             {
-                                PolymorphicUtilities.ReadValue(byteArrayPtr, ref index, out TestGlobalPolymorphicEventB e);
+                                ByteArrayUtilities.ReadValue(byteArrayPtr, ref index, out TestGlobalPolymorphicEventB e);
                                 EventTestUtilities.AddEventToCounter(ref eventsCounter, e.Val3);
                                 return true;
                             }

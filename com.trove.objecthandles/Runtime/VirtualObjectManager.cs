@@ -7,7 +7,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 
 namespace Trove.ObjectHandles
-{ 
+{
     public struct VirtualObjectHandleRO<T> where T : unmanaged
     {
         internal readonly int MetadataByteIndex;
@@ -67,7 +67,8 @@ namespace Trove.ObjectHandles
 
         private static int ByteIndex_ObjectMetadataCapacity = 0;
         private static int ByteIndex_ObjectMetadataCount = ByteIndex_ObjectMetadataCapacity + UnsafeUtility.SizeOf<int>();
-        private static int ByteIndex_MetadataFreeRangesHandle = ByteIndex_ObjectMetadataCount + UnsafeUtility.SizeOf<int>();
+        private static int ByteIndex_ObjectDataStartIndex = ByteIndex_ObjectMetadataCount + UnsafeUtility.SizeOf<int>();
+        private static int ByteIndex_MetadataFreeRangesHandle = ByteIndex_ObjectDataStartIndex + UnsafeUtility.SizeOf<int>();
         private static int ByteIndex_ObjectDataFreeRangesHandle = ByteIndex_MetadataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualObjectHandleRO<VirtualList<IndexRangeElement>>>();
         private static int ByteIndex_MetadatasStartIndex = ByteIndex_ObjectDataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualObjectHandleRO<VirtualList<IndexRangeElement>>>();
 
@@ -275,11 +276,11 @@ namespace Trove.ObjectHandles
 
             // Update metadata
             bufferPtr = (byte*)elementsByteBuffer.GetUnsafePtr();
-            ReadValue(bufferPtr, metadataIndex, out VirtualObjectMetadata objectMetadata);
+            ByteArrayUtilities.ReadValue(bufferPtr, metadataIndex, out VirtualObjectMetadata objectMetadata);
             objectMetadata.Version++;
             objectMetadata.Size = objectSize;
             objectMetadata.ByteIndex = dataStartIndex;
-            WriteValue(bufferPtr, metadataIndex, objectMetadata);
+            ByteArrayUtilities.WriteValue(bufferPtr, metadataIndex, objectMetadata);
 
             // Write object
             valueDestinationPtr = bufferPtr + (long)dataStartIndex;
@@ -301,25 +302,25 @@ namespace Trove.ObjectHandles
                 new VirtualObjectHandle(objectHandle.MetadataByteIndex, objectHandle.Version));
         }
 
-         public static void FreeObject(
-            ref DynamicBuffer<IndexRangeElement> dataFreeIndexRangesBuffer,
-            ref DynamicBuffer<IndexRangeElement> metaDataFreeIndexRangesBuffer,
-            ref DynamicBuffer<byte> elementsByteBuffer,
-            VirtualObjectHandle objectHandle)
+        public static void FreeObject(
+           ref DynamicBuffer<IndexRangeElement> dataFreeIndexRangesBuffer,
+           ref DynamicBuffer<IndexRangeElement> metaDataFreeIndexRangesBuffer,
+           ref DynamicBuffer<byte> elementsByteBuffer,
+           VirtualObjectHandle objectHandle)
         {
             byte* bufferPtr = (byte*)elementsByteBuffer.GetUnsafePtr();
             GetObjectDatasStartIndex(bufferPtr, out int endIndexOfMetadatasExclusive);
             bool metadataIndexValid = objectHandle.MetadataByteIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>() <= endIndexOfMetadatasExclusive;
             if (metadataIndexValid)
             {
-                ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
+                ByteArrayUtilities.ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
                 if (objectMetadata.Version == objectHandle.Version)
                 {
                     // Update metadata
                     objectMetadata.Version++;
                     objectMetadata.Size = 0;
                     objectMetadata.ByteIndex = -1;
-                    WriteValue(bufferPtr, objectHandle.MetadataByteIndex, objectMetadata);
+                    ByteArrayUtilities.WriteValue(bufferPtr, objectHandle.MetadataByteIndex, objectMetadata);
 
                     // Free metadata
                     {
@@ -456,7 +457,7 @@ namespace Trove.ObjectHandles
             GetObjectDatasStartIndex(bufferPtr, out int endIndexOfMetadatasExclusive);
             if (objectHandle.MetadataByteIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>() <= endIndexOfMetadatasExclusive)
             {
-                ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
+                ByteArrayUtilities.ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
                 if (objectMetadata.Version == objectHandle.Version)
                 {
                     valuePtr = bufferPtr + (long)objectMetadata.ByteIndex;
@@ -489,7 +490,7 @@ namespace Trove.ObjectHandles
             GetObjectDatasStartIndex(bufferPtr, out int endIndexOfMetadatasExclusive);
             if (objectHandle.MetadataByteIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>() <= endIndexOfMetadatasExclusive)
             {
-                ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
+                ByteArrayUtilities.ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
                 if (objectMetadata.Version == objectHandle.Version)
                 {
                     return true;
@@ -510,7 +511,7 @@ namespace Trove.ObjectHandles
             GetObjectDatasStartIndex(bufferPtr, out int endIndexOfMetadatasExclusive);
             if (objectHandle.MetadataByteIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>() <= endIndexOfMetadatasExclusive)
             {
-                ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
+                ByteArrayUtilities.ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
                 if (objectMetadata.Version == objectHandle.Version)
                 {
                     byte* objPtr = bufferPtr + (long)objectMetadata.ByteIndex;
@@ -625,74 +626,46 @@ namespace Trove.ObjectHandles
         {
             for (int i = ByteIndex_MetadatasStartIndex; i < metadatasEndIndexExclusive; i += UnsafeUtility.SizeOf<VirtualObjectMetadata>())
             {
-                ReadValue(elementDataBufferPtr, i, out VirtualObjectMetadata metadata);
+                ByteArrayUtilities.ReadValue(elementDataBufferPtr, i, out VirtualObjectMetadata metadata);
                 metadata.ByteIndex += indexShift;
-                WriteValue(elementDataBufferPtr, i, metadata);
+                ByteArrayUtilities.WriteValue(elementDataBufferPtr, i, metadata);
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ReadValue<T>(byte* byteArrayPtr, int byteIndex, out T value)
-            where T : unmanaged
-        {
-            byte* startPtr = byteArrayPtr + (long)byteIndex;
-            UnsafeUtility.CopyPtrToStructure(startPtr, out value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void WriteValue<T>(byte* byteArrayPtr, int byteIndex, T value)
-            where T : unmanaged
-        {
-            byte* startPtr = byteArrayPtr + (long)byteIndex;
-            UnsafeUtility.AsRef<T>(startPtr) = value;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void WriteValue<T>(byte* byteArrayPtr, ref int byteIndex, T value)
-            where T : unmanaged
-        {
-            byte* startPtr = byteArrayPtr + (long)byteIndex;
-            UnsafeUtility.AsRef<T>(startPtr) = value;
-            byteIndex += UnsafeUtility.SizeOf<T>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void WriteValue(byte* byteArrayPtr, int byteIndex, byte* value, int valueSize)
-        {
-            byte* startPtr = byteArrayPtr + (long)byteIndex;
-            UnsafeUtility.MemCpy(startPtr, value, valueSize);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void GetObjectMetadatasCapacity(byte* byteArrayPtr, out int value)
         {
-            ReadValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCapacity, out value);
+            ByteArrayUtilities.ReadValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCapacity, out value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void GetObjectMetadatasCount(byte* byteArrayPtr, out int value)
         {
-            ReadValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCount, out value);
+            ByteArrayUtilities.ReadValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCount, out value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        // TODO: ObjectDatasStartIndex could be cached as internal buffer data and updated whenever there's a resize of metadatas
         private static void GetObjectDatasStartIndex(byte* byteArrayPtr, out int value)
         {
-            GetObjectMetadatasCapacity(byteArrayPtr, out int objectMetadatasCapacity);
-            value = ByteIndex_MetadatasStartIndex + (UnsafeUtility.SizeOf<VirtualObjectMetadata>() * objectMetadatasCapacity);
+            ByteArrayUtilities.ReadValue<int>(byteArrayPtr, ByteIndex_ObjectDataStartIndex, out value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void SetObjectDatasStartIndex(byte* byteArrayPtr, int value)
+        {
+            ByteArrayUtilities.WriteValue<int>(byteArrayPtr, ByteIndex_ObjectDataStartIndex, value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void SetObjectMetadatasCapacity(byte* byteArrayPtr, int value)
         {
-            WriteValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCapacity, value);
+            ByteArrayUtilities.WriteValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCapacity, value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void SetObjectMetadatasCount(byte* byteArrayPtr, int value)
         {
-            WriteValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCount, value);
+            ByteArrayUtilities.WriteValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCount, value);
         }
     }
 }

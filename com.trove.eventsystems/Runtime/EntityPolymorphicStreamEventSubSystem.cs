@@ -5,6 +5,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
+using Trove;
 
 namespace Trove.EventSystems
 {
@@ -39,7 +40,7 @@ namespace Trove.EventSystems
                 _eventStreamsReference,
                 ref state);
             state.EntityManager.AddComponentData(singletonEntity, singleton);
-            
+
             _eventBufferTypeHandle = state.GetBufferTypeHandle<B>(false);
             _hasEventsTypeHandle = state.GetComponentTypeHandle<H>(false);
             _eventBufferLookup = state.GetBufferLookup<B>(false);
@@ -67,7 +68,7 @@ namespace Trove.EventSystems
         public void OnUpdate(ref SystemState state)
         {
             RefRW<S> singletonRW = _singletonRWQuery.GetSingletonRW<S>();
-        
+
             _eventBufferTypeHandle.Update(ref state);
             _hasEventsTypeHandle.Update(ref state);
             _eventBufferLookup.Update(ref state);
@@ -133,8 +134,8 @@ namespace Trove.EventSystems
 
                         // Write to buffer
                         byte* bufferPtr = (byte*)eventBuffer.GetUnsafePtr();
-                        PolymorphicUtilities.WriteValue<int>(bufferPtr, ref writeIndex, typeId);
-                        PolymorphicUtilities.WriteValue(bufferPtr, ref writeIndex, eventData, eventDataSize);
+                        ByteArrayUtilities.WriteValue<int>(bufferPtr, ref writeIndex, typeId);
+                        ByteArrayUtilities.WriteValue(bufferPtr, ref writeIndex, eventData, eventDataSize);
 
                         // Mark as having events
                         HasEventsLookup.SetComponentEnabled(affectedEntity, true);
