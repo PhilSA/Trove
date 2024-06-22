@@ -11,32 +11,6 @@ using static UnityEngine.Rendering.VirtualTexturing.Debugging;
 
 namespace Trove.ObjectHandles
 { 
-    public struct ObjectHandle<T> where T : unmanaged
-    {
-        internal readonly int Index;
-        internal readonly int Version;
-
-        internal ObjectHandle(ObjectHandle handle)
-        {
-            Index = handle.Index;
-            Version = handle.Version;
-        }
-
-        public static implicit operator ObjectHandle(ObjectHandle<T> o) => new ObjectHandle(o.Index, o.Version);
-    }
-
-    public struct ObjectHandle
-    {
-        internal readonly int Index;
-        internal readonly int Version;
-
-        internal ObjectHandle(int index, int version)
-        {
-            Index = index;
-            Version = version;
-        }
-    }
-
     public struct VirtualObjectHandleRO<T> where T : unmanaged
     {
         internal readonly int MetadataByteIndex;
@@ -83,18 +57,6 @@ namespace Trove.ObjectHandles
         }
     }
 
-    public struct IndexRangeElement
-    {
-        public int StartInclusive;
-        public int EndExclusive;
-    }
-
-    public struct ObjectData<T> where T : unmanaged
-    {
-        public int Version;
-        public T Value;
-    }
-
     public unsafe static class VirtualObjectManager
     {
         public struct VirtualObjectMetadata
@@ -111,24 +73,6 @@ namespace Trove.ObjectHandles
         private static int ByteIndex_MetadataFreeRangesHandle = ByteIndex_ObjectMetadataCount + UnsafeUtility.SizeOf<int>();
         private static int ByteIndex_ObjectDataFreeRangesHandle = ByteIndex_MetadataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualObjectHandleRO<VirtualList<IndexRangeElement>>>();
         private static int ByteIndex_MetadatasStartIndex = ByteIndex_ObjectDataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualObjectHandleRO<VirtualList<IndexRangeElement>>>();
-
-        public static void Initialize<T>(
-            ref DynamicBuffer<IndexRangeElement> freeIndexRangesBuffer,
-            ref DynamicBuffer<ObjectData<T>> elementsBuffer,
-            int initialElementsCapacity)
-            where T : unmanaged
-        {
-            freeIndexRangesBuffer.Clear();
-            elementsBuffer.Clear();
-
-            freeIndexRangesBuffer.Add(new IndexRangeElement
-            {
-                StartInclusive = 0,
-                EndExclusive = initialElementsCapacity,
-            });
-
-            elementsBuffer.Resize(initialElementsCapacity, NativeArrayOptions.ClearMemory);
-        }
 
         public static void Initialize(
             ref DynamicBuffer<IndexRangeElement> dataFreeIndexRangesBuffer,
@@ -347,63 +291,6 @@ namespace Trove.ObjectHandles
         }
 
         public static void FreeObject<T>(
-            ref DynamicBuffer<IndexRangeElement> freeIndexRangesBuffer,
-            ref DynamicBuffer<ObjectData<T>> elementsBuffer,
-            ObjectHandle objectHandle)
-            where T : unmanaged
-        {
-            bool indexValid = objectHandle.Index < elementsBuffer.Length;
-            if (indexValid)
-            {
-                ObjectData<T> existingElement = elementsBuffer[objectHandle.Index];
-                if (existingElement.Version == objectHandle.Version)
-                {
-                    // Bump version and clear value
-                    existingElement.Version++;
-                    existingElement.Value = default;
-                    elementsBuffer[objectHandle.Index] = existingElement;
-
-                    EvaluateRangeFreeing(ref freeIndexRangesBuffer, objectHandle.Index, 1, out RangeFreeingType rangeFreeingType, out int indexMatch);
-                    switch (rangeFreeingType)
-                    {
-                        case RangeFreeingType.MergeFirst:
-                            {
-                                IndexRangeElement rangeElement = freeIndexRangesBuffer[indexMatch];
-                                rangeElement.StartInclusive -= 1;
-                                freeIndexRangesBuffer[indexMatch] = rangeElement;
-                                break;
-                            }
-                        case RangeFreeingType.MergeLast:
-                            {
-                                IndexRangeElement rangeElement = freeIndexRangesBuffer[indexMatch];
-                                rangeElement.EndExclusive += 1;
-                                freeIndexRangesBuffer[indexMatch] = rangeElement;
-                                break;
-                            }
-                        case RangeFreeingType.Insert:
-                            {
-                                freeIndexRangesBuffer.Insert(indexMatch, new IndexRangeElement
-                                {
-                                    StartInclusive = objectHandle.Index,
-                                    EndExclusive = objectHandle.Index + 1,
-                                });
-                                break;
-                            }
-                        case RangeFreeingType.Add:
-                            {
-                                freeIndexRangesBuffer.Add(new IndexRangeElement
-                                {
-                                    StartInclusive = objectHandle.Index,
-                                    EndExclusive = objectHandle.Index + 1,
-                                });
-                                break;
-                            }
-                    }
-                }
-            }
-        }
-
-        public static void FreeObject<T>(
             ref DynamicBuffer<IndexRangeElement> dataFreeIndexRangesBuffer,
             ref DynamicBuffer<IndexRangeElement> metaDataFreeIndexRangesBuffer,
             ref DynamicBuffer<byte> elementsByteBuffer,
@@ -439,7 +326,7 @@ namespace Trove.ObjectHandles
 
                     // Free metadata
                     {
-                        EvaluateRangeFreeing(ref metaDataFreeIndexRangesBuffer, objectHandle.MetadataByteIndex, UnsafeUtility.SizeOf<VirtualObjectMetadata>(), out RangeFreeingType rangeFreeingType, out int indexMatch);
+                        ObjectManagerUtilities.EvaluateRangeFreeing(ref metaDataFreeIndexRangesBuffer, objectHandle.MetadataByteIndex, UnsafeUtility.SizeOf<VirtualObjectMetadata>(), out RangeFreeingType rangeFreeingType, out int indexMatch);
                         switch (rangeFreeingType)
                         {
                             case RangeFreeingType.MergeFirst:
@@ -479,7 +366,7 @@ namespace Trove.ObjectHandles
 
                     // Free data
                     {
-                        EvaluateRangeFreeing(ref dataFreeIndexRangesBuffer, objectMetadata.ByteIndex, objectMetadata.Size, out RangeFreeingType rangeFreeingType, out int indexMatch);
+                        ObjectManagerUtilities.EvaluateRangeFreeing(ref dataFreeIndexRangesBuffer, objectMetadata.ByteIndex, objectMetadata.Size, out RangeFreeingType rangeFreeingType, out int indexMatch);
                         switch (rangeFreeingType)
                         {
                             case RangeFreeingType.MergeFirst:
@@ -518,27 +405,6 @@ namespace Trove.ObjectHandles
                     }
                 }
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetObjectValue<T>(
-            ref DynamicBuffer<ObjectData<T>> elementsBuffer,
-            ObjectHandle<T> objectHandle,
-            out T value)
-            where T : unmanaged
-        {
-            if (objectHandle.Index < elementsBuffer.Length)
-            {
-                ObjectData<T> objectValue = elementsBuffer[objectHandle.Index];
-                if (objectValue.Version == objectHandle.Version)
-                {
-                    value = objectValue.Value;
-                    return true;
-                }
-            }
-
-            value = default;
-            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -607,25 +473,7 @@ namespace Trove.ObjectHandles
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Exists<T>(
-            ref DynamicBuffer<ObjectData<T>> elementsBuffer,
-            ObjectHandle<T> objectHandle)
-            where T : unmanaged
-        {
-            if (objectHandle.Index < elementsBuffer.Length)
-            {
-                ObjectData<T> objectValue = elementsBuffer[objectHandle.Index];
-                if (objectValue.Version == objectHandle.Version)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Exists<T>(
-            ref DynamicBuffer<ObjectData<T>> elementsByteBuffer,
+            ref DynamicBuffer<byte> elementsByteBuffer,
             VirtualObjectHandleRO<T> objectHandle)
             where T : unmanaged
         {
@@ -636,7 +484,7 @@ namespace Trove.ObjectHandles
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Exists<T>(
-            ref DynamicBuffer<ObjectData<T>> elementsByteBuffer,
+            ref DynamicBuffer<byte> elementsByteBuffer,
             VirtualObjectHandle<T> objectHandle)
             where T : unmanaged
         {
@@ -647,27 +495,6 @@ namespace Trove.ObjectHandles
                 ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
                 if (objectMetadata.Version == objectHandle.Version)
                 {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TrySetObjectValue<T>(
-            ref DynamicBuffer<ObjectData<T>> elementsBuffer,
-            ObjectHandle<T> objectHandle,
-            T value)
-            where T : unmanaged
-        {
-            if (objectHandle.Index < elementsBuffer.Length)
-            {
-                ObjectData<T> objectValue = elementsBuffer[objectHandle.Index];
-                if (objectValue.Version == objectHandle.Version)
-                {
-                    objectValue.Value = value;
-                    elementsBuffer[objectHandle.Index] = objectValue;
                     return true;
                 }
             }
@@ -698,37 +525,6 @@ namespace Trove.ObjectHandles
             return false;
         }
 
-        public static void TrimCapacity<T>(
-            ref DynamicBuffer<IndexRangeElement> freeIndexRangesBuffer,
-            ref DynamicBuffer<ObjectData<T>> elementsBuffer,
-            int minCapacity)
-            where T : unmanaged
-        {
-            FindLastUsedIndex(ref freeIndexRangesBuffer, 0, elementsBuffer.Length, out int lastUsedIndex);
-            int newSize = math.max(0, math.max(minCapacity, lastUsedIndex + 1));
-            elementsBuffer.Resize(newSize, NativeArrayOptions.ClearMemory);
-            elementsBuffer.Capacity = newSize;
-
-            // Clear ranges past new length
-            for (int i = freeIndexRangesBuffer.Length - 1; i >= 0; i--)
-            {
-                IndexRangeElement tmpRange = freeIndexRangesBuffer[i];
-
-                if (tmpRange.StartInclusive >= elementsBuffer.Length)
-                {
-                    // Remove
-                    freeIndexRangesBuffer.RemoveAt(i);
-                }
-                else if (tmpRange.EndExclusive > elementsBuffer.Length)
-                {
-                    // Trim
-                    tmpRange.EndExclusive = elementsBuffer.Length;
-                    freeIndexRangesBuffer[i] = tmpRange;
-                    break;
-                }
-            }
-        }
-
         public static void TrimCapacity(
             ref DynamicBuffer<IndexRangeElement> dataFreeIndexRangesBuffer,
             ref DynamicBuffer<IndexRangeElement> metadataFreeIndexRangesBuffer,
@@ -743,7 +539,7 @@ namespace Trove.ObjectHandles
             // Metadatas
             int newSizeMetaDataBytes;
             {
-                FindLastUsedIndex(ref metadataFreeIndexRangesBuffer, ByteIndex_MetadatasStartIndex, prevEndIndexOfMetadatasExclusive, out int lastUsedIndex);
+                ObjectManagerUtilities.FindLastUsedIndex(ref metadataFreeIndexRangesBuffer, ByteIndex_MetadatasStartIndex, prevEndIndexOfMetadatasExclusive, out int lastUsedIndex);
                 newSizeMetaDataBytes = math.max(0, math.max(minMetadatasCapacity * UnsafeUtility.SizeOf<VirtualObjectMetadata>(), (lastUsedIndex - ByteIndex_MetadatasStartIndex) + 1));
                 int newEndIndexOfMetadatasExclusive = ByteIndex_MetadatasStartIndex + newSizeMetaDataBytes;
 
@@ -779,7 +575,7 @@ namespace Trove.ObjectHandles
             // Datas
             int newSizeDataBytes;
             {
-                FindLastUsedIndex(ref dataFreeIndexRangesBuffer, prevEndIndexOfMetadatasExclusive, initialBufferLength, out int lastUsedIndex);
+                ObjectManagerUtilities.FindLastUsedIndex(ref dataFreeIndexRangesBuffer, prevEndIndexOfMetadatasExclusive, initialBufferLength, out int lastUsedIndex);
                 newSizeDataBytes = math.max(0, math.max(minDataBytesCapacity, (lastUsedIndex - prevEndIndexOfMetadatasExclusive) + 1));
                 int newEndOfDatasExclusive = ByteIndex_MetadatasStartIndex + newSizeMetaDataBytes + newSizeDataBytes;
 
@@ -904,79 +700,6 @@ namespace Trove.ObjectHandles
             MergeLast,
             Insert,
             Add,
-        }
-
-        private static void EvaluateRangeFreeing<T>(ref T freeIndexRangesBuffer, int objectStartIndex, int objectIndexesSize,
-            out RangeFreeingType rangeFreeingType, out int indexMatch)
-            where T : unmanaged, INativeList<IndexRangeElement>, IIndexable<IndexRangeElement>
-        {
-            rangeFreeingType = RangeFreeingType.Add;
-            indexMatch = -1;
-
-            for (int i = 0; i < freeIndexRangesBuffer.Length; i++)
-            {
-                IndexRangeElement tmpRange = freeIndexRangesBuffer[i];
-
-                // Assert no ranges overlap
-                Assert.IsFalse(RangesOverlap(objectStartIndex, (objectStartIndex + objectIndexesSize), tmpRange.StartInclusive, tmpRange.EndExclusive));
-
-                if (tmpRange.StartInclusive == objectStartIndex + objectIndexesSize)
-                {
-                    rangeFreeingType = RangeFreeingType.MergeFirst;
-                    indexMatch = i;
-                    break;
-                }
-                else if (tmpRange.EndExclusive == objectStartIndex)
-                {
-                    rangeFreeingType = RangeFreeingType.MergeLast;
-                    indexMatch = i;
-                    break;
-                }
-                else if (tmpRange.StartInclusive > objectStartIndex)
-                {
-                    rangeFreeingType = RangeFreeingType.Insert;
-                    indexMatch = i;
-                    break;
-                }
-            }
-        }
-
-        private static bool FindLastUsedIndex<T>(ref T freeIndexRangesBuffer, int dataStartIndexInclusive, int dataEndIndexExclusive, out int lastUsedIndex)
-            where T : unmanaged, INativeList<IndexRangeElement>, IIndexable<IndexRangeElement>
-        {
-            int evaluatedIndex = dataEndIndexExclusive - 1;
-            for (int i = freeIndexRangesBuffer.Length - 1; i >= 0; i--)
-            {
-                IndexRangeElement tmpRange = freeIndexRangesBuffer[i];
-
-                if(evaluatedIndex < dataStartIndexInclusive)
-                {
-                    // If we're past the start index, we haven't found any used index
-                    lastUsedIndex = -1;
-                    return false;
-                }
-                else if (RangesOverlap(evaluatedIndex, evaluatedIndex + 1, tmpRange.StartInclusive, tmpRange.EndExclusive))
-                {
-                    // If the ranges overlap, that means this evaluated index is free.
-                    // Continue checking from the start of that free range.
-                    evaluatedIndex = tmpRange.StartInclusive - 1;
-                }
-                else
-                {
-                    // If the ranges don't overlap, that means the last used index is the iterated one
-                    lastUsedIndex = evaluatedIndex;
-                    return true;
-                }
-            }
-
-            lastUsedIndex = -1;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool RangesOverlap(int aStartInclusive, int aEndExclusive, int bStartInclusive, int bEndExclusive)
-        {
-            return aStartInclusive < bEndExclusive && bStartInclusive < aEndExclusive;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
