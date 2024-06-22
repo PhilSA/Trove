@@ -10,7 +10,7 @@ using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using static UnityEngine.Rendering.VirtualTexturing.Debugging;
 
 namespace Trove.ObjectHandles
-{
+{ 
     public struct ObjectHandle<T> where T : unmanaged
     {
         internal readonly int Index;
@@ -95,7 +95,7 @@ namespace Trove.ObjectHandles
         public T Value;
     }
 
-    public unsafe static class ValueObjectManager
+    public unsafe static class VirtualObjectManager
     {
         public struct VirtualObjectMetadata
         {
@@ -199,7 +199,7 @@ namespace Trove.ObjectHandles
             where T : unmanaged
         {
             int objectSize = UnsafeUtility.SizeOf<T>();
-            VirtualObjectHandle<T> returnHandle = CreateObjectInternal<T>(
+            VirtualObjectHandle<T> returnHandle = CreateObject<T>(
                 ref dataFreeIndexRangesBuffer,
                 ref metaDataFreeIndexRangesBuffer,
                 ref elementsByteBuffer,
@@ -217,7 +217,7 @@ namespace Trove.ObjectHandles
             where T : unmanaged, IObjectByteWriter
         {
             int objectSize = objectByteWriter.GetByteSize();
-            VirtualObjectHandle<T> returnHandle = CreateObjectInternal<T>(
+            VirtualObjectHandle<T> returnHandle = CreateObject<T>(
                 ref dataFreeIndexRangesBuffer,
                 ref metaDataFreeIndexRangesBuffer,
                 ref elementsByteBuffer,
@@ -227,7 +227,7 @@ namespace Trove.ObjectHandles
             return returnHandle;
         }
 
-        internal static VirtualObjectHandle<T> CreateObjectInternal<T>(
+        public static VirtualObjectHandle<T> CreateObject<T>(
             ref DynamicBuffer<IndexRangeElement> dataFreeIndexRangesBuffer,
             ref DynamicBuffer<IndexRangeElement> metaDataFreeIndexRangesBuffer,
             ref DynamicBuffer<byte> elementsByteBuffer,
