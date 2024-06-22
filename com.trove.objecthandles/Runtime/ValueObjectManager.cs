@@ -2,7 +2,6 @@ using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using static Trove.ObjectHandles.VirtualObjectManager;
 
 namespace Trove.ObjectHandles
 {
@@ -39,6 +38,8 @@ namespace Trove.ObjectHandles
     }
     public struct ValueObjectManager : IComponentData
     {
+        private const float ObjectsCapacityGrowFactor = 2f;
+
         public static void Initialize<T>(
             ref DynamicBuffer<IndexRangeElement> freeIndexRangesBuffer,
             ref DynamicBuffer<ObjectData<T>> elementsBuffer,
@@ -57,7 +58,52 @@ namespace Trove.ObjectHandles
             elementsBuffer.Resize(initialElementsCapacity, NativeArrayOptions.ClearMemory);
         }
 
-        // TODO: CreateObject
+
+        public static ObjectHandle CreateObject<T>(
+            ref DynamicBuffer<IndexRangeElement> freeIndexRangesBuffer,
+            ref DynamicBuffer<ObjectData<T>> elementsBuffer,
+            T value)
+            where T : unmanaged
+        {
+            // Find a free bytes range that accomodates the object size
+            if (!ObjectManagerUtilities.FindFreeIndexRange(ref freeIndexRangesBuffer, 1, out IndexRangeElement freeIndexRange, out int indexOfFreeRange))
+            {
+                int prevLength = elementsBuffer.Length;
+                int newLength = (int)math.ceil(elementsBuffer.Length * ObjectsCapacityGrowFactor);
+                elementsBuffer.Resize(newLength, NativeArrayOptions.ClearMemory);
+
+                ObjectManagerUtilities.GetExpandedFreeRange(ref freeIndexRangesBuffer, prevLength, elementsBuffer.Length,
+                    out freeIndexRange, out indexOfFreeRange);
+            }
+
+            ObjectManagerUtilities.ConsumeFreeRange(freeIndexRange, 1, out bool isFullyConsumed, out int consumedStartIndex);
+            if (isFullyConsumed)
+            {
+                if (indexOfFreeRange >= 0) // If the range was already stored, remove it
+                {
+                    freeIndexRangesBuffer.RemoveAt(indexOfFreeRange);
+                }
+            }
+            else
+            {
+                if (indexOfFreeRange >= 0) // If the range was already stored, overwrite it
+                {
+                    freeIndexRangesBuffer[indexOfFreeRange] = freeIndexRange;
+                }
+                else // If the range wasn't stored, add it
+                {
+                    freeIndexRangesBuffer.Add(freeIndexRange);
+                }
+            }
+
+            // Bump version and write object
+            ObjectData<T> objectData = elementsBuffer[consumedStartIndex];
+            objectData.Version++;
+            objectData.Value = value;
+            elementsBuffer[consumedStartIndex] = objectData;
+
+            return new ObjectHandle(consumedStartIndex, objectData.Version);
+        }
 
         public static void FreeObject<T>(
             ref DynamicBuffer<IndexRangeElement> freeIndexRangesBuffer,

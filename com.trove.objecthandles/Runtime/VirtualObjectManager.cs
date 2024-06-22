@@ -184,7 +184,7 @@ namespace Trove.ObjectHandles
             // Metadatas
             int metadataIndex;
             {
-                if (!FindFreeIndexRange(ref metaDataFreeIndexRangesBuffer, UnsafeUtility.SizeOf<VirtualObjectMetadata>(), out IndexRangeElement freeIndexRange, out int indexOfFreeRange))
+                if (!ObjectManagerUtilities.FindFreeIndexRange(ref metaDataFreeIndexRangesBuffer, UnsafeUtility.SizeOf<VirtualObjectMetadata>(), out IndexRangeElement freeIndexRange, out int indexOfFreeRange))
                 {
                     bufferPtr = (byte*)elementsByteBuffer.GetUnsafePtr();
 
@@ -208,11 +208,11 @@ namespace Trove.ObjectHandles
                     ShiftFreeRanges(ref dataFreeIndexRangesBuffer, metadatasCapacityDiffInBytes);
                     ShiftMetadataByteIndexes(bufferPtr, metadatasCapacityDiffInBytes, newObjectDatasStartIndex);
 
-                    GetExpandedFreeRange(ref metaDataFreeIndexRangesBuffer, prevObjectDatasStartIndex, newObjectDatasStartIndex,
+                    ObjectManagerUtilities.GetExpandedFreeRange(ref metaDataFreeIndexRangesBuffer, prevObjectDatasStartIndex, newObjectDatasStartIndex,
                         out freeIndexRange, out indexOfFreeRange);
                 }
 
-                ConsumeFreeRange(freeIndexRange, UnsafeUtility.SizeOf<VirtualObjectMetadata>(), out bool isFullyConsumed, out int consumedStartIndex);
+                ObjectManagerUtilities.ConsumeFreeRange(freeIndexRange, UnsafeUtility.SizeOf<VirtualObjectMetadata>(), out bool isFullyConsumed, out int consumedStartIndex);
                 if (isFullyConsumed)
                 {
                     if (indexOfFreeRange >= 0) // If the range was already stored, remove it
@@ -238,7 +238,7 @@ namespace Trove.ObjectHandles
             // Datas
             int dataStartIndex;
             {
-                if (!FindFreeIndexRange(ref dataFreeIndexRangesBuffer, objectSize, out IndexRangeElement freeIndexRange, out int indexOfFreeRange))
+                if (!ObjectManagerUtilities.FindFreeIndexRange(ref dataFreeIndexRangesBuffer, objectSize, out IndexRangeElement freeIndexRange, out int indexOfFreeRange))
                 {
                     bufferPtr = (byte*)elementsByteBuffer.GetUnsafePtr();
 
@@ -249,11 +249,11 @@ namespace Trove.ObjectHandles
                     int newLength = (int)math.ceil(elementsByteBuffer.Length + (newDatasByteCapacity - prevDatasByteCapacity));
                     elementsByteBuffer.Resize(newLength, NativeArrayOptions.ClearMemory);
 
-                    GetExpandedFreeRange(ref dataFreeIndexRangesBuffer, objectDatasStartIndex, elementsByteBuffer.Length,
+                    ObjectManagerUtilities.GetExpandedFreeRange(ref dataFreeIndexRangesBuffer, objectDatasStartIndex, elementsByteBuffer.Length,
                         out freeIndexRange, out indexOfFreeRange);
                 }
 
-                ConsumeFreeRange(freeIndexRange, objectSize, out bool isFullyConsumed, out int consumedStartIndex);
+                ObjectManagerUtilities.ConsumeFreeRange(freeIndexRange, objectSize, out bool isFullyConsumed, out int consumedStartIndex);
                 if (isFullyConsumed)
                 {
                     if (indexOfFreeRange >= 0) // If the range was already stored, remove it
@@ -611,25 +611,6 @@ namespace Trove.ObjectHandles
         ////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////
-        
-        private static bool FindFreeIndexRange<T>(ref T freeIndexRangesBuffer, int objectIndexesSize, out IndexRangeElement freeIndexRange, out int indexOfFreeRange)
-            where T : unmanaged, INativeList<IndexRangeElement>, IIndexable<IndexRangeElement>
-        {
-            for (int i = 0; i < freeIndexRangesBuffer.Length; i++)
-            {
-                IndexRangeElement indexRange = freeIndexRangesBuffer[i];
-                if (indexRange.EndExclusive - indexRange.StartInclusive >= objectIndexesSize)
-                {
-                    indexOfFreeRange = i;
-                    freeIndexRange = indexRange;
-                    return true;
-                }
-            }
-
-            indexOfFreeRange = -1;
-            freeIndexRange = default;
-            return false;
-        }
 
         private static void ShiftFreeRanges<T>(ref T freeIndexRangesBuffer, int indexShift)
             where T : unmanaged, INativeList<IndexRangeElement>, IIndexable<IndexRangeElement>
@@ -651,55 +632,6 @@ namespace Trove.ObjectHandles
                 metadata.ByteIndex += indexShift;
                 WriteValue(elementDataBufferPtr, i, metadata);
             }
-        }
-
-        private static void GetExpandedFreeRange<T>(ref T freeIndexRangesBuffer, int previousEndIndexExclusive, int newEndIndexExclusive, 
-            out IndexRangeElement freeIndexRange, out int indexOfFreeRange)
-            where T : unmanaged, INativeList<IndexRangeElement>, IIndexable<IndexRangeElement>
-        {
-            // Add new free index range for the expanded capacity
-            if (freeIndexRangesBuffer.Length > 0 &&
-                freeIndexRangesBuffer[freeIndexRangesBuffer.Length - 1].EndExclusive == previousEndIndexExclusive)
-            {
-                // Expand the last range
-                indexOfFreeRange = freeIndexRangesBuffer.Length - 1;
-                freeIndexRange = freeIndexRangesBuffer[indexOfFreeRange];
-                freeIndexRange.EndExclusive = newEndIndexExclusive;
-            }
-            else
-            {
-                // Create a new range
-                indexOfFreeRange = -1;
-                freeIndexRange = new IndexRangeElement
-                {
-                    StartInclusive = previousEndIndexExclusive,
-                    EndExclusive = newEndIndexExclusive,
-                };
-            }
-        }
-
-        private static void ConsumeFreeRange(IndexRangeElement freeIndexRange, int objectIndexesSize,
-            out bool isFullyConsumed, out int consumedStartIndex)
-        {
-            // Consume memory out of the found range
-            consumedStartIndex = freeIndexRange.StartInclusive;
-            freeIndexRange.StartInclusive += objectIndexesSize;
-
-            Assert.IsTrue(freeIndexRange.StartInclusive <= freeIndexRange.EndExclusive);
-
-            if (freeIndexRange.StartInclusive == freeIndexRange.EndExclusive)
-            {
-                isFullyConsumed = true;
-            }
-            isFullyConsumed = false;
-        }
-
-        public enum RangeFreeingType
-        {
-            MergeFirst,
-            MergeLast,
-            Insert,
-            Add,
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
