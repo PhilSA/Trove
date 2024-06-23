@@ -4,6 +4,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Trove;
 using Unity.Mathematics;
+using Unity.Logging;
 using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 
 namespace Trove.ObjectHandles
@@ -282,10 +283,13 @@ namespace Trove.ObjectHandles
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
                 this._objectHandle,
-                out VirtualList<T> array))
+                out VirtualList<T> list))
             {
-                byte* dataPtr = (byte*)byteBuffer.GetUnsafePtr() + (long)this.MetadataByteIndex + (long)UnsafeUtility.SizeOf<VirtualArray<T>>();
-                unsafeArray = new UnsafeVirtualArray<T>((T*)dataPtr, array.Length);
+                byte* bufferPtr = (byte*)byteBuffer.GetUnsafePtr();
+                ByteArrayUtilities.ReadValue(bufferPtr, this.MetadataByteIndex, out VirtualObjectMetadata listMetadata);
+
+                byte* dataPtr = (byte*)byteBuffer.GetUnsafePtr() + (long)listMetadata.ByteIndex + (long)UnsafeUtility.SizeOf<VirtualList<T>>();
+                unsafeArray = new UnsafeVirtualArray<T>((T*)dataPtr, list.Length);
                 return true;
             }
             unsafeArray = default;

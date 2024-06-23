@@ -18,6 +18,8 @@ namespace Trove.ObjectHandles
             public int DatasStartIndex;
             public int MetadataFreeRangesStartIndex;
             public int DataFreeRangesStartIndex;
+            public int MetadataFreeRangesSize;
+            public int DataFreeRangesSize;
 
             public VirtualListHandle<IndexRangeElement> MetadataFreeRangesHandle;
             public VirtualListHandle<IndexRangeElement> DataFreeRangesHandle;

@@ -5,6 +5,7 @@ using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Logging;
 using Unity.Mathematics;
 
 namespace Trove.ObjectHandles
@@ -32,26 +33,26 @@ namespace Trove.ObjectHandles
             SetObjectMetadatasCount(bufferPtr, 0);
 
             GetObjectDatasStartIndex(bufferPtr, out int objectDatasStartIndex);
-            IndexRangeElement dataFreeRange = new IndexRangeElement
-            {
-                StartInclusive = objectDatasStartIndex,
-                EndExclusive = elementsByteBuffer.Length,
-            };
             IndexRangeElement metadataFreeRange = new IndexRangeElement
             {
                 StartInclusive = ByteIndex_MetadatasStartIndex,
                 EndExclusive = objectDatasStartIndex,
             };
+            IndexRangeElement dataFreeRange = new IndexRangeElement
+            {
+                StartInclusive = objectDatasStartIndex,
+                EndExclusive = elementsByteBuffer.Length,
+            };
 
             // Allocate system virtual lists for free ranges
             VirtualListHandle<IndexRangeElement> metadataFreeRangesListHandle = CreateSystemList<IndexRangeElement>(
-                ref dataFreeRange,
                 ref metadataFreeRange,
+                ref dataFreeRange,
                 ref elementsByteBuffer, 
                 FreeRangesInitialCapacity);
             VirtualListHandle<IndexRangeElement> dataFreeRangesListHandle = CreateSystemList<IndexRangeElement>(
-                ref dataFreeRange,
                 ref metadataFreeRange,
+                ref dataFreeRange,
                 ref elementsByteBuffer,
                 FreeRangesInitialCapacity);
             SetMetadataFreeRangesListHandle(bufferPtr, metadataFreeRangesListHandle);
@@ -431,9 +432,11 @@ namespace Trove.ObjectHandles
             GetMetadataFreeRangesListHandle(bufferPtr, out memoryInfo.MetadataFreeRangesHandle);
             ByteArrayUtilities.ReadValue(bufferPtr, memoryInfo.MetadataFreeRangesHandle.MetadataByteIndex, out VirtualObjectMetadata metadataFreeRangesMetadata);
             memoryInfo.MetadataFreeRangesStartIndex = metadataFreeRangesMetadata.ByteIndex;
+            memoryInfo.MetadataFreeRangesSize = metadataFreeRangesMetadata.Size;
             GetDataFreeRangesListHandle(bufferPtr, out memoryInfo.DataFreeRangesHandle);
             ByteArrayUtilities.ReadValue(bufferPtr, memoryInfo.DataFreeRangesHandle.MetadataByteIndex, out VirtualObjectMetadata dataFreeRangesMetadata);
             memoryInfo.DataFreeRangesStartIndex = dataFreeRangesMetadata.ByteIndex;
+            memoryInfo.DataFreeRangesSize = dataFreeRangesMetadata.Size;
 
             return memoryInfo;
         }
@@ -446,8 +449,8 @@ namespace Trove.ObjectHandles
         ////////////////////////////////////////////////////////////////////////////////////
 
         internal static VirtualListHandle<T> CreateSystemList<T>(
-            ref IndexRangeElement dataFreeIndexRange,
             ref IndexRangeElement metaDataFreeIndexRange,
+            ref IndexRangeElement dataFreeIndexRange,
             ref DynamicBuffer<byte> elementsByteBuffer,
             int capacity)
             where T : unmanaged
@@ -472,7 +475,7 @@ namespace Trove.ObjectHandles
             ByteArrayUtilities.ReadValue(bufferPtr, metadataIndex, out VirtualObjectMetadata objectMetadata);
             objectMetadata.Version++;
             objectMetadata.Size = totalListSize;
-            objectMetadata.ByteIndex = metadataIndex;
+            objectMetadata.ByteIndex = dataStartIndex;
             ByteArrayUtilities.WriteValue(bufferPtr, metadataIndex, objectMetadata);
 
             // Write object
@@ -660,7 +663,7 @@ namespace Trove.ObjectHandles
             success = freeIndexRangesListHandle.TryGetElementAt(ref bytesBuffer, freeRangeIndex, out IndexRangeElement freeRange);
             Assert.IsTrue(success);
 
-            ObjectManagerUtilities.ConsumeFreeRange(freeRange, objectSize, out bool isFullyConsumed, out consumedStartIndex);
+            ObjectManagerUtilities.ConsumeFreeRange(ref freeRange, objectSize, out bool isFullyConsumed, out consumedStartIndex);
             if (isFullyConsumed)
             {
                 success = freeIndexRangesListHandle.TryRemoveAt(ref bytesBuffer, freeRangeIndex);

@@ -3,7 +3,7 @@ using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
-using static Trove.ObjectHandles.VirtualObjectManager;
+using Unity.Logging;
 
 namespace Trove.ObjectHandles
 {
@@ -45,7 +45,7 @@ namespace Trove.ObjectHandles
         }
     }
 
-    internal struct VirtualObjectMetadata
+    public struct VirtualObjectMetadata
     {
         public int ByteIndex;
         public int Version;
@@ -94,12 +94,12 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ConsumeFreeRange(IndexRangeElement freeIndexRange, int objectIndexesSize,
+        public static void ConsumeFreeRange(ref IndexRangeElement freeIndexRange, int objectSize,
             out bool isFullyConsumed, out int consumedStartIndex)
         {
             // Consume memory out of the found range
             consumedStartIndex = freeIndexRange.StartInclusive;
-            freeIndexRange.StartInclusive += objectIndexesSize;
+            freeIndexRange.StartInclusive += objectSize;
 
             Assert.IsTrue(freeIndexRange.StartInclusive <= freeIndexRange.EndExclusive);
 
