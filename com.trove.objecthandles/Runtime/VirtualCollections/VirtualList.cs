@@ -177,14 +177,21 @@ namespace Trove.ObjectHandles
             int index,
             out T value)
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr(
+            if (index >= 0)
+            {
+                if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
                 this._objectHandle,
                 out byte* listPtr))
-            {
-                T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
-                value = listData[index];
-                return true;
+                {
+                    VirtualList<T> list = *(VirtualList<T>*)listPtr;
+                    if (index < list.Length)
+                    {
+                        T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
+                        value = listData[index];
+                        return true;
+                    }
+                }
             }
             value = default;
             return false;
@@ -192,6 +199,7 @@ namespace Trove.ObjectHandles
 
         /// <summary>
         /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
+        /// Note: unsafe because no index check
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T GetElementAtUnsafe(
@@ -200,6 +208,7 @@ namespace Trove.ObjectHandles
         {
             byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
                 ref byteBuffer, this._objectHandle);
+            VirtualList<T> list = *(VirtualList<T>*)listPtr;
             T* listDataPtr = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
             return listDataPtr[index];
         }
@@ -213,15 +222,22 @@ namespace Trove.ObjectHandles
             int index,
             out bool success)
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
-                ref byteBuffer,
-                this._objectHandle,
-                out byte* listPtr))
+            if (index >= 0)
             {
-                T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
-                T* elementPtr = listData + (long)(UnsafeUtility.SizeOf<T>() * index);
-                success = true;
-                return ref *elementPtr;
+                if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+                    ref byteBuffer,
+                    this._objectHandle,
+                    out byte* listPtr))
+                {
+                    VirtualList<T> list = *(VirtualList<T>*)listPtr;
+                    if (index < list.Length)
+                    {
+                        T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
+                        T* elementPtr = listData + (long)(UnsafeUtility.SizeOf<T>() * index);
+                        success = true;
+                        return ref *elementPtr;
+                    }
+                }
             }
             success = false;
             return ref *(T*)byteBuffer.GetUnsafePtr();
@@ -249,14 +265,21 @@ namespace Trove.ObjectHandles
             int index,
             T value)
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr(
-                ref byteBuffer,
-                this._objectHandle,
-                out byte* listPtr))
+            if (index >= 0)
             {
-                T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
-                listData[index] = value;
-                return true;
+                if (VirtualObjectManager.TryGetObjectValuePtr(
+                    ref byteBuffer,
+                    this._objectHandle,
+                    out byte* listPtr))
+                {
+                    VirtualList<T> list = *(VirtualList<T>*)listPtr;
+                    if (index < list.Length)
+                    {
+                        T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
+                        listData[index] = value;
+                        return true;
+                    }
+                }
             }
             return false;
         }
@@ -440,10 +463,10 @@ namespace Trove.ObjectHandles
                         {
                             int sizeOfVList = UnsafeUtility.SizeOf<VirtualList<T>>();
                             int sizeOfListDataType = UnsafeUtility.SizeOf<T>();
-                            byte* dataDestinationPtr = listPtr + (long)(sizeOfVList + (sizeOfListDataType * index));
+                            byte* dataDestinationPtr = listPtr + (long)sizeOfVList + (long)(sizeOfListDataType * index);
                             byte* dataStartPtr = dataDestinationPtr + (long)(sizeOfListDataType);
-                            int dataSize = (list._length - index) * sizeOfListDataType;
-                            UnsafeUtility.MemCpy(dataDestinationPtr, dataStartPtr, dataSize);
+                            int movedDataSize = (list._length - index) * sizeOfListDataType;
+                            UnsafeUtility.MemCpy(dataDestinationPtr, dataStartPtr, movedDataSize);
                         }
                         list._length -= 1;
                         return true;

@@ -102,8 +102,6 @@ partial struct MemoryVisualizerSystem : ISystem
 
         // Set cube colors
         {
-            Random random = Random.CreateFromIndex(0);
-
             // Default
             for (int i = 0; i < testEntitiesBuffer.Length; i++)
             {
@@ -129,7 +127,7 @@ partial struct MemoryVisualizerSystem : ISystem
                     {
                         while (iteratedIndex < range.StartInclusive)
                         {
-                            float4 randomCol = random.NextFloat4(memViz.UsedMetadataColorMin, memViz.UsedMetadataColorMax);
+                            float4 randomCol = GetRandomFloat4ForIndex(iteratedIndex, memViz.UsedMetadataColorMin, memViz.UsedMetadataColorMax);
                             for (int s = 0; s < objectSize; s++)
                             {
                                 state.EntityManager.SetComponentData(testEntitiesBuffer[iteratedIndex], new URPMaterialPropertyBaseColor { Value = randomCol });
@@ -148,11 +146,17 @@ partial struct MemoryVisualizerSystem : ISystem
                     Assert.AreEqual(range.EndExclusive, iteratedIndex);
                 }
 
-                // Rest of Unused
-                for (int r = iteratedIndex; r < memoryInfo.DatasStartIndex; r++)
+                // Rest of Used (after the last free range)
+                while (iteratedIndex < memoryInfo.DatasStartIndex)
                 {
-                    state.EntityManager.SetComponentData(testEntitiesBuffer[r], new URPMaterialPropertyBaseColor { Value = memViz.UnusedMetadataColor });
+                    float4 randomCol = GetRandomFloat4ForIndex(iteratedIndex, memViz.UsedMetadataColorMin, memViz.UsedMetadataColorMax);
+                    for (int s = 0; s < objectSize; s++)
+                    {
+                        state.EntityManager.SetComponentData(testEntitiesBuffer[iteratedIndex], new URPMaterialPropertyBaseColor { Value = randomCol });
+                        iteratedIndex++;
+                    }
                 }
+                Assert.AreEqual(memoryInfo.DatasStartIndex, iteratedIndex);
             }
 
             // Data
@@ -169,11 +173,13 @@ partial struct MemoryVisualizerSystem : ISystem
                 while (iteratedMetadataIndex < memoryInfo.DatasStartIndex)
                 {
                     ByteArrayUtilities.ReadValue(bufferPtr, iteratedMetadataIndex, out VirtualObjectMetadata metadata);
-
-                    float4 randomCol = random.NextFloat4(memViz.UsedDataColorMin, memViz.UsedDataColorMax);
-                    for (int s = metadata.ByteIndex; s < metadata.ByteIndex + metadata.Size; s++)
+                    if (metadata.ByteIndex > 0)
                     {
-                        state.EntityManager.SetComponentData(testEntitiesBuffer[s], new URPMaterialPropertyBaseColor { Value = randomCol });
+                        float4 randomCol = GetRandomFloat4ForIndex(iteratedMetadataIndex, memViz.UsedDataColorMin, memViz.UsedDataColorMax);
+                        for (int s = metadata.ByteIndex; s < metadata.ByteIndex + metadata.Size; s++)
+                        {
+                            state.EntityManager.SetComponentData(testEntitiesBuffer[s], new URPMaterialPropertyBaseColor { Value = randomCol });
+                        }
                     }
                     iteratedMetadataIndex += metadataSize;
                 }
@@ -191,5 +197,11 @@ partial struct MemoryVisualizerSystem : ISystem
                 }
             }
         }
+    }
+
+    private float4 GetRandomFloat4ForIndex(int index, float4 min, float4 max)
+    {
+        Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex((uint)index);
+        return random.NextFloat4(min, max);
     }
 }

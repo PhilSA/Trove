@@ -229,8 +229,12 @@ namespace Trove.ObjectHandles
         {
             IndexRangeElement freeRange = freeIndexRangesBuffer[freeRangeIndex];
 
-            ObjectManagerUtilities.ConsumeFreeRange(ref freeRange, 1, out bool isFullyConsumed, out consumedStartIndex);
-            if (isFullyConsumed)
+            consumedStartIndex = freeRange.StartInclusive;
+            freeRange.StartInclusive += 1;
+
+            Assert.IsTrue(freeRange.StartInclusive <= freeRange.EndExclusive);
+
+            if (freeRange.StartInclusive == freeRange.EndExclusive)
             {
                 freeIndexRangesBuffer.RemoveAt(freeRangeIndex);
             }

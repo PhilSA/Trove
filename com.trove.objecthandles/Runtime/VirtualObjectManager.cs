@@ -29,50 +29,40 @@ namespace Trove.ObjectHandles
         private const int FreeRangesInitialCapacity = 16; 
         private const float ObjectsCapacityGrowFactor = 2f;
 
-        private static readonly int ByteIndex_ObjectMetadataCapacity = 0;
-        private static readonly int ByteIndex_ObjectMetadataCount = ByteIndex_ObjectMetadataCapacity + UnsafeUtility.SizeOf<int>();
-        private static readonly int ByteIndex_ObjectDataStartIndex = ByteIndex_ObjectMetadataCount + UnsafeUtility.SizeOf<int>();
-        private static readonly int ByteIndex_MetadataFreeRangesHandle = ByteIndex_ObjectDataStartIndex + UnsafeUtility.SizeOf<int>();
-        private static readonly int ByteIndex_ObjectDataFreeRangesHandle = ByteIndex_MetadataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualListHandle<IndexRangeElement>>();
-        private static readonly int ByteIndex_MetadatasStartIndex = ByteIndex_ObjectDataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualListHandle<IndexRangeElement>>();
+        private static readonly int ByteIndex_ObjectMetadataCapacity = 0; // int 
+        private static readonly int ByteIndex_ObjectDataStartIndex = ByteIndex_ObjectMetadataCapacity + UnsafeUtility.SizeOf<int>(); // int
+        private static readonly int ByteIndex_MetadataFreeRangesHandle = ByteIndex_ObjectDataStartIndex + UnsafeUtility.SizeOf<int>(); // VirtualListHandle
+        private static readonly int ByteIndex_ObjectDataFreeRangesHandle = ByteIndex_MetadataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualListHandle<IndexRangeElement>>(); // VirtualListHandle
+        private static readonly int ByteIndex_MetadatasStart = ByteIndex_ObjectDataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualListHandle<IndexRangeElement>>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void GetObjectMetadatasCapacity(byte* byteArrayPtr, out int value)
+        private static void GetObjectMetadatasCapacityValue(byte* byteArrayPtr, out int value)
         {
             ByteArrayUtilities.ReadValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCapacity, out value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void GetObjectMetadatasCount(byte* byteArrayPtr, out int value)
-        {
-            ByteArrayUtilities.ReadValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCount, out value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void GetObjectDatasStartIndex(byte* byteArrayPtr, out int value)
+        private static void GetObjectDatasStartIndexValue(byte* byteArrayPtr, out int value)
         {
             ByteArrayUtilities.ReadValue<int>(byteArrayPtr, ByteIndex_ObjectDataStartIndex, out value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void CalculateAndSetObjectDatasStartIndex(byte* byteArrayPtr)
+        private static void CalculateObjectDatasStartIndex(int metadatasCapacity, out int objectDatasStartIndex)
         {
-            GetObjectMetadatasCapacity(byteArrayPtr, out int objectMetadatasCapacity);
-            int startIndex = ByteIndex_MetadatasStartIndex + (UnsafeUtility.SizeOf<VirtualObjectMetadata>() * objectMetadatasCapacity);
-            ByteArrayUtilities.WriteValue<int>(byteArrayPtr, ByteIndex_ObjectDataStartIndex, startIndex);
+            objectDatasStartIndex = ByteIndex_MetadatasStart + (UnsafeUtility.SizeOf<VirtualObjectMetadata>() * metadatasCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void SetObjectMetadatasCapacity(byte* byteArrayPtr, int value)
+        private static void SetObjectDatasStartIndexValue(byte* byteArrayPtr, int value)
+        {
+            ByteArrayUtilities.WriteValue<int>(byteArrayPtr, ByteIndex_ObjectDataStartIndex, value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void SetObjectMetadatasCapacityValue(byte* byteArrayPtr, int value)
         {
             ByteArrayUtilities.WriteValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCapacity, value);
-            CalculateAndSetObjectDatasStartIndex(byteArrayPtr);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void SetObjectMetadatasCount(byte* byteArrayPtr, int value)
-        {
-            ByteArrayUtilities.WriteValue<int>(byteArrayPtr, ByteIndex_ObjectMetadataCount, value);
         }
 
         private static void GetDataFreeRangesListHandle(byte* byteArrayPtr, out VirtualListHandle<IndexRangeElement> value)
@@ -96,15 +86,24 @@ namespace Trove.ObjectHandles
         }
 
         private static void ShiftMetadataByteIndexes(
-            byte* elementDataBufferPtr,
+            byte* bytesBufferPtr,
             int indexShift,
-            int metadatasEndIndexExclusive)
+            int metadatasCount)
         {
-            for (int i = ByteIndex_MetadatasStartIndex; i < metadatasEndIndexExclusive; i += UnsafeUtility.SizeOf<VirtualObjectMetadata>())
+            byte* metadatasBytePtr = (byte*)bytesBufferPtr + (long)ByteIndex_MetadatasStart;
+            VirtualObjectMetadata* metadatasPtr = (VirtualObjectMetadata*)metadatasBytePtr;
+
+            for (int i = 0; i < metadatasCount; i++)
             {
-                ByteArrayUtilities.ReadValue(elementDataBufferPtr, i, out VirtualObjectMetadata metadata);
-                metadata.ByteIndex += indexShift;
-                ByteArrayUtilities.WriteValue(elementDataBufferPtr, i, metadata);
+                VirtualObjectMetadata metadata = metadatasPtr[i];
+                if (metadata.ByteIndex > 0)
+                {
+                    int old = metadata.ByteIndex;
+                    metadata.ByteIndex += indexShift;
+                    metadatasPtr[i] = metadata;
+
+                    Log.Debug($"Shaft metadata byteindex from {old} to {metadata.ByteIndex}");
+                }
             }
         }
     }

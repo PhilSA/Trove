@@ -284,9 +284,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a711a0b266e049419d740c0a7ea7491, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectsCapacity: 12
+  ObjectsCapacity: 16
   ObjectDataBytesCapacity: 64
-  VirtualObjects: 00000000
+  _allHandles: []
 --- !u!4 &1107634552
 Transform:
   m_ObjectHideFlags: 0

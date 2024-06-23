@@ -171,10 +171,10 @@ MonoBehaviour:
   StaticDataColor: {r: 1, g: 0, b: 0, a: 1}
   UnusedMetadataColor: {r: 0.4339623, g: 0.4339623, b: 0.4339623, a: 1}
   UsedMetadataColorMin: {r: 0, g: 1, b: 0.08140397, a: 1}
-  UsedMetadataColorMax: {r: 0, g: 0.4245283, b: 0.096483715, a: 1}
+  UsedMetadataColorMax: {r: 0, g: 0.16226411, b: 0.03756115, a: 1}
   UnusedDataColor: {r: 0.09433961, g: 0.09433961, b: 0.09433961, a: 1}
   UsedDataColorMin: {r: 0, g: 0.66261864, b: 1, a: 1}
-  UsedDataColorMax: {r: 0, g: 0.31536382, b: 0.49056602, a: 1}
+  UsedDataColorMax: {r: 0, g: 0.113509424, b: 0.17735851, a: 1}
   DataFreeRangeColor: {r: 1, g: 0.9829562, b: 0, a: 1}
   MetadataFreeRangeColor: {r: 1, g: 0.48324436, b: 0, a: 1}
 --- !u!1660057539 &9223372036854775807

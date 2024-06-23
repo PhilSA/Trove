@@ -180,22 +180,5 @@ namespace Trove.ObjectHandles
         {
             return aStartInclusive < bEndExclusive && bStartInclusive < aEndExclusive;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ConsumeFreeRange(ref IndexRangeElement freeIndexRange, int objectSize,
-            out bool isFullyConsumed, out int consumedStartIndex)
-        {
-            // Consume memory out of the found range
-            consumedStartIndex = freeIndexRange.StartInclusive;
-            freeIndexRange.StartInclusive += objectSize;
-
-            Assert.IsTrue(freeIndexRange.StartInclusive <= freeIndexRange.EndExclusive);
-
-            if (freeIndexRange.StartInclusive == freeIndexRange.EndExclusive)
-            {
-                isFullyConsumed = true;
-            }
-            isFullyConsumed = false;
-        }
     }
 }
