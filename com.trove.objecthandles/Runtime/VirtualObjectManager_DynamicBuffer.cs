@@ -745,10 +745,31 @@ namespace Trove.ObjectHandles
             Assert.IsTrue(success);
 
             Log.Debug($"LoggingFreeRanges");
+            int maxCount = 10;
             for (int i = 0; i < rangesUnsafeArray.Length; i++)
             {
                 IndexRangeElement freeRange = rangesUnsafeArray[i];
-                Log.Debug($"{freeRange.StartInclusive}-{freeRange.EndExclusive}");
+                if (i < maxCount)
+                {
+                    Log.Debug($"{freeRange.StartInclusive}-{freeRange.EndExclusive}");
+                }
+            }
+        }
+
+        private static void DebugMetadatas(
+            ref DynamicBuffer<byte> bytesBuffer,
+            int metadatasCount)
+        {
+            byte* metadatasBytePtr = (byte*)bytesBuffer.GetUnsafePtr() + (long)ByteIndex_MetadatasStart;
+            VirtualObjectMetadata* metadatasPtr = (VirtualObjectMetadata*)metadatasBytePtr;
+
+            for (int i = 0; i < metadatasCount; i++)
+            {
+                VirtualObjectMetadata metadata = metadatasPtr[i];
+                if (metadata.ByteIndex > 0)
+                {
+                    Log.Debug($"Valid metadata.ByteIndes {metadata.ByteIndex}");
+                }
             }
         }
 
@@ -772,37 +793,50 @@ namespace Trove.ObjectHandles
             bytesBuffer.Resize(newLength, NativeArrayOptions.ClearMemory);
             bufferPtr = (byte*)bytesBuffer.GetUnsafePtr();
 
-            CalculateObjectDatasStartIndex(newMetadatasCapacity, out newObjectDatasStartIndex);
-
             //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
             //  ma mb .  a  a  a  b  b  .  .  .  .  .  .  .  .  .  .  .  .  .  
-            //  ma mb mc .  .  .  a  a  a  b  b  c  c  c  c  .  .  .  .  .  .  
+            //  ma mb mc a  a  a  b  b  c  c  c  c  .  .  .  .  .  .  .  .  . // add last available metada (mc)
+            //  ma mb mc md .  .  a  a  a  b  b  c  c  c  c  d  d  d  .  .  . // add metadata that causes a +3 resize (md)
 
-            Log.Debug($"BEFORE SHIFT +{metadatasCapacityDiffInBytes}");
+            Log.Debug($"BEFORE SHIFT META");
             DebugFreeRanges(metadataRangesHandle, ref bytesBuffer);
+            Log.Debug($"BEFORE SHIFT DATA");
+            DebugFreeRanges(dataRangesHandle, ref bytesBuffer);
+            Log.Debug($"BEFORE SHIFT MetaIndexes");
+            DebugMetadatas(ref bytesBuffer, prevMetadatasCapacity);
 
             // Shift indexes
             ShiftFreeRanges(
                 dataRangesHandle,
                 ref bytesBuffer,
                 metadatasCapacityDiffInBytes);
-            ShiftMetadataByteIndexes(bufferPtr, metadatasCapacityDiffInBytes, prevMetadatasCapacity);
+            ShiftMetadataByteIndexes(
+                bufferPtr, 
+                metadatasCapacityDiffInBytes, 
+                prevMetadatasCapacity);
 
             // Note: must be done after the shift, because resolving freerange list objects relies of the ObjectDatasStartIndex
+            CalculateObjectDatasStartIndex(newMetadatasCapacity, out newObjectDatasStartIndex);
             SetObjectMetadatasCapacityValue(bufferPtr, newMetadatasCapacity);
             SetObjectDatasStartIndexValue(bufferPtr, newObjectDatasStartIndex);
 
             // Move object data
             byte* destPtr = bufferPtr + (long)newObjectDatasStartIndex;
-            byte* startPtr = bufferPtr + (long)prevMetadatasCapacity;
-            UnsafeUtility.MemCpy(destPtr, startPtr, (prevElementsBufferLength - prevObjectDatasStartIndex));
+            byte* startPtr = bufferPtr + (long)prevObjectDatasStartIndex;
+            int copiedDataSize = prevElementsBufferLength - prevObjectDatasStartIndex;
+            UnsafeUtility.MemCpy(destPtr, startPtr, copiedDataSize);
 
             // Clear newly allocated metadatas 
             destPtr = bufferPtr + (long)prevObjectDatasStartIndex;
-            UnsafeUtility.MemClear(destPtr, (newObjectDatasStartIndex - prevObjectDatasStartIndex));
+            int clearedDataSize = newObjectDatasStartIndex - prevObjectDatasStartIndex;
+            UnsafeUtility.MemClear(destPtr, clearedDataSize);
 
-            Log.Debug($"AFTER SHIFT +{metadatasCapacityDiffInBytes}");
+            Log.Debug($"AFTER SHIFT META");
             DebugFreeRanges(metadataRangesHandle, ref bytesBuffer);
+            Log.Debug($"AFTER SHIFT DATA");
+            DebugFreeRanges(dataRangesHandle, ref bytesBuffer);
+            Log.Debug($"AFTER SHIFT MetaIndexes");
+            DebugMetadatas(ref bytesBuffer, newMetadatasCapacity);
 
             ExpandFreeRangesAfterResize(
                 metadataRangesHandle,
