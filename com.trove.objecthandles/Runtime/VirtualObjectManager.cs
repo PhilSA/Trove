@@ -162,34 +162,15 @@ namespace Trove.ObjectHandles
                         UnsafeUtility.SizeOf<VirtualObjectMetadata>(), 
                         out int indexOfFreeRange))
                 {
-                    // Increase buffer capacity for expanded metadatas
-                    int prevElementsBufferLength = elementsByteBuffer.Length;
-                    GetObjectDatasStartIndex(bufferPtr, out int prevObjectDatasStartIndex);
-                    GetObjectMetadatasCapacity(bufferPtr, out int prevMetadatasCapacity);
-                    int newMetadatasCapacity = (int)math.ceil(prevMetadatasCapacity * ObjectsCapacityGrowFactor);
-                    SetObjectMetadatasCapacity(bufferPtr, newMetadatasCapacity);
-                    int metadatasCapacityDiffInBytes = (newMetadatasCapacity - prevMetadatasCapacity) * UnsafeUtility.SizeOf<VirtualObjectMetadata>();
-                    int newLength = elementsByteBuffer.Length + metadatasCapacityDiffInBytes;
-                    elementsByteBuffer.Resize(newLength, NativeArrayOptions.ClearMemory);
+                    ResizeBufferForMetadataCapacityIncrease(
+                        metadataRangesHandle, 
+                        ref elementsByteBuffer,
+                        out int prevObjectDatasStartIndex,
+                        out int newObjectDatasStartIndex);
 
-                    bufferPtr = (byte*)elementsByteBuffer.GetUnsafePtr();
-                    GetObjectDatasStartIndex(bufferPtr, out int newObjectDatasStartIndex);
-
-                    // Move object data
-                    byte* destPtr = bufferPtr + (long)newObjectDatasStartIndex;
-                    byte* startPtr = bufferPtr + (long)prevMetadatasCapacity;
-                    UnsafeUtility.MemCpy(destPtr, startPtr, (prevElementsBufferLength - prevObjectDatasStartIndex));
-                    ShiftFreeRanges(
-                        metadataRangesHandle,
-                        ref elementsByteBuffer, 
-                        metadatasCapacityDiffInBytes);
-                    ShiftMetadataByteIndexes(bufferPtr, metadatasCapacityDiffInBytes, newObjectDatasStartIndex);
-
-                    ExpandFreeRangesAfterResize(
-                        metadataRangesHandle,
-                        ref elementsByteBuffer, 
-                        prevObjectDatasStartIndex, 
-                        newObjectDatasStartIndex);
+                    success = metadataRangesHandle.TryGetLength(ref elementsByteBuffer, out int freeRangesLength);
+                    Assert.IsTrue(success);
+                    indexOfFreeRange = freeRangesLength - 1;
                 }
 
                 ConsumeFromFreeRange(
@@ -211,18 +192,9 @@ namespace Trove.ObjectHandles
                         objectSize, 
                         out int indexOfFreeRange))
                 {
-                    // Increase buffer capacity for expanded object data
-                    GetObjectDatasStartIndex(bufferPtr, out int objectDatasStartIndex);
-                    int prevDatasByteCapacity = elementsByteBuffer.Length - objectDatasStartIndex;
-                    int newDatasByteCapacity = (int)math.ceil(prevDatasByteCapacity * ObjectsCapacityGrowFactor);
-                    int newLength = (int)math.ceil(elementsByteBuffer.Length + (newDatasByteCapacity - prevDatasByteCapacity));
-                    elementsByteBuffer.Resize(newLength, NativeArrayOptions.ClearMemory);
-
-                    ExpandFreeRangesAfterResize(
+                    ResizeBufferForObjectDataCapacityIncrease(
                         dataRangesHandle,
-                        ref elementsByteBuffer,
-                        objectDatasStartIndex, 
-                        elementsByteBuffer.Length);
+                        ref elementsByteBuffer);
 
                     success = dataRangesHandle.TryGetLength(ref elementsByteBuffer, out int freeRangesLength);
                     Assert.IsTrue(success);
@@ -298,6 +270,7 @@ namespace Trove.ObjectHandles
             ref DynamicBuffer<byte> byteBuffer,
             int newSize)
         {
+            bool success;
             byte* bufferPtr = (byte*)byteBuffer.GetUnsafePtr();
 
             ref VirtualObjectMetadata objectMetadataRef = ref ByteArrayUtilities.ReadValueAsRef<VirtualObjectMetadata>(bufferPtr, handle.MetadataByteIndex);
@@ -317,18 +290,13 @@ namespace Trove.ObjectHandles
                             newSize,
                             out int indexOfFreeRange))
                     {
-                        // Increase buffer capacity for expanded object data
-                        GetObjectDatasStartIndex(bufferPtr, out int objectDatasStartIndex);
-                        int prevDatasByteCapacity = byteBuffer.Length - objectDatasStartIndex;
-                        int newDatasByteCapacity = (int)math.ceil(prevDatasByteCapacity * ObjectsCapacityGrowFactor);
-                        int newLength = (int)math.ceil(byteBuffer.Length + (newDatasByteCapacity - prevDatasByteCapacity));
-                        byteBuffer.Resize(newLength, NativeArrayOptions.ClearMemory);
+                        ResizeBufferForObjectDataCapacityIncrease(
+                            dataRangesHandle, 
+                            ref byteBuffer);
 
-                        ExpandFreeRangesAfterResize(
-                            dataRangesHandle,
-                            ref byteBuffer,
-                            objectDatasStartIndex,
-                            byteBuffer.Length);
+                        success = dataRangesHandle.TryGetLength(ref byteBuffer, out int freeRangesLength);
+                        Assert.IsTrue(success);
+                        indexOfFreeRange = freeRangesLength - 1;
                     }
 
                     ConsumeFromFreeRange(
@@ -837,6 +805,62 @@ namespace Trove.ObjectHandles
                     break;
                 }
             }
+        }
+
+        private static void ResizeBufferForObjectDataCapacityIncrease(
+            VirtualListHandle<IndexRangeElement> dataRangesHandle, 
+            ref DynamicBuffer<byte> bytesBuffer)
+        {
+            byte* bufferPtr = (byte*)bytesBuffer.GetUnsafePtr();
+            GetObjectDatasStartIndex(bufferPtr, out int objectDatasStartIndex);
+            int prevDatasByteCapacity = bytesBuffer.Length - objectDatasStartIndex;
+            int newDatasByteCapacity = (int)math.ceil(prevDatasByteCapacity * ObjectsCapacityGrowFactor);
+            int newLength = (int)math.ceil(bytesBuffer.Length + (newDatasByteCapacity - prevDatasByteCapacity));
+            bytesBuffer.Resize(newLength, NativeArrayOptions.ClearMemory);
+
+            ExpandFreeRangesAfterResize(
+                dataRangesHandle,
+                ref bytesBuffer,
+                objectDatasStartIndex,
+                bytesBuffer.Length);
+        }
+
+        private static void ResizeBufferForMetadataCapacityIncrease(
+            VirtualListHandle<IndexRangeElement> metadataRangesHandle,
+            ref DynamicBuffer<byte> bytesBuffer,
+            out int prevObjectDatasStartIndex,
+            out int newObjectDatasStartIndex)
+        {
+            byte* bufferPtr = (byte*)bytesBuffer.GetUnsafePtr();
+
+            // Increase buffer capacity for expanded metadatas
+            int prevElementsBufferLength = bytesBuffer.Length;
+            GetObjectDatasStartIndex(bufferPtr, out prevObjectDatasStartIndex);
+            GetObjectMetadatasCapacity(bufferPtr, out int prevMetadatasCapacity);
+            int newMetadatasCapacity = (int)math.ceil(prevMetadatasCapacity * ObjectsCapacityGrowFactor);
+            SetObjectMetadatasCapacity(bufferPtr, newMetadatasCapacity);
+            int metadatasCapacityDiffInBytes = (newMetadatasCapacity - prevMetadatasCapacity) * UnsafeUtility.SizeOf<VirtualObjectMetadata>();
+            int newLength = bytesBuffer.Length + metadatasCapacityDiffInBytes;
+            bytesBuffer.Resize(newLength, NativeArrayOptions.ClearMemory);
+
+            bufferPtr = (byte*)bytesBuffer.GetUnsafePtr();
+            GetObjectDatasStartIndex(bufferPtr, out newObjectDatasStartIndex);
+
+            // Move object data
+            byte* destPtr = bufferPtr + (long)newObjectDatasStartIndex;
+            byte* startPtr = bufferPtr + (long)prevMetadatasCapacity;
+            UnsafeUtility.MemCpy(destPtr, startPtr, (prevElementsBufferLength - prevObjectDatasStartIndex));
+            ShiftFreeRanges(
+                metadataRangesHandle,
+                ref bytesBuffer,
+                metadatasCapacityDiffInBytes);
+            ShiftMetadataByteIndexes(bufferPtr, metadatasCapacityDiffInBytes, newObjectDatasStartIndex);
+
+            ExpandFreeRangesAfterResize(
+                metadataRangesHandle,
+                ref bytesBuffer,
+                prevObjectDatasStartIndex,
+                newObjectDatasStartIndex);
         }
 
         public static class Unsafe
