@@ -98,11 +98,8 @@ namespace Trove.ObjectHandles
                 VirtualObjectMetadata metadata = metadatasPtr[i];
                 if (metadata.ByteIndex > 0)
                 {
-                    int old = metadata.ByteIndex;
                     metadata.ByteIndex += indexShift;
                     metadatasPtr[i] = metadata;
-
-                    Log.Debug($"Shaft metadata byteindex from {old} to {metadata.ByteIndex}");
                 }
             }
         }

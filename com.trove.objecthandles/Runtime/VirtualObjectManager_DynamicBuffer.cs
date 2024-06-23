@@ -666,12 +666,9 @@ namespace Trove.ObjectHandles
             for (int i = 0; i < rangesUnsafeArray.Length; i++)
             {
                 IndexRangeElement freeRange = rangesUnsafeArray[i];
-                var prev = freeRange;
                 freeRange.StartInclusive += indexShift;
                 freeRange.EndExclusive += indexShift;
                 rangesUnsafeArray[i] = freeRange;
-
-                Log.Debug($"Shifting a range from {prev.StartInclusive}-{prev.EndExclusive} to {freeRange.StartInclusive}-{freeRange.EndExclusive}");
             }
         }
 
@@ -777,6 +774,10 @@ namespace Trove.ObjectHandles
 
             CalculateObjectDatasStartIndex(newMetadatasCapacity, out newObjectDatasStartIndex);
 
+            //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
+            //  ma mb .  a  a  a  b  b  .  .  .  .  .  .  .  .  .  .  .  .  .  
+            //  ma mb mc .  .  .  a  a  a  b  b  c  c  c  c  .  .  .  .  .  .  
+
             Log.Debug($"BEFORE SHIFT +{metadatasCapacityDiffInBytes}");
             DebugFreeRanges(metadataRangesHandle, ref bytesBuffer);
 
@@ -795,6 +796,10 @@ namespace Trove.ObjectHandles
             byte* destPtr = bufferPtr + (long)newObjectDatasStartIndex;
             byte* startPtr = bufferPtr + (long)prevMetadatasCapacity;
             UnsafeUtility.MemCpy(destPtr, startPtr, (prevElementsBufferLength - prevObjectDatasStartIndex));
+
+            // Clear newly allocated metadatas 
+            destPtr = bufferPtr + (long)prevObjectDatasStartIndex;
+            UnsafeUtility.MemClear(destPtr, (newObjectDatasStartIndex - prevObjectDatasStartIndex));
 
             Log.Debug($"AFTER SHIFT +{metadatasCapacityDiffInBytes}");
             DebugFreeRanges(metadataRangesHandle, ref bytesBuffer);
