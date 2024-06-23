@@ -419,6 +419,25 @@ namespace Trove.ObjectHandles
             elementsByteBuffer.Capacity = newSize;
         }
 
+        public static VirtualObjectManager.MemoryInfo GetMemoryInfo(ref DynamicBuffer<byte> bytesBuffer)
+        {
+            byte* bufferPtr = (byte*)bytesBuffer.GetUnsafePtr();
+
+            VirtualObjectManager.MemoryInfo memoryInfo = new VirtualObjectManager.MemoryInfo();
+
+            memoryInfo.MetadatasStartIndex = ByteIndex_MetadatasStartIndex;
+            GetObjectMetadatasCapacity(bufferPtr, out memoryInfo.MetadatasCapacity);
+            GetObjectDatasStartIndex(bufferPtr, out memoryInfo.DatasStartIndex);
+            GetMetadataFreeRangesListHandle(bufferPtr, out memoryInfo.MetadataFreeRangesHandle);
+            ByteArrayUtilities.ReadValue(bufferPtr, memoryInfo.MetadataFreeRangesHandle.MetadataByteIndex, out VirtualObjectMetadata metadataFreeRangesMetadata);
+            memoryInfo.MetadataFreeRangesStartIndex = metadataFreeRangesMetadata.ByteIndex;
+            GetDataFreeRangesListHandle(bufferPtr, out memoryInfo.DataFreeRangesHandle);
+            ByteArrayUtilities.ReadValue(bufferPtr, memoryInfo.DataFreeRangesHandle.MetadataByteIndex, out VirtualObjectMetadata dataFreeRangesMetadata);
+            memoryInfo.DataFreeRangesStartIndex = dataFreeRangesMetadata.ByteIndex;
+
+            return memoryInfo;
+        }
+
         ////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////

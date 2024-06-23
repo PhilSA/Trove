@@ -11,6 +11,18 @@ namespace Trove.ObjectHandles
 {
     public unsafe static partial class VirtualObjectManager
     {
+        public struct MemoryInfo
+        {
+            public int MetadatasStartIndex;
+            public int MetadatasCapacity;
+            public int DatasStartIndex;
+            public int MetadataFreeRangesStartIndex;
+            public int DataFreeRangesStartIndex;
+
+            public VirtualListHandle<IndexRangeElement> MetadataFreeRangesHandle;
+            public VirtualListHandle<IndexRangeElement> DataFreeRangesHandle;
+        }
+
         private const int FreeRangesInitialCapacity = 64;
         private const float ObjectsCapacityGrowFactor = 2f;
 

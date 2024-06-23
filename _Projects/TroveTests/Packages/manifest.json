@@ -55,6 +55,7 @@
     "com.trove.attributes",
     "com.trove.utilityai",
     "com.trove.common",
+    "com.trove.objecthandles",
     "com.trove.polymorphicstructs",
     "com.trove.tweens",
     "com.trove.eventsystems"
