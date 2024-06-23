@@ -285,7 +285,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ObjectsCapacity: 12
-  ObjectDataBytesCapacity: 64
+  ObjectDataBytesCapacity: 40
   _allHandles: []
 --- !u!4 &1107634552
 Transform:

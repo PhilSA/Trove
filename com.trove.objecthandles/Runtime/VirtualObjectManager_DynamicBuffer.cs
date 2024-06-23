@@ -310,9 +310,7 @@ namespace Trove.ObjectHandles
                     valuePtr = bufferPtr + (long)objectMetadata.ByteIndex;
                     return true;
                 }
-                Log.Debug($"Failed version check");
             }
-            Log.Debug($"Failed metadataindex check {endIndexOfMetadatasExclusive}");
 
             valuePtr = default;
             return false;
@@ -510,7 +508,6 @@ namespace Trove.ObjectHandles
             int objectSize)
         {
             GetObjectDatasStartIndexValue((byte*)bytesBuffer.GetUnsafePtr(), out int tmp);
-            Log.Debug($"Free ranges? {tmp}");
 
             bool success = freeIndexRangesListHandle.TryAsUnsafeVirtualArray(ref bytesBuffer, out UnsafeVirtualArray<IndexRangeElement> rangesUnsafeArray);
             Assert.IsTrue(success);
@@ -633,15 +630,12 @@ namespace Trove.ObjectHandles
                 success = freeRangesListHandle.TryGetElementAt(ref bytesBuffer, indexOfLastRange, out IndexRangeElement freeRange);
                 Assert.IsTrue(success);
 
-                Log.Debug($"Checking freerange to expand {freeRange.StartInclusive}-{freeRange.EndExclusive}");
-
                 if (freeRange.EndExclusive == previousEndIndexExclusive)
                 {
                     // Expand the last range
                     freeRange.EndExclusive = newEndIndexExclusive;
                     success = freeRangesListHandle.TrySetElementAt(ref bytesBuffer, indexOfLastRange, freeRange);
                     Assert.IsTrue(success);
-                    Log.Debug($"expanded last range {freeRange.StartInclusive}-{freeRange.EndExclusive}");
                     return;
                 }
             }
@@ -680,30 +674,21 @@ namespace Trove.ObjectHandles
             out int consumedStartIndex)
         {
             bool success;
-
-            Log.Debug($"ConsumeFromFreeRange rangeIndex {freeRangeIndex}");
-
             success = freeIndexRangesListHandle.TryGetElementAt(ref bytesBuffer, freeRangeIndex, out IndexRangeElement freeRange);
             Assert.IsTrue(success);
-
-            Log.Debug($"Get range {freeRange.StartInclusive}-{freeRange.EndExclusive}");
 
             consumedStartIndex = freeRange.StartInclusive;
             freeRange.StartInclusive += objectSize;
 
             Assert.IsTrue(freeRange.StartInclusive <= freeRange.EndExclusive);
 
-            Log.Debug($"range after consume {freeRange.StartInclusive}-{freeRange.EndExclusive}");
-
             if (freeRange.StartInclusive == freeRange.EndExclusive)
             {
-                Log.Debug($"REMOVING RANGE");
                 success = freeIndexRangesListHandle.TryRemoveAt(ref bytesBuffer, freeRangeIndex);
                 Assert.IsTrue(success);
             }
             else
             {
-                Log.Debug($"SETING BACK RANGE");
                 success = freeIndexRangesListHandle.TrySetElementAt(ref bytesBuffer, freeRangeIndex, freeRange);
                 Assert.IsTrue(success);
             }
@@ -737,42 +722,6 @@ namespace Trove.ObjectHandles
             }
         }
 
-        private static void DebugFreeRanges(
-            VirtualListHandle<IndexRangeElement> rangesHandle,
-            ref DynamicBuffer<byte> bytesBuffer)
-        {
-            bool success = rangesHandle.TryAsUnsafeVirtualArray(ref bytesBuffer, out UnsafeVirtualArray<IndexRangeElement> rangesUnsafeArray);
-            Assert.IsTrue(success);
-
-            Log.Debug($"LoggingFreeRanges");
-            int maxCount = 10;
-            for (int i = 0; i < rangesUnsafeArray.Length; i++)
-            {
-                IndexRangeElement freeRange = rangesUnsafeArray[i];
-                if (i < maxCount)
-                {
-                    Log.Debug($"{freeRange.StartInclusive}-{freeRange.EndExclusive}");
-                }
-            }
-        }
-
-        private static void DebugMetadatas(
-            ref DynamicBuffer<byte> bytesBuffer,
-            int metadatasCount)
-        {
-            byte* metadatasBytePtr = (byte*)bytesBuffer.GetUnsafePtr() + (long)ByteIndex_MetadatasStart;
-            VirtualObjectMetadata* metadatasPtr = (VirtualObjectMetadata*)metadatasBytePtr;
-
-            for (int i = 0; i < metadatasCount; i++)
-            {
-                VirtualObjectMetadata metadata = metadatasPtr[i];
-                if (metadata.ByteIndex > 0)
-                {
-                    Log.Debug($"Valid metadata.ByteIndes {metadata.ByteIndex}");
-                }
-            }
-        }
-
         internal static void ResizeBufferAndExpandFreeRangesForMetadataCapacityIncrease(
             VirtualListHandle<IndexRangeElement> metadataRangesHandle,
             VirtualListHandle<IndexRangeElement> dataRangesHandle,
@@ -792,18 +741,6 @@ namespace Trove.ObjectHandles
 
             bytesBuffer.Resize(newLength, NativeArrayOptions.ClearMemory);
             bufferPtr = (byte*)bytesBuffer.GetUnsafePtr();
-
-            //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
-            //  ma mb .  a  a  a  b  b  .  .  .  .  .  .  .  .  .  .  .  .  .  
-            //  ma mb mc a  a  a  b  b  c  c  c  c  .  .  .  .  .  .  .  .  . // add last available metada (mc)
-            //  ma mb mc md .  .  a  a  a  b  b  c  c  c  c  d  d  d  .  .  . // add metadata that causes a +3 resize (md)
-
-            Log.Debug($"BEFORE SHIFT META");
-            DebugFreeRanges(metadataRangesHandle, ref bytesBuffer);
-            Log.Debug($"BEFORE SHIFT DATA");
-            DebugFreeRanges(dataRangesHandle, ref bytesBuffer);
-            Log.Debug($"BEFORE SHIFT MetaIndexes");
-            DebugMetadatas(ref bytesBuffer, prevMetadatasCapacity);
 
             // Shift indexes
             ShiftFreeRanges(
@@ -830,13 +767,6 @@ namespace Trove.ObjectHandles
             destPtr = bufferPtr + (long)prevObjectDatasStartIndex;
             int clearedDataSize = newObjectDatasStartIndex - prevObjectDatasStartIndex;
             UnsafeUtility.MemClear(destPtr, clearedDataSize);
-
-            Log.Debug($"AFTER SHIFT META");
-            DebugFreeRanges(metadataRangesHandle, ref bytesBuffer);
-            Log.Debug($"AFTER SHIFT DATA");
-            DebugFreeRanges(dataRangesHandle, ref bytesBuffer);
-            Log.Debug($"AFTER SHIFT MetaIndexes");
-            DebugMetadatas(ref bytesBuffer, newMetadatasCapacity);
 
             ExpandFreeRangesAfterResize(
                 metadataRangesHandle,
