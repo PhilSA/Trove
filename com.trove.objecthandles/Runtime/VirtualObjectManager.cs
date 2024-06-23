@@ -5,6 +5,7 @@ using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Logging;
 using Unity.Mathematics;
 
 namespace Trove.ObjectHandles
@@ -25,15 +26,15 @@ namespace Trove.ObjectHandles
             public VirtualListHandle<IndexRangeElement> DataFreeRangesHandle;
         }
 
-        private const int FreeRangesInitialCapacity = 64;
+        private const int FreeRangesInitialCapacity = 16; 
         private const float ObjectsCapacityGrowFactor = 2f;
 
-        private static int ByteIndex_ObjectMetadataCapacity = 0;
-        private static int ByteIndex_ObjectMetadataCount = ByteIndex_ObjectMetadataCapacity + UnsafeUtility.SizeOf<int>();
-        private static int ByteIndex_ObjectDataStartIndex = ByteIndex_ObjectMetadataCount + UnsafeUtility.SizeOf<int>();
-        private static int ByteIndex_MetadataFreeRangesHandle = ByteIndex_ObjectDataStartIndex + UnsafeUtility.SizeOf<int>();
-        private static int ByteIndex_ObjectDataFreeRangesHandle = ByteIndex_MetadataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualListHandle<IndexRangeElement>>();
-        private static int ByteIndex_MetadatasStartIndex = ByteIndex_ObjectDataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualListHandle<IndexRangeElement>>();
+        private static readonly int ByteIndex_ObjectMetadataCapacity = 0;
+        private static readonly int ByteIndex_ObjectMetadataCount = ByteIndex_ObjectMetadataCapacity + UnsafeUtility.SizeOf<int>();
+        private static readonly int ByteIndex_ObjectDataStartIndex = ByteIndex_ObjectMetadataCount + UnsafeUtility.SizeOf<int>();
+        private static readonly int ByteIndex_MetadataFreeRangesHandle = ByteIndex_ObjectDataStartIndex + UnsafeUtility.SizeOf<int>();
+        private static readonly int ByteIndex_ObjectDataFreeRangesHandle = ByteIndex_MetadataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualListHandle<IndexRangeElement>>();
+        private static readonly int ByteIndex_MetadatasStartIndex = ByteIndex_ObjectDataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualListHandle<IndexRangeElement>>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void GetObjectMetadatasCapacity(byte* byteArrayPtr, out int value)

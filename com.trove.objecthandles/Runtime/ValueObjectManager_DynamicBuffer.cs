@@ -179,7 +179,6 @@ namespace Trove.ObjectHandles
             int objectIndex)
         {
             // Iterate ranges to determine which range to add the freed memory to (or where to insert new range)
-            bool foundRangeInsertionPoint = false;
             for (int i = 0; i < freeIndexRangesBuffer.Length; i++)
             {
                 IndexRangeElement tmpRange = freeIndexRangesBuffer[i];
@@ -192,14 +191,14 @@ namespace Trove.ObjectHandles
                 {
                     tmpRange.StartInclusive -= 1;
                     freeIndexRangesBuffer[i] = tmpRange;
-                    break;
+                    return;
                 }
                 // Merge at end
                 else if (tmpRange.EndExclusive == objectIndex)
                 {
                     tmpRange.EndExclusive += 1;
                     freeIndexRangesBuffer[i] = tmpRange;
-                    break;
+                    return;
                 }
                 // Insert
                 else if (tmpRange.StartInclusive > objectIndex)
@@ -209,18 +208,16 @@ namespace Trove.ObjectHandles
                         StartInclusive = objectIndex,
                         EndExclusive = objectIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
                     });
-                    break;
+                    return;
                 }
             }
 
-            if (!foundRangeInsertionPoint)
+            // If we haven't found a match and returned yet, Add range
+            freeIndexRangesBuffer.Add(new IndexRangeElement
             {
-                freeIndexRangesBuffer.Add(new IndexRangeElement
-                {
-                    StartInclusive = objectIndex,
-                    EndExclusive = objectIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
-                });
-            }
+                StartInclusive = objectIndex,
+                EndExclusive = objectIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
+            });
         }
 
         internal static void ConsumeFromFreeRange<T>(

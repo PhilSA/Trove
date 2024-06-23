@@ -18,6 +18,7 @@ public struct MemoryVisualizer : IComponentData
     public float4 MetadataFreeRangeColor;
 
     public bool Update;
+    public Entity TestEntity;
 }
 
 public struct TestVirtualObjectElement : IBufferElementData

@@ -7,6 +7,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Logging;
 using Unity.Mathematics;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 
 namespace Trove.ObjectHandles
 {
@@ -169,7 +170,7 @@ namespace Trove.ObjectHandles
             // Write object
             valueDestinationPtr = bufferPtr + (long)dataStartIndex;
 
-            return new VirtualObjectHandle<T>(new VirtualObjectHandle(objectMetadata.ByteIndex, objectMetadata.Version));
+            return new VirtualObjectHandle<T>(new VirtualObjectHandle(metadataIndex, objectMetadata.Version));
         }
 
         public static void FreeObject(
@@ -181,12 +182,12 @@ namespace Trove.ObjectHandles
             bool metadataIndexValid = objectHandle.MetadataByteIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>() <= endIndexOfMetadatasExclusive;
             if (metadataIndexValid)
             {
-                GetMetadataFreeRangesListHandle(bufferPtr, out VirtualListHandle<IndexRangeElement> metadataRangesHandle);
-                GetDataFreeRangesListHandle(bufferPtr, out VirtualListHandle<IndexRangeElement> dataRangesHandle);
-
                 ByteArrayUtilities.ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
                 if (objectMetadata.Version == objectHandle.Version)
                 {
+                    GetMetadataFreeRangesListHandle(bufferPtr, out VirtualListHandle<IndexRangeElement> metadataRangesHandle);
+                    GetDataFreeRangesListHandle(bufferPtr, out VirtualListHandle<IndexRangeElement> dataRangesHandle);
+
                     // Free metadata
                     {
                         FreeRangeForStartIndexAndSize(
@@ -281,12 +282,16 @@ namespace Trove.ObjectHandles
             out T value)
             where T : unmanaged
         {
-            bool success = TryGetObjectValuePtr(
+            if (TryGetObjectValuePtr(
                 ref elementsByteBuffer,
                 new VirtualObjectHandle<T>(new VirtualObjectHandle(objectHandle.MetadataByteIndex, objectHandle.Version)),
-                out byte* valuePtr);
-            value = *(T*)valuePtr;
-            return success;
+                out byte* valuePtr))
+            {
+                value = *(T*)valuePtr;
+                return true;
+            }
+            value = default;
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -497,7 +502,6 @@ namespace Trove.ObjectHandles
             Assert.IsTrue(success);
 
             // Iterate ranges to determine which range to add the freed memory to (or where to insert new range)
-            bool foundRangeInsertionPoint = false;
             for (int i = 0; i < rangesUnsafeArray.Length; i++)
             {
                 IndexRangeElement tmpRange = rangesUnsafeArray[i];
@@ -510,35 +514,35 @@ namespace Trove.ObjectHandles
                 {
                     tmpRange.StartInclusive -= objectSize;
                     rangesUnsafeArray[i] = tmpRange;
-                    break;
+                    return;
                 }
                 // Merge at end
                 else if (tmpRange.EndExclusive == objectStartIndex)
                 {
                     tmpRange.EndExclusive += objectSize;
                     rangesUnsafeArray[i] = tmpRange;
-                    break;
+                    return;
                 }
                 // Insert
                 else if (tmpRange.StartInclusive > objectStartIndex)
                 {
-                    freeIndexRangesListHandle.TryInsertAt(ref bytesBuffer, i, new IndexRangeElement
+                    success = freeIndexRangesListHandle.TryInsertAt(ref bytesBuffer, i, new IndexRangeElement
                     {
                         StartInclusive = objectStartIndex,
                         EndExclusive = objectStartIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
                     });
-                    break;
+                    Assert.IsTrue(success);
+                    return;
                 }
             }
 
-            if(!foundRangeInsertionPoint)
+            // If we haven't found a match and returned yet, Add range
+            success = freeIndexRangesListHandle.TryAdd(ref bytesBuffer, new IndexRangeElement
             {
-                freeIndexRangesListHandle.TryAdd(ref bytesBuffer, new IndexRangeElement
-                {
-                    StartInclusive = objectStartIndex,
-                    EndExclusive = objectStartIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
-                });
-            }
+                StartInclusive = objectStartIndex,
+                EndExclusive = objectStartIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
+            });
+            Assert.IsTrue(success);
         }
 
         internal static bool FindLastUsedIndex(

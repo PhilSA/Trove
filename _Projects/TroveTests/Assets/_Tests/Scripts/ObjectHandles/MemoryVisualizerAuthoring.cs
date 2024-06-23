@@ -40,7 +40,7 @@ class MemoryVisualizerAuthoringBaker : Baker<MemoryVisualizerAuthoring>
             DataFreeRangeColor = ColorToFloat4(authoring.DataFreeRangeColor),
             MetadataFreeRangeColor = ColorToFloat4(authoring.MetadataFreeRangeColor),
 
-            Update = true,
+            Update = false,
         });
     }
 

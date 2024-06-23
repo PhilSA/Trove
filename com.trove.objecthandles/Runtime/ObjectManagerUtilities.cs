@@ -1,9 +1,12 @@
+using System;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Logging;
+using UnityEngine.UIElements;
 
 namespace Trove.ObjectHandles
 {
@@ -13,7 +16,7 @@ namespace Trove.ObjectHandles
         public int EndExclusive;
     }
 
-    public struct ObjectHandle<T> where T : unmanaged
+    public struct ObjectHandle<T> : IEquatable<ObjectHandle>, IEquatable<ObjectHandle<T>> where T : unmanaged
     {
         internal readonly int Index;
         internal readonly int Version;
@@ -25,6 +28,34 @@ namespace Trove.ObjectHandles
         }
 
         public static implicit operator ObjectHandle(ObjectHandle<T> o) => new ObjectHandle(o.Index, o.Version);
+
+        public bool Equals(ObjectHandle other)
+        {
+            return Index == other.Index && Version == other.Version;
+        }
+
+        public bool Equals(ObjectHandle<T> other)
+        {
+            return Index == other.Index && Version == other.Version;
+        }
+
+        public static bool operator ==(ObjectHandle<T> x, ObjectHandle<T> y)
+        {
+            return x.Index == y.Index && x.Version == y.Version;
+        }
+        public static bool operator !=(ObjectHandle<T> x, ObjectHandle<T> y)
+        {
+            return x.Index != y.Index || x.Version != y.Version;
+        }
+
+        public static bool operator ==(ObjectHandle<T> x, ObjectHandle y)
+        {
+            return x.Index == y.Index && x.Version == y.Version;
+        }
+        public static bool operator !=(ObjectHandle<T> x, ObjectHandle y)
+        {
+            return x.Index != y.Index || x.Version != y.Version;
+        }
     }
 
     public struct ObjectData<T> where T : unmanaged
@@ -33,7 +64,7 @@ namespace Trove.ObjectHandles
         public T Value;
     }
 
-    public struct ObjectHandle
+    public struct ObjectHandle : IEquatable<ObjectHandle>
     {
         internal readonly int Index;
         internal readonly int Version;
@@ -42,6 +73,20 @@ namespace Trove.ObjectHandles
         {
             Index = index;
             Version = version;
+        }
+
+        public bool Equals(ObjectHandle other)
+        {
+            return Index == other.Index && Version == other.Version;
+        }
+
+        public static bool operator ==(ObjectHandle x, ObjectHandle y)
+        {
+            return x.Index == y.Index && x.Version == y.Version;
+        }
+        public static bool operator !=(ObjectHandle x, ObjectHandle y)
+        {
+            return x.Index != y.Index || x.Version != y.Version;
         }
     }
 
@@ -52,7 +97,7 @@ namespace Trove.ObjectHandles
         public int Size;
     }
 
-    public struct VirtualObjectHandle<T> where T : unmanaged
+    public struct VirtualObjectHandle<T> : IEquatable<VirtualObjectHandle>, IEquatable<VirtualObjectHandle<T>> where T : unmanaged
     {
         internal readonly int MetadataByteIndex;
         internal readonly int Version;
@@ -70,9 +115,38 @@ namespace Trove.ObjectHandles
         }
 
         public static implicit operator VirtualObjectHandle(VirtualObjectHandle<T> o) => new VirtualObjectHandle(o.MetadataByteIndex, o.Version);
+
+        public bool Equals(VirtualObjectHandle other)
+        {
+            return MetadataByteIndex == other.MetadataByteIndex && Version == other.Version;
+        }
+
+        public bool Equals(VirtualObjectHandle<T> other)
+        {
+            return MetadataByteIndex == other.MetadataByteIndex && Version == other.Version;
+        }
+
+        public static bool operator ==(VirtualObjectHandle<T> x, VirtualObjectHandle<T> y)
+        {
+            return x.MetadataByteIndex == y.MetadataByteIndex && x.Version == y.Version;
+        }
+        public static bool operator !=(VirtualObjectHandle<T> x, VirtualObjectHandle<T> y)
+        {
+            return x.MetadataByteIndex != y.MetadataByteIndex || x.Version != y.Version;
+        }
+
+        public static bool operator ==(VirtualObjectHandle<T> x, VirtualObjectHandle y)
+        {
+            return x.MetadataByteIndex == y.MetadataByteIndex && x.Version == y.Version;
+        }
+        public static bool operator !=(VirtualObjectHandle<T> x, VirtualObjectHandle y)
+        {
+            return x.MetadataByteIndex != y.MetadataByteIndex || x.Version != y.Version;
+        }
     }
 
-    public unsafe struct VirtualObjectHandle
+    [System.Serializable]
+    public unsafe struct VirtualObjectHandle : IEquatable<VirtualObjectHandle>
     {
         internal readonly int MetadataByteIndex;
         internal readonly int Version;
@@ -81,6 +155,20 @@ namespace Trove.ObjectHandles
         {
             MetadataByteIndex = index;
             Version = version;
+        }
+
+        public bool Equals(VirtualObjectHandle other)
+        {
+            return MetadataByteIndex == other.MetadataByteIndex && Version == other.Version;
+        }
+
+        public static bool operator ==(VirtualObjectHandle x, VirtualObjectHandle y)
+        {
+            return x.MetadataByteIndex == y.MetadataByteIndex && x.Version == y.Version;
+        }
+        public static bool operator !=(VirtualObjectHandle x, VirtualObjectHandle y)
+        {
+            return x.MetadataByteIndex != y.MetadataByteIndex || x.Version != y.Version;
         }
     }
 
