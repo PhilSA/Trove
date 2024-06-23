@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 2048
     height: 1060.8
   m_ShowMode: 4
-  m_Title: Console
+  m_Title: Project
   m_RootView: {fileID: 3}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -166,12 +166,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1037.6
+    width: 1311.2
     height: 1010.80005
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 17
+  controlID: 41
   draggingID: 0
 --- !u!114 &8
 MonoBehaviour:
@@ -190,7 +190,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1037.6
+    width: 1311.2
     height: 657.6
   m_MinSize: {x: 201, y: 221}
   m_MaxSize: {x: 4001, y: 4021}
@@ -219,7 +219,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 657.6
-    width: 1037.6
+    width: 1311.2
     height: 353.20007
   m_MinSize: {x: 101, y: 121}
   m_MaxSize: {x: 4001, y: 4021}
@@ -245,14 +245,14 @@ MonoBehaviour:
   - {fileID: 12}
   m_Position:
     serializedVersion: 2
-    x: 1037.6
+    x: 1311.2
     y: 0
-    width: 405.59998
+    width: 275.20007
     height: 1010.80005
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 78
+  controlID: 100
   draggingID: 0
 --- !u!114 &11
 MonoBehaviour:
@@ -271,7 +271,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 405.59998
+    width: 275.20007
     height: 462.4
   m_MinSize: {x: 202, y: 221}
   m_MaxSize: {x: 4002, y: 4021}
@@ -297,7 +297,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 462.4
-    width: 405.59998
+    width: 275.20007
     height: 548.4
   m_MinSize: {x: 232, y: 271}
   m_MaxSize: {x: 10002, y: 10021}
@@ -321,9 +321,9 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 1443.2
+    x: 1586.4
     y: 0
-    width: 604.80005
+    width: 461.59998
     height: 1010.80005
   m_MinSize: {x: 276, y: 71}
   m_MaxSize: {x: 4001, y: 4021}
@@ -1823,7 +1823,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 19
-    width: 1036.6
+    width: 1310.2
     height: 636.6
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1878,23 +1878,23 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 1036.6
+      width: 1310.2
       height: 615.6
-    m_Scale: {x: 0.6748698, y: 0.6748698}
-    m_Translation: {x: 518.3, y: 307.8}
+    m_Scale: {x: 0.7125, y: 0.7125}
+    m_Translation: {x: 655.1, y: 307.8}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -768
-      y: -456.08798
-      width: 1536
-      height: 912.17596
+      x: -919.4386
+      y: -432
+      width: 1838.8772
+      height: 864
     m_MinimalGUI: 1
-  m_defaultScale: 0.6748698
-  m_LastWindowPixelSize: {x: 1036.6, y: 636.6}
+  m_defaultScale: 0.7125
+  m_LastWindowPixelSize: {x: 1310.2, y: 636.6}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000
@@ -1924,7 +1924,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 676.6
-    width: 1036.6
+    width: 1310.2
     height: 332.20007
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1961,7 +1961,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 1
     y: 19
-    width: 403.59998
+    width: 273.20007
     height: 441.4
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1979,7 +1979,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: d8faffff
+      m_ExpandedIDs: a6f2ffffd8faffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -2028,7 +2028,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 1
     y: 481.4
-    width: 403.59998
+    width: 273.20007
     height: 527.4
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -2052,7 +2052,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Packages/com.trove.common/Runtime
+    - Packages/com.trove.objecthandles/Runtime/VirtualCollections
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -2070,7 +2070,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 3af30000
     m_LastClickedID: 62266
-    m_ExpandedIDs: 0000000014bf000016bf000018bf00001abf00001cbf00001ebf000020bf000022bf000024bf000026bf000028bf00002abf00002cbf0000
+    m_ExpandedIDs: 0000000018bf00001abf00001cbf00001ebf000020bf000022bf000024bf000026bf000028bf00002abf00002cbf00002ebf000030bf0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -2096,10 +2096,10 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 690.6}
+    scrollPos: {x: 0, y: 1170.6}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 0000000014bf000016bf000018bf00001abf00001cbf00001ebf000020bf000022bf000024bf000026bf000028bf00002abf00002cbf0000
+    m_ExpandedIDs: 0000000018bf00001abf00001cbf00001ebf000020bf000022bf000024bf000026bf000028bf00002abf00002cbf00002ebf000030bf0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -2179,9 +2179,9 @@ MonoBehaviour:
     m_TextWithWhitespace: "Inspector\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 1444.2
+    x: 1587.4
     y: 19
-    width: 603.80005
+    width: 460.59998
     height: 989.80005
   m_SerializedDataModeController:
     m_DataMode: 0

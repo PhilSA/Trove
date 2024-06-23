@@ -51,6 +51,9 @@ namespace Trove.ObjectHandles
         }
     }
 
+    /// <summary>
+    /// Note: unsafe due to operating on a ptr to the data in the dynamicBuffer of bytes
+    /// </summary>
     public unsafe struct UnsafeVirtualArray<T>
         where T : unmanaged
     {
@@ -90,28 +93,21 @@ namespace Trove.ObjectHandles
     {
         internal readonly int MetadataByteIndex;
         internal readonly int Version;
+        internal readonly VirtualObjectHandle<VirtualArray<T>> _objectHandle;
 
         internal VirtualArrayHandle(int index, int version)
         {
             MetadataByteIndex = index;
             Version = version;
+            _objectHandle = new VirtualObjectHandle<VirtualArray<T>>(new VirtualObjectHandle(MetadataByteIndex, Version));
         }
-
-        internal VirtualArrayHandle(VirtualObjectHandleRO<VirtualArray<T>> handle)
-        {
-            MetadataByteIndex = handle.MetadataByteIndex;
-            Version = handle.Version;
-        }
-
-        public static implicit operator VirtualArrayHandle<T>(VirtualObjectHandleRO<VirtualArray<T>> o) => new VirtualArrayHandle<T>(o);
-        public static implicit operator VirtualObjectHandleRO<VirtualArray<T>>(VirtualArrayHandle<T> o) => new VirtualObjectHandleRO<VirtualArray<T>>(o.MetadataByteIndex, o.Version);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetLength(ref DynamicBuffer<byte> byteBuffer, out int length)
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out VirtualArray<T> array))
             {
                 length = array._length;
@@ -129,7 +125,7 @@ namespace Trove.ObjectHandles
         {
             if (VirtualObjectManager.TryGetObjectValuePtr<VirtualArray<T>>(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out byte* arrayPtr))
             {
                 T* arrayData = (T*)(arrayPtr + (long)UnsafeUtility.SizeOf<VirtualArray<T>>());
@@ -151,7 +147,7 @@ namespace Trove.ObjectHandles
         {
             if (VirtualObjectManager.TryGetObjectValuePtr<VirtualArray<T>>(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out byte* arrayPtr))
             {
                 T* arrayData = (T*)(arrayPtr + (long)UnsafeUtility.SizeOf<VirtualArray<T>>());
@@ -171,7 +167,7 @@ namespace Trove.ObjectHandles
         {
             if (VirtualObjectManager.TryGetObjectValuePtr<VirtualArray<T>>(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out byte* arrayPtr))
             {
                 T* arrayData = (T*)(arrayPtr + (long)UnsafeUtility.SizeOf<VirtualArray<T>>());
@@ -187,7 +183,7 @@ namespace Trove.ObjectHandles
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out VirtualArray<T> array))
             {
                 byte* dataPtr = (byte*)byteBuffer.GetUnsafePtr() + (long)this.MetadataByteIndex + (long)UnsafeUtility.SizeOf<VirtualArray<T>>();
