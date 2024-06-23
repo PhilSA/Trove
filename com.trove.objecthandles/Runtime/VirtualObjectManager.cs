@@ -162,7 +162,7 @@ namespace Trove.ObjectHandles
                         UnsafeUtility.SizeOf<VirtualObjectMetadata>(), 
                         out int indexOfFreeRange))
                 {
-                    ResizeBufferForMetadataCapacityIncrease(
+                    ResizeBufferAndFreeRangesForMetadataCapacityIncrease(
                         metadataRangesHandle, 
                         ref elementsByteBuffer,
                         out int prevObjectDatasStartIndex,
@@ -192,7 +192,7 @@ namespace Trove.ObjectHandles
                         objectSize, 
                         out int indexOfFreeRange))
                 {
-                    ResizeBufferForObjectDataCapacityIncrease(
+                    ResizeBufferAndFreeRangesForObjectDataCapacityIncrease(
                         dataRangesHandle,
                         ref elementsByteBuffer);
 
@@ -290,7 +290,7 @@ namespace Trove.ObjectHandles
                             newSize,
                             out int indexOfFreeRange))
                     {
-                        ResizeBufferForObjectDataCapacityIncrease(
+                        ResizeBufferAndFreeRangesForObjectDataCapacityIncrease(
                             dataRangesHandle, 
                             ref byteBuffer);
 
@@ -807,7 +807,7 @@ namespace Trove.ObjectHandles
             }
         }
 
-        private static void ResizeBufferForObjectDataCapacityIncrease(
+        private static void ResizeBufferAndFreeRangesForObjectDataCapacityIncrease(
             VirtualListHandle<IndexRangeElement> dataRangesHandle, 
             ref DynamicBuffer<byte> bytesBuffer)
         {
@@ -825,7 +825,7 @@ namespace Trove.ObjectHandles
                 bytesBuffer.Length);
         }
 
-        private static void ResizeBufferForMetadataCapacityIncrease(
+        private static void ResizeBufferAndFreeRangesForMetadataCapacityIncrease(
             VirtualListHandle<IndexRangeElement> metadataRangesHandle,
             ref DynamicBuffer<byte> bytesBuffer,
             out int prevObjectDatasStartIndex,
