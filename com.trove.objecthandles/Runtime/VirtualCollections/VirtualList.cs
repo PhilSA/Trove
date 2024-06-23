@@ -4,6 +4,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Trove;
 using Unity.Mathematics;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 
 namespace Trove.ObjectHandles
 {
@@ -55,6 +56,7 @@ namespace Trove.ObjectHandles
     {
         internal readonly int MetadataByteIndex;
         internal readonly int Version;
+        internal readonly VirtualObjectHandle<VirtualList<T>> _objectHandle;
 
         public const float GrowFactor = 2f;
 
@@ -62,23 +64,15 @@ namespace Trove.ObjectHandles
         {
             MetadataByteIndex = index;
             Version = version;
+            _objectHandle = new VirtualObjectHandle<VirtualList<T>>(new VirtualObjectHandle(MetadataByteIndex, Version));
         }
-
-        internal VirtualListHandle(VirtualObjectHandleRO<VirtualList<T>> handle)
-        {
-            MetadataByteIndex = handle.MetadataByteIndex;
-            Version = handle.Version;
-        }
-
-        public static implicit operator VirtualListHandle<T>(VirtualObjectHandleRO<VirtualList<T>> o) => new VirtualListHandle<T>(o);
-        public static implicit operator VirtualObjectHandleRO<VirtualList<T>>(VirtualListHandle<T> o) => new VirtualObjectHandleRO<VirtualList<T>>(o.MetadataByteIndex, o.Version);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetLength(ref DynamicBuffer<byte> byteBuffer, out int length)
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out VirtualList<T> list))
             {
                 length = list._length;
@@ -86,6 +80,15 @@ namespace Trove.ObjectHandles
             }
             length = default;
             return false;
+        }
+
+        /// <summary>
+        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetLengthUnsafe(ref DynamicBuffer<byte> byteBuffer)
+        {
+            return VirtualObjectManager.Unsafe.GetObjectValueUnsafe(ref byteBuffer, this._objectHandle).Length;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -93,7 +96,7 @@ namespace Trove.ObjectHandles
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out VirtualList<T> list))
             {
                 capacity = list._capacity;
@@ -103,12 +106,21 @@ namespace Trove.ObjectHandles
             return false;
         }
 
+        /// <summary>
+        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetCapacityUnsafe(ref DynamicBuffer<byte> byteBuffer)
+        {
+            return VirtualObjectManager.Unsafe.GetObjectValueUnsafe(ref byteBuffer, this._objectHandle).Capacity;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetLengthAndCapacity(ref DynamicBuffer<byte> byteBuffer, out int length, out int capacity)
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out VirtualList<T> list))
             {
                 length = list._length;
@@ -120,12 +132,23 @@ namespace Trove.ObjectHandles
             return false;
         }
 
+        /// <summary>
+        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void GetLengthAndCapacityUnsafe(ref DynamicBuffer<byte> byteBuffer, out int length, out int capacity)
+        {
+            VirtualList<T> list = VirtualObjectManager.Unsafe.GetObjectValueUnsafe(ref byteBuffer, this._objectHandle);
+            length = list._length;
+            capacity = list._capacity;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryClear(ref DynamicBuffer<byte> byteBuffer)
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+            if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out byte* listPtr))
             {
                 ref VirtualList<T> list = ref *(VirtualList<T>*)listPtr;
@@ -135,15 +158,27 @@ namespace Trove.ObjectHandles
             return false;
         }
 
+        /// <summary>
+        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ClearUnsafe(ref DynamicBuffer<byte> byteBuffer)
+        {
+            byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
+                ref byteBuffer, this._objectHandle);
+            ref VirtualList<T> list = ref *(VirtualList<T>*)listPtr;
+            list._length = 0;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetElementAt(
             ref DynamicBuffer<byte> byteBuffer,
             int index,
             out T value)
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+            if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out byte* listPtr))
             {
                 T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
@@ -155,17 +190,31 @@ namespace Trove.ObjectHandles
         }
 
         /// <summary>
+        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T GetElementAtUnsafe(
+            ref DynamicBuffer<byte> byteBuffer,
+            int index)
+        {
+            byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
+                ref byteBuffer, this._objectHandle);
+            T* listDataPtr = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
+            return listDataPtr[index];
+        }
+
+        /// <summary>
         /// Note: unsafe because as soon as the list grows and gets reallocated, the ref is no longer valid
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T TryGetRefElementAtUnsafe(
+        public ref T TryGetUnsafeRefElementAt(
             ref DynamicBuffer<byte> byteBuffer,
             int index,
             out bool success)
         {
             if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out byte* listPtr))
             {
                 T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
@@ -177,15 +226,31 @@ namespace Trove.ObjectHandles
             return ref *(T*)byteBuffer.GetUnsafePtr();
         }
 
+        /// <summary>
+        /// Note: unsafe because as soon as the list grows and gets reallocated, the ref is no longer valid
+        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T GetUnsafeRefElementAtUnsafe(
+            ref DynamicBuffer<byte> byteBuffer,
+            int index)
+        {
+            byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
+                ref byteBuffer, this._objectHandle);
+            T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
+            T* elementPtr = listData + (long)(UnsafeUtility.SizeOf<T>() * index);
+            return ref *elementPtr;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TrySetElementAt(
             ref DynamicBuffer<byte> byteBuffer,
             int index,
             T value)
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+            if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out byte* listPtr))
             {
                 T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
@@ -195,37 +260,35 @@ namespace Trove.ObjectHandles
             return false;
         }
 
-        public bool TryAsUnsafeListRO(
+        /// <summary>
+        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetElementAtUnsafe(
             ref DynamicBuffer<byte> byteBuffer,
-            out UnsafeList<T>.ReadOnly unsafeList)
+            int index,
+            T value)
         {
-            if (VirtualObjectManager.TryGetObjectValue(
-                ref byteBuffer,
-                this,
-                out VirtualList<T> list))
-            {
-                byte* dataPtr = (byte*)byteBuffer.GetUnsafePtr() + (long)this.MetadataByteIndex + (long)UnsafeUtility.SizeOf<VirtualList<T>>();
-                unsafeList = new UnsafeList<T>((T*)dataPtr, list.Length).AsReadOnly();
-                return true;
-            }
-            unsafeList = default;
-            return false;
+            byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
+                ref byteBuffer, this._objectHandle);
+            T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
+            listData[index] = value;
         }
 
-        public bool TryAsUnsafeList(
+        public bool TryAsUnsafeVirtualArray(
             ref DynamicBuffer<byte> byteBuffer,
-            out UnsafeList<T> unsafeList)
+            out UnsafeVirtualArray<T> unsafeArray)
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
-                this,
-                out VirtualList<T> list))
+                this._objectHandle,
+                out VirtualList<T> array))
             {
-                byte* dataPtr = (byte*)byteBuffer.GetUnsafePtr() + (long)this.MetadataByteIndex + (long)UnsafeUtility.SizeOf<VirtualList<T>>();
-                unsafeList = new UnsafeList<T>((T*)dataPtr, list.Length);
+                byte* dataPtr = (byte*)byteBuffer.GetUnsafePtr() + (long)this.MetadataByteIndex + (long)UnsafeUtility.SizeOf<VirtualArray<T>>();
+                unsafeArray = new UnsafeVirtualArray<T>((T*)dataPtr, array.Length);
                 return true;
             }
-            unsafeList = default;
+            unsafeArray = default;
             return false;
         }
 
@@ -234,9 +297,9 @@ namespace Trove.ObjectHandles
             ref DynamicBuffer<byte> byteBuffer,
             int capacity)
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+            if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out byte* listPtr))
             {
                 VirtualList<T> list = *(VirtualList<T>*)listPtr;
@@ -246,32 +309,7 @@ namespace Trove.ObjectHandles
                         new VirtualObjectHandle(this.MetadataByteIndex, this.Version), 
                         ref byteBuffer, 
                         capacity);
-
-                    if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
-                        ref byteBuffer,
-                        newListHandle,
-                        out byte* newlistPtr))
-                    {
-                        // Copy old list contents to new
-                        ref VirtualList<T> newList = ref *(VirtualList<T>*)newlistPtr;
-                        int newLength = math.min(capacity, list._length);
-                        newList._capacity = capacity;
-                        newList._length = newLength;
-                        int sizeOfVirtualList = UnsafeUtility.SizeOf<VirtualList<T>>();
-                        byte* oldListDataPtr = listPtr + (long)sizeOfVirtualList;
-                        byte* newListDataPtr = newlistPtr + (long)sizeOfVirtualList;
-                        UnsafeUtility.MemCpy(newListDataPtr, oldListDataPtr, UnsafeUtility.SizeOf<T>() * newList._length);
-
-                        // Free old list
-                        VirtualObjectManager.FreeObject<VirtualList<T>>(
-                            ref byteBuffer,
-                            this);
-
-                        // Replace handle with new one 
-                        this = newListHandle;
-
-                        return true;
-                    }
+                    return true;
                 }
             }
             return false;
@@ -282,9 +320,9 @@ namespace Trove.ObjectHandles
             ref DynamicBuffer<byte> byteBuffer,
             int newLength)
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+            if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out byte* listPtr))
             {
                 ref VirtualList<T> list = ref *(VirtualList<T>*)listPtr;
@@ -293,9 +331,9 @@ namespace Trove.ObjectHandles
                     TrySetCapacity(
                         ref byteBuffer,
                         (int)math.ceil(newLength * GrowFactor));
-                    VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+                    VirtualObjectManager.TryGetObjectValuePtr(
                         ref byteBuffer,
-                        this,
+                        this._objectHandle,
                         out listPtr);
                     list = ref *(VirtualList<T>*)listPtr;
                 }
@@ -310,9 +348,9 @@ namespace Trove.ObjectHandles
             ref DynamicBuffer<byte> byteBuffer,
             T value)
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+            if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
-                this,
+                this._objectHandle,
                 out byte* listPtr))
             {
                 ref VirtualList<T> list = ref *(VirtualList<T>*)listPtr;
@@ -322,9 +360,9 @@ namespace Trove.ObjectHandles
                     TrySetCapacity(
                         ref byteBuffer,
                         (int)math.ceil(newLength * GrowFactor));
-                    VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+                    VirtualObjectManager.TryGetObjectValuePtr(
                         ref byteBuffer,
-                        this,
+                        this._objectHandle,
                         out listPtr);
                     list = ref *(VirtualList<T>*)listPtr;
                 }
@@ -344,9 +382,9 @@ namespace Trove.ObjectHandles
         {
             if (index >= 0)
             {
-                if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+                if (VirtualObjectManager.TryGetObjectValuePtr(
                     ref byteBuffer,
-                    this,
+                    this._objectHandle,
                     out byte* listPtr))
                 {
                     ref VirtualList<T> list = ref *(VirtualList<T>*)listPtr;
@@ -358,9 +396,9 @@ namespace Trove.ObjectHandles
                             TrySetCapacity(
                                 ref byteBuffer,
                                 (int)math.ceil(newLength * GrowFactor));
-                            VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+                            VirtualObjectManager.TryGetObjectValuePtr(
                                 ref byteBuffer,
-                                this,
+                                this._objectHandle,
                                 out listPtr);
                             list = ref *(VirtualList<T>*)listPtr;
                         }
@@ -386,9 +424,9 @@ namespace Trove.ObjectHandles
         {
             if (index >= 0)
             {
-                if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+                if (VirtualObjectManager.TryGetObjectValuePtr(
                     ref byteBuffer,
-                    this,
+                    this._objectHandle,
                     out byte* listPtr))
                 {
                     ref VirtualList<T> list = ref *(VirtualList<T>*)listPtr;

@@ -12,14 +12,6 @@ namespace Trove.ObjectHandles
         public int EndExclusive;
     }
 
-    public enum RangeFreeingType
-    {
-        MergeFirst,
-        MergeLast,
-        Insert,
-        Add,
-    }
-
     public static class ObjectManagerUtilities
     {
 

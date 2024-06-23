@@ -4,6 +4,9 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Trove;
 using Unity.Mathematics;
+using System.Collections;
+using System.Collections.Generic;
+using Unity.Assertions;
 
 namespace Trove.ObjectHandles
 {
@@ -45,6 +48,41 @@ namespace Trove.ObjectHandles
             UnsafeUtility.MemClear(valueDestinationPtr, array.GetDataSizeBytes());
 
             return handle;
+        }
+    }
+
+    public unsafe struct UnsafeVirtualArray<T>
+        where T : unmanaged
+    {
+        internal T* _ptr;
+        internal int _length;
+
+        public int Length => _length;
+
+        public UnsafeVirtualArray(T* ptr, int length)
+        {
+            _ptr = ptr;
+            _length = length;
+        }
+
+        public T this[int i]
+        {
+            get 
+            {
+                Assert.IsTrue(i >= 0 && i < _length);
+                return _ptr[i]; 
+            }
+            set
+            {
+                Assert.IsTrue(i >= 0 && i < _length);
+                _ptr[i] = value; 
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T* GetUnsafePtr()
+        { 
+            return _ptr; 
         }
     }
 
@@ -143,9 +181,9 @@ namespace Trove.ObjectHandles
             return false;
         }
 
-        public bool TryAsUnsafeListRO(
+        public bool TryAsUnsafeVirtualArray(
             ref DynamicBuffer<byte> byteBuffer,
-            out UnsafeList<T>.ReadOnly unsafeArray)
+            out UnsafeVirtualArray<T> unsafeArray)
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
@@ -153,7 +191,7 @@ namespace Trove.ObjectHandles
                 out VirtualArray<T> array))
             {
                 byte* dataPtr = (byte*)byteBuffer.GetUnsafePtr() + (long)this.MetadataByteIndex + (long)UnsafeUtility.SizeOf<VirtualArray<T>>();
-                unsafeArray = new UnsafeList<T>((T*)dataPtr, array.Length).AsReadOnly();
+                unsafeArray = new UnsafeVirtualArray<T>((T*)dataPtr, array.Length);
                 return true;
             }
             unsafeArray = default;

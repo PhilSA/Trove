@@ -11,30 +11,16 @@ using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 
 namespace Trove.ObjectHandles
 {
-    public struct VirtualObjectHandleRO<T> where T : unmanaged
-    {
-        internal readonly int MetadataByteIndex;
-        internal readonly int Version;
-
-        internal VirtualObjectHandleRO(int index, int version)
-        {
-            MetadataByteIndex = index;
-            Version = version;
-        }
-
-        internal VirtualObjectHandleRO(VirtualObjectHandle handle)
-        {
-            MetadataByteIndex = handle.MetadataByteIndex;
-            Version = handle.Version;
-        }
-
-        public static implicit operator VirtualObjectHandleRO<T>(VirtualObjectHandle<T> o) => new VirtualObjectHandleRO<T>(o.MetadataByteIndex, o.Version);
-    }
-
     public struct VirtualObjectHandle<T> where T : unmanaged
     {
         internal readonly int MetadataByteIndex;
         internal readonly int Version;
+
+        internal VirtualObjectHandle(int index, int version)
+        {
+            MetadataByteIndex = index;
+            Version = version;
+        }
 
         internal VirtualObjectHandle(VirtualObjectHandle handle)
         {
@@ -50,9 +36,9 @@ namespace Trove.ObjectHandles
         internal readonly int MetadataByteIndex;
         internal readonly int Version;
 
-        internal VirtualObjectHandle(int metadataIndex, int version)
+        internal VirtualObjectHandle(int index, int version)
         {
-            MetadataByteIndex = metadataIndex;
+            MetadataByteIndex = index;
             Version = version;
         }
     }
@@ -73,8 +59,8 @@ namespace Trove.ObjectHandles
         private static int ByteIndex_ObjectMetadataCount = ByteIndex_ObjectMetadataCapacity + UnsafeUtility.SizeOf<int>();
         private static int ByteIndex_ObjectDataStartIndex = ByteIndex_ObjectMetadataCount + UnsafeUtility.SizeOf<int>();
         private static int ByteIndex_MetadataFreeRangesHandle = ByteIndex_ObjectDataStartIndex + UnsafeUtility.SizeOf<int>();
-        private static int ByteIndex_ObjectDataFreeRangesHandle = ByteIndex_MetadataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualObjectHandleRO<VirtualList<IndexRangeElement>>>();
-        private static int ByteIndex_MetadatasStartIndex = ByteIndex_ObjectDataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualObjectHandleRO<VirtualList<IndexRangeElement>>>();
+        private static int ByteIndex_ObjectDataFreeRangesHandle = ByteIndex_MetadataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualListHandle<IndexRangeElement>>();
+        private static int ByteIndex_MetadatasStartIndex = ByteIndex_ObjectDataFreeRangesHandle + UnsafeUtility.SizeOf<VirtualListHandle<IndexRangeElement>>();
 
         public static void Initialize(
             ref DynamicBuffer<byte> elementsByteBuffer,
@@ -169,11 +155,11 @@ namespace Trove.ObjectHandles
             // Metadatas
             int metadataIndex;
             {
-                if (!FindFreeIndexRange(
+                if (!FindFreeRange(
                         metadataRangesHandle,
                         ref elementsByteBuffer, 
                         UnsafeUtility.SizeOf<VirtualObjectMetadata>(), 
-                        out IndexRangeElement freeIndexRange, 
+                        out IndexRangeElement freeRange, 
                         out int indexOfFreeRange))
                 {
                     // Increase buffer capacity for expanded metadatas
@@ -204,14 +190,14 @@ namespace Trove.ObjectHandles
                         ref elementsByteBuffer, 
                         prevObjectDatasStartIndex, 
                         newObjectDatasStartIndex,
-                        out freeIndexRange, 
+                        out freeRange, 
                         out indexOfFreeRange);
                 }
 
                 ConsumeFromFreeRanges(
                     metadataRangesHandle,
                     ref elementsByteBuffer,
-                    freeIndexRange,
+                    freeRange,
                     indexOfFreeRange,
                     UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
                     out metadataIndex);
@@ -222,11 +208,11 @@ namespace Trove.ObjectHandles
             // Datas
             int dataStartIndex;
             {
-                if (!FindFreeIndexRange(
+                if (!FindFreeRange(
                         dataRangesHandle,
                         ref elementsByteBuffer,
                         objectSize, 
-                        out IndexRangeElement freeIndexRange, 
+                        out IndexRangeElement freeRange, 
                         out int indexOfFreeRange))
                 {
                     // Increase buffer capacity for expanded object data
@@ -241,14 +227,14 @@ namespace Trove.ObjectHandles
                         ref elementsByteBuffer,
                         objectDatasStartIndex, 
                         elementsByteBuffer.Length,
-                        out freeIndexRange, 
+                        out freeRange, 
                         out indexOfFreeRange);
                 }
 
                 ConsumeFromFreeRanges(
                     dataRangesHandle,
                     ref elementsByteBuffer,
-                    freeIndexRange,
+                    freeRange,
                     indexOfFreeRange,
                     objectSize,
                     out dataStartIndex);
@@ -268,16 +254,6 @@ namespace Trove.ObjectHandles
             return new VirtualObjectHandle<T>(new VirtualObjectHandle(objectMetadata.ByteIndex, objectMetadata.Version));
         }
 
-        public static void FreeObject<T>(
-            ref DynamicBuffer<byte> elementsByteBuffer,
-            VirtualObjectHandleRO<T> objectHandle)
-            where T : unmanaged
-        {
-            FreeObject(
-                ref elementsByteBuffer,
-                new VirtualObjectHandle(objectHandle.MetadataByteIndex, objectHandle.Version));
-        }
-
         public static void FreeObject(
            ref DynamicBuffer<byte> elementsByteBuffer,
            VirtualObjectHandle objectHandle)
@@ -293,33 +269,29 @@ namespace Trove.ObjectHandles
                 ByteArrayUtilities.ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
                 if (objectMetadata.Version == objectHandle.Version)
                 {
+                    // Free metadata
+                    {
+                        FreeRangeForStartIndexAndSize(
+                            metadataRangesHandle,
+                            ref elementsByteBuffer, 
+                            objectHandle.MetadataByteIndex, 
+                            UnsafeUtility.SizeOf<VirtualObjectMetadata>());
+                    }
+
+                    // Free data
+                    {
+                        FreeRangeForStartIndexAndSize(
+                            dataRangesHandle,
+                            ref elementsByteBuffer,
+                            objectMetadata.ByteIndex, 
+                            objectMetadata.Size);
+                    }
+
                     // Update metadata
                     objectMetadata.Version++;
                     objectMetadata.Size = 0;
                     objectMetadata.ByteIndex = -1;
                     ByteArrayUtilities.WriteValue(bufferPtr, objectHandle.MetadataByteIndex, objectMetadata);
-
-                    // Free metadata
-                    {
-                        FreeRangeForObject(
-                            metadataRangesHandle,
-                            ref elementsByteBuffer, 
-                            objectHandle.MetadataByteIndex, 
-                            UnsafeUtility.SizeOf<VirtualObjectMetadata>(), 
-                            out RangeFreeingType rangeFreeingType, 
-                            out int indexMatch);
-                    }
-
-                    // Free data
-                    {
-                        FreeRangeForObject(
-                            dataRangesHandle,
-                            ref elementsByteBuffer,
-                            objectMetadata.ByteIndex, 
-                            objectMetadata.Size, 
-                            out RangeFreeingType rangeFreeingType, 
-                            out int indexMatch);
-                    }
                 }
             }
         }
@@ -336,46 +308,60 @@ namespace Trove.ObjectHandles
 
             if (newSize != oldSize)
             {
-                // - find a new place to allocate data (check if we can simply expand current range)
-                int newDataByteIndex = ;
-                bool dataByteIndexChanged = ;
-                bool newSizeIsSmaller = newSize < oldSize;
+                int oldByteIndexStart = objectMetadataRef.ByteIndex;
+                GetDataFreeRangesListHandle(bufferPtr, out VirtualListHandle<IndexRangeElement> dataRangesHandle);
 
-                if (dataByteIndexChanged)
+                // Find a new place to allocate data
+                int newDataByteIndex;
                 {
-                    // Copy data over to new location
-                    byte* oldDataPtr = bufferPtr + (long)objectMetadataRef.ByteIndex;
-                    byte* newDataPtr = bufferPtr + (long)newDataByteIndex;
-                    UnsafeUtility.MemCpy(newDataPtr, oldDataPtr, oldSize);
+                    if (!FindFreeRange(
+                            dataRangesHandle,
+                            ref byteBuffer,
+                            newSize,
+                            out IndexRangeElement freeRange,
+                            out int indexOfFreeRange))
+                    {
+                        // Increase buffer capacity for expanded object data
+                        GetObjectDatasStartIndex(bufferPtr, out int objectDatasStartIndex);
+                        int prevDatasByteCapacity = byteBuffer.Length - objectDatasStartIndex;
+                        int newDatasByteCapacity = (int)math.ceil(prevDatasByteCapacity * ObjectsCapacityGrowFactor);
+                        int newLength = (int)math.ceil(byteBuffer.Length + (newDatasByteCapacity - prevDatasByteCapacity));
+                        byteBuffer.Resize(newLength, NativeArrayOptions.ClearMemory);
 
-                    // Make metadata byteindex point to new location
-                    objectMetadataRef.ByteIndex = newDataByteIndex;
+                        GetExpandedFreeRange(
+                            dataRangesHandle,
+                            ref byteBuffer,
+                            objectDatasStartIndex,
+                            byteBuffer.Length,
+                            out freeRange,
+                            out indexOfFreeRange);
+                    }
 
-                    // - free old memory
-                    k
+                    ConsumeFromFreeRanges(
+                        dataRangesHandle,
+                        ref byteBuffer,
+                        freeRange,
+                        indexOfFreeRange,
+                        newSize,
+                        out newDataByteIndex);
                 }
-                else if (newSizeIsSmaller)
-                {
-                    // - free superfluous memory
-                    g
-                }
 
-                // Update metadata size
+                // Copy data over to new location
+                byte* oldDataPtr = bufferPtr + (long)objectMetadataRef.ByteIndex;
+                byte* newDataPtr = bufferPtr + (long)newDataByteIndex;
+                UnsafeUtility.MemCpy(newDataPtr, oldDataPtr, oldSize);
+
+                // Update metadata byteindex and size (but not version, because this still represents the same object)
+                objectMetadataRef.ByteIndex = newDataByteIndex;
                 objectMetadataRef.Size = newSize;
-            }
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetObjectValue<T>(
-            ref DynamicBuffer<byte> elementsByteBuffer,
-            VirtualObjectHandleRO<T> objectHandle,
-            out T value)
-            where T : unmanaged
-        {
-            return TryGetObjectValue(
-                ref elementsByteBuffer,
-                new VirtualObjectHandle<T>(new VirtualObjectHandle(objectHandle.MetadataByteIndex, objectHandle.Version)),
-                out value);
+                // Free old object data range
+                FreeRangeForStartIndexAndSize(
+                    dataRangesHandle,
+                    ref byteBuffer,
+                    oldByteIndexStart,
+                    oldSize);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -391,19 +377,6 @@ namespace Trove.ObjectHandles
                 out byte* valuePtr);
             value = *(T*)valuePtr;
             return success;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool TryGetObjectValuePtr<T>(
-            ref DynamicBuffer<byte> elementsByteBuffer,
-            VirtualObjectHandleRO<T> objectHandle,
-            out byte* valuePtr)
-            where T : unmanaged
-        {
-            return TryGetObjectValuePtr(
-                ref elementsByteBuffer,
-                new VirtualObjectHandle<T>(new VirtualObjectHandle(objectHandle.MetadataByteIndex, objectHandle.Version)),
-                out valuePtr);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -427,17 +400,6 @@ namespace Trove.ObjectHandles
 
             valuePtr = default;
             return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Exists<T>(
-            ref DynamicBuffer<byte> elementsByteBuffer,
-            VirtualObjectHandleRO<T> objectHandle)
-            where T : unmanaged
-        {
-            return Exists(
-                ref elementsByteBuffer,
-                new VirtualObjectHandle<T>(new VirtualObjectHandle(objectHandle.MetadataByteIndex, objectHandle.Version)));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -651,79 +613,57 @@ namespace Trove.ObjectHandles
             ByteArrayUtilities.WriteValue(byteArrayPtr, ByteIndex_MetadataFreeRangesHandle, value);
         }
 
-        private static void FreeRangeForObject(
+        private static void FreeRangeForStartIndexAndSize(
             VirtualListHandle<IndexRangeElement> freeIndexRangesListHandle,
             ref DynamicBuffer<byte> bytesBuffer,
             int objectStartIndex, 
-            int objectIndexesSize,
-            out RangeFreeingType rangeFreeingType, out int indexMatch)
+            int objectSize)
         {
-            rangeFreeingType = RangeFreeingType.Add;
-            indexMatch = -1;
-
-            bool success = freeIndexRangesListHandle.TryAsUnsafeListRO(ref bytesBuffer, out UnsafeList<IndexRangeElement>.ReadOnly asUnsafeListRO);
+            bool success = freeIndexRangesListHandle.TryAsUnsafeVirtualArray(ref bytesBuffer, out UnsafeVirtualArray<IndexRangeElement> asUnsafeArray);
             Assert.IsTrue(success);
 
-            for (int i = 0; i < asUnsafeListRO.Length; i++)
+            // Iterate ranges to determine which range to add the freed memory to (or where to insert new range)
+            bool foundRangeInsertionPoint = false;
+            for (int i = 0; i < asUnsafeArray.Length; i++)
             {
-                IndexRangeElement tmpRange = asUnsafeListRO.ElementAt(i);
+                IndexRangeElement tmpRange = asUnsafeArray[i];
 
                 // Assert no ranges overlap
-                Assert.IsFalse(ObjectManagerUtilities.RangesOverlap(objectStartIndex, (objectStartIndex + objectIndexesSize), tmpRange.StartInclusive, tmpRange.EndExclusive));
+                Assert.IsFalse(ObjectManagerUtilities.RangesOverlap(objectStartIndex, (objectStartIndex + objectSize), tmpRange.StartInclusive, tmpRange.EndExclusive));
 
-                if (tmpRange.StartInclusive == objectStartIndex + objectIndexesSize)
+                // Merge at beginning
+                if (tmpRange.StartInclusive == objectStartIndex + objectSize)
                 {
-                    rangeFreeingType = RangeFreeingType.MergeFirst;
-                    indexMatch = i;
+                    ref IndexRangeElement rangeElement = ref freeIndexRangesListHandle.TryGetUnsafeRefElementAt(ref bytesBuffer, i, out success);
+                    rangeElement.StartInclusive -= objectSize;
                     break;
                 }
+                // Merge at end
                 else if (tmpRange.EndExclusive == objectStartIndex)
                 {
-                    rangeFreeingType = RangeFreeingType.MergeLast;
-                    indexMatch = i;
+                    ref IndexRangeElement rangeElement = ref freeIndexRangesListHandle.TryGetUnsafeRefElementAt(ref bytesBuffer, i, out success);
+                    rangeElement.EndExclusive += objectSize;
                     break;
                 }
+                // Insert
                 else if (tmpRange.StartInclusive > objectStartIndex)
                 {
-                    rangeFreeingType = RangeFreeingType.Insert;
-                    indexMatch = i;
+                    freeIndexRangesListHandle.TryInsertAt(ref bytesBuffer, i, new IndexRangeElement
+                    {
+                        StartInclusive = objectStartIndex,
+                        EndExclusive = objectStartIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
+                    });
                     break;
                 }
             }
 
-
-            switch (rangeFreeingType)
+            if(!foundRangeInsertionPoint)
             {
-                case RangeFreeingType.MergeFirst:
-                    {
-                        ref IndexRangeElement rangeElement = ref freeIndexRangesListHandle.TryGetRefElementAtUnsafe(ref bytesBuffer, indexMatch, out success);
-                        rangeElement.StartInclusive -= UnsafeUtility.SizeOf<VirtualObjectMetadata>();
-                        break;
-                    }
-                case RangeFreeingType.MergeLast:
-                    {
-                        ref IndexRangeElement rangeElement = ref freeIndexRangesListHandle.TryGetRefElementAtUnsafe(ref bytesBuffer, indexMatch, out success);
-                        rangeElement.EndExclusive += UnsafeUtility.SizeOf<VirtualObjectMetadata>();
-                        break;
-                    }
-                case RangeFreeingType.Insert:
-                    {
-                        freeIndexRangesListHandle.TryInsertAt(ref bytesBuffer, indexMatch, new IndexRangeElement
-                        {
-                            StartInclusive = objectStartIndex,
-                            EndExclusive = objectStartIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
-                        });
-                        break;
-                    }
-                case RangeFreeingType.Add:
-                    {
-                        freeIndexRangesListHandle.TryAdd(ref bytesBuffer, new IndexRangeElement
-                        {
-                            StartInclusive = objectStartIndex,
-                            EndExclusive = objectStartIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
-                        });
-                        break;
-                    }
+                freeIndexRangesListHandle.TryAdd(ref bytesBuffer, new IndexRangeElement
+                {
+                    StartInclusive = objectStartIndex,
+                    EndExclusive = objectStartIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
+                });
             }
         }
 
@@ -734,13 +674,13 @@ namespace Trove.ObjectHandles
             int dataEndIndexExclusive, 
             out int lastUsedIndex)
         {
-            bool success = freeIndexRangesListHandle.TryAsUnsafeListRO(ref bytesBuffer, out UnsafeList<IndexRangeElement>.ReadOnly asUnsafeListRO);
+            bool success = freeIndexRangesListHandle.TryAsUnsafeVirtualArray(ref bytesBuffer, out UnsafeVirtualArray<IndexRangeElement> asUnsafeArray);
             Assert.IsTrue(success);
 
             int evaluatedIndex = dataEndIndexExclusive - 1;
-            for (int i = asUnsafeListRO.Length - 1; i >= 0; i--)
+            for (int i = asUnsafeArray.Length - 1; i >= 0; i--)
             {
-                IndexRangeElement tmpRange = asUnsafeListRO.ElementAt(i);
+                IndexRangeElement tmpRange = asUnsafeArray[i];
 
                 if (evaluatedIndex < dataStartIndexInclusive)
                 {
@@ -766,19 +706,19 @@ namespace Trove.ObjectHandles
             return false;
         }
 
-        private static bool FindFreeIndexRange(
+        private static bool FindFreeRange(
             VirtualListHandle<IndexRangeElement> freeIndexRangesListHandle,
             ref DynamicBuffer<byte> bytesBuffer,
             int objectIndexesSize,
             out IndexRangeElement freeIndexRange,
             out int indexOfFreeRange)
         {
-            bool success = freeIndexRangesListHandle.TryAsUnsafeListRO(ref bytesBuffer, out UnsafeList<IndexRangeElement>.ReadOnly asUnsafeListRO);
+            bool success = freeIndexRangesListHandle.TryAsUnsafeVirtualArray(ref bytesBuffer, out UnsafeVirtualArray<IndexRangeElement> asUnsafeArray);
             Assert.IsTrue(success);
 
-            for (int i = 0; i < asUnsafeListRO.Length; i++)
+            for (int i = 0; i < asUnsafeArray.Length; i++)
             {
-                IndexRangeElement indexRange = asUnsafeListRO.ElementAt(i);
+                IndexRangeElement indexRange = asUnsafeArray[i];
                 if (indexRange.EndExclusive - indexRange.StartInclusive >= objectIndexesSize)
                 {
                     indexOfFreeRange = i;
@@ -797,30 +737,30 @@ namespace Trove.ObjectHandles
             ref DynamicBuffer<byte> bytesBuffer,
             int previousEndIndexExclusive, 
             int newEndIndexExclusive,
-            out IndexRangeElement freeIndexRange, 
+            out IndexRangeElement freeRange, 
             out int indexOfFreeRange)
         {
             bool success = freeIndexRangesListHandle.TryGetLength(ref bytesBuffer, out int listLength);
             Assert.IsTrue(success);
 
-            // Add new free index range for the expanded capacity
+            // Add new free range for the expanded capacity
             if (listLength > 0)
             {
                 indexOfFreeRange = listLength - 1;
-                success = freeIndexRangesListHandle.TryGetElementAt(ref bytesBuffer, indexOfFreeRange, out freeIndexRange);
+                success = freeIndexRangesListHandle.TryGetElementAt(ref bytesBuffer, indexOfFreeRange, out freeRange);
                 Assert.IsTrue(success);
 
-                if (freeIndexRange.EndExclusive == previousEndIndexExclusive)
+                if (freeRange.EndExclusive == previousEndIndexExclusive)
                 {
                     // Expand the last range
-                    freeIndexRange.EndExclusive = newEndIndexExclusive;
+                    freeRange.EndExclusive = newEndIndexExclusive;
                     return;
                 }
             }
 
             // Create a new range
             indexOfFreeRange = -1;
-            freeIndexRange = new IndexRangeElement
+            freeRange = new IndexRangeElement
             {
                 StartInclusive = previousEndIndexExclusive,
                 EndExclusive = newEndIndexExclusive,
@@ -831,15 +771,15 @@ namespace Trove.ObjectHandles
             ref DynamicBuffer<byte> bytesBuffer,
             int indexShift)
         {
-            bool success = freeIndexRangesListHandle.TryAsUnsafeList(ref bytesBuffer, out UnsafeList<IndexRangeElement> asUnsafeList);
+            bool success = freeIndexRangesListHandle.TryAsUnsafeVirtualArray(ref bytesBuffer, out UnsafeVirtualArray<IndexRangeElement> asUnsafeArray);
             Assert.IsTrue(success);
 
-            for (int i = 0; i < asUnsafeList.Length; i++)
+            for (int i = 0; i < asUnsafeArray.Length; i++)
             {
-                IndexRangeElement freeRange = asUnsafeList[i];
+                IndexRangeElement freeRange = asUnsafeArray[i];
                 freeRange.StartInclusive += indexShift;
                 freeRange.EndExclusive += indexShift;
-                asUnsafeList[i] = freeRange;
+                asUnsafeArray[i] = freeRange;
             }
         }
 
@@ -890,26 +830,75 @@ namespace Trove.ObjectHandles
             ref DynamicBuffer<byte> bytesBuffer,
             int newEndIndexExclusive)
         {
-            bool success = freeIndexRangesListHandle.TryGetLength(ref bytesBuffer, out int length);
+            bool success = freeIndexRangesListHandle.TryGetLength(ref bytesBuffer, out int initialLength);
+            Assert.IsTrue(success);
 
-            for (int i = metadataFreeIndexRangesBuffer.Length - 1; i >= 0; i--)
+            for (int i = initialLength - 1; i >= 0; i--)
             {
-                IndexRangeElement tmpRange = metadataFreeIndexRangesBuffer[i];
+                IndexRangeElement tmpRange = freeIndexRangesListHandle.GetElementAtUnsafe(ref bytesBuffer, i);
 
-                if (tmpRange.StartInclusive >= newEndIndexOfMetadatasExclusive)
+                if (tmpRange.StartInclusive >= newEndIndexExclusive)
                 {
                     // Remove
-                    metadataFreeIndexRangesBuffer.RemoveAt(i);
+                    success = freeIndexRangesListHandle.TryRemoveAt(ref bytesBuffer, i);
+                    Assert.IsTrue(success);
                 }
-                else if (tmpRange.EndExclusive > newEndIndexOfMetadatasExclusive)
+                else if (tmpRange.EndExclusive > newEndIndexExclusive)
                 {
                     // Trim
-                    tmpRange.EndExclusive = newEndIndexOfMetadatasExclusive;
-                    metadataFreeIndexRangesBuffer[i] = tmpRange;
+                    tmpRange.EndExclusive = newEndIndexExclusive;
+                    freeIndexRangesListHandle.SetElementAtUnsafe(ref bytesBuffer, i, tmpRange);
                     break;
                 }
             }
         }
 
+        public static class Unsafe
+        {
+            /// <summary>
+            /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
+            /// This means if the object was freed or if the bytes buffer was trimmed since obtaining the object handle, 
+            /// the returned value could be garbage data. For safety, call .Exists() before using this
+            /// </summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static T GetObjectValueUnsafe<T>(
+                ref DynamicBuffer<byte> elementsByteBuffer,
+                VirtualObjectHandle<T> objectHandle)
+                where T : unmanaged
+            {
+                byte* bufferPtr = (byte*)elementsByteBuffer.GetUnsafePtr();
+                ByteArrayUtilities.ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
+                return *(T*)(bufferPtr + (long)objectMetadata.ByteIndex);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal static byte* GetObjectValuePtrUnsafe<T>(
+                ref DynamicBuffer<byte> elementsByteBuffer,
+                VirtualObjectHandle<T> objectHandle)
+                where T : unmanaged
+            {
+                byte* bufferPtr = (byte*)elementsByteBuffer.GetUnsafePtr();
+                ByteArrayUtilities.ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
+                return bufferPtr + (long)objectMetadata.ByteIndex;
+            }
+
+            /// <summary>
+            /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
+            /// This means if the object was freed or if the bytes buffer was trimmed since obtaining the object handle, 
+            /// this will potentially overwrite the value of another object. For safety, call .Exists() before using this
+            /// </summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static void SetObjectValueUnsafe<T>(
+                ref DynamicBuffer<byte> elementsByteBuffer,
+                VirtualObjectHandle<T> objectHandle,
+                T value)
+                where T : unmanaged
+            {
+                byte* bufferPtr = (byte*)elementsByteBuffer.GetUnsafePtr();
+                ByteArrayUtilities.ReadValue(bufferPtr, objectHandle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
+                byte* objPtr = bufferPtr + (long)objectMetadata.ByteIndex;
+                *(T*)objPtr = value;
+            }
+        }
     }
 }
