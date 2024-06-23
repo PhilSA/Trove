@@ -38,7 +38,7 @@ namespace Trove.ObjectHandles
             list._capacity = capacity;
 
             int objectSize = list.GetSizeBytes();
-            VirtualObjectHandle<T> tmpHandle = VirtualObjectManager.CreateObject<T>(
+            VirtualObjectHandle<T> tmpHandle = VirtualObjectManager.AllocateObject<T>(
                 ref byteBuffer,
                 objectSize,
                 out byte* valueDestinationPtr);
