@@ -540,7 +540,7 @@ namespace Trove.ObjectHandles
                     success = freeIndexRangesListHandle.TryInsertAt(ref bytesBuffer, i, new IndexRangeElement
                     {
                         StartInclusive = objectStartIndex,
-                        EndExclusive = objectStartIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
+                        EndExclusive = objectStartIndex + objectSize,
                     });
                     Assert.IsTrue(success);
                     return;
@@ -551,7 +551,7 @@ namespace Trove.ObjectHandles
             success = freeIndexRangesListHandle.TryAdd(ref bytesBuffer, new IndexRangeElement
             {
                 StartInclusive = objectStartIndex,
-                EndExclusive = objectStartIndex + UnsafeUtility.SizeOf<VirtualObjectMetadata>(),
+                EndExclusive = objectStartIndex + objectSize,
             });
             Assert.IsTrue(success);
         }
