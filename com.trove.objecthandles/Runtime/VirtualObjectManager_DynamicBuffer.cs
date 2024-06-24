@@ -7,7 +7,6 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Logging;
 using Unity.Mathematics;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 
 namespace Trove.ObjectHandles
 {
@@ -294,6 +293,25 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T TryGetObjectValueRef<T>(
+            ref DynamicBuffer<byte> elementsByteBuffer,
+            VirtualObjectHandle<T> objectHandle,
+            out bool success)
+            where T : unmanaged
+        {
+            if (TryGetObjectValuePtr(
+                ref elementsByteBuffer,
+                new VirtualObjectHandle<T>(new VirtualObjectHandle(objectHandle.MetadataByteIndex, objectHandle.Version)),
+                out byte* valuePtr))
+            {
+                success = true;
+                return ref *(T*)valuePtr;
+            }
+            success = false;
+            return ref *(T*)valuePtr;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool TryGetObjectValuePtr<T>(
             ref DynamicBuffer<byte> elementsByteBuffer,
             VirtualObjectHandle<T> objectHandle,
@@ -312,7 +330,7 @@ namespace Trove.ObjectHandles
                 }
             }
 
-            valuePtr = default;
+            valuePtr = (byte*)elementsByteBuffer.GetUnsafePtr();
             return false;
         }
 
@@ -380,8 +398,6 @@ namespace Trove.ObjectHandles
                     prevEndIndexOfMetadatasExclusive, 
                     out int lastUsedIndex); 
 
-                Log.Debug($"lastusedIndex {gound} {lastUsedIndex} ----- metadatas start {ByteIndex_MetadatasStart} end {prevEndIndexOfMetadatasExclusive}");
-                 
                 Assert.AreEqual(0, ((lastUsedIndex - ByteIndex_MetadatasStart) + 1) % UnsafeUtility.SizeOf<VirtualObjectMetadata>());
                 int lastUsedMetadataObjectIndex = ((lastUsedIndex - ByteIndex_MetadatasStart) + 1) / 3;
                 int newMetadatasCapacity = math.max(3, math.max(minMetadatasCapacity, lastUsedMetadataObjectIndex));
@@ -572,17 +588,14 @@ namespace Trove.ObjectHandles
             for (int i = rangesUnsafeArray.Length - 1; i >= 0; i--)
             {
                 IndexRangeElement tmpRange = rangesUnsafeArray[i];
-                Log.Debug($"does range {tmpRange.StartInclusive}-{tmpRange.EndExclusive} contain index {evaluatedIndex}");
                 if (ObjectManagerUtilities.RangeContains(tmpRange.StartInclusive, tmpRange.EndExclusive, evaluatedIndex))
                 {
                     // If the ranges contains the index, that means this evaluated index is free.
                     // Continue checking from the start of that free range.
                     evaluatedIndex = tmpRange.StartInclusive - 1;
-                    Log.Debug($"yes; moving on ... {evaluatedIndex}");
                 }
                 else
                 {
-                    Log.Debug($"no; selecting ...");
                     // If the ranges don't overlap, that means the last used index is the iterated one
                     lastUsedIndex = evaluatedIndex;
                     return true;

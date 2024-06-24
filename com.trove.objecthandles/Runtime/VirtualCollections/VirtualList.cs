@@ -45,9 +45,10 @@ namespace Trove.ObjectHandles
                 out byte* valueDestinationPtr);
             VirtualListHandle<T> handle = new VirtualListHandle<T>(tmpHandle.MetadataByteIndex, tmpHandle.Version);
 
-            UnsafeUtility.CopyStructureToPtr(ref list, valueDestinationPtr);
-            valueDestinationPtr += (long)UnsafeUtility.SizeOf<VirtualList<T>>();
-            UnsafeUtility.MemClear(valueDestinationPtr, list.GetDataCapacitySizeBytes());
+            *(VirtualList<T>*)valueDestinationPtr = list;
+            //UnsafeUtility.CopyStructureToPtr(ref list, valueDestinationPtr);
+            //valueDestinationPtr += (long)UnsafeUtility.SizeOf<VirtualList<T>>();
+            //UnsafeUtility.MemClear(valueDestinationPtr, list.GetDataCapacitySizeBytes());
 
             return handle;
         }
