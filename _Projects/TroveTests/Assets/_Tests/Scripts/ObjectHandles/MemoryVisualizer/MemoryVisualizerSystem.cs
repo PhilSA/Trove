@@ -34,7 +34,7 @@ partial struct MemoryVisualizerSystem : ISystem
         {
             memViz.TestEntity = state.EntityManager.CreateEntity();
             state.EntityManager.AddBuffer<TestEntity>(memViz.TestEntity);
-            DynamicBuffer<byte> bytesBuffer = state.EntityManager.AddBuffer<TestVirtualObjectElement>(memViz.TestEntity).Reinterpret<byte>();
+            DynamicBuffer<TestVirtualObjectElement> bytesBuffer = state.EntityManager.AddBuffer<TestVirtualObjectElement>(memViz.TestEntity);
         }
 
         if (memViz.Update && memViz.TestEntity != Entity.Null)
@@ -47,7 +47,7 @@ partial struct MemoryVisualizerSystem : ISystem
     [BurstCompile]
     public unsafe void UpdateMemoryVisualizer(ref SystemState state, ref MemoryVisualizer memViz)
     {
-        DynamicBuffer<byte> bytesBuffer = state.EntityManager.GetBuffer<TestVirtualObjectElement>(memViz.TestEntity).Reinterpret<byte>();
+        DynamicBuffer<TestVirtualObjectElement> bytesBuffer = state.EntityManager.GetBuffer<TestVirtualObjectElement>(memViz.TestEntity);
         DynamicBuffer<Entity> testEntitiesBuffer = state.EntityManager.GetBuffer<TestEntity>(memViz.TestEntity).Reinterpret<Entity>();
 
         EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
@@ -92,7 +92,7 @@ partial struct MemoryVisualizerSystem : ISystem
         ecb.Playback(state.EntityManager);
         ecb.Dispose();
 
-        bytesBuffer = state.EntityManager.GetBuffer<TestVirtualObjectElement>(memViz.TestEntity).Reinterpret<byte>();
+        bytesBuffer = state.EntityManager.GetBuffer<TestVirtualObjectElement>(memViz.TestEntity);
         testEntitiesBuffer = state.EntityManager.GetBuffer<TestEntity>(memViz.TestEntity).Reinterpret<Entity>();
         byte* bufferPtr = (byte*)bytesBuffer.GetUnsafePtr();
 

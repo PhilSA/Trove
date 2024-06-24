@@ -26,11 +26,6 @@ public struct StatValueRO : IBufferElementData
     }
 }
 
-public struct StatVOBuffer : IBufferElementData
-{
-    public byte Data;
-}
-
 public struct Stat
 {
     public float BaseValue;
@@ -40,14 +35,23 @@ public struct Stat
     public VirtualListHandle<StatObserver> Observers;
     public VirtualListHandle<DirtyStat> DirtyStatsList;
 
-    public Stat(int valueIndex, float baseValue, VirtualListHandle<DirtyStat> dirtyStatsList, ref DynamicBuffer<byte> statBuffer)
+    public static Stat Create<B>(int valueIndex, float baseValue, VirtualListHandle<DirtyStat> dirtyStatsList, ref DynamicBuffer<B> statBuffer)
+        where B : unmanaged, IBufferElementData
     {
-        BaseValue = baseValue;
-        Value = baseValue;
-        ValueIndex = valueIndex;
-        Modifiers = VirtualList<StatModifier>.Allocate(ref statBuffer, 10);
-        Observers = VirtualList<StatObserver>.Allocate(ref statBuffer, 10);
-        DirtyStatsList = dirtyStatsList;
+        Stat newStat = new Stat
+        {
+            BaseValue = baseValue,
+            Value = baseValue,
+            ValueIndex = valueIndex,
+            Modifiers = VirtualList<StatModifier>.Allocate(ref statBuffer, 10),
+            Observers = VirtualList<StatObserver>.Allocate(ref statBuffer, 10),
+            DirtyStatsList = dirtyStatsList,
+        };
+
+        // Add to dirty stats list
+        dirtyStatsList.TryAdd(ref statBuffer, new DirtyStat(newStat));
+
+        return newStat;
     }
 }
 
@@ -111,7 +115,8 @@ public struct StatModifier
     public float ValueA;
     public float ValueB;
 
-    public bool OnAdded(StatReference prevStatReference, ref DynamicBuffer<byte> prevStatBuffer, ref BufferLookup<StatVOBuffer> voBufferLookup)
+    public bool OnAdded<B>(StatReference prevStatReference, ref DynamicBuffer<B> prevStatBuffer, ref BufferLookup<B> voBufferLookup)
+        where B : unmanaged, IBufferElementData
     {
         switch (Type)
         {
@@ -124,7 +129,8 @@ public struct StatModifier
         return false;
     }
 
-    public void Apply(Entity prevBufferEntity, ref DynamicBuffer<byte> prevStatBuffer, ref BufferLookup<StatVOBuffer> voBufferLookup, ref Stack stack)
+    public void Apply<B>(Entity prevBufferEntity, ref DynamicBuffer<B> prevStatBuffer, ref BufferLookup<B> voBufferLookup, ref Stack stack)
+        where B : unmanaged, IBufferElementData
     {
         switch(Type)
         {
@@ -157,14 +163,19 @@ public struct StatModifier
         }
     }
 
-    private static bool AddAsObserverOf(StatReference otherStatReference, StatReference prevStatReference, ref DynamicBuffer<byte> prevStatBuffer, ref BufferLookup<StatVOBuffer> voBufferLookup)
+    private static bool AddAsObserverOf<B>(
+        StatReference otherStatReference, 
+        StatReference prevStatReference, 
+        ref DynamicBuffer<B> prevStatBuffer,
+        ref BufferLookup<B> voBufferLookup)
+        where B : unmanaged, IBufferElementData
     {
         ref Stat otherStat = ref StatUtility.TryResolveStatRef(
             otherStatReference, 
             ref voBufferLookup, 
             prevStatReference.BufferEntity,
             ref prevStatBuffer,
-            out DynamicBuffer<byte> otherStatBuffer, 
+            out DynamicBuffer<B> otherStatBuffer, 
             out bool success);
         if (success)
         {
@@ -179,13 +190,14 @@ public struct StatModifier
 
 public static class StatUtility
 {
-    public static bool TryAddModifier(
+    public static bool TryAddModifier<B>(
         StatReference statReference,
         StatModifier modifier,
-        ref BufferLookup<StatVOBuffer> voBufferLookup,
+        ref BufferLookup<B> voBufferLookup,
         bool autoRecompute = true)
+        where B : unmanaged, IBufferElementData
     {
-        ref Stat stat = ref TryResolveStatRef(statReference, ref voBufferLookup, out DynamicBuffer<byte> statBuffer, out bool success);
+        ref Stat stat = ref TryResolveStatRef(statReference, ref voBufferLookup, out DynamicBuffer<B> statBuffer, out bool success);
         if (success)
         {
             if (stat.Modifiers.TryAdd(ref statBuffer, modifier))
@@ -207,13 +219,14 @@ public static class StatUtility
         return false;
     }
 
-    public static bool TryAddBaseValue(
+    public static bool TryAddBaseValue<B>(
         StatReference statReference,
         float value,
-        ref BufferLookup<StatVOBuffer> voBufferLookup,
+        ref BufferLookup<B> voBufferLookup,
         bool autoRecompute = true)
+        where B : unmanaged, IBufferElementData
     {
-        ref Stat stat = ref TryResolveStatRef(statReference, ref voBufferLookup, out DynamicBuffer<byte> statBuffer, out bool success);
+        ref Stat stat = ref TryResolveStatRef(statReference, ref voBufferLookup, out DynamicBuffer<B> statBuffer, out bool success);
         if(success)
         {
             stat.BaseValue += value;
@@ -230,11 +243,12 @@ public static class StatUtility
         return false;
     }
 
-    public static void RecomputeStatAndDependencies(
+    public static void RecomputeStatAndDependencies<B>(
         ref Stat stat,
         Entity statBufferEntity,
-        ref DynamicBuffer<byte> statBuffer,
-        ref BufferLookup<StatVOBuffer> voBufferLookup)
+        ref DynamicBuffer<B> statBuffer,
+        ref BufferLookup<B> voBufferLookup)
+        where B : unmanaged, IBufferElementData
     {
         if(stat.Modifiers.TryAsUnsafeVirtualArray(ref statBuffer, out UnsafeVirtualArray<StatModifier> statModifiers) &&
             stat.Observers.TryAsUnsafeVirtualArray(ref statBuffer, out UnsafeVirtualArray<StatObserver> statObservers))
@@ -262,7 +276,7 @@ public static class StatUtility
                     ref voBufferLookup,
                     statBufferEntity,
                     ref statBuffer,
-                    out DynamicBuffer<byte> observerStatBuffer,
+                    out DynamicBuffer<B> observerStatBuffer,
                     out bool success);
                 if (success)
                 {
@@ -281,15 +295,16 @@ public static class StatUtility
         }
     }
 
-    public static bool TryResolveStat(
+    public static bool TryResolveStat<B>(
         StatReference statReference,
-        ref BufferLookup<StatVOBuffer> voBufferLookup,
+        ref BufferLookup<B> voBufferLookup,
         out Stat stat,
-        out DynamicBuffer<byte> statBuffer)
+        out DynamicBuffer<B> statBuffer)
+        where B : unmanaged, IBufferElementData
     {
-        if (voBufferLookup.TryGetBuffer(statReference.BufferEntity, out DynamicBuffer<StatVOBuffer> voBuffer))
+        if (voBufferLookup.TryGetBuffer(statReference.BufferEntity, out DynamicBuffer<B> voBuffer))
         {
-            statBuffer = voBuffer.Reinterpret<byte>();
+            statBuffer = voBuffer;
             if (VirtualObjectManager.TryGetObjectValue(ref statBuffer, statReference.Handle, out stat))
             {
                 return true;
@@ -300,20 +315,21 @@ public static class StatUtility
         return false;
     }
 
-    public static bool TryResolveStat(
+    public static bool TryResolveStat<B>(
         StatReference statReference,
-        ref BufferLookup<StatVOBuffer> voBufferLookup,
+        ref BufferLookup<B> voBufferLookup,
         Entity prevBufferEntity,
-        ref DynamicBuffer<byte> prevStatBuffer,
+        ref DynamicBuffer<B> prevStatBuffer,
         out Stat stat,
-        out DynamicBuffer<byte> statBuffer)
+        out DynamicBuffer<B> statBuffer)
+        where B : unmanaged, IBufferElementData
     {
         statBuffer = prevStatBuffer;
         if (prevBufferEntity != statReference.BufferEntity)
         {
-            if (voBufferLookup.TryGetBuffer(statReference.BufferEntity, out DynamicBuffer<StatVOBuffer> voBuffer))
+            if (voBufferLookup.TryGetBuffer(statReference.BufferEntity, out DynamicBuffer<B> voBuffer))
             {
-                statBuffer = voBuffer.Reinterpret<byte>();
+                statBuffer = voBuffer;
             }
             else
             {
@@ -329,15 +345,16 @@ public static class StatUtility
         return false;
     }
 
-    public unsafe static ref Stat TryResolveStatRef(
+    public unsafe static ref Stat TryResolveStatRef<B>(
         StatReference statReference,
-        ref BufferLookup<StatVOBuffer> voBufferLookup,
-        out DynamicBuffer<byte> statBuffer,
+        ref BufferLookup<B> voBufferLookup,
+        out DynamicBuffer<B> statBuffer,
         out bool success)
+        where B : unmanaged, IBufferElementData
     {
-        if (voBufferLookup.TryGetBuffer(statReference.BufferEntity, out DynamicBuffer<StatVOBuffer> voBuffer))
+        if (voBufferLookup.TryGetBuffer(statReference.BufferEntity, out DynamicBuffer<B> voBuffer))
         {
-            statBuffer = voBuffer.Reinterpret<byte>();
+            statBuffer = voBuffer;
             return ref VirtualObjectManager.TryGetObjectValueRef(ref statBuffer, statReference.Handle, out success);
         }
         statBuffer = default;
@@ -345,20 +362,21 @@ public static class StatUtility
         return ref *(Stat*)default; 
     }
 
-    public unsafe static ref Stat TryResolveStatRef(
+    public unsafe static ref Stat TryResolveStatRef<B>(
         StatReference statReference,
-        ref BufferLookup<StatVOBuffer> voBufferLookup,
+        ref BufferLookup<B> voBufferLookup,
         Entity prevBufferEntity,
-        ref DynamicBuffer<byte> prevStatBuffer,
-        out DynamicBuffer<byte> statBuffer,
+        ref DynamicBuffer<B> prevStatBuffer,
+        out DynamicBuffer<B> statBuffer,
         out bool success)
+        where B : unmanaged, IBufferElementData
     {
         statBuffer = prevStatBuffer;
         if (prevBufferEntity != statReference.BufferEntity)
         {
-            if (voBufferLookup.TryGetBuffer(statReference.BufferEntity, out DynamicBuffer<StatVOBuffer> voBuffer))
+            if (voBufferLookup.TryGetBuffer(statReference.BufferEntity, out DynamicBuffer<B> voBuffer))
             {
-                statBuffer = voBuffer.Reinterpret<byte>();
+                statBuffer = voBuffer;
                 return ref VirtualObjectManager.TryGetObjectValueRef(ref statBuffer, statReference.Handle, out success);
             }
             else
@@ -371,38 +389,31 @@ public static class StatUtility
         return ref *(Stat*)prevStatBuffer.GetUnsafePtr();
     }
 
-    public static bool TransferDirtyStatsToStatValues(
+    public static bool TransferDirtyStatsToStatValues<B>(
         VirtualListHandle<DirtyStat> dirtyStatsList, 
-        ref DynamicBuffer<byte> statBuffer, 
+        ref DynamicBuffer<B> statBuffer, 
         ref DynamicBuffer<StatValueRO> statValuesBuffer)
+        where B : unmanaged, IBufferElementData
     {
         bool success = true;
-        if (dirtyStatsList.TryGetLength(ref statBuffer, out int dirtyStatsCount))
+        if (dirtyStatsList.TryAsUnsafeVirtualArray(ref statBuffer, out UnsafeVirtualArray<DirtyStat> dirtyStats))
         {
-            if (dirtyStatsCount > 0)
+            for (int i = 0; i < dirtyStats.Length; i++)
             {
-                if (dirtyStatsList.TryAsUnsafeVirtualArray(ref statBuffer, out UnsafeVirtualArray<DirtyStat> dirtyStats))
+                DirtyStat dirtyStat = dirtyStats[i];
+                if (dirtyStat.ValueIndex < statValuesBuffer.Length)
                 {
-                    for (int i = 0; i < dirtyStats.Length; i++)
-                    {
-                        DirtyStat dirtyStat = dirtyStats[i];
-                        if (dirtyStat.ValueIndex < statValuesBuffer.Length)
-                        {
-                            statValuesBuffer[dirtyStat.ValueIndex] = dirtyStat.Value;
-                        }
-                        else
-                        {
-                            success = false;
-                            // TODO: error handling?
-                        }
-                    }
+                    statValuesBuffer[dirtyStat.ValueIndex] = dirtyStat.Value;
                 }
                 else
                 {
                     success = false;
                     // TODO: error handling?
                 }
+            }
 
+            if (dirtyStats.Length > 0)
+            {
                 dirtyStatsList.TryClear(ref statBuffer);
             }
         }

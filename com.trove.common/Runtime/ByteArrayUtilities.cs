@@ -5,6 +5,7 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 
 namespace Trove
 {
@@ -118,7 +119,7 @@ namespace Trove
             where T : unmanaged
         {
             byte* startPtr = byteArrayPtr + (long)byteIndex;
-            UnsafeUtility.CopyPtrToStructure(startPtr, out value);
+            value = *(T*)startPtr;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -135,10 +136,10 @@ namespace Trove
             where T2 : unmanaged
         {
             byte* startPtr = byteArrayPtr + (long)byteIndex;
-            UnsafeUtility.CopyPtrToStructure(startPtr, out value1);
+            value1 = *(T1*)startPtr;
             byteIndex += UnsafeUtility.SizeOf<T1>();
             startPtr = byteArrayPtr + (long)byteIndex;
-            UnsafeUtility.CopyPtrToStructure(startPtr, out value2);
+            value2 = *(T2*)startPtr;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -146,7 +147,7 @@ namespace Trove
             where T : unmanaged
         {
             byte* startPtr = byteArrayPtr + (long)byteIndex;
-            UnsafeUtility.CopyPtrToStructure(startPtr, out value);
+            value = *(T*)startPtr;
             byteIndex += UnsafeUtility.SizeOf<T>();
         }
 
@@ -381,9 +382,9 @@ namespace Trove
             if (stream.RemainingItemCount > 0)
             {
                 byte* startPtr = stream.ReadUnsafePtr(UnsafeUtility.SizeOf<T1>() + UnsafeUtility.SizeOf<T2>());
-                UnsafeUtility.CopyPtrToStructure(startPtr, out value1);
+                value1 = *(T1*)startPtr;
                 startPtr = startPtr + (long)UnsafeUtility.SizeOf<T1>();
-                UnsafeUtility.CopyPtrToStructure(startPtr, out value2);
+                value2 = *(T2*)startPtr;
                 return true;
             }
             value1 = default;
@@ -412,9 +413,9 @@ namespace Trove
             if (stream.RemainingItemCount > 0)
             {
                 byte* startPtr = stream.ReadUnsafePtr(UnsafeUtility.SizeOf<T1>() + UnsafeUtility.SizeOf<T2>());
-                UnsafeUtility.CopyPtrToStructure(startPtr, out value1);
+                value1 = *(T1*)startPtr;
                 startPtr = startPtr + (long)UnsafeUtility.SizeOf<T1>();
-                UnsafeUtility.CopyPtrToStructure(startPtr, out value2);
+                value2 = *(T2*)startPtr;
                 return true;
             }
             value1 = default;

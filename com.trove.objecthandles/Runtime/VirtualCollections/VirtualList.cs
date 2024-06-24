@@ -30,22 +30,23 @@ namespace Trove.ObjectHandles
             return UnsafeUtility.SizeOf<VirtualList<T>>() + GetDataCapacitySizeBytes();
         }
 
-        public static VirtualListHandle<T> Allocate(
-            ref DynamicBuffer<byte> byteBuffer,
+        public static VirtualListHandle<T> Allocate<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int capacity)
+            where B : unmanaged, IBufferElementData
         {
             VirtualList<T> list = new VirtualList<T>();
             list._length = 0;
             list._capacity = capacity;
 
             int objectSize = list.GetSizeBytes();
-            VirtualObjectHandle<T> tmpHandle = VirtualObjectManager.AllocateObject<T>(
+            VirtualObjectHandle<T> tmpHandle = VirtualObjectManager.AllocateObject<T, B>(
                 ref byteBuffer,
                 objectSize,
                 out byte* valueDestinationPtr);
             VirtualListHandle<T> handle = new VirtualListHandle<T>(tmpHandle.MetadataByteIndex, tmpHandle.Version);
 
-            UnsafeUtility.CopyStructureToPtr(ref list, valueDestinationPtr);
+            *(VirtualList<T>*)valueDestinationPtr = list;
 
             return handle;
         }
@@ -67,7 +68,8 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetLength(ref DynamicBuffer<byte> byteBuffer, out int length)
+        public bool TryGetLength<B>(ref DynamicBuffer<B> byteBuffer, out int length)
+            where B : unmanaged, IBufferElementData
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
@@ -85,13 +87,15 @@ namespace Trove.ObjectHandles
         /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetLengthUnsafe(ref DynamicBuffer<byte> byteBuffer)
+        public int GetLengthUnsafe<B>(ref DynamicBuffer<B> byteBuffer)
+            where B : unmanaged, IBufferElementData
         {
             return VirtualObjectManager.Unsafe.GetObjectValueUnsafe(ref byteBuffer, this._objectHandle).Length;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetCapacity(ref DynamicBuffer<byte> byteBuffer, out int capacity)
+        public bool TryGetCapacity<B>(ref DynamicBuffer<B> byteBuffer, out int capacity)
+            where B : unmanaged, IBufferElementData
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
@@ -109,13 +113,15 @@ namespace Trove.ObjectHandles
         /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetCapacityUnsafe(ref DynamicBuffer<byte> byteBuffer)
+        public int GetCapacityUnsafe<B>(ref DynamicBuffer<B> byteBuffer)
+            where B : unmanaged, IBufferElementData
         {
             return VirtualObjectManager.Unsafe.GetObjectValueUnsafe(ref byteBuffer, this._objectHandle).Capacity;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetLengthAndCapacity(ref DynamicBuffer<byte> byteBuffer, out int length, out int capacity)
+        public bool TryGetLengthAndCapacity<B>(ref DynamicBuffer<B> byteBuffer, out int length, out int capacity)
+            where B : unmanaged, IBufferElementData
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
@@ -135,7 +141,8 @@ namespace Trove.ObjectHandles
         /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void GetLengthAndCapacityUnsafe(ref DynamicBuffer<byte> byteBuffer, out int length, out int capacity)
+        public void GetLengthAndCapacityUnsafe<B>(ref DynamicBuffer<B> byteBuffer, out int length, out int capacity)
+            where B : unmanaged, IBufferElementData
         {
             VirtualList<T> list = VirtualObjectManager.Unsafe.GetObjectValueUnsafe(ref byteBuffer, this._objectHandle);
             length = list._length;
@@ -143,7 +150,8 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryClear(ref DynamicBuffer<byte> byteBuffer)
+        public bool TryClear<B>(ref DynamicBuffer<B> byteBuffer)
+            where B : unmanaged, IBufferElementData
         {
             if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
@@ -161,7 +169,8 @@ namespace Trove.ObjectHandles
         /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ClearUnsafe(ref DynamicBuffer<byte> byteBuffer)
+        public void ClearUnsafe<B>(ref DynamicBuffer<B> byteBuffer)
+            where B : unmanaged, IBufferElementData
         {
             byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
                 ref byteBuffer, this._objectHandle);
@@ -170,10 +179,11 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetElementAt(
-            ref DynamicBuffer<byte> byteBuffer,
+        public bool TryGetElementAt<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int index,
             out T value)
+            where B : unmanaged, IBufferElementData
         {
             if (index >= 0)
             {
@@ -200,9 +210,10 @@ namespace Trove.ObjectHandles
         /// Note: unsafe because no index check
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T GetElementAtUnsafe(
-            ref DynamicBuffer<byte> byteBuffer,
+        public T GetElementAtUnsafe<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int index)
+            where B : unmanaged, IBufferElementData
         {
             byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
                 ref byteBuffer, this._objectHandle);
@@ -215,14 +226,15 @@ namespace Trove.ObjectHandles
         /// Note: unsafe because as soon as the list grows and gets reallocated, the ref is no longer valid
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T TryGetUnsafeRefElementAt(
-            ref DynamicBuffer<byte> byteBuffer,
+        public ref T TryGetUnsafeRefElementAt<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int index,
             out bool success)
+            where B : unmanaged, IBufferElementData
         {
             if (index >= 0)
             {
-                if (VirtualObjectManager.TryGetObjectValuePtr<VirtualList<T>>(
+                if (VirtualObjectManager.TryGetObjectValuePtr(
                     ref byteBuffer,
                     this._objectHandle,
                     out byte* listPtr))
@@ -246,9 +258,10 @@ namespace Trove.ObjectHandles
         /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T GetUnsafeRefElementAtUnsafe(
-            ref DynamicBuffer<byte> byteBuffer,
+        public ref T GetUnsafeRefElementAtUnsafe<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int index)
+            where B : unmanaged, IBufferElementData
         {
             byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
                 ref byteBuffer, this._objectHandle);
@@ -258,10 +271,11 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TrySetElementAt(
-            ref DynamicBuffer<byte> byteBuffer,
+        public bool TrySetElementAt<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int index,
             T value)
+            where B : unmanaged, IBufferElementData
         {
             if (index >= 0)
             {
@@ -286,10 +300,11 @@ namespace Trove.ObjectHandles
         /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetElementAtUnsafe(
-            ref DynamicBuffer<byte> byteBuffer,
+        public void SetElementAtUnsafe<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int index,
             T value)
+            where B : unmanaged, IBufferElementData
         {
             byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
                 ref byteBuffer, this._objectHandle);
@@ -297,9 +312,10 @@ namespace Trove.ObjectHandles
             listData[index] = value;
         }
 
-        public bool TryAsUnsafeVirtualArray(
-            ref DynamicBuffer<byte> byteBuffer,
+        public bool TryAsUnsafeVirtualArray<B>(
+            ref DynamicBuffer<B> byteBuffer,
             out UnsafeVirtualArray<T> unsafeArray)
+            where B : unmanaged, IBufferElementData
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
@@ -318,9 +334,10 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TrySetCapacity(
-            ref DynamicBuffer<byte> byteBuffer,
+        public bool TrySetCapacity<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int capacity)
+            where B : unmanaged, IBufferElementData
         {
             if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
@@ -331,8 +348,8 @@ namespace Trove.ObjectHandles
                 if (list._capacity != capacity)
                 {
                     VirtualObjectManager.ReallocateObject(
-                        new VirtualObjectHandle(this.MetadataByteIndex, this.Version), 
-                        ref byteBuffer, 
+                        new VirtualObjectHandle(this.MetadataByteIndex, this.Version),
+                        ref byteBuffer,
                         capacity);
                     return true;
                 }
@@ -341,9 +358,10 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryResize(
-            ref DynamicBuffer<byte> byteBuffer,
+        public bool TryResize<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int newLength)
+            where B : unmanaged, IBufferElementData
         {
             if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
@@ -369,9 +387,10 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryAdd(
-            ref DynamicBuffer<byte> byteBuffer,
+        public bool TryAdd<B>(
+            ref DynamicBuffer<B> byteBuffer,
             T value)
+            where B : unmanaged, IBufferElementData
         {
             if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
@@ -400,10 +419,11 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryInsertAt(
-            ref DynamicBuffer<byte> byteBuffer,
+        public bool TryInsertAt<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int index,
             T value)
+            where B : unmanaged, IBufferElementData
         {
             if (index >= 0)
             {
@@ -443,9 +463,10 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryRemoveAt(
-            ref DynamicBuffer<byte> byteBuffer,
+        public bool TryRemoveAt<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int index)
+            where B : unmanaged, IBufferElementData
         {
             if (index >= 0)
             {

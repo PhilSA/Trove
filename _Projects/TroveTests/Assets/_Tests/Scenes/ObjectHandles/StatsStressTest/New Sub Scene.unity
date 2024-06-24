@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   UseOldSystem: 0
-  ChangingAttributesCount: 1
+  ChangingAttributesCount: 10000
   ChangingAttributesChildDepth: 2
   UnchangingAttributesCount: 0
 --- !u!4 &255176745

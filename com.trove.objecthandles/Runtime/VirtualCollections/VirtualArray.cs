@@ -29,23 +29,22 @@ namespace Trove.ObjectHandles
             return UnsafeUtility.SizeOf<VirtualArray<T>>() + GetDataSizeBytes();
         }
 
-        public static VirtualArrayHandle<T> Allocate(
-            ref DynamicBuffer<byte> byteBuffer,
+        public static VirtualArrayHandle<T> Allocate<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int capacity)
+            where B : unmanaged, IBufferElementData
         {
             VirtualArray<T> array = new VirtualArray<T>();
             array._length = 0;
 
             int objectSize = array.GetSizeBytes();
-            VirtualObjectHandle<T> tmpHandle = VirtualObjectManager.AllocateObject<T>(
+            VirtualObjectHandle<T> tmpHandle = VirtualObjectManager.AllocateObject<T, B>(
                 ref byteBuffer,
                 objectSize,
                 out byte* valueDestinationPtr);
             VirtualArrayHandle<T> handle = new VirtualArrayHandle<T>(tmpHandle.MetadataByteIndex, tmpHandle.Version);
 
-            UnsafeUtility.CopyStructureToPtr(ref array, valueDestinationPtr);
-            valueDestinationPtr += (long)UnsafeUtility.SizeOf<VirtualArray<T>>();
-            UnsafeUtility.MemClear(valueDestinationPtr, array.GetDataSizeBytes());
+            *(VirtualArray<T>*)valueDestinationPtr = array;
 
             return handle;
         }
@@ -103,7 +102,8 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetLength(ref DynamicBuffer<byte> byteBuffer, out int length)
+        public bool TryGetLength<B>(ref DynamicBuffer<B> byteBuffer, out int length)
+            where B : unmanaged, IBufferElementData
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,
@@ -118,12 +118,13 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetElementAt(
-            ref DynamicBuffer<byte> byteBuffer,
+        public bool TryGetElementAt<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int index,
             out T value)
+            where B : unmanaged, IBufferElementData
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr<VirtualArray<T>>(
+            if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
                 this._objectHandle,
                 out byte* arrayPtr))
@@ -140,12 +141,13 @@ namespace Trove.ObjectHandles
         /// Note: unsafe because as soon as the array grows and gets reallocated, the ref is no longer valid
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T TryGetRefElementAtUnsafe(
-            ref DynamicBuffer<byte> byteBuffer,
+        public ref T TryGetRefElementAtUnsafe<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int index,
             out bool success)
+            where B : unmanaged, IBufferElementData
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr<VirtualArray<T>>(
+            if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
                 this._objectHandle,
                 out byte* arrayPtr))
@@ -160,12 +162,13 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TrySetElementAt(
-            ref DynamicBuffer<byte> byteBuffer,
+        public bool TrySetElementAt<B>(
+            ref DynamicBuffer<B> byteBuffer,
             int index,
             T value)
+            where B : unmanaged, IBufferElementData
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr<VirtualArray<T>>(
+            if (VirtualObjectManager.TryGetObjectValuePtr(
                 ref byteBuffer,
                 this._objectHandle,
                 out byte* arrayPtr))
@@ -177,9 +180,10 @@ namespace Trove.ObjectHandles
             return false;
         }
 
-        public bool TryAsUnsafeVirtualArray(
-            ref DynamicBuffer<byte> byteBuffer,
+        public bool TryAsUnsafeVirtualArray<B>(
+            ref DynamicBuffer<B> byteBuffer,
             out UnsafeVirtualArray<T> unsafeArray)
+            where B : unmanaged, IBufferElementData
         {
             if (VirtualObjectManager.TryGetObjectValue(
                 ref byteBuffer,

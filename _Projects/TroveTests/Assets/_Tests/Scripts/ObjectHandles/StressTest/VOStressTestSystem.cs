@@ -2,6 +2,12 @@ using Trove.Attributes;
 using Trove.ObjectHandles;
 using Unity.Burst;
 using Unity.Entities;
+using Unity.Logging;
+
+public struct StatVOBuffer : IBufferElementData
+{
+    public byte Data;
+}
 
 public struct ChangingStat : IComponentData
 { }
@@ -26,13 +32,6 @@ partial struct VOStressTestSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // TEST
-        //Entity voTestEntity = SystemAPI.GetSingletonEntity<VOStressTest>();
-        //DynamicBuffer<byte> testStatBuffer = state.EntityManager.AddBuffer<StatVOBuffer>(voTestEntity).Reinterpret<byte>();
-        //VirtualObjectManager.Initialize(ref testStatBuffer, 16, 256);
-        //VirtualListHandle<StatModifier> statModifiersHandle = VirtualList<StatModifier>.Allocate(ref testStatBuffer, 10);
-
-        
         ref VOStressTest voTest = ref SystemAPI.GetSingletonRW<VOStressTest>().ValueRW;
         BufferLookup<StatVOBuffer> statVOBufferLookup = SystemAPI.GetBufferLookup<StatVOBuffer>(false);
 
@@ -71,24 +70,15 @@ partial struct VOStressTestSystem : ISystem
             voTest.HasInitialized = true;
         }
 
-        float deltaTime = SystemAPI.Time.DeltaTime;
         statVOBufferLookup = SystemAPI.GetBufferLookup<StatVOBuffer>(false);
-        foreach (var (statOwner, entity) in SystemAPI.Query<ExampleStatOwner>().WithAll<ChangingStat>().WithEntityAccess())
+        state.Dependency = new ChangingStatsJob
         {
-            StatUtility.TryAddBaseValue(
-                new StatReference(entity, statOwner.Strength),
-                deltaTime,
-                ref statVOBufferLookup);
-        }
+            DeltaTime = SystemAPI.Time.DeltaTime,
+            StatVOBufferLookup = statVOBufferLookup,
+        }.Schedule(state.Dependency);
 
-        //state.Dependency = new ChangingStatsJob
-        //{
-        //    DeltaTime = SystemAPI.Time.DeltaTime,
-        //    StatVOBufferLookup = ,
-        //}.Schedule(state.Dependency);
-
-        //state.Dependency = new UpdateStatROValuesJob
-        //{ }.ScheduleParallel(state.Dependency);
+        state.Dependency = new UpdateStatROValuesJob
+        { }.ScheduleParallel(state.Dependency);
 
     }
 
@@ -96,32 +86,25 @@ partial struct VOStressTestSystem : ISystem
     {
         statOwner = default;
         Entity entity = entityManager.CreateEntity();
-        entityManager.AddBuffer<StatValueRO>(entity);
-        DynamicBuffer<byte> statVOBuffer = entityManager.AddBuffer<StatVOBuffer>(entity).Reinterpret<byte>();
-        VirtualObjectManager.Initialize(ref statVOBuffer, 16, 256);
+
+        DynamicBuffer<StatValueRO> statValueBuffer = entityManager.AddBuffer<StatValueRO>(entity);
+        statValueBuffer.Resize(10, Unity.Collections.NativeArrayOptions.ClearMemory);
+
+        DynamicBuffer<StatVOBuffer> statVOBuffer = entityManager.AddBuffer<StatVOBuffer>(entity);
+        VirtualObjectManager.Initialize(ref statVOBuffer, 100, 10000);
 
         VirtualListHandle<DirtyStat> dirtyStatsList = VirtualList<DirtyStat>.Allocate(ref statVOBuffer, 10);
         statOwner = new ExampleStatOwner
         {
-            Strength = VirtualObjectManager.CreateObject(ref statVOBuffer, new Stat(0, 10f, dirtyStatsList, ref statVOBuffer)),
-            Dexterity = VirtualObjectManager.CreateObject(ref statVOBuffer, new Stat(1, 10f, dirtyStatsList, ref statVOBuffer)),
-            Intelligence = VirtualObjectManager.CreateObject(ref statVOBuffer, new Stat(2, 10f, dirtyStatsList, ref statVOBuffer)),
+            Strength = VirtualObjectManager.CreateObject(ref statVOBuffer, Stat.Create(0, 10f, dirtyStatsList, ref statVOBuffer)),
+            Dexterity = VirtualObjectManager.CreateObject(ref statVOBuffer, Stat.Create(1, 10f, dirtyStatsList, ref statVOBuffer)),
+            Intelligence = VirtualObjectManager.CreateObject(ref statVOBuffer, Stat.Create(2, 10f, dirtyStatsList, ref statVOBuffer)),
 
             DirtyStatsList = dirtyStatsList,
         };
         entityManager.AddComponentData(entity, statOwner);
 
         return entity;
-    }
-
-    [BurstCompile]
-    public partial struct UpdateStatROValuesJob : IJobEntity
-    {
-        void Execute(in ExampleStatOwner statOwner, ref DynamicBuffer<StatVOBuffer> statVOBuffer, ref DynamicBuffer<StatValueRO> statValueROBuffer)
-        {
-            DynamicBuffer<byte> statBuffer = statVOBuffer.Reinterpret<byte>();
-            StatUtility.TransferDirtyStatsToStatValues(statOwner.DirtyStatsList, ref statBuffer, ref statValueROBuffer);
-        }
     }
 
     [BurstCompile]
@@ -136,6 +119,15 @@ partial struct VOStressTestSystem : ISystem
                 new StatReference(entity, statOwner.Strength),
                 DeltaTime,
                 ref StatVOBufferLookup);
+        }
+    }
+
+    [BurstCompile]
+    public partial struct UpdateStatROValuesJob : IJobEntity
+    {
+        void Execute(in ExampleStatOwner statOwner, ref DynamicBuffer<StatVOBuffer> statVOBuffer, ref DynamicBuffer<StatValueRO> statValueROBuffer)
+        {
+            StatUtility.TransferDirtyStatsToStatValues(statOwner.DirtyStatsList, ref statVOBuffer, ref statValueROBuffer);
         }
     }
 }

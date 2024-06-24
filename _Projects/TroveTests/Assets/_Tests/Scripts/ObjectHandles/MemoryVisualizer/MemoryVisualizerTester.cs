@@ -25,7 +25,7 @@ public class MemoryVisualizerTesterEditor : Editor
             ref MemoryVisualizer memoryVisualizer = ref MemoryVisualizerTester.TryGetSingletonRW<MemoryVisualizer>(_entityManager, out bool success);
             if (success && memoryVisualizer.TestEntity != Entity.Null)
             {
-                DynamicBuffer<byte> bytesBuffer = _entityManager.GetBuffer<TestVirtualObjectElement>(memoryVisualizer.TestEntity).Reinterpret<byte>();
+                DynamicBuffer<TestVirtualObjectElement> bytesBuffer = _entityManager.GetBuffer<TestVirtualObjectElement>(memoryVisualizer.TestEntity);
 
                 if (GUILayout.Button("Add Object1"))
                 {
@@ -257,7 +257,7 @@ public class MemoryVisualizerTester : MonoBehaviour
             {
                 _allHandles.Clear();
 
-                DynamicBuffer<byte> bytesBuffer = _entityManager.GetBuffer<TestVirtualObjectElement>(memoryVisualizer.TestEntity).Reinterpret<byte>();
+                DynamicBuffer<TestVirtualObjectElement> bytesBuffer = _entityManager.GetBuffer<TestVirtualObjectElement>(memoryVisualizer.TestEntity);
                 VirtualObjectManager.Initialize(ref bytesBuffer, ObjectsCapacity, ObjectDataBytesCapacity);
 
                 _hasInitialized = true;
