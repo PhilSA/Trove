@@ -71,11 +71,21 @@ partial struct VOStressTestSystem : ISystem
             voTest.HasInitialized = true;
         }
 
-        state.Dependency = new ChangingStatsJob
+        float deltaTime = SystemAPI.Time.DeltaTime;
+        statVOBufferLookup = SystemAPI.GetBufferLookup<StatVOBuffer>(false);
+        foreach (var (statOwner, entity) in SystemAPI.Query<ExampleStatOwner>().WithAll<ChangingStat>().WithEntityAccess())
         {
-            DeltaTime = SystemAPI.Time.DeltaTime,
-            StatVOBufferLookup = SystemAPI.GetBufferLookup<StatVOBuffer>(false),
-        }.Schedule(state.Dependency);
+            StatUtility.TryAddBaseValue(
+                new StatReference(entity, statOwner.Strength),
+                deltaTime,
+                ref statVOBufferLookup);
+        }
+
+        //state.Dependency = new ChangingStatsJob
+        //{
+        //    DeltaTime = SystemAPI.Time.DeltaTime,
+        //    StatVOBufferLookup = ,
+        //}.Schedule(state.Dependency);
 
         //state.Dependency = new UpdateStatROValuesJob
         //{ }.ScheduleParallel(state.Dependency);
