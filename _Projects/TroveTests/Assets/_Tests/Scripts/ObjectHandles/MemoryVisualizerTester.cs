@@ -188,6 +188,18 @@ public class MemoryVisualizerTesterEditor : Editor
                         tester._obj3Handles.Remove(removedHandle);
                     }
                 }
+
+                if (GUILayout.Button("Trim Capacity"))
+                {
+                    VirtualObjectManager.TrimCapacity(ref bytesBuffer, 2, 2);
+                    memoryVisualizer.Update = true;
+                }
+
+                if (GUILayout.Button("Reinitialize"))
+                {
+                    VirtualObjectManager.Initialize(ref bytesBuffer, tester.ObjectsCapacity, tester.ObjectDataBytesCapacity);
+                    memoryVisualizer.Update = true;
+                }
             }
         }
     }

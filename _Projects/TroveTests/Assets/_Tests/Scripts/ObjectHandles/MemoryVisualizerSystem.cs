@@ -127,7 +127,7 @@ partial struct MemoryVisualizerSystem : ISystem
                     {
                         while (iteratedIndex < range.StartInclusive)
                         {
-                            float4 randomCol = GetRandomFloat4ForIndex(iteratedIndex, memViz.UsedMetadataColorMin, memViz.UsedMetadataColorMax);
+                            float4 randomCol = GetRandomFloat4ForIndex(iteratedIndex, memViz.UsedMetadataColor);
                             for (int s = 0; s < objectSize; s++)
                             {
                                 state.EntityManager.SetComponentData(testEntitiesBuffer[iteratedIndex], new URPMaterialPropertyBaseColor { Value = randomCol });
@@ -149,7 +149,7 @@ partial struct MemoryVisualizerSystem : ISystem
                 // Rest of Used (after the last free range)
                 while (iteratedIndex < memoryInfo.DatasStartIndex)
                 {
-                    float4 randomCol = GetRandomFloat4ForIndex(iteratedIndex, memViz.UsedMetadataColorMin, memViz.UsedMetadataColorMax);
+                    float4 randomCol = GetRandomFloat4ForIndex(iteratedIndex, memViz.UsedMetadataColor);
                     for (int s = 0; s < objectSize; s++)
                     {
                         state.EntityManager.SetComponentData(testEntitiesBuffer[iteratedIndex], new URPMaterialPropertyBaseColor { Value = randomCol });
@@ -175,7 +175,7 @@ partial struct MemoryVisualizerSystem : ISystem
                     ByteArrayUtilities.ReadValue(bufferPtr, iteratedMetadataIndex, out VirtualObjectMetadata metadata);
                     if (metadata.ByteIndex > 0)
                     {
-                        float4 randomCol = GetRandomFloat4ForIndex(iteratedMetadataIndex, memViz.UsedDataColorMin, memViz.UsedDataColorMax);
+                        float4 randomCol = GetRandomFloat4ForIndex(iteratedMetadataIndex, memViz.UsedDataColor);
                         for (int s = metadata.ByteIndex; s < metadata.ByteIndex + metadata.Size; s++)
                         {
                             state.EntityManager.SetComponentData(testEntitiesBuffer[s], new URPMaterialPropertyBaseColor { Value = randomCol });
@@ -199,9 +199,9 @@ partial struct MemoryVisualizerSystem : ISystem
         }
     }
 
-    private float4 GetRandomFloat4ForIndex(int index, float4 min, float4 max)
+    private float4 GetRandomFloat4ForIndex(int index, float4 col)
     {
         Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex((uint)index);
-        return random.NextFloat4(min, max);
+        return random.NextFloat(0.1f, 1f) * col;
     }
 }

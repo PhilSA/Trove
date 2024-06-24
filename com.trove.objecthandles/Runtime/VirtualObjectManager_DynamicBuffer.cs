@@ -226,10 +226,10 @@ namespace Trove.ObjectHandles
 
             ByteArrayUtilities.ReadValue(bufferPtr, handle.MetadataByteIndex, out VirtualObjectMetadata objectMetadata);
             int oldSize = objectMetadata.Size;
+            int oldByteIndexStart = objectMetadata.ByteIndex;
 
             if (newSize != oldSize)
             {
-                int oldByteIndexStart = objectMetadata.ByteIndex;
                 GetDataFreeRangesListHandle(bufferPtr, out VirtualListHandle<IndexRangeElement> dataRangesHandle);
 
                 // Find a new place to allocate data
@@ -256,7 +256,7 @@ namespace Trove.ObjectHandles
                     out int newDataByteIndex);
 
                 // Copy data over to new location
-                byte* oldDataPtr = bufferPtr + (long)objectMetadata.ByteIndex;
+                byte* oldDataPtr = bufferPtr + (long)oldByteIndexStart;
                 byte* newDataPtr = bufferPtr + (long)newDataByteIndex;
                 UnsafeUtility.MemCpy(newDataPtr, oldDataPtr, oldSize);
 
@@ -812,6 +812,11 @@ namespace Trove.ObjectHandles
                 return *(T*)(bufferPtr + (long)objectMetadata.ByteIndex);
             }
 
+            /// <summary>
+            /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
+            /// This means if the object was freed or if the bytes buffer was trimmed since obtaining the object handle, 
+            /// the returned value could be garbage data. For safety, call .Exists() before using this
+            /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal static byte* GetObjectValuePtrUnsafe<T>(
                 ref DynamicBuffer<byte> elementsByteBuffer,

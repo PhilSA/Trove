@@ -10,11 +10,9 @@ class MemoryVisualizerAuthoring : MonoBehaviour
     public Color DefaultColor;
     public Color StaticDataColor;
     public Color UnusedMetadataColor;
-    public Color UsedMetadataColorMin;
-    public Color UsedMetadataColorMax;
+    public Color UsedMetadataColor;
     public Color UnusedDataColor;
-    public Color UsedDataColorMin;
-    public Color UsedDataColorMax;
+    public Color UsedDataColor;
     public Color DataFreeRangeColor;
     public Color MetadataFreeRangeColor;
 }
@@ -32,11 +30,9 @@ class MemoryVisualizerAuthoringBaker : Baker<MemoryVisualizerAuthoring>
             DefaultColor = ColorToFloat4(authoring.DefaultColor),
             StaticDataColor = ColorToFloat4(authoring.StaticDataColor),
             UnusedMetadataColor = ColorToFloat4(authoring.UnusedMetadataColor),
-            UsedMetadataColorMin = ColorToFloat4(authoring.UsedMetadataColorMin),
-            UsedMetadataColorMax = ColorToFloat4(authoring.UsedMetadataColorMax),
+            UsedMetadataColor = ColorToFloat4(authoring.UsedMetadataColor),
             UnusedDataColor = ColorToFloat4(authoring.UnusedDataColor),
-            UsedDataColorMin = ColorToFloat4(authoring.UsedDataColorMin),
-            UsedDataColorMax = ColorToFloat4(authoring.UsedDataColorMax),
+            UsedDataColor = ColorToFloat4(authoring.UsedDataColor),
             DataFreeRangeColor = ColorToFloat4(authoring.DataFreeRangeColor),
             MetadataFreeRangeColor = ColorToFloat4(authoring.MetadataFreeRangeColor),
 
