@@ -180,5 +180,11 @@ namespace Trove.ObjectHandles
         {
             return aStartInclusive < bEndExclusive && bStartInclusive < aEndExclusive;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool RangeContains(int startInclusive, int endExclusive, int value)
+        {
+            return value >= startInclusive && value < endExclusive;
+        }
     }
 }
