@@ -1,67 +1,23 @@
 using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Entities;
-using Trove;
-using Unity.Mathematics;
-using System.Collections;
-using System.Collections.Generic;
-using Unity.Assertions;
 
 namespace Trove.ObjectHandles
 {
-    public unsafe struct VirtualArray<T>
-        where T : unmanaged
-    {
-        internal int _length;
-
-        public int Length => _length;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetDataSizeBytes()
-        {
-            return UnsafeUtility.SizeOf<T>() * _length;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetSizeBytes()
-        {
-            return UnsafeUtility.SizeOf<VirtualArray<T>>() + GetDataSizeBytes();
-        }
-
-        public static VirtualArrayHandle<T> Allocate<B>(
-            ref DynamicBuffer<B> byteBuffer,
-            int capacity)
-            where B : unmanaged, IBufferElementData
-        {
-            VirtualArray<T> array = new VirtualArray<T>();
-            array._length = 0;
-
-            int objectSize = array.GetSizeBytes();
-            VirtualObjectHandle<T> tmpHandle = VirtualObjectManager.AllocateObject<T, B>(
-                ref byteBuffer,
-                objectSize,
-                out byte* valueDestinationPtr);
-            VirtualArrayHandle<T> handle = new VirtualArrayHandle<T>(tmpHandle.MetadataByteIndex, tmpHandle.Version);
-
-            *(VirtualArray<T>*)valueDestinationPtr = array;
-
-            return handle;
-        }
-    }
 
     /// <summary>
     /// Note: unsafe due to operating on a ptr to the data in the dynamicBuffer of bytes
     /// </summary>
-    public unsafe struct UnsafeVirtualArray<T>
+    public unsafe struct UnsafeArrayView<T>
         where T : unmanaged
     {
+        [NativeDisableUnsafePtrRestriction]
         internal T* _ptr;
         internal int _length;
 
         public int Length => _length;
 
-        public UnsafeVirtualArray(T* ptr, int length)
+        public UnsafeArrayView(T* ptr, int length)
         {
             _ptr = ptr;
             _length = length;
@@ -69,48 +25,193 @@ namespace Trove.ObjectHandles
 
         public T this[int i]
         {
-            get 
+            // TODO: index bounds check
+            get
             {
-                Assert.IsTrue(i >= 0 && i < _length);
-                return _ptr[i]; 
+                return _ptr[i];
             }
             set
             {
-                Assert.IsTrue(i >= 0 && i < _length);
-                _ptr[i] = value; 
+                _ptr[i] = value;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T* GetUnsafePtr()
-        { 
-            return _ptr; 
+        {
+            return _ptr;
+        }
+    }
+
+    public unsafe struct UnsafeVirtualArray<T>
+        where T : unmanaged
+    {
+        internal int _length;
+        internal VirtualObjectHandle<T> _dataHandle;
+
+        public int Length => _length;
+        public VirtualObjectHandle<T> DataHandle => _dataHandle;
+
+        public static UnsafeVirtualArray<T> Allocate<V>(
+            ref V voView,
+            int capacity)
+            where V : unmanaged, IVirtualObjectView
+        {
+            UnsafeVirtualArray<T> array = new UnsafeVirtualArray<T>();
+            array._length = 0;
+
+            int objectSize = array.GetSizeBytes();
+            VirtualObjectHandle<T> _dataHandle = VirtualObjectManager.AllocateObject(
+                ref voView,
+                objectSize,
+                out T* _);
+
+            return array;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetDataCapacitySizeBytes()
+        {
+            return UnsafeUtility.SizeOf<T>() * _length;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetSizeBytes()
+        {
+            return UnsafeUtility.SizeOf<UnsafeVirtualArray<T>>();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetElementAt<V>(
+            ref V voView,
+            int index,
+            out T value)
+            where V : unmanaged, IVirtualObjectView
+        {
+            if (!ObjectManagerUtilities.IndexIsValid(index, _length))
+            {
+                value = default;
+                return false;
+            }
+
+            if (VirtualObjectManager.TryGetObjectValuePtr(
+                ref voView,
+                this._dataHandle,
+                out T* arrayDataPtr))
+            {
+                value = arrayDataPtr[index];
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Note: unsafe because as soon as the array grows and gets reallocated, the ref is no longer valid
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T TryGetUnsafeRefElementAt<V>(
+            ref V voView,
+            int index,
+            out bool success)
+            where V : unmanaged, IVirtualObjectView
+        {
+            if (!ObjectManagerUtilities.IndexIsValid(index, _length))
+            {
+                success = false;
+                return ref *(T*)default;
+            }
+
+            if (VirtualObjectManager.TryGetObjectValuePtr(
+                ref voView,
+                this._dataHandle,
+                out T* arrayDataPtr))
+            {
+                success = true;
+                return ref *(arrayDataPtr + (long)index);
+            }
+
+            success = false;
+            return ref *(T*)default;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TrySetElementAt<V>(
+            ref V voView,
+            int index,
+            T value)
+            where V : unmanaged, IVirtualObjectView
+        {
+            if (!ObjectManagerUtilities.IndexIsValid(index, _length))
+            {
+                return false;
+            }
+
+            if (VirtualObjectManager.TryGetObjectValuePtr(
+                ref voView,
+                this._dataHandle,
+                out T* arrayDataPtr))
+            {
+                arrayDataPtr[index] = value;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryAsUnsafeArrayView<V>(
+            ref V voView,
+            out UnsafeArrayView<T> unsafeArray)
+            where V : unmanaged, IVirtualObjectView
+        {
+            if (VirtualObjectManager.TryGetObjectValuePtr(
+                ref voView,
+                this._dataHandle,
+                out T* arrayDataPtr))
+            {
+                unsafeArray = new UnsafeArrayView<T>(arrayDataPtr, this._length);
+                return true;
+            }
+
+            unsafeArray = default;
+            return false;
         }
     }
 
     public unsafe struct VirtualArrayHandle<T> where T : unmanaged
     {
-        internal readonly int MetadataByteIndex;
-        internal readonly int Version;
-        internal readonly VirtualObjectHandle<VirtualArray<T>> _objectHandle;
+        internal readonly VirtualObjectHandle<UnsafeVirtualArray<T>> ArrayHandle;
 
-        internal VirtualArrayHandle(int index, int version)
+        internal VirtualArrayHandle(VirtualObjectHandle<UnsafeVirtualArray<T>> unsafeArrayHandle)
         {
-            MetadataByteIndex = index;
-            Version = version;
-            _objectHandle = new VirtualObjectHandle<VirtualArray<T>>(new VirtualObjectHandle(MetadataByteIndex, Version));
+            ArrayHandle = unsafeArrayHandle;
+        }
+
+        public static implicit operator VirtualArrayHandle<T>(VirtualObjectHandle<UnsafeVirtualArray<T>> o) => new VirtualArrayHandle<T>(o);
+        public static implicit operator VirtualObjectHandle<UnsafeVirtualArray<T>>(VirtualArrayHandle<T> o) => o.ArrayHandle;
+
+        public static VirtualArrayHandle<T> Allocate<V>(
+            ref V voView,
+            int capacity)
+            where V : unmanaged, IVirtualObjectView
+        {
+            UnsafeVirtualArray<T> unsafeArray = UnsafeVirtualArray<T>.Allocate(ref voView, capacity);
+            VirtualObjectHandle<UnsafeVirtualArray<T>> unsafeArrayHandle = VirtualObjectManager.CreateObject(ref voView, unsafeArray);
+            VirtualArrayHandle<T> array = unsafeArrayHandle;
+            return array;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetLength<B>(ref DynamicBuffer<B> byteBuffer, out int length)
-            where B : unmanaged, IBufferElementData
+        public bool TryGetLength<V>(
+            ref V voView,
+            out int length)
+            where V : unmanaged, IVirtualObjectView
         {
-            if (VirtualObjectManager.TryGetObjectValue(
-                ref byteBuffer,
-                this._objectHandle,
-                out VirtualArray<T> array))
+            ref UnsafeVirtualArray<T> unsafeArrayRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ArrayHandle, out bool success);
+            if (success)
             {
-                length = array._length;
+                length = unsafeArrayRef._length;
                 return true;
             }
             length = default;
@@ -118,20 +219,16 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetElementAt<B>(
-            ref DynamicBuffer<B> byteBuffer,
+        public bool TryGetElementAt<V>(
+            ref V voView,
             int index,
             out T value)
-            where B : unmanaged, IBufferElementData
+            where V : unmanaged, IVirtualObjectView
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr(
-                ref byteBuffer,
-                this._objectHandle,
-                out byte* arrayPtr))
+            ref UnsafeVirtualArray<T> unsafeArrayRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ArrayHandle, out bool success);
+            if (success)
             {
-                T* arrayData = (T*)(arrayPtr + (long)UnsafeUtility.SizeOf<VirtualArray<T>>());
-                value = arrayData[index];
-                return true;
+                return unsafeArrayRef.TryGetElementAt(ref voView, index, out value);
             }
             value = default;
             return false;
@@ -141,58 +238,44 @@ namespace Trove.ObjectHandles
         /// Note: unsafe because as soon as the array grows and gets reallocated, the ref is no longer valid
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T TryGetRefElementAtUnsafe<B>(
-            ref DynamicBuffer<B> byteBuffer,
+        public ref T TryGetUnsafeRefElementAt<V>(
+            ref V voView,
             int index,
             out bool success)
-            where B : unmanaged, IBufferElementData
+            where V : unmanaged, IVirtualObjectView
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr(
-                ref byteBuffer,
-                this._objectHandle,
-                out byte* arrayPtr))
+            ref UnsafeVirtualArray<T> unsafeArrayRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ArrayHandle, out success);
+            if (success)
             {
-                T* arrayData = (T*)(arrayPtr + (long)UnsafeUtility.SizeOf<VirtualArray<T>>());
-                T* elementPtr = arrayData + (long)(UnsafeUtility.SizeOf<T>() * index);
-                success = true;
-                return ref *elementPtr;
+                return ref unsafeArrayRef.TryGetUnsafeRefElementAt(ref voView, index, out success);
             }
-            success = false;
-            return ref *(T*)byteBuffer.GetUnsafePtr();
+            return ref *(T*)voView.GetDataPtr();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TrySetElementAt<B>(
-            ref DynamicBuffer<B> byteBuffer,
+        public bool TrySetElementAt<V>(
+            ref V voView,
             int index,
             T value)
-            where B : unmanaged, IBufferElementData
+            where V : unmanaged, IVirtualObjectView
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr(
-                ref byteBuffer,
-                this._objectHandle,
-                out byte* arrayPtr))
+            ref UnsafeVirtualArray<T> unsafeArrayRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ArrayHandle, out bool success);
+            if (success)
             {
-                T* arrayData = (T*)(arrayPtr + (long)UnsafeUtility.SizeOf<VirtualArray<T>>());
-                arrayData[index] = value;
-                return true;
+                return unsafeArrayRef.TrySetElementAt(ref voView, index, value); ;
             }
             return false;
         }
 
-        public bool TryAsUnsafeVirtualArray<B>(
-            ref DynamicBuffer<B> byteBuffer,
-            out UnsafeVirtualArray<T> unsafeArray)
-            where B : unmanaged, IBufferElementData
+        public bool TryAsUnsafeArrayView<V>(
+            ref V voView,
+            out UnsafeArrayView<T> unsafeArray)
+            where V : unmanaged, IVirtualObjectView
         {
-            if (VirtualObjectManager.TryGetObjectValue(
-                ref byteBuffer,
-                this._objectHandle,
-                out VirtualArray<T> array))
+            ref UnsafeVirtualArray<T> unsafeArrayRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ArrayHandle, out bool success);
+            if (success)
             {
-                byte* dataPtr = (byte*)byteBuffer.GetUnsafePtr() + (long)this.MetadataByteIndex + (long)UnsafeUtility.SizeOf<VirtualArray<T>>();
-                unsafeArray = new UnsafeVirtualArray<T>((T*)dataPtr, array.Length);
-                return true;
+                return unsafeArrayRef.TryAsUnsafeArrayView(ref voView, out unsafeArray);
             }
             unsafeArray = default;
             return false;

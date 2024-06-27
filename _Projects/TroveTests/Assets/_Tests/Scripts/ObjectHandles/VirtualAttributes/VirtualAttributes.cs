@@ -1,6 +1,10 @@
+using System.Runtime.CompilerServices;
 using Trove.ObjectHandles;
 using Unity.Burst;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Logging;
 
 public struct DirtyStat : IBufferElementData
 {
@@ -31,25 +35,31 @@ public struct Stat
     public float BaseValue;
     public float Value;
     public int ValueIndex;
-    public VirtualListHandle<StatModifier> Modifiers;
-    public VirtualListHandle<StatObserver> Observers;
+    public UnsafeVirtualList<StatModifier> Modifiers;
+    public UnsafeVirtualList<StatObserver> Observers;
     public VirtualListHandle<DirtyStat> DirtyStatsList;
 
-    public static Stat Create<B>(int valueIndex, float baseValue, VirtualListHandle<DirtyStat> dirtyStatsList, ref DynamicBuffer<B> statBuffer)
-        where B : unmanaged, IBufferElementData
+    public static Stat Create<V>(
+        ref V voView,
+        int valueIndex, 
+        float baseValue,
+        int modifiersInitialCapacity,
+        int observersInitialCapacity,
+        VirtualListHandle<DirtyStat> dirtyStatsList)
+        where V : unmanaged, IVirtualObjectView
     {
         Stat newStat = new Stat
         {
             BaseValue = baseValue,
             Value = baseValue,
             ValueIndex = valueIndex,
-            Modifiers = VirtualList<StatModifier>.Allocate(ref statBuffer, 10),
-            Observers = VirtualList<StatObserver>.Allocate(ref statBuffer, 10),
+            Modifiers = UnsafeVirtualList<StatModifier>.Allocate(ref voView, modifiersInitialCapacity),
+            Observers = UnsafeVirtualList<StatObserver>.Allocate(ref voView, observersInitialCapacity),
             DirtyStatsList = dirtyStatsList,
         };
 
         // Add to dirty stats list
-        dirtyStatsList.TryAdd(ref statBuffer, new DirtyStat(newStat));
+        dirtyStatsList.TryAdd(ref voView, new DirtyStat(newStat));
 
         return newStat;
     }
@@ -101,11 +111,12 @@ public struct StatModifier
             };
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Apply(ref Stat stat)
         {
             stat.Value = stat.BaseValue;
             stat.Value += Add;
-            stat.Value += (AddMultiply * stat.Value);
+            stat.Value *= AddMultiply;
         }
     }
 
@@ -115,24 +126,30 @@ public struct StatModifier
     public float ValueA;
     public float ValueB;
 
-    public bool OnAdded<B>(StatReference prevStatReference, ref DynamicBuffer<B> prevStatBuffer, ref BufferLookup<B> voBufferLookup)
-        where B : unmanaged, IBufferElementData
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool OnAdded<V>(
+        ref V voView, 
+        StatReference statReference)
+        where V : unmanaged, IVirtualObjectView
     {
         switch (Type)
         {
             case (ModifierType.AddFromStat):
             case (ModifierType.AddMultiplyFromStat):
-                AddAsObserverOf(StatA, prevStatReference, ref prevStatBuffer, ref voBufferLookup);
+                AddAsObserverOf(ref voView, StatA, statReference);
                 return true;
         }
 
         return false;
     }
 
-    public void Apply<B>(Entity prevBufferEntity, ref DynamicBuffer<B> prevStatBuffer, ref BufferLookup<B> voBufferLookup, ref Stack stack)
-        where B : unmanaged, IBufferElementData
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Apply<V>(
+        ref V voView, 
+        ref Stack stack)
+        where V : unmanaged, IVirtualObjectView
     {
-        switch(Type)
+        switch (Type)
         {
             case (ModifierType.Add):
                 {
@@ -141,7 +158,7 @@ public struct StatModifier
                 }
             case (ModifierType.AddFromStat):
                 {
-                    if(StatUtility.TryResolveStat(StatA, ref voBufferLookup, prevBufferEntity, ref prevStatBuffer, out Stat otherStat, out _))
+                    if (StatUtility.TryResolveStat(ref voView, StatA, out Stat otherStat))
                     {
                         stack.Add += otherStat.Value;
                     }
@@ -154,7 +171,7 @@ public struct StatModifier
                 }
             case (ModifierType.AddMultiplyFromStat):
                 {
-                    if (StatUtility.TryResolveStat(StatA, ref voBufferLookup, prevBufferEntity, ref prevStatBuffer, out Stat otherStat, out _))
+                    if (StatUtility.TryResolveStat(ref voView, StatA, out Stat otherStat))
                     {
                         stack.AddMultiply += otherStat.Value;
                     }
@@ -163,23 +180,16 @@ public struct StatModifier
         }
     }
 
-    private static bool AddAsObserverOf<B>(
-        StatReference otherStatReference, 
-        StatReference prevStatReference, 
-        ref DynamicBuffer<B> prevStatBuffer,
-        ref BufferLookup<B> voBufferLookup)
-        where B : unmanaged, IBufferElementData
+    private static bool AddAsObserverOf<V>(
+        ref V voView,
+        StatReference otherStatReference,
+        StatReference selfStatReference)
+        where V : unmanaged, IVirtualObjectView
     {
-        ref Stat otherStat = ref StatUtility.TryResolveStatRef(
-            otherStatReference, 
-            ref voBufferLookup, 
-            prevStatReference.BufferEntity,
-            ref prevStatBuffer,
-            out DynamicBuffer<B> otherStatBuffer, 
-            out bool success);
+        ref Stat otherStat = ref StatUtility.TryResolveStatRef(ref voView, otherStatReference, out bool success);
         if (success)
         {
-            if (otherStat.Observers.TryAdd(ref otherStatBuffer, new StatObserver(prevStatReference)))
+            if (otherStat.Observers.TryAdd(ref voView, new StatObserver(selfStatReference)))
             {
                 return true;
             }
@@ -190,68 +200,56 @@ public struct StatModifier
 
 public static class StatUtility
 {
-    public static bool TryAddModifier<B>(
+    public static bool TryAddModifier<V>(
+        ref V voView,
         StatReference statReference,
         StatModifier modifier,
-        ref BufferLookup<B> voBufferLookup,
         bool autoRecompute = true)
-        where B : unmanaged, IBufferElementData
+        where V : unmanaged, IVirtualObjectView
     {
-        ref Stat stat = ref TryResolveStatRef(statReference, ref voBufferLookup, out DynamicBuffer<B> statBuffer, out bool success);
-        if (success)
+        ref Stat stat = ref TryResolveStatRef(ref voView, statReference, out bool success);
+        if (success &&
+            stat.Modifiers.TryAdd(ref voView, modifier) &&
+            modifier.OnAdded(ref voView, statReference))
         {
-            if (stat.Modifiers.TryAdd(ref statBuffer, modifier))
-            {
-                if(modifier.OnAdded(statReference, ref statBuffer, ref voBufferLookup))
-                {
-                    if (autoRecompute)
-                    {
-                        RecomputeStatAndDependencies(
-                            ref stat,
-                            statReference.BufferEntity,
-                            ref statBuffer,
-                            ref voBufferLookup);
-                    }
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public static bool TryAddBaseValue<B>(
-        StatReference statReference,
-        float value,
-        ref BufferLookup<B> voBufferLookup,
-        bool autoRecompute = true)
-        where B : unmanaged, IBufferElementData
-    {
-        ref Stat stat = ref TryResolveStatRef(statReference, ref voBufferLookup, out DynamicBuffer<B> statBuffer, out bool success);
-        if(success)
-        {
-            stat.BaseValue += value;
             if (autoRecompute)
             {
-                RecomputeStatAndDependencies(
-                    ref stat,
-                    statReference.BufferEntity,
-                    ref statBuffer,
-                    ref voBufferLookup);
+                RecomputeStatAndDependencies(ref voView, ref stat);
             }
             return true;
         }
         return false;
     }
 
-    public static void RecomputeStatAndDependencies<B>(
-        ref Stat stat,
-        Entity statBufferEntity,
-        ref DynamicBuffer<B> statBuffer,
-        ref BufferLookup<B> voBufferLookup)
-        where B : unmanaged, IBufferElementData
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool TryAddBaseValue<V>(
+        ref V voView,
+        StatReference statReference,
+        float value,
+        bool autoRecompute = true)
+        where V : unmanaged, IVirtualObjectView
     {
-        if(stat.Modifiers.TryAsUnsafeVirtualArray(ref statBuffer, out UnsafeVirtualArray<StatModifier> statModifiers) &&
-            stat.Observers.TryAsUnsafeVirtualArray(ref statBuffer, out UnsafeVirtualArray<StatObserver> statObservers))
+        ref Stat stat = ref TryResolveStatRef(ref voView, statReference, out bool success);
+        if (success)
+        {
+            stat.BaseValue += value;
+            if (autoRecompute)
+            {
+                RecomputeStatAndDependencies(ref voView, ref stat);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void RecomputeStatAndDependencies<V>(
+        ref V voView,
+        ref Stat stat)
+        where V : unmanaged, IVirtualObjectView
+    {
+        if (stat.Modifiers.TryAsUnsafeArrayView(ref voView, out UnsafeArrayView<StatModifier> statModifiers) &&
+            stat.Observers.TryAsUnsafeArrayView(ref voView, out UnsafeArrayView<StatObserver> statObservers))
         {
             // Modifiers
             {
@@ -259,144 +257,70 @@ public static class StatUtility
                 for (int i = 0; i < statModifiers.Length; i++)
                 {
                     StatModifier modifier = statModifiers[i];
-                    modifier.Apply(statBufferEntity, ref statBuffer, ref voBufferLookup, ref modifierStack);
+                    modifier.Apply(ref voView, ref modifierStack);
                 }
                 modifierStack.Apply(ref stat);
             }
 
             // Add to dirty stats list
-            stat.DirtyStatsList.TryAdd(ref statBuffer, new DirtyStat(stat));
+            stat.DirtyStatsList.TryAdd(ref voView, new DirtyStat(stat));
 
             // Observers
             for (int i = statObservers.Length - 1; i >= 0; i--)
             {
                 StatObserver observer = statObservers[i];
                 ref Stat observerStat = ref TryResolveStatRef(
+                    ref voView,
                     observer.StatReference,
-                    ref voBufferLookup,
-                    statBufferEntity,
-                    ref statBuffer,
-                    out DynamicBuffer<B> observerStatBuffer,
                     out bool success);
                 if (success)
                 {
                     RecomputeStatAndDependencies(
-                        ref observerStat,
-                        observer.StatReference.BufferEntity,
-                        ref observerStatBuffer,
-                        ref voBufferLookup);
+                        ref voView,
+                        ref observerStat);
                 }
                 else
                 {
                     // If could not resolve, remove from observers
-                    stat.Observers.TryRemoveAt(ref statBuffer, i);
+                    stat.Observers.TryRemoveAt(ref voView, i);
                 }
             }
         }
     }
 
-    public static bool TryResolveStat<B>(
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool TryResolveStat<V>(
+        ref V voView,
         StatReference statReference,
-        ref BufferLookup<B> voBufferLookup,
-        out Stat stat,
-        out DynamicBuffer<B> statBuffer)
-        where B : unmanaged, IBufferElementData
+        out Stat stat)
+        where V : unmanaged, IVirtualObjectView
     {
-        if (voBufferLookup.TryGetBuffer(statReference.BufferEntity, out DynamicBuffer<B> voBuffer))
-        {
-            statBuffer = voBuffer;
-            if (VirtualObjectManager.TryGetObjectValue(ref statBuffer, statReference.Handle, out stat))
-            {
-                return true;
-            }
-        }
-        statBuffer = default;
-        stat = default;
-        return false;
-    }
-
-    public static bool TryResolveStat<B>(
-        StatReference statReference,
-        ref BufferLookup<B> voBufferLookup,
-        Entity prevBufferEntity,
-        ref DynamicBuffer<B> prevStatBuffer,
-        out Stat stat,
-        out DynamicBuffer<B> statBuffer)
-        where B : unmanaged, IBufferElementData
-    {
-        statBuffer = prevStatBuffer;
-        if (prevBufferEntity != statReference.BufferEntity)
-        {
-            if (voBufferLookup.TryGetBuffer(statReference.BufferEntity, out DynamicBuffer<B> voBuffer))
-            {
-                statBuffer = voBuffer;
-            }
-            else
-            {
-                statBuffer = default;
-            }
-        }
-        if(VirtualObjectManager.TryGetObjectValue(ref statBuffer, statReference.Handle, out stat))
+        if (VirtualObjectManager.TryGetObjectValue(ref voView, statReference.Handle, out stat))
         {
             return true;
         }
-        statBuffer = default;
         stat = default;
         return false;
     }
 
-    public unsafe static ref Stat TryResolveStatRef<B>(
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe static ref Stat TryResolveStatRef<V>(
+        ref V voView,
         StatReference statReference,
-        ref BufferLookup<B> voBufferLookup,
-        out DynamicBuffer<B> statBuffer,
         out bool success)
-        where B : unmanaged, IBufferElementData
+        where V : unmanaged, IVirtualObjectView
     {
-        if (voBufferLookup.TryGetBuffer(statReference.BufferEntity, out DynamicBuffer<B> voBuffer))
-        {
-            statBuffer = voBuffer;
-            return ref VirtualObjectManager.TryGetObjectValueRef(ref statBuffer, statReference.Handle, out success);
-        }
-        statBuffer = default;
-        success = false;
-        return ref *(Stat*)default; 
+        return ref VirtualObjectManager.TryGetObjectValueRef(ref voView, statReference.Handle, out success);
     }
 
-    public unsafe static ref Stat TryResolveStatRef<B>(
-        StatReference statReference,
-        ref BufferLookup<B> voBufferLookup,
-        Entity prevBufferEntity,
-        ref DynamicBuffer<B> prevStatBuffer,
-        out DynamicBuffer<B> statBuffer,
-        out bool success)
-        where B : unmanaged, IBufferElementData
-    {
-        statBuffer = prevStatBuffer;
-        if (prevBufferEntity != statReference.BufferEntity)
-        {
-            if (voBufferLookup.TryGetBuffer(statReference.BufferEntity, out DynamicBuffer<B> voBuffer))
-            {
-                statBuffer = voBuffer;
-                return ref VirtualObjectManager.TryGetObjectValueRef(ref statBuffer, statReference.Handle, out success);
-            }
-            else
-            {
-                statBuffer = default;
-            }
-        }
-        statBuffer = default;
-        success = false;
-        return ref *(Stat*)prevStatBuffer.GetUnsafePtr();
-    }
-
-    public static bool TransferDirtyStatsToStatValues<B>(
-        VirtualListHandle<DirtyStat> dirtyStatsList, 
-        ref DynamicBuffer<B> statBuffer, 
+    public static bool TransferDirtyStatsToStatValues<V>(
+        ref V voView,
+        VirtualListHandle<DirtyStat> dirtyStatsList,
         ref DynamicBuffer<StatValueRO> statValuesBuffer)
-        where B : unmanaged, IBufferElementData
+        where V : unmanaged, IVirtualObjectView
     {
         bool success = true;
-        if (dirtyStatsList.TryAsUnsafeVirtualArray(ref statBuffer, out UnsafeVirtualArray<DirtyStat> dirtyStats))
+        if (dirtyStatsList.TryAsUnsafeArrayView(ref voView, out UnsafeArrayView<DirtyStat> dirtyStats))
         {
             for (int i = 0; i < dirtyStats.Length; i++)
             {
@@ -414,7 +338,7 @@ public static class StatUtility
 
             if (dirtyStats.Length > 0)
             {
-                dirtyStatsList.TryClear(ref statBuffer);
+                dirtyStatsList.TryClear(ref voView);
             }
         }
         else

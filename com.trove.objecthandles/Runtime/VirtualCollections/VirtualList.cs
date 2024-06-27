@@ -1,22 +1,39 @@
+
 using System.Runtime.CompilerServices;
-using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Entities;
-using Trove;
 using Unity.Mathematics;
 using Unity.Logging;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 
 namespace Trove.ObjectHandles
 {
-    public unsafe struct VirtualList<T>
+    public unsafe struct UnsafeVirtualList<T>
         where T : unmanaged
     {
         internal int _length;
         internal int _capacity;
+        internal VirtualObjectHandle<T> _dataHandle;
 
         public int Length => _length;
         public int Capacity => _capacity;
+        public VirtualObjectHandle<T> DataHandle => _dataHandle;
+
+        public const float GrowFactor = 2f;
+
+        public static UnsafeVirtualList<T> Allocate<V>(
+            ref V voView,
+            int capacity)
+            where V : unmanaged, IVirtualObjectView
+        {
+            UnsafeVirtualList<T> list = new UnsafeVirtualList<T>();
+            list._length = 0;
+            list._capacity = capacity;
+            list._dataHandle = VirtualObjectManager.AllocateObject(
+                ref voView,
+                list.GetDataCapacitySizeBytes(),
+                out T* _);
+
+            return list;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetDataCapacitySizeBytes()
@@ -27,330 +44,139 @@ namespace Trove.ObjectHandles
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetSizeBytes()
         {
-            return UnsafeUtility.SizeOf<VirtualList<T>>() + GetDataCapacitySizeBytes();
-        }
-
-        public static VirtualListHandle<T> Allocate<B>(
-            ref DynamicBuffer<B> byteBuffer,
-            int capacity)
-            where B : unmanaged, IBufferElementData
-        {
-            VirtualList<T> list = new VirtualList<T>();
-            list._length = 0;
-            list._capacity = capacity;
-
-            int objectSize = list.GetSizeBytes();
-            VirtualObjectHandle<T> tmpHandle = VirtualObjectManager.AllocateObject<T, B>(
-                ref byteBuffer,
-                objectSize,
-                out byte* valueDestinationPtr);
-            VirtualListHandle<T> handle = new VirtualListHandle<T>(tmpHandle.MetadataByteIndex, tmpHandle.Version);
-
-            *(VirtualList<T>*)valueDestinationPtr = list;
-
-            return handle;
-        }
-    }
-
-    public unsafe struct VirtualListHandle<T> where T : unmanaged
-    {
-        internal readonly int MetadataByteIndex;
-        internal readonly int Version;
-        internal readonly VirtualObjectHandle<VirtualList<T>> _objectHandle;
-
-        public const float GrowFactor = 2f;
-
-        internal VirtualListHandle(int index, int version)
-        {
-            MetadataByteIndex = index;
-            Version = version;
-            _objectHandle = new VirtualObjectHandle<VirtualList<T>>(new VirtualObjectHandle(MetadataByteIndex, Version));
+            return UnsafeUtility.SizeOf<UnsafeVirtualList<T>>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetLength<B>(ref DynamicBuffer<B> byteBuffer, out int length)
-            where B : unmanaged, IBufferElementData
+        public void Clear()
         {
-            if (VirtualObjectManager.TryGetObjectValue(
-                ref byteBuffer,
-                this._objectHandle,
-                out VirtualList<T> list))
-            {
-                length = list._length;
-                return true;
-            }
-            length = default;
-            return false;
-        }
-
-        /// <summary>
-        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetLengthUnsafe<B>(ref DynamicBuffer<B> byteBuffer)
-            where B : unmanaged, IBufferElementData
-        {
-            return VirtualObjectManager.Unsafe.GetObjectValueUnsafe(ref byteBuffer, this._objectHandle).Length;
+            this._length = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetCapacity<B>(ref DynamicBuffer<B> byteBuffer, out int capacity)
-            where B : unmanaged, IBufferElementData
-        {
-            if (VirtualObjectManager.TryGetObjectValue(
-                ref byteBuffer,
-                this._objectHandle,
-                out VirtualList<T> list))
-            {
-                capacity = list._capacity;
-                return true;
-            }
-            capacity = default;
-            return false;
-        }
-
-        /// <summary>
-        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetCapacityUnsafe<B>(ref DynamicBuffer<B> byteBuffer)
-            where B : unmanaged, IBufferElementData
-        {
-            return VirtualObjectManager.Unsafe.GetObjectValueUnsafe(ref byteBuffer, this._objectHandle).Capacity;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetLengthAndCapacity<B>(ref DynamicBuffer<B> byteBuffer, out int length, out int capacity)
-            where B : unmanaged, IBufferElementData
-        {
-            if (VirtualObjectManager.TryGetObjectValue(
-                ref byteBuffer,
-                this._objectHandle,
-                out VirtualList<T> list))
-            {
-                length = list._length;
-                capacity = list._capacity;
-                return true;
-            }
-            length = default;
-            capacity = default;
-            return false;
-        }
-
-        /// <summary>
-        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void GetLengthAndCapacityUnsafe<B>(ref DynamicBuffer<B> byteBuffer, out int length, out int capacity)
-            where B : unmanaged, IBufferElementData
-        {
-            VirtualList<T> list = VirtualObjectManager.Unsafe.GetObjectValueUnsafe(ref byteBuffer, this._objectHandle);
-            length = list._length;
-            capacity = list._capacity;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryClear<B>(ref DynamicBuffer<B> byteBuffer)
-            where B : unmanaged, IBufferElementData
-        {
-            if (VirtualObjectManager.TryGetObjectValuePtr(
-                ref byteBuffer,
-                this._objectHandle,
-                out byte* listPtr))
-            {
-                ref VirtualList<T> list = ref *(VirtualList<T>*)listPtr;
-                list._length = 0;
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ClearUnsafe<B>(ref DynamicBuffer<B> byteBuffer)
-            where B : unmanaged, IBufferElementData
-        {
-            byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
-                ref byteBuffer, this._objectHandle);
-            ref VirtualList<T> list = ref *(VirtualList<T>*)listPtr;
-            list._length = 0;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetElementAt<B>(
-            ref DynamicBuffer<B> byteBuffer,
+        public bool TryGetElementAt<V>(
+            ref V voView,
             int index,
             out T value)
-            where B : unmanaged, IBufferElementData
+            where V : unmanaged, IVirtualObjectView
         {
-            if (index >= 0)
+            if (!ObjectManagerUtilities.IndexIsValid(index, _length))
             {
-                if (VirtualObjectManager.TryGetObjectValuePtr(
-                ref byteBuffer,
-                this._objectHandle,
-                out byte* listPtr))
-                {
-                    VirtualList<T> list = *(VirtualList<T>*)listPtr;
-                    if (index < list.Length)
-                    {
-                        T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
-                        value = listData[index];
-                        return true;
-                    }
-                }
+                value = default;
+                return false;
             }
+
+            if (VirtualObjectManager.TryGetObjectValuePtr(
+                ref voView,
+                this._dataHandle,
+                out T* listDataPtr))
+            {
+                value = listDataPtr[index];
+                return true;
+            }
+
             value = default;
             return false;
         }
 
         /// <summary>
-        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
-        /// Note: unsafe because no index check
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T GetElementAtUnsafe<B>(
-            ref DynamicBuffer<B> byteBuffer,
-            int index)
-            where B : unmanaged, IBufferElementData
-        {
-            byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
-                ref byteBuffer, this._objectHandle);
-            VirtualList<T> list = *(VirtualList<T>*)listPtr;
-            T* listDataPtr = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
-            return listDataPtr[index];
-        }
-
-        /// <summary>
         /// Note: unsafe because as soon as the list grows and gets reallocated, the ref is no longer valid
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T TryGetUnsafeRefElementAt<B>(
-            ref DynamicBuffer<B> byteBuffer,
+        public ref T TryGetUnsafeRefElementAt<V>(
+            ref V voView,
             int index,
             out bool success)
-            where B : unmanaged, IBufferElementData
+            where V : unmanaged, IVirtualObjectView
         {
-            if (index >= 0)
+            if (!ObjectManagerUtilities.IndexIsValid(index, _length))
             {
-                if (VirtualObjectManager.TryGetObjectValuePtr(
-                    ref byteBuffer,
-                    this._objectHandle,
-                    out byte* listPtr))
-                {
-                    VirtualList<T> list = *(VirtualList<T>*)listPtr;
-                    if (index < list.Length)
-                    {
-                        T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
-                        T* elementPtr = listData + (long)(UnsafeUtility.SizeOf<T>() * index);
-                        success = true;
-                        return ref *elementPtr;
-                    }
-                }
+                success = false;
+                return ref *(T*)default;
             }
+
+            if (VirtualObjectManager.TryGetObjectValuePtr(
+                ref voView,
+                this._dataHandle,
+                out T* listDataPtr))
+            {
+                success = true;
+                return ref *(listDataPtr + (long)index);
+            }
+
             success = false;
-            return ref *(T*)byteBuffer.GetUnsafePtr();
-        }
-
-        /// <summary>
-        /// Note: unsafe because as soon as the list grows and gets reallocated, the ref is no longer valid
-        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T GetUnsafeRefElementAtUnsafe<B>(
-            ref DynamicBuffer<B> byteBuffer,
-            int index)
-            where B : unmanaged, IBufferElementData
-        {
-            byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
-                ref byteBuffer, this._objectHandle);
-            T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
-            T* elementPtr = listData + (long)(UnsafeUtility.SizeOf<T>() * index);
-            return ref *elementPtr;
+            return ref *(T*)voView.GetDataPtr();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TrySetElementAt<B>(
-            ref DynamicBuffer<B> byteBuffer,
+        public bool TrySetElementAt<V>(
+            ref V voView,
             int index,
             T value)
-            where B : unmanaged, IBufferElementData
+            where V : unmanaged, IVirtualObjectView
         {
-            if (index >= 0)
+            if (!ObjectManagerUtilities.IndexIsValid(index, _length))
             {
-                if (VirtualObjectManager.TryGetObjectValuePtr(
-                    ref byteBuffer,
-                    this._objectHandle,
-                    out byte* listPtr))
-                {
-                    VirtualList<T> list = *(VirtualList<T>*)listPtr;
-                    if (index < list.Length)
-                    {
-                        T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
-                        listData[index] = value;
-                        return true;
-                    }
-                }
+                return false;
             }
+
+            if (VirtualObjectManager.TryGetObjectValuePtr(
+                ref voView,
+                this._dataHandle,
+                out T* listDataPtr))
+            {
+                listDataPtr[index] = value;
+                return true;
+            }
+
             return false;
         }
 
-        /// <summary>
-        /// Note: unsafe because we don't check if the metadata index is in bounds, and don't check for a version match.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetElementAtUnsafe<B>(
-            ref DynamicBuffer<B> byteBuffer,
-            int index,
-            T value)
-            where B : unmanaged, IBufferElementData
+        public bool TryAsUnsafeArrayView<V>(
+            ref V voView,
+            out UnsafeArrayView<T> unsafeArray)
+            where V : unmanaged, IVirtualObjectView
         {
-            byte* listPtr = VirtualObjectManager.Unsafe.GetObjectValuePtrUnsafe(
-                ref byteBuffer, this._objectHandle);
-            T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
-            listData[index] = value;
-        }
-
-        public bool TryAsUnsafeVirtualArray<B>(
-            ref DynamicBuffer<B> byteBuffer,
-            out UnsafeVirtualArray<T> unsafeArray)
-            where B : unmanaged, IBufferElementData
-        {
-            if (VirtualObjectManager.TryGetObjectValue(
-                ref byteBuffer,
-                this._objectHandle,
-                out VirtualList<T> list))
+            if (VirtualObjectManager.TryGetObjectValuePtr(
+                ref voView,
+                this._dataHandle,
+                out T* listDataPtr))
             {
-                byte* bufferPtr = (byte*)byteBuffer.GetUnsafePtr();
-                ByteArrayUtilities.ReadValue(bufferPtr, this.MetadataByteIndex, out VirtualObjectMetadata listMetadata);
-
-                byte* dataPtr = (byte*)byteBuffer.GetUnsafePtr() + (long)listMetadata.ByteIndex + (long)UnsafeUtility.SizeOf<VirtualList<T>>();
-                unsafeArray = new UnsafeVirtualArray<T>((T*)dataPtr, list.Length);
+                unsafeArray = new UnsafeArrayView<T>(listDataPtr, this._length);
                 return true;
             }
+
             unsafeArray = default;
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TrySetCapacity<B>(
-            ref DynamicBuffer<B> byteBuffer,
-            int capacity)
-            where B : unmanaged, IBufferElementData
+        public bool TrySetCapacity<V>(
+            ref V voView,
+            int newCapacity)
+            where V : unmanaged, IVirtualObjectView
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr(
-                ref byteBuffer,
-                this._objectHandle,
-                out byte* listPtr))
+            // TODO: if new capacity is smaller, maybe just free superfluous memory
+
+            if (this._capacity != newCapacity && newCapacity > 0)
             {
-                VirtualList<T> list = *(VirtualList<T>*)listPtr;
-                if (list._capacity != capacity)
+                if (VirtualObjectManager.TryGetObjectValuePtr(
+                    ref voView,
+                    this._dataHandle,
+                    out T* listDataPtr))
                 {
-                    VirtualObjectManager.ReallocateObject(
-                        new VirtualObjectHandle(this.MetadataByteIndex, this.Version),
-                        ref byteBuffer,
-                        capacity);
+                    VirtualObjectHandle<T> newDataHandle = VirtualObjectManager.AllocateObject(
+                        ref voView,
+                        newCapacity * UnsafeUtility.SizeOf<T>(),
+                        out T* newListDataPtr);
+
+                    UnsafeUtility.MemCpy(newListDataPtr, listDataPtr, this._length * UnsafeUtility.SizeOf<T>());
+
+                    VirtualObjectManager.FreeObject(
+                        ref voView,
+                        this._dataHandle);
+
+                    this._capacity = newCapacity;
                     return true;
                 }
             }
@@ -358,139 +184,306 @@ namespace Trove.ObjectHandles
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryResize<B>(
-            ref DynamicBuffer<B> byteBuffer,
+        public bool TryResize<V>(
+            ref V voView,
             int newLength)
-            where B : unmanaged, IBufferElementData
+            where V : unmanaged, IVirtualObjectView
         {
-            if (VirtualObjectManager.TryGetObjectValuePtr(
-                ref byteBuffer,
-                this._objectHandle,
-                out byte* listPtr))
+            if (newLength > 0 && newLength < this._length)
             {
-                ref VirtualList<T> list = ref *(VirtualList<T>*)listPtr;
-                if (newLength > list._capacity)
+                if (newLength <= this._capacity || TrySetCapacity(ref voView, (int)math.ceil(newLength * GrowFactor)))
                 {
-                    TrySetCapacity(
-                        ref byteBuffer,
-                        (int)math.ceil(newLength * GrowFactor));
-                    VirtualObjectManager.TryGetObjectValuePtr(
-                        ref byteBuffer,
-                        this._objectHandle,
-                        out listPtr);
-                    list = ref *(VirtualList<T>*)listPtr;
+                    this._length = newLength;
+                    return true;
                 }
-                list._length = newLength;
-                return true;
             }
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryAdd<B>(
-            ref DynamicBuffer<B> byteBuffer,
+        public bool TryAdd<V>(
+            ref V voView,
             T value)
-            where B : unmanaged, IBufferElementData
+            where V : unmanaged, IVirtualObjectView
         {
             if (VirtualObjectManager.TryGetObjectValuePtr(
-                ref byteBuffer,
-                this._objectHandle,
-                out byte* listPtr))
+                ref voView,
+                this._dataHandle,
+                out T* listDataPtr))
             {
-                ref VirtualList<T> list = ref *(VirtualList<T>*)listPtr;
-                int newLength = list._length + 1;
-                if (newLength > list._capacity)
+                int newLength = this._length + 1;
+                if (newLength > this._capacity)
                 {
-                    TrySetCapacity(
-                        ref byteBuffer,
-                        (int)math.ceil(newLength * GrowFactor));
+                    TrySetCapacity(ref voView, (int)math.ceil(newLength * GrowFactor));
+
+                    // Re-get ptr after realloc
                     VirtualObjectManager.TryGetObjectValuePtr(
-                        ref byteBuffer,
-                        this._objectHandle,
-                        out listPtr);
-                    list = ref *(VirtualList<T>*)listPtr;
+                        ref voView,
+                        this._dataHandle,
+                        out listDataPtr);
                 }
-                T* listData = (T*)(listPtr + (long)UnsafeUtility.SizeOf<VirtualList<T>>());
-                listData[list._length] = value;
-                list._length = newLength;
+
+                listDataPtr[this._length] = value;
+                this._length = newLength;
                 return true;
             }
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryInsertAt<B>(
-            ref DynamicBuffer<B> byteBuffer,
+        public bool TryInsertAt<V>(
+            ref V voView,
             int index,
             T value)
-            where B : unmanaged, IBufferElementData
+            where V : unmanaged, IVirtualObjectView
         {
-            if (index >= 0)
+            if (!ObjectManagerUtilities.IndexIsValid(index, _length))
             {
-                if (VirtualObjectManager.TryGetObjectValuePtr(
-                    ref byteBuffer,
-                    this._objectHandle,
-                    out byte* listPtr))
+                return false;
+            }
+
+            if (VirtualObjectManager.TryGetObjectValuePtr(
+                ref voView,
+                this._dataHandle,
+                out T* listDataPtr))
+            {
+                int newLength = this._length + 1;
+                if (newLength > this._capacity)
                 {
-                    ref VirtualList<T> list = ref *(VirtualList<T>*)listPtr;
-                    if (index < list.Length)
-                    {
-                        int newLength = list._length + 1;
-                        if (newLength > list._capacity)
-                        {
-                            TrySetCapacity(
-                                ref byteBuffer,
-                                (int)math.ceil(newLength * GrowFactor));
-                            VirtualObjectManager.TryGetObjectValuePtr(
-                                ref byteBuffer,
-                                this._objectHandle,
-                                out listPtr);
-                            list = ref *(VirtualList<T>*)listPtr;
-                        }
-                        int sizeOfVList = UnsafeUtility.SizeOf<VirtualList<T>>();
-                        int sizeOfListDataType = UnsafeUtility.SizeOf<T>();
-                        byte* dataStartPtr = listPtr + (long)(sizeOfVList + (sizeOfListDataType * index));
-                        byte* dataDestinationPtr = dataStartPtr + (long)(sizeOfListDataType);
-                        int dataSize = (list._length - index) * sizeOfListDataType;
-                        UnsafeUtility.MemCpy(dataDestinationPtr, dataStartPtr, dataSize);
-                        *(T*)dataStartPtr = value;
-                        list._length = newLength;
-                        return true;
-                    }
+                    TrySetCapacity(ref voView, (int)math.ceil(newLength * GrowFactor));
+
+                    // Re-get ptr after realloc
+                    VirtualObjectManager.TryGetObjectValuePtr(
+                        ref voView,
+                        this._dataHandle,
+                        out listDataPtr);
                 }
+                T* dataStartPtr = listDataPtr + (long)index;
+                T* dataDestinationPtr = dataStartPtr + (long)1;
+                int dataSize = (this._length - index) * UnsafeUtility.SizeOf<T>();
+                UnsafeUtility.MemCpy(dataDestinationPtr, dataStartPtr, dataSize);
+                *dataStartPtr = value;
+                this._length = newLength;
+                return true;
             }
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryRemoveAt<B>(
-            ref DynamicBuffer<B> byteBuffer,
+        public bool TryRemoveAt<V>(
+            ref V voView,
             int index)
-            where B : unmanaged, IBufferElementData
+            where V : unmanaged, IVirtualObjectView
         {
-            if (index >= 0)
+            if (!ObjectManagerUtilities.IndexIsValid(index, _length))
             {
-                if (VirtualObjectManager.TryGetObjectValuePtr(
-                    ref byteBuffer,
-                    this._objectHandle,
-                    out byte* listPtr))
+                return false;
+            }
+
+            if (VirtualObjectManager.TryGetObjectValuePtr(
+                ref voView,
+                this._dataHandle,
+                out T* listDataPtr))
+            {
+                if (index < this._length - 1)
                 {
-                    ref VirtualList<T> list = ref *(VirtualList<T>*)listPtr;
-                    if (index < list._length)
-                    {
-                        if (index < list._length - 1)
-                        {
-                            int sizeOfVList = UnsafeUtility.SizeOf<VirtualList<T>>();
-                            int sizeOfListDataType = UnsafeUtility.SizeOf<T>();
-                            byte* dataDestinationPtr = listPtr + (long)sizeOfVList + (long)(sizeOfListDataType * index);
-                            byte* dataStartPtr = dataDestinationPtr + (long)(sizeOfListDataType);
-                            int movedDataSize = (list._length - index) * sizeOfListDataType;
-                            UnsafeUtility.MemCpy(dataDestinationPtr, dataStartPtr, movedDataSize);
-                        }
-                        list._length -= 1;
-                        return true;
-                    }
+                    T* dataDestinationPtr = listDataPtr + (long)index;
+                    T* dataStartPtr = dataDestinationPtr + (long)1;
+                    int movedDataSize = (this._length - (index + 1)) * UnsafeUtility.SizeOf<T>();
+                    UnsafeUtility.MemCpy(dataDestinationPtr, dataStartPtr, movedDataSize);
                 }
+                this._length -= 1;
+                return true;
+
+            }
+            return false;
+        }
+    }
+
+    public unsafe struct VirtualListHandle<T> where T : unmanaged
+    {
+        internal readonly VirtualObjectHandle<UnsafeVirtualList<T>> ListHandle;
+
+        internal VirtualListHandle(VirtualObjectHandle<UnsafeVirtualList<T>> unsafeListHandle)
+        {
+            ListHandle = unsafeListHandle;
+        }
+
+        public static VirtualListHandle<T> Allocate<V>(
+            ref V voView,
+            int capacity)
+            where V : unmanaged, IVirtualObjectView
+        {
+            UnsafeVirtualList<T> unsafeList = UnsafeVirtualList<T>.Allocate(ref voView, capacity);
+            VirtualObjectHandle<UnsafeVirtualList<T>> unsafeListHandle = VirtualObjectManager.CreateObject(ref voView, unsafeList);
+            VirtualListHandle<T> list = new VirtualListHandle<T>(unsafeListHandle);
+            return list;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetLengthAndCapacity<V>(
+            ref V voView,
+            out int length,
+            out int capacity)
+            where V : unmanaged, IVirtualObjectView
+        {
+            ref UnsafeVirtualList<T> unsafeListRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ListHandle, out bool success);
+            if (success)
+            {
+                length = unsafeListRef._length;
+                capacity = unsafeListRef._capacity;
+                return true;
+            }
+            length = default;
+            capacity = default;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryClear<V>(ref V voView)
+            where V : unmanaged, IVirtualObjectView
+        {
+            ref UnsafeVirtualList<T> unsafeListRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ListHandle, out bool success);
+            if(success)
+            {
+                unsafeListRef.Clear();
+                return true;
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetElementAt<V>(
+            ref V voView,
+            int index,
+            out T value)
+            where V : unmanaged, IVirtualObjectView
+        {
+            ref UnsafeVirtualList<T> unsafeListRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ListHandle, out bool success);
+            if (success)
+            {
+                return unsafeListRef.TryGetElementAt(ref voView, index, out value);
+            }
+            value = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Note: unsafe because as soon as the list grows and gets reallocated, the ref is no longer valid
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T TryGetUnsafeRefElementAt<V>(
+            ref V voView,
+            int index,
+            out bool success)
+            where V : unmanaged, IVirtualObjectView
+        {
+            ref UnsafeVirtualList<T> unsafeListRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ListHandle, out success);
+            if (success)
+            {
+                return ref unsafeListRef.TryGetUnsafeRefElementAt(ref voView, index, out success);
+            }
+            return ref *(T*)default;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TrySetElementAt<V>(
+            ref V voView,
+            int index,
+            T value)
+            where V : unmanaged, IVirtualObjectView
+        {
+            ref UnsafeVirtualList<T> unsafeListRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ListHandle, out bool success);
+            if (success)
+            {
+                return unsafeListRef.TrySetElementAt(ref voView, index, value); ;
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryAsUnsafeArrayView<V>(
+            ref V voView,
+            out UnsafeArrayView<T> unsafeArray)
+            where V : unmanaged, IVirtualObjectView
+        {
+            ref UnsafeVirtualList<T> unsafeListRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ListHandle, out bool success);
+            if (success)
+            {
+                success = unsafeListRef.TryAsUnsafeArrayView(ref voView, out unsafeArray);
+                return success;
+            }
+            unsafeArray = default;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TrySetCapacity<V>(
+            ref V voView,
+            int newCapacity)
+            where V : unmanaged, IVirtualObjectView
+        {
+            ref UnsafeVirtualList<T> unsafeListRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ListHandle, out bool success);
+            if (success)
+            {
+                return unsafeListRef.TrySetCapacity(ref voView, newCapacity);
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryResize<V>(
+            ref V voView,
+            int newLength)
+            where V : unmanaged, IVirtualObjectView
+        {
+            ref UnsafeVirtualList<T> unsafeListRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ListHandle, out bool success);
+            if (success)
+            {
+                return unsafeListRef.TryResize(ref voView, newLength);
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryAdd<V>(
+            ref V voView,
+            T value)
+            where V : unmanaged, IVirtualObjectView
+        {
+            ref UnsafeVirtualList<T> unsafeListRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ListHandle, out bool success);
+            if (success)
+            {
+                return unsafeListRef.TryAdd(ref voView, value);
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryInsertAt<V>(
+            ref V voView,
+            int index,
+            T value)
+            where V : unmanaged, IVirtualObjectView
+        {
+            ref UnsafeVirtualList<T> unsafeListRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ListHandle, out bool success);
+            if (success)
+            {
+                return unsafeListRef.TryInsertAt(ref voView, index, value);
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryRemoveAt<V>(
+            ref V voView,
+            int index)
+            where V : unmanaged, IVirtualObjectView
+        {
+            ref UnsafeVirtualList<T> unsafeListRef = ref VirtualObjectManager.TryGetObjectValueRef(ref voView, ListHandle, out bool success);
+            if (success)
+            {
+                return unsafeListRef.TryRemoveAt(ref voView, index);
             }
             return false;
         }

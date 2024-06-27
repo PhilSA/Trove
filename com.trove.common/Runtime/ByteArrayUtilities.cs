@@ -5,7 +5,6 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 
 namespace Trove
 {
