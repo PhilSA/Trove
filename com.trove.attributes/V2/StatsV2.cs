@@ -677,8 +677,9 @@ namespace Trove.Stats
                 {
                     ref StatHandle dirtyStatHandle = ref MarkStatsDirtyStream.Read<StatHandle>();
 
-                    DirtyStatsMaskLookup.GetRefRW(dirtyStatHandle.Entity).ValueRW.SetBit(dirtyStatHandle.Index);
-                    HasDirtyStatsLookup.GetEnabledRefRW<HasDirtyStats>(dirtyStatHandle.Entity).ValueRW = true;
+                    StatUtilities.MarkStatForBatchRecompute(dirtyStatHandle.Index,
+                        ref DirtyStatsMaskLookup.GetRefRW(dirtyStatHandle.Entity).ValueRW,
+                        HasDirtyStatsLookup.GetEnabledRefRW<HasDirtyStats>(dirtyStatHandle.Entity));
                 }
 
                 MarkStatsDirtyStream.EndForEachIndex();
