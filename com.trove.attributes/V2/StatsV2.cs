@@ -1,5 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using Unity.Assertions;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -7,11 +9,20 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Logging;
-using UnityEditor.SceneManagement;
+using Unity.Mathematics;
+using Unity.Plastic.Newtonsoft.Json.Linq;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
 
 namespace Trove.Stats
 {
+    //public interface IDirtyStatsBitMask
+    //{
+    //    public bool GetSubMask(uint index, out ulong submask);
+    //    public void SetSubMask(uint index, ulong submask);
+    //    public int GetSubMaskCount();
+    //}
+
     public interface IStatsModifierStack
     {
         public void Reset();
@@ -58,14 +69,141 @@ namespace Trove.Stats
         }
     }
 
+    public struct DirtyStatsMask : IComponentData
+    {
+        public struct Iterator
+        {
+            internal long BitMask_0;
+            internal long BitMask_1;
+            internal int BitCount;
+
+            internal int BitIterator;
+            internal int SubMaskBitIterator;
+
+            internal Iterator(DirtyStatsMask d)
+            {
+                BitMask_0 = d.BitMask_0;
+                BitMask_1 = d.BitMask_1;
+                BitCount = d.StatsCount;
+
+                BitIterator = 0;
+                SubMaskBitIterator = 0;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool GetNextDirtyStat(out int nextStatIndex)
+            {
+                // First mask
+                while (BitIterator < BitCount)
+                {
+                    // If submask has its first bit enabled, return this index and shift mask
+                    if ((BitMask_0 & 1) != 0L)
+                    {
+                        nextStatIndex = BitIterator;
+                        BitIterator++;
+                        SubMaskBitIterator++;
+                        BitMask_0 >>= 1;
+                        return true;
+                    }
+
+                    BitIterator++;
+                    SubMaskBitIterator++;
+                    BitMask_0 >>= 1;
+                }
+
+                // Moving on to second mask
+                SubMaskBitIterator = 0;
+                while (BitIterator < BitCount)
+                {
+                    // If submask has its first bit enabled, return this index and shift mask
+                    if ((BitMask_1 & 1) != 0L)
+                    {
+                        nextStatIndex = BitIterator;
+                        BitIterator++;
+                        SubMaskBitIterator++;
+                        BitMask_1 >>= 1;
+                        return true;
+                    }
+
+                    BitIterator++;
+                    SubMaskBitIterator++;
+                    BitMask_1 >>= 1;
+                }
+
+                // Additional masks would go here
+
+                nextStatIndex = -1;
+                return false;
+            }
+
+            //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+            //public void ShiftMaskAndIncrementIterators()
+            //{
+            //    BitIterator++;
+            //    SubMaskBitIterator++;
+            //    SubBitMask >>= 1;
+
+            //    // Handle moving on to next submask
+            //    if (SubMaskBitIterator >= 8)
+            //    {
+            //        SubMaskIndex++;
+            //        SubMaskBitIterator = 0;
+            //        BitMask.GetSubMask(SubMaskIndex, out SubBitMask);
+            //    }
+            //}
+        }
+
+        public long BitMask_0;
+        public long BitMask_1;
+        public int StatsCount;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Iterator GetIterator()
+        {
+            return new Iterator(this);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetBit(int index)
+        {
+            int subMaskIndex = index / 64;
+            int indexInSubMask = index % 64;
+            long newMask;
+            switch (subMaskIndex)
+            {
+                case 0:
+                    newMask = BitMask_0 | (uint)(1 << indexInSubMask);
+                    Interlocked.Exchange(ref BitMask_0, newMask);
+                    break;
+                case 1:
+                    newMask = BitMask_1 | (uint)(1 << indexInSubMask);
+                    Interlocked.Exchange(ref BitMask_1, newMask);
+                    break;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ClearBit(int index)
+        {
+            int subMaskIndex = index / 64;
+            int indexInSubMask = index % 64;
+            long newMask;
+            switch (subMaskIndex)
+            {
+                case 0:
+                    newMask = (BitMask_0 & (uint)(~indexInSubMask));
+                    Interlocked.Exchange(ref BitMask_0, newMask);
+                    break;
+                case 1:
+                    newMask = (BitMask_1 & (uint)(~indexInSubMask));
+                    Interlocked.Exchange(ref BitMask_1, newMask);
+                    break;
+            }
+        }
+    }
+
     public struct HasDirtyStats : IComponentData, IEnableableComponent
     { }
-
-    [InternalBufferCapacity(0)]
-    public partial struct DirtyStat : IBufferElementData
-    {
-        public byte Value;
-    }
 
     public struct StatHandle : IEquatable<StatHandle>
     {
@@ -173,17 +311,17 @@ namespace Trove.Stats
         private EntityQuery _batchRecomputeStatsQuery;
         private EntityQuery _dirtyStatsQuery;
 
+        private ComponentLookup<DirtyStatsMask> DirtyStatsMaskLookup;
         private ComponentLookup<HasDirtyStats> HasDirtyStatsLookup;
         private BufferLookup<Stat> StatsBufferLookup;
         private BufferLookup<TStatModifier> StatModifiersBufferLookupRO;
         private BufferLookup<StatObserver> StatObserversBufferLookupRO;
-        private BufferLookup<DirtyStat> DirtyStatsBufferLookup;
 
         private EntityTypeHandle EntityTypeHandle;
+        private ComponentTypeHandle<DirtyStatsMask> DirtyStatsMaskTypeHandle;
         private ComponentTypeHandle<HasDirtyStats> HasDirtyStatsTypeHandle;
         private BufferTypeHandle<TStatModifier> StatModifiersBufferTypeHandleRO;
         private BufferTypeHandle<StatObserver> StatObserversBufferTypeHandleRO;
-        private BufferTypeHandle<DirtyStat> DirtyStatsBufferTypeHandle;
 
         private NativeQueue<StatHandle> _tmpDirtyStatsQueue;
 
@@ -195,30 +333,29 @@ namespace Trove.Stats
                 TStatModifier,
                 StatObserver>()
                 .WithAllRW<Stat>()
-                .WithAllRW<DirtyStat>()
                 .Build(ref state);
             _dirtyStatsQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<
                 StatOwner,
                 TStatModifier,
                 StatObserver>()
                 .WithAllRW<Stat>()
-                .WithAllRW<DirtyStat>()
+                .WithAllRW<DirtyStatsMask>()
                 .WithAllRW<HasDirtyStats>()
                 .Build(ref state);
 
             state.RequireForUpdate(_batchRecomputeStatsQuery);
 
+            DirtyStatsMaskLookup = state.GetComponentLookup<DirtyStatsMask>(false);
             HasDirtyStatsLookup = state.GetComponentLookup<HasDirtyStats>(false);
             StatsBufferLookup = state.GetBufferLookup<Stat>(false);
             StatModifiersBufferLookupRO = state.GetBufferLookup<TStatModifier>(true);
             StatObserversBufferLookupRO = state.GetBufferLookup<StatObserver>(true);
-            DirtyStatsBufferLookup = state.GetBufferLookup<DirtyStat>(false);
 
             EntityTypeHandle = state.EntityManager.GetEntityTypeHandle();
+            DirtyStatsMaskTypeHandle = state.EntityManager.GetComponentTypeHandle<DirtyStatsMask>(false);
             HasDirtyStatsTypeHandle = state.EntityManager.GetComponentTypeHandle<HasDirtyStats>(false);
             StatModifiersBufferTypeHandleRO = state.EntityManager.GetBufferTypeHandle<TStatModifier>(true);
             StatObserversBufferTypeHandleRO = state.EntityManager.GetBufferTypeHandle<StatObserver>(true);
-            DirtyStatsBufferTypeHandle = state.EntityManager.GetBufferTypeHandle<DirtyStat>(false);
 
             _tmpDirtyStatsQueue = new NativeQueue<StatHandle>(Allocator.Persistent);
         }
@@ -247,13 +384,13 @@ namespace Trove.Stats
             StatObserversBufferLookupRO.Update(ref state);
 
             EntityTypeHandle.Update(ref state);
+            DirtyStatsMaskTypeHandle.Update(ref state);
             HasDirtyStatsTypeHandle.Update(ref state);
-            DirtyStatsBufferTypeHandle.Update(ref state);
 
             if (batchRecomputeUpdatesCount > 0)
             {
+                DirtyStatsMaskLookup.Update(ref state);
                 HasDirtyStatsLookup.Update(ref state);
-                DirtyStatsBufferLookup.Update(ref state);
 
                 StatModifiersBufferTypeHandleRO.Update(ref state);
                 StatObserversBufferTypeHandleRO.Update(ref state);
@@ -269,10 +406,10 @@ namespace Trove.Stats
                         StatsBufferLookup = StatsBufferLookup,
 
                         EntityTypeHandle = EntityTypeHandle,
+                        DirtyStatsMaskTypeHandle = DirtyStatsMaskTypeHandle,
                         HasDirtyStatsTypeHandle = HasDirtyStatsTypeHandle,
                         StatModifiersBufferTypeHandle = StatModifiersBufferTypeHandleRO,
                         StatObserversBufferTypeHandle = StatObserversBufferTypeHandleRO,
-                        DirtyStatsBufferTypeHandle = DirtyStatsBufferTypeHandle,
 
                         MarkStatsDirtyStream = markStatsDirtyStream.AsWriter(),
                     }.ScheduleParallel(_dirtyStatsQuery, state.Dependency);
@@ -290,8 +427,8 @@ namespace Trove.Stats
                     {
                         state.Dependency = new ApplyHasDirtyStatsJob
                         {
+                            DirtyStatsMaskLookup = DirtyStatsMaskLookup,
                             HasDirtyStatsLookup = HasDirtyStatsLookup,
-                            DirtyStatsBufferLookup = DirtyStatsBufferLookup,
                             MarkStatsDirtyStream = markStatsDirtyStream.AsReader(),
                         }.Schedule(statEntitiesChunkCount, 1, state.Dependency);
                     }
@@ -307,8 +444,8 @@ namespace Trove.Stats
                     TmpDirtyStatsQueue = _tmpDirtyStatsQueue.AsParallelWriter(),
 
                     EntityTypeHandle = EntityTypeHandle,
+                    DirtyStatsMaskTypeHandle = DirtyStatsMaskTypeHandle,
                     HasDirtyStatsTypeHandle = HasDirtyStatsTypeHandle,
-                    DirtyStatsBufferTypeHandle = DirtyStatsBufferTypeHandle,
                 }.ScheduleParallel(_dirtyStatsQuery, state.Dependency);
             }
 
@@ -348,12 +485,12 @@ namespace Trove.Stats
 
             [ReadOnly]
             public EntityTypeHandle EntityTypeHandle;
+            public ComponentTypeHandle<DirtyStatsMask> DirtyStatsMaskTypeHandle;
             public ComponentTypeHandle<HasDirtyStats> HasDirtyStatsTypeHandle;
             [ReadOnly]
             public BufferTypeHandle<TStatModifier> StatModifiersBufferTypeHandle;
             [ReadOnly]
             public BufferTypeHandle<StatObserver> StatObserversBufferTypeHandle;
-            public BufferTypeHandle<DirtyStat> DirtyStatsBufferTypeHandle;
 
             [NativeDisableParallelForRestriction]
             public NativeStream.Writer MarkStatsDirtyStream;
@@ -363,70 +500,63 @@ namespace Trove.Stats
                 if (chunkEnabledMask.ULong0 > 0 || chunkEnabledMask.ULong1 > 0)
                 {
                     NativeArray<Entity> entities = chunk.GetNativeArray(EntityTypeHandle);
+                    NativeArray<DirtyStatsMask> dirtyStatsMasks = chunk.GetNativeArray(ref DirtyStatsMaskTypeHandle);
                     EnabledMask doesEntityHaveDirtyStats = chunk.GetEnabledMask(ref HasDirtyStatsTypeHandle);
                     BufferAccessor<TStatModifier> statModifiersBufferAccessor = chunk.GetBufferAccessor(ref StatModifiersBufferTypeHandle);
                     BufferAccessor<StatObserver> statObserversBufferAccessor = chunk.GetBufferAccessor(ref StatObserversBufferTypeHandle);
-                    BufferAccessor<DirtyStat> dirtyStatsBufferAccessor = chunk.GetBufferAccessor(ref DirtyStatsBufferTypeHandle);
 
                     MarkStatsDirtyStream.BeginForEachIndex(unfilteredChunkIndex);
 
                     ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
                     while (entityEnumerator.NextEntityIndex(out int i))
                     {
-                        // TODO: is this needed, considering we operate on the dirtyStatsQuery?
-                        if (!doesEntityHaveDirtyStats[i])
-                            continue;
-
                         Entity entity = entities[i];
+                        DirtyStatsMask dirtyStatsMask = dirtyStatsMasks[i];
                         DynamicBuffer<Stat> statsBuffer = StatsBufferLookup[entity];
                         DynamicBuffer<TStatModifier> statModifiersBuffer = statModifiersBufferAccessor[i];
                         DynamicBuffer<StatObserver> statObserversBuffer = statObserversBufferAccessor[i];
-                        DynamicBuffer<DirtyStat> dirtyStatsBuffer = dirtyStatsBufferAccessor[i];
 
-                        void* dirtyStatsBufferPtr = dirtyStatsBuffer.GetUnsafePtr();
                         void* statsBufferPtr = statsBuffer.GetUnsafePtr();
 
-                        for (int statIndex = 0; statIndex < dirtyStatsBuffer.Length; statIndex++)
+                        DirtyStatsMask.Iterator dirtyStatsMaskIterator = dirtyStatsMask.GetIterator();
+                        while (dirtyStatsMaskIterator.GetNextDirtyStat(out int statIndex))
                         {
-                            ref byte dirtyStatByteRef = ref UnsafeUtility.ArrayElementAsRef<byte>(dirtyStatsBufferPtr, statIndex);
-                            if (dirtyStatByteRef == 1)
+                            StatHandle selfStatHandle = new StatHandle(entity, statIndex);
+                            ref Stat stat = ref UnsafeUtility.ArrayElementAsRef<Stat>(statsBufferPtr, statIndex);
+
+                            // Apply Modifiers
+                            TStatModifierStack modifierStack = new TStatModifierStack();
+                            modifierStack.Reset();
+                            for (int m = 0; m < statModifiersBuffer.Length; m++)
                             {
-                                StatHandle selfStatHandle = new StatHandle(entity, statIndex);
-                                ref Stat stat = ref UnsafeUtility.ArrayElementAsRef<Stat>(statsBufferPtr, statIndex);
-
-                                // Apply Modifiers
-                                TStatModifierStack modifierStack = new TStatModifierStack();
-                                modifierStack.Reset();
-                                for (int m = 0; m < statModifiersBuffer.Length; m++)
+                                TStatModifier modifier = statModifiersBuffer[m];
+                                if (selfStatHandle == modifier.AffectedStat)
                                 {
-                                    TStatModifier modifier = statModifiersBuffer[m];
-                                    if (selfStatHandle == modifier.AffectedStat)
-                                    {
-                                        modifier.Apply(
-                                            ref modifierStack,
-                                            new StatHandle(entity, statIndex),
-                                            ref statsBuffer,
-                                            ref StatsBufferLookup);
-                                    }
+                                    modifier.Apply(
+                                        ref modifierStack,
+                                        new StatHandle(entity, statIndex),
+                                        ref statsBuffer,
+                                        ref StatsBufferLookup);
                                 }
-                                modifierStack.Apply(ref stat);
-                                dirtyStatByteRef = 0;
+                            }
+                            modifierStack.Apply(ref stat);
+                            dirtyStatsMask.ClearBit(statIndex);
 
-                                // Notify Observers
-                                for (int o = statObserversBuffer.Length - 1; o >= 0; o--)
+                            // Notify Observers
+                            for (int o = statObserversBuffer.Length - 1; o >= 0; o--)
+                            {
+                                StatObserver observer = statObserversBuffer[o];
+                                if (observer.ObservedStat == selfStatHandle)
                                 {
-                                    StatObserver observer = statObserversBuffer[o];
-                                    if (observer.ObservedStat == selfStatHandle)
-                                    {
-                                        MarkStatsDirtyStream.Write(observer.ObserverStat);
+                                    MarkStatsDirtyStream.Write(observer.ObserverStat);
 
-                                        // TODO: if observer no longer exists, remove it
-                                    }
+                                    // TODO: if observer no longer exists, remove it
                                 }
                             }
                         }
 
                         doesEntityHaveDirtyStats[i] = false;
+                        dirtyStatsMasks[i] = dirtyStatsMask;
                     }
 
                     MarkStatsDirtyStream.EndForEachIndex();
@@ -444,7 +574,6 @@ namespace Trove.Stats
             public BufferLookup<StatObserver> StatObserversBufferLookup;
 
             public NativeQueue<StatHandle> TmpDirtyStatsQueue;
-
             public void Execute()
             {
                 StatHandle prevStatHandle = default;
@@ -487,32 +616,71 @@ namespace Trove.Stats
                 TmpDirtyStatsQueue.Clear();
             }
         }
-    }
 
-    [BurstCompile]
-    public struct ApplyHasDirtyStatsJob : IJobParallelFor
-    {
-        [NativeDisableParallelForRestriction]
-        public ComponentLookup<HasDirtyStats> HasDirtyStatsLookup;
-        [NativeDisableParallelForRestriction]
-        public BufferLookup<DirtyStat> DirtyStatsBufferLookup;
-        [NativeDisableParallelForRestriction]
-        public NativeStream.Reader MarkStatsDirtyStream;
-
-        public void Execute(int index)
+        [BurstCompile]
+        public struct EnqueueDirtyStatsForRecomputeImmediateJob : IJobChunk
         {
-            MarkStatsDirtyStream.BeginForEachIndex(index);
+            public NativeQueue<StatHandle>.ParallelWriter TmpDirtyStatsQueue;
 
-            while (MarkStatsDirtyStream.RemainingItemCount > 0)
+            [ReadOnly]
+            public EntityTypeHandle EntityTypeHandle;
+            public ComponentTypeHandle<DirtyStatsMask> DirtyStatsMaskTypeHandle;
+            public ComponentTypeHandle<HasDirtyStats> HasDirtyStatsTypeHandle;
+
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                ref StatHandle dirtyStatHandle = ref MarkStatsDirtyStream.Read<StatHandle>();
+                if (chunkEnabledMask.ULong0 > 0 || chunkEnabledMask.ULong1 > 0)
+                {
+                    NativeArray<Entity> entities = chunk.GetNativeArray(EntityTypeHandle);
+                    NativeArray<DirtyStatsMask> dirtyStatsMasks = chunk.GetNativeArray(ref DirtyStatsMaskTypeHandle);
+                    EnabledMask doesEntityHaveDirtyStats = chunk.GetEnabledMask(ref HasDirtyStatsTypeHandle);
 
-                DynamicBuffer<DirtyStat> dirtyStatsBuffer = DirtyStatsBufferLookup[dirtyStatHandle.Entity];
-                dirtyStatsBuffer[dirtyStatHandle.Index] = new DirtyStat { Value = 1 };
-                HasDirtyStatsLookup.GetEnabledRefRW<HasDirtyStats>(dirtyStatHandle.Entity).ValueRW = true;
+                    ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
+                    while (entityEnumerator.NextEntityIndex(out int i))
+                    {
+                        Entity entity = entities[i];
+                        DirtyStatsMask dirtyStatsMask = dirtyStatsMasks[i];
+
+                        DirtyStatsMask.Iterator dirtyStatsMaskIterator = dirtyStatsMask.GetIterator();
+                        while (dirtyStatsMaskIterator.GetNextDirtyStat(out int statIndex))
+                        {
+                            StatHandle selfStatHandle = new StatHandle(entity, statIndex);
+                            TmpDirtyStatsQueue.Enqueue(selfStatHandle);
+
+                            dirtyStatsMask.ClearBit(statIndex);
+                        }
+
+                        doesEntityHaveDirtyStats[i] = false;
+                        dirtyStatsMasks[i] = dirtyStatsMask;
+                    }
+                }
             }
+        }
 
-            MarkStatsDirtyStream.EndForEachIndex();
+        [BurstCompile]
+        public struct ApplyHasDirtyStatsJob : IJobParallelFor
+        {
+            [NativeDisableParallelForRestriction]
+            public ComponentLookup<DirtyStatsMask> DirtyStatsMaskLookup;
+            [NativeDisableParallelForRestriction]
+            public ComponentLookup<HasDirtyStats> HasDirtyStatsLookup;
+            [NativeDisableParallelForRestriction]
+            public NativeStream.Reader MarkStatsDirtyStream;
+
+            public void Execute(int index)
+            {
+                MarkStatsDirtyStream.BeginForEachIndex(index);
+
+                while (MarkStatsDirtyStream.RemainingItemCount > 0)
+                {
+                    ref StatHandle dirtyStatHandle = ref MarkStatsDirtyStream.Read<StatHandle>();
+
+                    DirtyStatsMaskLookup.GetRefRW(dirtyStatHandle.Entity).ValueRW.SetBit(dirtyStatHandle.Index);
+                    HasDirtyStatsLookup.GetEnabledRefRW<HasDirtyStats>(dirtyStatHandle.Entity).ValueRW = true;
+                }
+
+                MarkStatsDirtyStream.EndForEachIndex();
+            }
         }
     }
 
@@ -534,51 +702,6 @@ namespace Trove.Stats
             }
 
             MarkStatsDirtyStream.EndForEachIndex();
-        }
-    }
-
-    [BurstCompile]
-    public struct EnqueueDirtyStatsForRecomputeImmediateJob : IJobChunk
-    {
-        public NativeQueue<StatHandle>.ParallelWriter TmpDirtyStatsQueue;
-
-        [ReadOnly]
-        public EntityTypeHandle EntityTypeHandle;
-        public ComponentTypeHandle<HasDirtyStats> HasDirtyStatsTypeHandle;
-        public BufferTypeHandle<DirtyStat> DirtyStatsBufferTypeHandle;
-
-        public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-        {
-            if (chunkEnabledMask.ULong0 > 0 || chunkEnabledMask.ULong1 > 0)
-            {
-                NativeArray<Entity> entities = chunk.GetNativeArray(EntityTypeHandle);
-                EnabledMask doesEntityHaveDirtyStats = chunk.GetEnabledMask(ref HasDirtyStatsTypeHandle);
-                BufferAccessor<DirtyStat> dirtyStatsBufferAccessor = chunk.GetBufferAccessor(ref DirtyStatsBufferTypeHandle);
-
-                ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
-                while (entityEnumerator.NextEntityIndex(out int i))
-                {
-                    // TODO: is this needed, considering we operate on the dirtyStatsQuery?
-                    if (!doesEntityHaveDirtyStats[i])
-                        continue;
-
-                    Entity entity = entities[i];
-                    DynamicBuffer<DirtyStat> dirtyStatsBuffer = dirtyStatsBufferAccessor[i];
-
-                    for (int statIndex = 0; statIndex < dirtyStatsBuffer.Length; statIndex++)
-                    {
-                        if (dirtyStatsBuffer[statIndex].Value == 1)
-                        {
-                            StatHandle selfStatHandle = new StatHandle(entity, statIndex);
-                            TmpDirtyStatsQueue.Enqueue(selfStatHandle);
-
-                            dirtyStatsBuffer[statIndex] = default;
-                        }
-                    }
-
-                    doesEntityHaveDirtyStats[i] = false;
-                }
-            }
         }
     }
 
@@ -623,17 +746,12 @@ namespace Trove.Stats
             // TODO: test that this works with the queries in the subsystem
             if (!supportOnlyImmediateRecompute)
             {
-                DynamicBuffer<DirtyStat> dirtyStatsBuffer = baker.AddBuffer<DirtyStat>(entity);
-                baker.AddComponent(entity, new HasDirtyStats());
-
-                dirtyStatsBuffer.Resize(statDefinitions.Length, NativeArrayOptions.ClearMemory);
-                for (int i = 0; i < statDefinitions.Length; i++)
+                baker.AddComponent(entity, new DirtyStatsMask
                 {
-                    dirtyStatsBuffer[i] = new DirtyStat
-                    {
-                        Value = statDefinitions[i].HasStat ? (byte)1 : (byte)0,
-                    };
-                }
+                    StatsCount = statDefinitions.Length,
+                });
+                baker.AddComponent(entity, new HasDirtyStats());
+                baker.SetComponentEnabled<HasDirtyStats>(entity, true);
             }
         }
 
@@ -733,12 +851,12 @@ namespace Trove.Stats
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void MarkStatForBatchRecompute(
             int statIndex,
-            ref DynamicBuffer<DirtyStat> dirtyStatsBuffer,
+            ref DirtyStatsMask dirtyStatsMask,
             EnabledRefRW<HasDirtyStats> hasDirtyStatsEnabledRefRW)
         {
-            if (statIndex >= 0 && statIndex < dirtyStatsBuffer.Length)
+            if (statIndex >= 0 && statIndex < dirtyStatsMask.StatsCount)
             {
-                dirtyStatsBuffer[statIndex] = new DirtyStat { Value = 1 };
+                dirtyStatsMask.SetBit(statIndex);
                 hasDirtyStatsEnabledRefRW.ValueRW = true;
             }
         }
@@ -746,13 +864,14 @@ namespace Trove.Stats
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void MarkStatForBatchRecompute(
             StatHandle statHandle,
-            ref BufferLookup<DirtyStat> dirtyStatsBufferLookup,
+            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
             ref ComponentLookup<HasDirtyStats> hasDirtyStatsLookup)
         {
-            if (dirtyStatsBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<DirtyStat> dirtyStatsBuffer))
+            if (hasDirtyStatsLookup.HasComponent(statHandle.Entity))
             {
+                ref DirtyStatsMask dirtyStatsMask = ref dirtyStatsMaskLookup.GetRefRW(statHandle.Entity).ValueRW;
                 EnabledRefRW<HasDirtyStats> hasDirtyStatsEnabledRefRW = hasDirtyStatsLookup.GetEnabledRefRW<HasDirtyStats>(statHandle.Entity);
-                MarkStatForBatchRecompute(statHandle.Index, ref dirtyStatsBuffer, hasDirtyStatsEnabledRefRW);
+                MarkStatForBatchRecompute(statHandle.Index, ref dirtyStatsMask, hasDirtyStatsEnabledRefRW);
             }
         }
 
@@ -852,17 +971,17 @@ namespace Trove.Stats
             ref StatOwner statOwner,
             ref DynamicBuffer<TStatModifier> statModifiersBuffer,
             ref DynamicBuffer<StatObserver> statObserversBuffer,
-            ref DynamicBuffer<DirtyStat> dirtyStatsBuffer,
+            ref DirtyStatsMask dirtyStatsMask,
             EnabledRefRW<HasDirtyStats> hasDirtyStatsEnabledRefRW,
             ref BufferLookup<StatObserver> statObserversBufferLookup,
-            ref BufferLookup<DirtyStat> dirtyStatsBufferLookup,
+            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
             ref ComponentLookup<HasDirtyStats> hasDirtyStatsLookup,
             ref UnsafeList<StatHandle> tmpObservedStatsList)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
             where TStatModifierStack : unmanaged, IStatsModifierStack
         {
             ModifierHandle modifierHandle = new ModifierHandle(Entity.Null, 0);
-            if (affectedStatHandle.Index >= 0 && affectedStatHandle.Index < dirtyStatsBuffer.Length)
+            if (affectedStatHandle.Index >= 0 && affectedStatHandle.Index < dirtyStatsMask.StatsCount)
             {
                 uint modifierId = statOwner.ModifierIdCounter++;
                 modifierHandle = new ModifierHandle(affectedStatHandle.Entity, modifierId);
@@ -879,14 +998,14 @@ namespace Trove.Stats
                         affectedStatHandle,
                         tmpObservedStatsList[i],
                         ref statObserversBuffer,
-                        ref dirtyStatsBuffer,
+                        ref dirtyStatsMask,
                         hasDirtyStatsEnabledRefRW,
                         ref statObserversBufferLookup,
-                        ref dirtyStatsBufferLookup,
+                        ref dirtyStatsMaskLookup,
                         ref hasDirtyStatsLookup);
                 }
 
-                MarkStatForBatchRecompute(affectedStatHandle.Index, ref dirtyStatsBuffer, hasDirtyStatsEnabledRefRW);
+                MarkStatForBatchRecompute(affectedStatHandle.Index, ref dirtyStatsMask, hasDirtyStatsEnabledRefRW);
             }
             return modifierHandle;
         }
@@ -898,7 +1017,7 @@ namespace Trove.Stats
             ref ComponentLookup<StatOwner> statOwnerLookup,
             ref BufferLookup<TStatModifier> statModifiersBufferLookup,
             ref BufferLookup<StatObserver> statObserversBufferLookup,
-            ref BufferLookup<DirtyStat> dirtyStatsBufferLookup,
+            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
             ref ComponentLookup<HasDirtyStats> hasDirtyStatsLookup,
             ref UnsafeList<StatHandle> tmpObservedStatsList)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
@@ -907,9 +1026,9 @@ namespace Trove.Stats
             ModifierHandle modifierHandle = new ModifierHandle(Entity.Null, 0);
             if (statOwnerLookup.TryGetComponent(statHandle.Entity, out StatOwner statOwner) &&
                 statModifiersBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<TStatModifier> statModifiersBuffer) &&
-                statObserversBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer) &&
-                dirtyStatsBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<DirtyStat> dirtyStatsBuffer))
+                statObserversBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
+                ref DirtyStatsMask dirtyStatsMask = ref dirtyStatsMaskLookup.GetRefRW(statHandle.Entity).ValueRW;
                 EnabledRefRW<HasDirtyStats> hasDirtyStatsEnabledRefRW = hasDirtyStatsLookup.GetEnabledRefRW<HasDirtyStats>(statHandle.Entity);
                 modifierHandle = AddModifier<TStatModifier, TStatModifierStack>(
                     statHandle,
@@ -917,10 +1036,10 @@ namespace Trove.Stats
                     ref statOwner,
                     ref statModifiersBuffer,
                     ref statObserversBuffer,
-                    ref dirtyStatsBuffer,
+                    ref dirtyStatsMask,
                     hasDirtyStatsEnabledRefRW,
                     ref statObserversBufferLookup,
-                    ref dirtyStatsBufferLookup,
+                    ref dirtyStatsMaskLookup,
                     ref hasDirtyStatsLookup,
                     ref tmpObservedStatsList);
 
@@ -935,14 +1054,14 @@ namespace Trove.Stats
             ModifierHandle modifierHandle,
             ref DynamicBuffer<TStatModifier> statModifiersBuffer,
             ref DynamicBuffer<StatObserver> statObserversBuffer,
-            ref DynamicBuffer<DirtyStat> dirtyStatsBuffer,
+            ref DirtyStatsMask dirtyStatsMask,
             EnabledRefRW<HasDirtyStats> hasDirtyStatsEnabledRefRW,
             ref BufferLookup<StatObserver> statObserversBufferLookup,
             ref UnsafeList<StatHandle> tmpObservedStatsList)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
             where TStatModifierStack : unmanaged, IStatsModifierStack
         {
-            if (statHandle.Index >= 0 && statHandle.Index < dirtyStatsBuffer.Length)
+            if (statHandle.Index >= 0 && statHandle.Index < dirtyStatsMask.StatsCount)
             {
                 for (int i = statModifiersBuffer.Length - 1; i >= 0; i--)
                 {
@@ -961,7 +1080,7 @@ namespace Trove.Stats
                         }
 
                         statModifiersBuffer.RemoveAt(i);
-                        MarkStatForBatchRecompute(statHandle.Index, ref dirtyStatsBuffer, hasDirtyStatsEnabledRefRW);
+                        MarkStatForBatchRecompute(statHandle.Index, ref dirtyStatsMask, hasDirtyStatsEnabledRefRW);
                         return;
                     }
                 }
@@ -975,7 +1094,7 @@ namespace Trove.Stats
             ref ComponentLookup<StatOwner> statOwnerLookup,
             ref BufferLookup<TStatModifier> statModifiersBufferLookup,
             ref BufferLookup<StatObserver> statObserversBufferLookup,
-            ref BufferLookup<DirtyStat> dirtyStatsBufferLookup,
+            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
             ref ComponentLookup<HasDirtyStats> hasDirtyStatsLookup,
             ref UnsafeList<StatHandle> tmpObservedStatsList)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
@@ -983,16 +1102,16 @@ namespace Trove.Stats
         {
             if (statOwnerLookup.TryGetComponent(statHandle.Entity, out StatOwner statOwner) &&
                 statModifiersBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<TStatModifier> statModifiersBuffer) &&
-                statObserversBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer) &&
-                dirtyStatsBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<DirtyStat> dirtyStatsBuffer))
+                statObserversBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
+                ref DirtyStatsMask dirtyStatsMask = ref dirtyStatsMaskLookup.GetRefRW(statHandle.Entity).ValueRW;
                 EnabledRefRW<HasDirtyStats> hasDirtyStatsEnabledRefRW = hasDirtyStatsLookup.GetEnabledRefRW<HasDirtyStats>(statHandle.Entity);
                 RemoveModifier<TStatModifier, TStatModifierStack>(
                     statHandle,
                     modifierHandle,
                     ref statModifiersBuffer,
                     ref statObserversBuffer,
-                    ref dirtyStatsBuffer,
+                    ref dirtyStatsMask,
                     hasDirtyStatsEnabledRefRW,
                     ref statObserversBufferLookup,
                     ref tmpObservedStatsList);
@@ -1006,23 +1125,23 @@ namespace Trove.Stats
             StatHandle observerStatHandle,
             StatHandle observedStatHandle,
             ref DynamicBuffer<StatObserver> observerStatObserversBuffer,
-            ref DynamicBuffer<DirtyStat> observerDirtyStatsBuffer,
+            ref DirtyStatsMask dirtyStatsMask,
             EnabledRefRW<HasDirtyStats> observerHasDirtyStatsEnabledRefRW,
             ref BufferLookup<StatObserver> statObserversBufferLookup,
-            ref BufferLookup<DirtyStat> dirtyStatsBufferLookup,
-            ref ComponentLookup<HasDirtyStats> hasDirtyStatsLookup)
+            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
+            ref ComponentLookup<HasDirtyStats> hasDirtyStatsLookup)    
         {
             // TODO: observer loop detection?
 
             if (observerStatHandle.Entity == observedStatHandle.Entity)
             {
                 AddObserverToBuffer(observerStatHandle, observedStatHandle, ref observerStatObserversBuffer);
-                MarkStatForBatchRecompute(observedStatHandle.Index, ref observerDirtyStatsBuffer, observerHasDirtyStatsEnabledRefRW);
+                MarkStatForBatchRecompute(observedStatHandle.Index, ref dirtyStatsMask, observerHasDirtyStatsEnabledRefRW);
             }
             else if (statObserversBufferLookup.TryGetBuffer(observedStatHandle.Entity, out DynamicBuffer<StatObserver> observedStatObserversBuffer))
             {
                 AddObserverToBuffer(observerStatHandle, observedStatHandle, ref observedStatObserversBuffer);
-                MarkStatForBatchRecompute(observedStatHandle, ref dirtyStatsBufferLookup, ref hasDirtyStatsLookup);
+                MarkStatForBatchRecompute(observedStatHandle, ref dirtyStatsMaskLookup, ref hasDirtyStatsLookup);
             }
         }
 
