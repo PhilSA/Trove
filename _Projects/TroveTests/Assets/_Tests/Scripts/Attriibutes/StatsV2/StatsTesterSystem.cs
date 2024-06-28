@@ -3,23 +3,21 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Jobs;
 
+[assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.BatchRecomputeDirtyStatsJob))]
+[assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.RecomputeDirtyStatsImmediateJob))]
 
 public struct UpdatingStat : IComponentData
 { }
 
+[UpdateBefore(typeof(StatsUpdateSystem))]
 partial struct StatsTesterSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<StatsTester>();
-    }
-
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    {
-
     }
 
     [BurstCompile]
@@ -49,16 +47,16 @@ partial struct StatsTesterSystem : ISystem
                     BufferLookup<Trove.Stats.DirtyStat> dirtyStatsBufferLookup = SystemAPI.GetBufferLookup<Trove.Stats.DirtyStat>(false);
                     ComponentLookup<Trove.Stats.HasDirtyStats> hasDirtyStatsLookup = SystemAPI.GetComponentLookup<Trove.Stats.HasDirtyStats>(false);
                     Trove.Stats.StatOwner statOwner = state.EntityManager.GetComponentData<StatOwner>(observedEntity);
-                    DynamicBuffer<Trove.Stats.StatModifier> statModifiersBuffer = state.EntityManager.GetBuffer<Trove.Stats.StatModifier>(observedEntity);
+                    DynamicBuffer<StatModifier> statModifiersBuffer = state.EntityManager.GetBuffer<StatModifier>(observedEntity);
                     DynamicBuffer<Trove.Stats.StatObserver> statObserversBuffer = state.EntityManager.GetBuffer<Trove.Stats.StatObserver>(observedEntity);
                     DynamicBuffer<Trove.Stats.DirtyStat> dirtyStatsBuffer = state.EntityManager.GetBuffer<Trove.Stats.DirtyStat>(observedEntity);
                     EnabledRefRW<Trove.Stats.HasDirtyStats> hasDirtyStatsEnabledRefRW = hasDirtyStatsLookup.GetEnabledRefRW<Trove.Stats.HasDirtyStats>(observedEntity);
 
-                    ModifierHandle modifierHandle1 = StatUtilities.AddModifier(
+                    ModifierHandle modifierHandle1 = StatUtilities.AddModifier<StatModifier, StatModifier.Stack>(
                         new Trove.Stats.StatHandle(observedEntity, 1),
-                        new Trove.Stats.StatModifier
+                        new StatModifier
                         {
-                            ModifierType = Trove.Stats.StatModifier.Type.AddFromStat,
+                            ModifierType = StatModifier.Type.AddFromStat,
                             StatA = new StatHandle(observedEntity, 0),
                             ValueA = 0f,
                         },
@@ -72,11 +70,11 @@ partial struct StatsTesterSystem : ISystem
                         ref hasDirtyStatsLookup,
                         ref tmpObservedStatsList);
 
-                    ModifierHandle modifierHandle2 = StatUtilities.AddModifier(
+                    ModifierHandle modifierHandle2 = StatUtilities.AddModifier<StatModifier, StatModifier.Stack>(
                         new Trove.Stats.StatHandle(observedEntity, 2),
-                        new Trove.Stats.StatModifier
+                        new StatModifier
                         {
-                            ModifierType = Trove.Stats.StatModifier.Type.AddFromStat,
+                            ModifierType = StatModifier.Type.AddFromStat,
                             StatA = new StatHandle(observedEntity, 0),
                             ValueA = 0f,
                         },
@@ -99,16 +97,16 @@ partial struct StatsTesterSystem : ISystem
                     BufferLookup<Trove.Stats.DirtyStat> dirtyStatsBufferLookup = SystemAPI.GetBufferLookup<Trove.Stats.DirtyStat>(false);
                     ComponentLookup<Trove.Stats.HasDirtyStats> hasDirtyStatsLookup = SystemAPI.GetComponentLookup<Trove.Stats.HasDirtyStats>(false);
                     Trove.Stats.StatOwner statOwner = state.EntityManager.GetComponentData<StatOwner>(observerEntity);
-                    DynamicBuffer<Trove.Stats.StatModifier> statModifiersBuffer = state.EntityManager.GetBuffer<Trove.Stats.StatModifier>(observerEntity);
+                    DynamicBuffer<StatModifier> statModifiersBuffer = state.EntityManager.GetBuffer<StatModifier>(observerEntity);
                     DynamicBuffer<Trove.Stats.StatObserver> statObserversBuffer = state.EntityManager.GetBuffer<Trove.Stats.StatObserver>(observerEntity);
                     DynamicBuffer< Trove.Stats.DirtyStat > dirtyStatsBuffer = state.EntityManager.GetBuffer<Trove.Stats.DirtyStat>(observerEntity);
                     EnabledRefRW<Trove.Stats.HasDirtyStats> hasDirtyStatsEnabledRefRW = hasDirtyStatsLookup.GetEnabledRefRW<Trove.Stats.HasDirtyStats>(observerEntity);
 
-                    ModifierHandle modifierHandle = StatUtilities.AddModifier(
+                    ModifierHandle modifierHandle = StatUtilities.AddModifier<StatModifier, StatModifier.Stack>(
                         new Trove.Stats.StatHandle(observerEntity, 0),
-                        new Trove.Stats.StatModifier
+                        new StatModifier
                         {
-                            ModifierType = Trove.Stats.StatModifier.Type.AddFromStat,
+                            ModifierType = StatModifier.Type.AddFromStat,
                             StatA = new StatHandle(observedEntity, 0),
                             ValueA = 0f,
                         },
@@ -153,10 +151,37 @@ partial struct StatsTesterSystem : ISystem
             stat.BaseValue += DeltaTime;
             statsBuffer[0] = stat;
 
-            StatUtilities.MarkStatForRecompute(
+            StatUtilities.MarkStatForBatchRecompute(
                 0,
                 ref dirtyStatsBuffer,
                 hasDirtyStatsEnabledRefRW);
         }
+    }
+}
+
+
+partial struct StatsUpdateSystem : ISystem
+{
+    private StatsUpdateSubSystem<StatModifier, StatModifier.Stack> _statsUpdateSubSystem;
+
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<StatsTester>();
+
+        _statsUpdateSubSystem = new StatsUpdateSubSystem<StatModifier, StatModifier.Stack>();
+        _statsUpdateSubSystem.OnCreate(ref state);
+    }
+
+    [BurstCompile]
+    public void OnDestroy(ref SystemState state)
+    {
+        _statsUpdateSubSystem.OnDestroy(ref state);
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        _statsUpdateSubSystem.OnUpdate(ref state);
     }
 }
