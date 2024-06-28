@@ -505,20 +505,22 @@ namespace Trove.Stats
                     BufferAccessor<TStatModifier> statModifiersBufferAccessor = chunk.GetBufferAccessor(ref StatModifiersBufferTypeHandle);
                     BufferAccessor<StatObserver> statObserversBufferAccessor = chunk.GetBufferAccessor(ref StatObserversBufferTypeHandle);
 
+                    void* dirtyStatsMasksArrayPtr = dirtyStatsMasks.GetUnsafePtr();
+
                     MarkStatsDirtyStream.BeginForEachIndex(unfilteredChunkIndex);
 
                     ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
                     while (entityEnumerator.NextEntityIndex(out int i))
                     {
                         Entity entity = entities[i];
-                        DirtyStatsMask dirtyStatsMask = dirtyStatsMasks[i];
+                        ref DirtyStatsMask dirtyStatsMaskRef = ref UnsafeUtility.ArrayElementAsRef<DirtyStatsMask>(dirtyStatsMasksArrayPtr, i);
                         DynamicBuffer<Stat> statsBuffer = StatsBufferLookup[entity];
                         DynamicBuffer<TStatModifier> statModifiersBuffer = statModifiersBufferAccessor[i];
                         DynamicBuffer<StatObserver> statObserversBuffer = statObserversBufferAccessor[i];
 
                         void* statsBufferPtr = statsBuffer.GetUnsafePtr();
 
-                        DirtyStatsMask.Iterator dirtyStatsMaskIterator = dirtyStatsMask.GetIterator();
+                        DirtyStatsMask.Iterator dirtyStatsMaskIterator = dirtyStatsMaskRef.GetIterator();
                         while (dirtyStatsMaskIterator.GetNextDirtyStat(out int statIndex))
                         {
                             StatHandle selfStatHandle = new StatHandle(entity, statIndex);
@@ -540,7 +542,7 @@ namespace Trove.Stats
                                 }
                             }
                             modifierStack.Apply(ref stat);
-                            dirtyStatsMask.ClearBit(statIndex);
+                            dirtyStatsMaskRef.ClearBit(statIndex);
 
                             // Notify Observers
                             for (int o = statObserversBuffer.Length - 1; o >= 0; o--)
@@ -556,7 +558,6 @@ namespace Trove.Stats
                         }
 
                         doesEntityHaveDirtyStats[i] = false;
-                        dirtyStatsMasks[i] = dirtyStatsMask;
                     }
 
                     MarkStatsDirtyStream.EndForEachIndex();
@@ -618,7 +619,7 @@ namespace Trove.Stats
         }
 
         [BurstCompile]
-        public struct EnqueueDirtyStatsForRecomputeImmediateJob : IJobChunk
+        public unsafe struct EnqueueDirtyStatsForRecomputeImmediateJob : IJobChunk
         {
             public NativeQueue<StatHandle>.ParallelWriter TmpDirtyStatsQueue;
 
@@ -635,23 +636,24 @@ namespace Trove.Stats
                     NativeArray<DirtyStatsMask> dirtyStatsMasks = chunk.GetNativeArray(ref DirtyStatsMaskTypeHandle);
                     EnabledMask doesEntityHaveDirtyStats = chunk.GetEnabledMask(ref HasDirtyStatsTypeHandle);
 
+                    void* dirtyStatsMasksArrayPtr = dirtyStatsMasks.GetUnsafePtr();
+
                     ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
                     while (entityEnumerator.NextEntityIndex(out int i))
                     {
                         Entity entity = entities[i];
-                        DirtyStatsMask dirtyStatsMask = dirtyStatsMasks[i];
+                        ref DirtyStatsMask dirtyStatsMaskRef = ref UnsafeUtility.ArrayElementAsRef<DirtyStatsMask>(dirtyStatsMasksArrayPtr, i);
 
-                        DirtyStatsMask.Iterator dirtyStatsMaskIterator = dirtyStatsMask.GetIterator();
+                        DirtyStatsMask.Iterator dirtyStatsMaskIterator = dirtyStatsMaskRef.GetIterator();
                         while (dirtyStatsMaskIterator.GetNextDirtyStat(out int statIndex))
                         {
                             StatHandle selfStatHandle = new StatHandle(entity, statIndex);
                             TmpDirtyStatsQueue.Enqueue(selfStatHandle);
 
-                            dirtyStatsMask.ClearBit(statIndex);
+                            dirtyStatsMaskRef.ClearBit(statIndex);
                         }
 
                         doesEntityHaveDirtyStats[i] = false;
-                        dirtyStatsMasks[i] = dirtyStatsMask;
                     }
                 }
             }
