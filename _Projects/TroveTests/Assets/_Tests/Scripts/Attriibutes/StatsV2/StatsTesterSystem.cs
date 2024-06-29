@@ -10,6 +10,7 @@ using Unity.Jobs;
 //[assembly: RegisterGenericComponentType(typeof(DirtyStatsMask<DirtyStatsMaskValue>))]
 [assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.MarkStatObserversDirtyJob))]
 [assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.CompileChangedStatsDataJob))]
+[assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.BuildStatsDataMapJob))]
 [assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.BatchRecomputeDirtyStatsJob))]
 [assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.RecomputeDirtyStatsImmediateJob))]
 [assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.EnqueueDirtyStatsForRecomputeImmediateJob))]
