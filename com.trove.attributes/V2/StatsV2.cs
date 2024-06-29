@@ -621,7 +621,7 @@ namespace Trove.Stats
                             for (int o = statObserversBuffer.Length - 1; o >= 0; o--)
                             {
                                 StatObserver observer = statObserversBuffer[o];
-                                if (observer.ObserverStat == selfStatHandle)
+                                if (observer.ObservedStat == selfStatHandle)
                                 {
                                     if (observer.ObserverStat.Entity == entity)
                                     {
