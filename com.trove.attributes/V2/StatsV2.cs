@@ -13,6 +13,7 @@ using Unity.Mathematics;
 using Unity.Plastic.Newtonsoft.Json.Linq;
 using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
+using static UnityEngine.EventSystems.EventTrigger;
 
 namespace Trove.Stats
 {
@@ -308,6 +309,18 @@ namespace Trove.Stats
         where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
+        public unsafe struct StatData
+        {
+            [NativeDisableUnsafePtrRestriction]
+            public Stat* StatPtr;
+
+            public int ModifiersStartIndex;
+            public int ModifiersCount;
+
+            public int ObserversStartIndex;
+            public int ObserversCount;
+        }
+
         private EntityQuery _batchRecomputeStatsQuery;
         private EntityQuery _dirtyStatsQuery;
 
@@ -324,6 +337,7 @@ namespace Trove.Stats
         private BufferTypeHandle<StatObserver> StatObserversBufferTypeHandleRO;
 
         private NativeQueue<StatHandle> _tmpDirtyStatsQueue;
+        private NativeList<StatHandle> _changedStatsList;
 
         [BurstCompile]
         public void OnCreate(ref SystemState state)
@@ -358,6 +372,7 @@ namespace Trove.Stats
             StatObserversBufferTypeHandleRO = state.EntityManager.GetBufferTypeHandle<StatObserver>(true);
 
             _tmpDirtyStatsQueue = new NativeQueue<StatHandle>(Allocator.Persistent);
+            _changedStatsList = new NativeList<StatHandle>(10000, Allocator.Persistent);
         }
 
         [BurstCompile]
@@ -367,13 +382,18 @@ namespace Trove.Stats
             {
                 _tmpDirtyStatsQueue.Dispose();
             }
+            if (_changedStatsList.IsCreated)
+            {
+                _changedStatsList.Dispose();
+            }
         }
 
         [BurstCompile]
-        public void OnUpdate(ref SystemState state)
+        public unsafe void OnUpdate(ref SystemState state)
         {
-            bool finishWithRecomputeImmediate = true;  // TODO: make configurable
-            int batchRecomputeUpdatesCount = 3; // TODO: make configurable
+            bool useStatsWorld = true;
+            bool finishWithRecomputeImmediate = false;  // TODO: make configurable
+            int batchRecomputeUpdatesCount = 0; // TODO: make configurable
 
             int statEntitiesChunkCount = _batchRecomputeStatsQuery.CalculateChunkCount();
 
@@ -386,6 +406,60 @@ namespace Trove.Stats
             EntityTypeHandle.Update(ref state);
             DirtyStatsMaskTypeHandle.Update(ref state);
             HasDirtyStatsTypeHandle.Update(ref state);
+
+
+            // StatsWorld
+            if(useStatsWorld)
+            {
+                DirtyStatsMaskLookup.Update(ref state);
+                HasDirtyStatsLookup.Update(ref state);
+
+                StatModifiersBufferTypeHandleRO.Update(ref state);
+                StatObserversBufferTypeHandleRO.Update(ref state);
+
+                NativeStream orderedStatChainsStream = new NativeStream(statEntitiesChunkCount, state.WorldUpdateAllocator);
+                NativeReference<UnsafeParallelHashMap<StatHandle, StatData>> statsDataMapReference = new NativeReference<UnsafeParallelHashMap<StatHandle, StatData>>(default, state.WorldUpdateAllocator);
+
+                state.Dependency = new MarkStatObserversDirtyJob
+                {
+                    DirtyStatsMaskLookup = DirtyStatsMaskLookup,
+                    HasDirtyStatsLookup = HasDirtyStatsLookup,
+                    StatObserversBufferLookup = StatObserversBufferLookupRO,
+
+                    EntityTypeHandle = EntityTypeHandle,
+
+                    OrderedStatChainsStream = orderedStatChainsStream.AsWriter(),
+
+                }.ScheduleParallel(_dirtyStatsQuery, state.Dependency);
+
+                state.Dependency = new CompileChangedStatsDataJob
+                {
+                    OrderedStatChainsStream = orderedStatChainsStream.AsReader(),
+                    ChangedStatsList = _changedStatsList,
+                    StatsDataMapReference = statsDataMapReference,
+                    Allocator = state.WorldUpdateAllocator,
+                }.Schedule(state.Dependency);
+
+                //state.Dependency = new BuildStatsDataMapJob
+                //{
+                //    StatsBufferLookup = StatsBufferLookup,
+
+                //    EntityTypeHandle = EntityTypeHandle,
+                //    DirtyStatsMaskTypeHandle = DirtyStatsMaskTypeHandle,
+                //    HasDirtyStatsTypeHandle = HasDirtyStatsTypeHandle,
+                //    StatModifiersBufferTypeHandle = StatModifiersBufferTypeHandleRO,
+                //    StatObserversBufferTypeHandle = StatObserversBufferTypeHandleRO,
+
+                //    MarkStatsDirtyStream = orderedStatChainsStream.AsWriter(),
+
+                //}.ScheduleParallel(_dirtyStatsQuery, state.Dependency);
+
+                orderedStatChainsStream.Dispose(state.Dependency);
+                statsDataMapReference.Value.Dispose(state.Dependency);
+                statsDataMapReference.Dispose(state.Dependency);
+
+            }
+
 
             if (batchRecomputeUpdatesCount > 0)
             {
@@ -463,6 +537,243 @@ namespace Trove.Stats
                 }.Schedule(state.Dependency);
             }
         }
+
+
+
+        [BurstCompile]
+        public unsafe struct MarkStatObserversDirtyJob : IJobChunk
+        {
+            [NativeDisableParallelForRestriction]
+            public ComponentLookup<DirtyStatsMask> DirtyStatsMaskLookup;
+            [NativeDisableParallelForRestriction]
+            public ComponentLookup<HasDirtyStats> HasDirtyStatsLookup;
+            [ReadOnly]
+            public BufferLookup<StatObserver> StatObserversBufferLookup;
+
+            [ReadOnly]
+            public EntityTypeHandle EntityTypeHandle;
+
+            [NativeDisableParallelForRestriction]
+            public NativeStream.Writer OrderedStatChainsStream;
+
+            private UnsafeList<StatHandle> InChunkObserversList;
+            private UnsafeList<StatHandle> OutChunkObserversList;
+            private const int ObserversListInitialCapacity = 1024;
+
+            public unsafe void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+            {
+                if (chunkEnabledMask.ULong0 > 0 || chunkEnabledMask.ULong1 > 0)
+                {
+                    if (!InChunkObserversList.IsCreated)
+                    {
+                        InChunkObserversList = new UnsafeList<StatHandle>(ObserversListInitialCapacity, Allocator.Temp, NativeArrayOptions.ClearMemory);
+                    }
+                    if (!OutChunkObserversList.IsCreated)
+                    {
+                        OutChunkObserversList = new UnsafeList<StatHandle>(ObserversListInitialCapacity, Allocator.Temp, NativeArrayOptions.ClearMemory);
+                    }
+
+                    NativeArray<Entity> entities = chunk.GetNativeArray(EntityTypeHandle);
+                    OrderedStatChainsStream.BeginForEachIndex(unfilteredChunkIndex);
+                    InChunkObserversList.Clear();
+                    OutChunkObserversList.Clear();
+
+                    // Chunk iteration
+                    ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
+                    while (entityEnumerator.NextEntityIndex(out int i))
+                    {
+                        Entity entity = entities[i];
+                        ref DirtyStatsMask dirtyStatsMaskRef = ref DirtyStatsMaskLookup.GetRefRW(entity).ValueRW;
+                        DynamicBuffer<StatObserver> statObserversBuffer = StatObserversBufferLookup[entity];
+
+                        // Detect dirty stats
+                        DirtyStatsMask.Iterator dirtyStatsMaskIterator = dirtyStatsMaskRef.GetIterator();
+                        while (dirtyStatsMaskIterator.GetNextDirtyStat(out int statIndex))
+                        {
+                            StatHandle selfStatHandle = new StatHandle(entity, statIndex);
+                            OrderedStatChainsStream.Write(selfStatHandle);
+
+                            // For each observer of dirty stats, build a list of these observers
+                            for (int o = statObserversBuffer.Length - 1; o >= 0; o--)
+                            {
+                                StatObserver observer = statObserversBuffer[o];
+                                if (observer.ObserverStat == selfStatHandle)
+                                {
+                                    if (observer.ObserverStat.Entity == entity)
+                                    {
+                                        InChunkObserversList.Add(observer.ObserverStat);
+                                    }
+                                    else if (StatObserversBufferLookup.HasBuffer(observer.ObserverStat.Entity))
+                                    {
+                                        OutChunkObserversList.Add(observer.ObserverStat);
+                                    }
+                                    else
+                                    {
+                                        // TODO: build nativeStream of RemovedObservers
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // At the end of the chunk, combine observers lists so that all the guaranteed in-chunk observers come first.
+                    // This should help with lookup speeds, since lookups will be able to benefit from their caches.
+                    InChunkObserversList.AddRange(OutChunkObserversList);
+
+                    // Add observers of all detected observers to the list and mark them dirty
+                    for (int i = 0; i < InChunkObserversList.Length; i++)
+                    {
+                        StatHandle observerHandle = InChunkObserversList[i];
+
+                        OrderedStatChainsStream.Write(observerHandle);
+
+                        // Note: we already validated that the stat exists before adding it
+                        DynamicBuffer<StatObserver> observerObserversBuffer = StatObserversBufferLookup[observerHandle.Entity];
+                        ref DirtyStatsMask observerDirtyStatsMaskRef = ref DirtyStatsMaskLookup.GetRefRW(observerHandle.Entity).ValueRW;
+                        EnabledRefRW<HasDirtyStats> observerHasDirtyStatsEnabledRefRW = HasDirtyStatsLookup.GetEnabledRefRW<HasDirtyStats>(observerHandle.Entity);
+
+                        // Mark dirty
+                        StatUtilities.MarkStatForBatchRecompute(observerHandle.Index, ref observerDirtyStatsMaskRef, observerHasDirtyStatsEnabledRefRW);
+
+                        // Add observers
+                        for (int o = observerObserversBuffer.Length - 1; o >= 0; o--)
+                        {
+                            StatObserver observerObserver = observerObserversBuffer[o];
+                            if (observerObserver.ObservedStat == observerHandle)
+                            {
+                                if (observerObserver.ObserverStat.Entity == observerHandle.Entity)
+                                {
+                                    InChunkObserversList.Add(observerObserver.ObserverStat);
+                                }
+                                else if (StatObserversBufferLookup.HasBuffer(observerObserver.ObserverStat.Entity))
+                                {
+                                    InChunkObserversList.Add(observerObserver.ObserverStat);
+                                }
+                                else
+                                {
+                                    // TODO: build nativeStream of RemovedObservers
+                                }
+                            }
+                        }
+                    }
+
+                    OrderedStatChainsStream.EndForEachIndex(); 
+                }
+            }
+        }
+
+        [BurstCompile]
+        public unsafe struct CompileChangedStatsDataJob : IJob
+        {
+            public NativeStream.Reader OrderedStatChainsStream;
+            public NativeList<StatHandle> ChangedStatsList;
+            public NativeReference<UnsafeParallelHashMap<StatHandle, StatData>> StatsDataMapReference;
+
+            public Allocator Allocator;
+
+            public void Execute()
+            {
+                ChangedStatsList.Clear();
+                for (int i = 0; i < OrderedStatChainsStream.ForEachCount; i++)
+                {
+                    OrderedStatChainsStream.BeginForEachIndex(i);
+                    while (OrderedStatChainsStream.RemainingItemCount > 0)
+                    {
+                        StatHandle statHandle = OrderedStatChainsStream.Read<StatHandle>();
+                        ChangedStatsList.Add(statHandle);
+                    }
+                    OrderedStatChainsStream.EndForEachIndex();
+                }
+
+                // Allocate stats data map
+                //*StatsDataMapReference.GetUnsafePtr() = new UnsafeParallelHashMap<StatHandle, StatData>(ChangedStatsList.Length, Allocator);
+            }
+        }
+
+        //[BurstCompile]
+        //public unsafe struct BuildStatsDataMapJob : IJobChunk
+        //{
+        //    [NativeDisableParallelForRestriction]
+        //    public BufferLookup<Stat> StatsBufferLookup;
+
+        //    [ReadOnly]
+        //    public EntityTypeHandle EntityTypeHandle;
+        //    public ComponentTypeHandle<DirtyStatsMask> DirtyStatsMaskTypeHandle;
+        //    public ComponentTypeHandle<HasDirtyStats> HasDirtyStatsTypeHandle;
+        //    [ReadOnly]
+        //    public BufferTypeHandle<TStatModifier> StatModifiersBufferTypeHandle;
+        //    [ReadOnly]
+        //    public BufferTypeHandle<StatObserver> StatObserversBufferTypeHandle;
+
+        //    public unsafe void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+        //    {
+        //        if (chunkEnabledMask.ULong0 > 0 || chunkEnabledMask.ULong1 > 0)
+        //        {
+        //            NativeArray<Entity> entities = chunk.GetNativeArray(EntityTypeHandle);
+        //            NativeArray<DirtyStatsMask> dirtyStatsMasks = chunk.GetNativeArray(ref DirtyStatsMaskTypeHandle);
+        //            EnabledMask doesEntityHaveDirtyStats = chunk.GetEnabledMask(ref HasDirtyStatsTypeHandle);
+        //            BufferAccessor<TStatModifier> statModifiersBufferAccessor = chunk.GetBufferAccessor(ref StatModifiersBufferTypeHandle);
+        //            BufferAccessor<StatObserver> statObserversBufferAccessor = chunk.GetBufferAccessor(ref StatObserversBufferTypeHandle);
+
+        //            void* dirtyStatsMasksArrayPtr = dirtyStatsMasks.GetUnsafePtr();
+
+        //            MarkStatsDirtyStream.BeginForEachIndex(unfilteredChunkIndex);
+
+        //            ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
+        //            while (entityEnumerator.NextEntityIndex(out int i))
+        //            {
+        //                Entity entity = entities[i];
+        //                ref DirtyStatsMask dirtyStatsMaskRef = ref UnsafeUtility.ArrayElementAsRef<DirtyStatsMask>(dirtyStatsMasksArrayPtr, i);
+        //                DynamicBuffer<Stat> statsBuffer = StatsBufferLookup[entity];
+        //                DynamicBuffer<TStatModifier> statModifiersBuffer = statModifiersBufferAccessor[i];
+        //                DynamicBuffer<StatObserver> statObserversBuffer = statObserversBufferAccessor[i];
+
+        //                void* statsBufferPtr = statsBuffer.GetUnsafePtr();
+
+        //                DirtyStatsMask.Iterator dirtyStatsMaskIterator = dirtyStatsMaskRef.GetIterator();
+        //                while (dirtyStatsMaskIterator.GetNextDirtyStat(out int statIndex))
+        //                {
+        //                    StatHandle selfStatHandle = new StatHandle(entity, statIndex);
+        //                    ref Stat stat = ref UnsafeUtility.ArrayElementAsRef<Stat>(statsBufferPtr, statIndex);
+
+        //                    // Apply Modifiers
+        //                    TStatModifierStack modifierStack = new TStatModifierStack();
+        //                    modifierStack.Reset();
+        //                    for (int m = 0; m < statModifiersBuffer.Length; m++)
+        //                    {
+        //                        TStatModifier modifier = statModifiersBuffer[m];
+        //                        if (selfStatHandle == modifier.AffectedStat)
+        //                        {
+        //                            modifier.Apply(
+        //                                ref modifierStack,
+        //                                new StatHandle(entity, statIndex),
+        //                                ref statsBuffer,
+        //                                ref StatsBufferLookup);
+        //                        }
+        //                    }
+        //                    modifierStack.Apply(ref stat);
+        //                    dirtyStatsMaskRef.ClearBit(statIndex);
+
+        //                    // Notify Observers
+        //                    for (int o = statObserversBuffer.Length - 1; o >= 0; o--)
+        //                    {
+        //                        StatObserver observer = statObserversBuffer[o];
+        //                        if (observer.ObservedStat == selfStatHandle)
+        //                        {
+        //                            MarkStatsDirtyStream.Write(observer.ObserverStat);
+
+        //                            // TODO: if observer no longer exists, remove it
+        //                        }
+        //                    }
+        //                }
+
+        //                doesEntityHaveDirtyStats[i] = false;
+        //            }
+
+        //            MarkStatsDirtyStream.EndForEachIndex();
+        //        }
+        //    }
+        //}
 
         [BurstCompile]
         public struct BatchRecomputeDirtyStatsJob : IJobChunk
