@@ -88,12 +88,11 @@ partial struct StatsTesterSystem : ISystem
                 {
                     BufferLookup<Trove.Stats.StatObserver> statObserversBufferLookup = SystemAPI.GetBufferLookup<Trove.Stats.StatObserver>(false);
                     ComponentLookup<Trove.Stats.DirtyStatsMask> dirtyStatsMaskLookup = SystemAPI.GetComponentLookup<Trove.Stats.DirtyStatsMask>(false);
-                    ComponentLookup<Trove.Stats.HasDirtyStats> hasDirtyStatsLookup = SystemAPI.GetComponentLookup<Trove.Stats.HasDirtyStats>(false);
                     Trove.Stats.StatOwner statOwner = state.EntityManager.GetComponentData<StatOwner>(observedEntity);
                     DynamicBuffer<StatModifier> statModifiersBuffer = state.EntityManager.GetBuffer<StatModifier>(observedEntity);
                     DynamicBuffer<Trove.Stats.StatObserver> statObserversBuffer = state.EntityManager.GetBuffer<Trove.Stats.StatObserver>(observedEntity);
                     ref Trove.Stats.DirtyStatsMask dirtyStatsMask = ref dirtyStatsMaskLookup.GetRefRW(observedEntity).ValueRW;
-                    EnabledRefRW<Trove.Stats.HasDirtyStats> hasDirtyStatsEnabledRefRW = hasDirtyStatsLookup.GetEnabledRefRW<Trove.Stats.HasDirtyStats>(observedEntity);
+                    EnabledRefRW<Trove.Stats.DirtyStatsMask> hasDirtyStatsEnabledRefRW = dirtyStatsMaskLookup.GetEnabledRefRW<Trove.Stats.DirtyStatsMask>(observedEntity);
 
                     ModifierHandle modifierHandle1 = StatUtilities.AddModifier<StatModifier, StatModifier.Stack>(
                         new Trove.Stats.StatHandle(observedEntity, 1),
@@ -110,7 +109,6 @@ partial struct StatsTesterSystem : ISystem
                         hasDirtyStatsEnabledRefRW,
                         ref statObserversBufferLookup,
                         ref dirtyStatsMaskLookup,
-                        ref hasDirtyStatsLookup,
                         ref tmpObservedStatsList);
 
                     ModifierHandle modifierHandle2 = StatUtilities.AddModifier<StatModifier, StatModifier.Stack>(
@@ -128,7 +126,6 @@ partial struct StatsTesterSystem : ISystem
                         hasDirtyStatsEnabledRefRW,
                         ref statObserversBufferLookup,
                         ref dirtyStatsMaskLookup,
-                        ref hasDirtyStatsLookup,
                         ref tmpObservedStatsList);
                 }
 
@@ -138,12 +135,11 @@ partial struct StatsTesterSystem : ISystem
 
                     BufferLookup<Trove.Stats.StatObserver> statObserversBufferLookup = SystemAPI.GetBufferLookup<Trove.Stats.StatObserver>(false);
                     ComponentLookup<Trove.Stats.DirtyStatsMask> dirtyStatsMaskLookup = SystemAPI.GetComponentLookup<Trove.Stats.DirtyStatsMask>(false);
-                    ComponentLookup<Trove.Stats.HasDirtyStats> hasDirtyStatsLookup = SystemAPI.GetComponentLookup<Trove.Stats.HasDirtyStats>(false);
                     Trove.Stats.StatOwner statOwner = state.EntityManager.GetComponentData<StatOwner>(observerEntity);
                     DynamicBuffer<StatModifier> statModifiersBuffer = state.EntityManager.GetBuffer<StatModifier>(observerEntity);
                     DynamicBuffer<Trove.Stats.StatObserver> statObserversBuffer = state.EntityManager.GetBuffer<Trove.Stats.StatObserver>(observerEntity);
                     ref Trove.Stats.DirtyStatsMask dirtyStatsMask = ref dirtyStatsMaskLookup.GetRefRW(observerEntity).ValueRW;
-                    EnabledRefRW<Trove.Stats.HasDirtyStats> hasDirtyStatsEnabledRefRW = hasDirtyStatsLookup.GetEnabledRefRW<Trove.Stats.HasDirtyStats>(observerEntity);
+                    EnabledRefRW<Trove.Stats.DirtyStatsMask> hasDirtyStatsEnabledRefRW = dirtyStatsMaskLookup.GetEnabledRefRW<Trove.Stats.DirtyStatsMask>(observerEntity);
 
                     ModifierHandle modifierHandle = StatUtilities.AddModifier<StatModifier, StatModifier.Stack>(
                         new Trove.Stats.StatHandle(observerEntity, 0),
@@ -160,7 +156,6 @@ partial struct StatsTesterSystem : ISystem
                         hasDirtyStatsEnabledRefRW,
                         ref statObserversBufferLookup,
                         ref dirtyStatsMaskLookup,
-                        ref hasDirtyStatsLookup,
                         ref tmpObservedStatsList);
 
                     observedEntity = observerEntity;
@@ -174,6 +169,7 @@ partial struct StatsTesterSystem : ISystem
         state.Dependency = new UpdatingStatsJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime,
+            DirtyStatsMaskLookup = SystemAPI.GetComponentLookup<DirtyStatsMask>(false),
         }.ScheduleParallel(state.Dependency);
     }
 
@@ -183,21 +179,20 @@ partial struct StatsTesterSystem : ISystem
     public partial struct UpdatingStatsJob : IJobEntity
     {
         public float DeltaTime;
+        [NativeDisableParallelForRestriction]
+        public ComponentLookup<DirtyStatsMask> DirtyStatsMaskLookup;
 
         void Execute(
             Entity entity, 
-            ref DynamicBuffer<Trove.Stats.Stat> statsBuffer,
-            ref Trove.Stats.DirtyStatsMask dirtyStatsMask,
-            EnabledRefRW<HasDirtyStats> hasDirtyStatsEnabledRefRW)
+            ref DynamicBuffer<Trove.Stats.Stat> statsBuffer)
         {
             Trove.Stats.Stat stat = statsBuffer[0];
             stat.BaseValue += DeltaTime;
             statsBuffer[0] = stat;
-
-            StatUtilities.MarkStatForBatchRecompute(
-                0,
-                ref dirtyStatsMask,
-                hasDirtyStatsEnabledRefRW);
+             
+            StatUtilities.MarkStatForBatchRecompute_AssumeHasComponent(
+                new StatHandle(entity, 0),
+                ref DirtyStatsMaskLookup);
         }
     }
 }

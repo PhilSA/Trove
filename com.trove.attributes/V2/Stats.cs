@@ -76,9 +76,7 @@ namespace Trove.Stats
         }
     }
 
-    public struct HasDirtyStats : IComponentData, IEnableableComponent
-    { }
-    public struct DirtyStatsMask : IComponentData
+    public struct DirtyStatsMask : IComponentData, IEnableableComponent
     {
         public struct Iterator
         {

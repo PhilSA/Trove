@@ -24,14 +24,12 @@ namespace Trove.Stats
         private EntityQuery _statsSettingsQuery;
 
         private ComponentLookup<DirtyStatsMask> DirtyStatsMaskLookup;
-        private ComponentLookup<HasDirtyStats> HasDirtyStatsLookup;
         private BufferLookup<Stat> StatsBufferLookup;
         private BufferLookup<TStatModifier> StatModifiersBufferLookupRO;
         private BufferLookup<StatObserver> StatObserversBufferLookupRO;
 
         private EntityTypeHandle EntityTypeHandle;
         private ComponentTypeHandle<DirtyStatsMask> DirtyStatsMaskTypeHandle;
-        private ComponentTypeHandle<HasDirtyStats> HasDirtyStatsTypeHandle;
         private BufferTypeHandle<Stat> StatsBufferTypeHandle;
         private BufferTypeHandle<Stat> StatsBufferTypeHandleRO;
         private BufferTypeHandle<TStatModifier> StatModifiersBufferTypeHandle;
@@ -69,21 +67,18 @@ namespace Trove.Stats
                 StatObserver>()
                 .WithAllRW<Stat>()
                 .WithAllRW<DirtyStatsMask>()
-                .WithAllRW<HasDirtyStats>()
                 .Build(ref state);
             _statsSettingsQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<StatsSettings>().Build(ref state);
 
             state.RequireForUpdate(_batchRecomputeStatsQuery);
 
             DirtyStatsMaskLookup = state.GetComponentLookup<DirtyStatsMask>(false);
-            HasDirtyStatsLookup = state.GetComponentLookup<HasDirtyStats>(false);
             StatsBufferLookup = state.GetBufferLookup<Stat>(false);
             StatModifiersBufferLookupRO = state.GetBufferLookup<TStatModifier>(true);
             StatObserversBufferLookupRO = state.GetBufferLookup<StatObserver>(true);
 
             EntityTypeHandle = state.EntityManager.GetEntityTypeHandle();
             DirtyStatsMaskTypeHandle = state.EntityManager.GetComponentTypeHandle<DirtyStatsMask>(false);
-            HasDirtyStatsTypeHandle = state.EntityManager.GetComponentTypeHandle<HasDirtyStats>(false);
             StatsBufferTypeHandle = state.EntityManager.GetBufferTypeHandle<Stat>(false);
             StatsBufferTypeHandleRO = state.EntityManager.GetBufferTypeHandle<Stat>(true);
             StatModifiersBufferTypeHandle = state.EntityManager.GetBufferTypeHandle<TStatModifier>(false);
@@ -117,12 +112,10 @@ namespace Trove.Stats
             StatObserversBufferLookupRO.Update(ref state);
             EntityTypeHandle.Update(ref state);
             DirtyStatsMaskTypeHandle.Update(ref state);
-            HasDirtyStatsTypeHandle.Update(ref state);
 
             if (statsSettings.BatchRecomputeUpdatesCount > 0)
             {
                 DirtyStatsMaskLookup.Update(ref state);
-                HasDirtyStatsLookup.Update(ref state);
                 StatModifiersBufferTypeHandleRO.Update(ref state);
                 StatObserversBufferTypeHandleRO.Update(ref state);
 
@@ -138,7 +131,6 @@ namespace Trove.Stats
 
                         EntityTypeHandle = EntityTypeHandle,
                         DirtyStatsMaskTypeHandle = DirtyStatsMaskTypeHandle,
-                        HasDirtyStatsTypeHandle = HasDirtyStatsTypeHandle,
                         StatModifiersBufferTypeHandle = StatModifiersBufferTypeHandleRO,
                         StatObserversBufferTypeHandle = StatObserversBufferTypeHandleRO,
 
@@ -159,7 +151,6 @@ namespace Trove.Stats
                         state.Dependency = new ApplyHasDirtyStatsJob
                         {
                             DirtyStatsMaskLookup = DirtyStatsMaskLookup,
-                            HasDirtyStatsLookup = HasDirtyStatsLookup,
                             MarkStatsDirtyStream = markStatsDirtyStream.AsReader(),
                         }.Schedule(statEntitiesChunkCount, 1, state.Dependency);
                     }
@@ -176,7 +167,6 @@ namespace Trove.Stats
 
                     EntityTypeHandle = EntityTypeHandle,
                     DirtyStatsMaskTypeHandle = DirtyStatsMaskTypeHandle,
-                    HasDirtyStatsTypeHandle = HasDirtyStatsTypeHandle,
                 }.ScheduleParallel(_dirtyStatsQuery, state.Dependency);
             }
 
@@ -217,7 +207,6 @@ namespace Trove.Stats
             [ReadOnly]
             public EntityTypeHandle EntityTypeHandle;
             public ComponentTypeHandle<DirtyStatsMask> DirtyStatsMaskTypeHandle;
-            public ComponentTypeHandle<HasDirtyStats> HasDirtyStatsTypeHandle;
             [ReadOnly]
             public BufferTypeHandle<TStatModifier> StatModifiersBufferTypeHandle;
             [ReadOnly]
@@ -232,7 +221,7 @@ namespace Trove.Stats
                 {
                     NativeArray<Entity> entities = chunk.GetNativeArray(EntityTypeHandle);
                     NativeArray<DirtyStatsMask> dirtyStatsMasks = chunk.GetNativeArray(ref DirtyStatsMaskTypeHandle);
-                    EnabledMask doesEntityHaveDirtyStats = chunk.GetEnabledMask(ref HasDirtyStatsTypeHandle);
+                    EnabledMask doesEntityHaveDirtyStats = chunk.GetEnabledMask(ref DirtyStatsMaskTypeHandle);
                     BufferAccessor<TStatModifier> statModifiersBufferAccessor = chunk.GetBufferAccessor(ref StatModifiersBufferTypeHandle);
                     BufferAccessor<StatObserver> statObserversBufferAccessor = chunk.GetBufferAccessor(ref StatObserversBufferTypeHandle);
 
@@ -357,7 +346,6 @@ namespace Trove.Stats
             [ReadOnly]
             public EntityTypeHandle EntityTypeHandle;
             public ComponentTypeHandle<DirtyStatsMask> DirtyStatsMaskTypeHandle;
-            public ComponentTypeHandle<HasDirtyStats> HasDirtyStatsTypeHandle;
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
@@ -365,7 +353,7 @@ namespace Trove.Stats
                 {
                     NativeArray<Entity> entities = chunk.GetNativeArray(EntityTypeHandle);
                     NativeArray<DirtyStatsMask> dirtyStatsMasks = chunk.GetNativeArray(ref DirtyStatsMaskTypeHandle);
-                    EnabledMask doesEntityHaveDirtyStats = chunk.GetEnabledMask(ref HasDirtyStatsTypeHandle);
+                    EnabledMask doesEntityHaveDirtyStats = chunk.GetEnabledMask(ref DirtyStatsMaskTypeHandle);
 
                     void* dirtyStatsMasksArrayPtr = dirtyStatsMasks.GetUnsafePtr();
 
@@ -396,8 +384,6 @@ namespace Trove.Stats
             [NativeDisableParallelForRestriction]
             public ComponentLookup<DirtyStatsMask> DirtyStatsMaskLookup;
             [NativeDisableParallelForRestriction]
-            public ComponentLookup<HasDirtyStats> HasDirtyStatsLookup;
-            [NativeDisableParallelForRestriction]
             public NativeStream.Reader MarkStatsDirtyStream;
 
             public void Execute(int index)
@@ -410,7 +396,7 @@ namespace Trove.Stats
 
                     StatUtilities.MarkStatForBatchRecompute(dirtyStatHandle.Index,
                         ref DirtyStatsMaskLookup.GetRefRW(dirtyStatHandle.Entity).ValueRW,
-                        HasDirtyStatsLookup.GetEnabledRefRW<HasDirtyStats>(dirtyStatHandle.Entity));
+                        DirtyStatsMaskLookup.GetEnabledRefRW<DirtyStatsMask>(dirtyStatHandle.Entity));
                 }
 
                 MarkStatsDirtyStream.EndForEachIndex();
