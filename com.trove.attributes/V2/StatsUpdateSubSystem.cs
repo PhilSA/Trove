@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Trove.EventSystems;
+using Trove.Stats;
 using Unity.Assertions;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
@@ -10,7 +12,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Logging;
 using Unity.Mathematics;
-using UnityEngine;
+
 
 namespace Trove.Stats
 {
@@ -19,6 +21,9 @@ namespace Trove.Stats
         where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
+        private GlobalEventSubSystem<StatEventsSingleton<TStatModifier, TStatModifierStack>, StatEvent<TStatModifier, TStatModifierStack>> _statEventsSubSystem;
+        private EntityEventSubSystem<EntityStatEventsSingleton<TStatModifier, TStatModifierStack>, EntityStatEvent<TStatModifier, TStatModifierStack>, StatEvent<TStatModifier, TStatModifierStack>, HasEntityStatEvents> _subSystem;
+
         private EntityQuery _batchRecomputeStatsQuery;
         private EntityQuery _dirtyStatsQuery;
         private EntityQuery _statsSettingsQuery;
@@ -38,7 +43,6 @@ namespace Trove.Stats
         private BufferTypeHandle<StatObserver> StatObserversBufferTypeHandleRO;
 
         private NativeQueue<StatHandle> _tmpDirtyStatsQueue;
-
 
         private StatsSettings GetStatsSettings()
         {
@@ -87,11 +91,21 @@ namespace Trove.Stats
             StatObserversBufferTypeHandleRO = state.EntityManager.GetBufferTypeHandle<StatObserver>(true);
 
             _tmpDirtyStatsQueue = new NativeQueue<StatHandle>(Allocator.Persistent);
+
+            _statEventsSubSystem =
+                new GlobalEventSubSystem<StatEventsSingleton<TStatModifier, TStatModifierStack>, StatEvent<TStatModifier, TStatModifierStack>>(
+                    ref state, 32, 32, 1000);
+            _subSystem =
+                new EntityEventSubSystem<EntityStatEventsSingleton<TStatModifier, TStatModifierStack>, EntityStatEvent<TStatModifier, TStatModifierStack>, StatEvent<TStatModifier, TStatModifierStack>, HasEntityStatEvents>(
+                    ref state, 32, 32);
         }
 
         [BurstCompile]
         public void OnDestroy(ref SystemState state)
         {
+            _statEventsSubSystem.OnDestroy(ref state);
+            _subSystem.OnDestroy(ref state);
+
             if (_tmpDirtyStatsQueue.IsCreated)
             {
                 _tmpDirtyStatsQueue.Dispose();
@@ -103,7 +117,11 @@ namespace Trove.Stats
         {
             StatsSettings statsSettings = GetStatsSettings();
 
-            // TODO: process stat commands
+            // Process stat events
+            {
+                _statEventsSubSystem.OnUpdate(ref state);
+                _subSystem.OnUpdate(ref state);
+            }
 
             int statEntitiesChunkCount = _batchRecomputeStatsQuery.CalculateChunkCount();
 
@@ -182,6 +200,75 @@ namespace Trove.Stats
 
                     TmpDirtyStatsQueue = _tmpDirtyStatsQueue,
                 }.Schedule(state.Dependency);
+            }
+        }
+
+        [BurstCompile]
+        public struct ProcessStatEventsJob : IJob
+        {
+            public NativeList<StatEvent<TStatModifier, TStatModifierStack>> StatEvents;
+
+            public ComponentLookup<StatOwner> StatOwnerLookup;
+            public ComponentLookup<DirtyStatsMask> DirtyStatsMaskLookup;
+            public BufferLookup<Stat> StatsBufferLookup;
+            public BufferLookup<TStatModifier> StatModifiersBufferLookup;
+            public BufferLookup<StatObserver> StatObserversBufferLookup;
+
+            public void Execute()
+            {
+                for (int i = 0; i < StatEvents.Length; i++)
+                {
+                    StatEvents[i].Execute();
+                }
+            }
+        }
+
+        [BurstCompile]
+        public unsafe struct ProcessEntityStatEventsJob : IJobChunk
+        {
+            [ReadOnly]
+            public EntityTypeHandle EntityTypeHandle;
+            public ComponentTypeHandle<HasEntityStatEvents> HasEntityStatEventsTypeHandle;
+            public ComponentTypeHandle<StatOwner> StatOwnerTypeHandle;
+            public ComponentTypeHandle<DirtyStatsMask> DirtyStatsMaskTypeHandle;
+            public BufferTypeHandle<StatEvent<TStatModifier, TStatModifierStack>> StatEventBufferTypeHandle;
+            public BufferTypeHandle<Stat> StatsBufferTypeHandle;
+            public BufferTypeHandle<TStatModifier> StatModifiersBufferTypeHandle;
+            public BufferTypeHandle<StatObserver> StatObserversBufferTypeHandle;
+
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+            {
+                if (chunkEnabledMask.ULong0 > 0 || chunkEnabledMask.ULong1 > 0)
+                {
+                    NativeArray<Entity> entities = chunk.GetNativeArray(EntityTypeHandle);
+                    EnabledMask hasEntityStatEvents = chunk.GetEnabledMask(ref HasEntityStatEventsTypeHandle);
+                    NativeArray<StatOwner> statOwners = chunk.GetNativeArray(ref StatOwnerTypeHandle);
+                    NativeArray<DirtyStatsMask> dirtyStatsMasks = chunk.GetNativeArray(ref DirtyStatsMaskTypeHandle);
+                    EnabledMask doesEntityHaveDirtyStats = chunk.GetEnabledMask(ref DirtyStatsMaskTypeHandle);
+                    BufferAccessor<StatEvent<TStatModifier, TStatModifierStack>> statEventsBufferAccessor = chunk.GetBufferAccessor(ref StatEventBufferTypeHandle);
+                    BufferAccessor<Stat> statsBufferAccessor = chunk.GetBufferAccessor(ref StatsBufferTypeHandle);
+                    BufferAccessor<TStatModifier> statModifiersBufferAccessor = chunk.GetBufferAccessor(ref StatModifiersBufferTypeHandle);
+                    BufferAccessor<StatObserver> statObserversBufferAccessor = chunk.GetBufferAccessor(ref StatObserversBufferTypeHandle);
+
+                    void* dirtyStatsMasksArrayPtr = dirtyStatsMasks.GetUnsafePtr();
+
+                    ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
+                    while (entityEnumerator.NextEntityIndex(out int i))
+                    {
+                        Entity entity = entities[i];
+                        StatOwner statOwner = statOwners[i];
+                        ref DirtyStatsMask dirtyStatsMaskRef = ref UnsafeUtility.ArrayElementAsRef<DirtyStatsMask>(dirtyStatsMasksArrayPtr, i);
+                        DynamicBuffer<StatEvent<TStatModifier, TStatModifierStack>> statEventsBuffer = statEventsBufferAccessor[i];
+                        DynamicBuffer<Stat> statsBuffer = statsBufferAccessor[i];
+                        DynamicBuffer<TStatModifier> statModifiersBuffer = statModifiersBufferAccessor[i];
+                        DynamicBuffer<StatObserver> statObserversBuffer = statObserversBufferAccessor[i];
+
+                        for (int s = 0; s < statEventsBuffer.Length; s++)
+                        {
+                            statEventsBuffer[s].Execute();
+                        }
+                    }
+                }
             }
         }
 

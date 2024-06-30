@@ -6,12 +6,22 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
+using Trove.EventSystems;
+
 
 //[assembly: RegisterGenericComponentType(typeof(DirtyStatsMask<DirtyStatsMaskValue>))]
 [assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.BatchRecomputeDirtyStatsJob))]
 [assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.RecomputeDirtyStatsImmediateJob))]
 [assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.EnqueueDirtyStatsForRecomputeImmediateJob))]
 [assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.ApplyHasDirtyStatsJob))]
+
+// Stat event jobs
+[assembly: RegisterGenericJobType(typeof(EventClearListJob<StatEvent<StatModifier, StatModifier.Stack>>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferQueueToListJob<StatEvent<StatModifier, StatModifier.Stack>>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferStreamToListJob<StatEvent<StatModifier, StatModifier.Stack>>))]
+[assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<StatEvent<StatModifier, StatModifier.Stack>, HasEntityStatEvents>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferQueueToBufferJob<EntityStatEvent<StatModifier, StatModifier.Stack>, StatEvent<StatModifier, StatModifier.Stack>, HasEntityStatEvents>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferStreamToBufferJob<EntityStatEvent<StatModifier, StatModifier.Stack>, StatEvent<StatModifier, StatModifier.Stack>, HasEntityStatEvents>))]
 
 //[StructLayout(LayoutKind.Explicit)]
 //public struct DirtyStatsMaskValue : IDirtyStatsBitMask

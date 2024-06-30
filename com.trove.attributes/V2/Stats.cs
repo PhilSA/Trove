@@ -3,6 +3,8 @@ using System.Threading;
 using System;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Trove.EventSystems;
+using Unity.Collections;
 
 namespace Trove.Stats
 {

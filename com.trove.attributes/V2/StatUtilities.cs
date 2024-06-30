@@ -12,6 +12,7 @@ namespace Trove.Stats
             IBaker baker,
             MonoBehaviour authoring,
             StatDefinition[] statDefinitions,
+            bool supportEntityStatEvents,
             bool supportOnlyImmediateRecompute = false)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
             where TStatModifierStack : unmanaged, IStatsModifierStack
@@ -36,6 +37,13 @@ namespace Trove.Stats
                 };
             }
 
+            if(supportEntityStatEvents)
+            {
+                baker.AddComponent<HasEntityStatEvents>(entity);
+                baker.SetComponentEnabled<HasEntityStatEvents>(entity, false);
+                baker.AddBuffer<StatEvent<TStatModifier, TStatModifierStack>>(entity);
+            }
+
             // TODO: test that this works with the queries in the subsystem
             if (!supportOnlyImmediateRecompute)
             {
@@ -45,34 +53,6 @@ namespace Trove.Stats
                 });
                 baker.SetComponentEnabled<DirtyStatsMask>(entity, true);
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryResolveStat(
-            StatHandle selfStatHandle,
-            StatHandle resolvedStatHandle,
-            ref DynamicBuffer<Stat> selfStatsBuffer,
-            ref BufferLookup<Stat> statsBufferLookup,
-            out Stat result)
-        {
-            if (selfStatHandle.Entity == resolvedStatHandle.Entity)
-            {
-                if (resolvedStatHandle.Index >= 0 && resolvedStatHandle.Index < selfStatsBuffer.Length)
-                {
-                    result = selfStatsBuffer[resolvedStatHandle.Index];
-                    return true;
-                }
-            }
-            else if (statsBufferLookup.TryGetBuffer(resolvedStatHandle.Entity, out DynamicBuffer<Stat> resolvedStatsBuffer))
-            {
-                if (resolvedStatHandle.Index >= 0 && resolvedStatHandle.Index < resolvedStatsBuffer.Length)
-                {
-                    result = resolvedStatsBuffer[resolvedStatHandle.Index];
-                    return true;
-                }
-            }
-            result = default;
-            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -91,34 +71,6 @@ namespace Trove.Stats
             }
             result = default;
             return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe static ref Stat TryResolveStatRef(
-            StatHandle selfStatHandle,
-            StatHandle resolvedStatHandle,
-            ref DynamicBuffer<Stat> selfStatsBuffer,
-            ref BufferLookup<Stat> statsBufferLookup,
-            out bool success)
-        {
-            if (selfStatHandle.Entity == resolvedStatHandle.Entity)
-            {
-                if (resolvedStatHandle.Index >= 0 && resolvedStatHandle.Index < selfStatsBuffer.Length)
-                {
-                    success = true;
-                    return ref UnsafeUtility.ArrayElementAsRef<Stat>(selfStatsBuffer.GetUnsafePtr(), resolvedStatHandle.Index);
-                }
-            }
-            else if (statsBufferLookup.TryGetBuffer(resolvedStatHandle.Entity, out DynamicBuffer<Stat> resolvedStatsBuffer))
-            {
-                if (resolvedStatHandle.Index >= 0 && resolvedStatHandle.Index < resolvedStatsBuffer.Length)
-                {
-                    success = true;
-                    return ref UnsafeUtility.ArrayElementAsRef<Stat>(resolvedStatsBuffer.GetUnsafePtr(), resolvedStatHandle.Index);
-                }
-            }
-            success = false;
-            return ref UnsafeUtility.ArrayElementAsRef<Stat>(selfStatsBuffer.GetUnsafePtr(), 0); ;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
