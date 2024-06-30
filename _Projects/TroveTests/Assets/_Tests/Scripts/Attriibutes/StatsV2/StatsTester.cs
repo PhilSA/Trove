@@ -105,41 +105,4 @@ public struct StatModifier : IBufferElementData, IStatsModifier<StatModifier.Sta
                 }
         }
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void Apply2(
-        ref Stack stack,
-        Trove.Stats.StatHandle selfStatHandle,
-        ref UnsafeParallelHashMap<StatHandle, StatData>.ReadOnly statsDataMap)
-    {
-        switch (ModifierType)
-        {
-            case (Type.Add):
-                {
-                    stack.Add += ValueA;
-                    break;
-                }
-            case (Type.AddFromStat):
-                {
-                    if (statsDataMap.TryGetValue(StatA, out StatData resolvedStat))
-                    {
-                        stack.Add += resolvedStat.StatPtr->Value;
-                    }
-                    break;
-                }
-            case (Type.AddMultiplier):
-                {
-                    stack.AddMultiply += ValueA;
-                    break;
-                }
-            case (Type.AddMultiplierFromStat):
-                {
-                    if (statsDataMap.TryGetValue(StatA, out StatData resolvedStat))
-                    {
-                        stack.AddMultiply += resolvedStat.StatPtr->Value;
-                    }
-                    break;
-                }
-        }
-    }
 }

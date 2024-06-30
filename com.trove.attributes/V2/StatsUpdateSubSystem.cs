@@ -14,315 +14,6 @@ using UnityEngine;
 
 namespace Trove.Stats
 {
-    //public interface IDirtyStatsBitMask
-    //{
-    //    public bool GetSubMask(uint index, out ulong submask);
-    //    public void SetSubMask(uint index, ulong submask);
-    //    public int GetSubMaskCount();
-    //}
-
-    public interface IStatsModifierStack
-    {
-        public void Reset();
-        public void Apply(ref Stat stat);
-    }
-
-    public interface IStatsModifier<TStack> 
-        where TStack : unmanaged, IStatsModifierStack
-    {
-        public uint Id { get; set; }
-        public StatHandle AffectedStat { get; set; }
-        public void AddObservedStatsToList(ref UnsafeList<StatHandle> observedStats);
-        public void Apply(
-            ref TStack stack,
-            StatHandle selfStatHandle,
-            ref DynamicBuffer<Stat> selfStatsBuffer,
-            ref BufferLookup<Stat> statsBufferLookup);
-        public void Apply2(
-            ref TStack stack,
-            StatHandle selfStatHandle,
-            ref UnsafeParallelHashMap<StatHandle, StatData>.ReadOnly statsDataMap);
-    }
-
-    public struct StatOwner : IComponentData
-    {
-        public uint ModifierIdCounter;
-    }
-
-    [InternalBufferCapacity(3)]
-    public partial struct Stat : IBufferElementData
-    {
-        public byte Exists;
-        public float BaseValue;
-        public float Value;
-    }
-
-    [InternalBufferCapacity(0)]
-    public unsafe partial struct StatObserver : IBufferElementData
-    {
-        public StatHandle ObserverStat;
-        public StatHandle ObservedStat;
-        public int Count;
-
-        public StatObserver(StatHandle observerStat, StatHandle observedStat, int count = 0)
-        {
-            ObservedStat = observedStat;
-            ObserverStat = observerStat;
-            Count = count;
-        }
-    }
-
-    public struct DirtyStatsMask : IComponentData
-    {
-        public struct Iterator
-        {
-            internal long BitMask_0;
-            internal long BitMask_1;
-            internal int BitCount;
-
-            internal int BitIterator;
-            internal int SubMaskBitIterator;
-
-            internal Iterator(DirtyStatsMask d)
-            {
-                BitMask_0 = d.BitMask_0;
-                BitMask_1 = d.BitMask_1;
-                BitCount = d.StatsCount;
-
-                BitIterator = 0;
-                SubMaskBitIterator = 0;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool GetNextDirtyStat(out int nextStatIndex)
-            {
-                // First mask
-                while (BitIterator < BitCount)
-                {
-                    // If submask has its first bit enabled, return this index and shift mask
-                    if ((BitMask_0 & 1) != 0L)
-                    {
-                        nextStatIndex = BitIterator;
-                        BitIterator++;
-                        SubMaskBitIterator++;
-                        BitMask_0 >>= 1;
-                        return true;
-                    }
-
-                    BitIterator++;
-                    SubMaskBitIterator++;
-                    BitMask_0 >>= 1;
-                }
-
-                // Moving on to second mask
-                SubMaskBitIterator = 0;
-                while (BitIterator < BitCount)
-                {
-                    // If submask has its first bit enabled, return this index and shift mask
-                    if ((BitMask_1 & 1) != 0L)
-                    {
-                        nextStatIndex = BitIterator;
-                        BitIterator++;
-                        SubMaskBitIterator++;
-                        BitMask_1 >>= 1;
-                        return true;
-                    }
-
-                    BitIterator++;
-                    SubMaskBitIterator++;
-                    BitMask_1 >>= 1;
-                }
-
-                // Additional masks would go here
-
-                nextStatIndex = -1;
-                return false;
-            }
-
-            //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-            //public void ShiftMaskAndIncrementIterators()
-            //{
-            //    BitIterator++;
-            //    SubMaskBitIterator++;
-            //    SubBitMask >>= 1;
-
-            //    // Handle moving on to next submask
-            //    if (SubMaskBitIterator >= 8)
-            //    {
-            //        SubMaskIndex++;
-            //        SubMaskBitIterator = 0;
-            //        BitMask.GetSubMask(SubMaskIndex, out SubBitMask);
-            //    }
-            //}
-        }
-
-        public long BitMask_0;
-        public long BitMask_1;
-        public int StatsCount;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Iterator GetIterator()
-        {
-            return new Iterator(this);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetBit(int index)
-        {
-            int subMaskIndex = index / 64;
-            int indexInSubMask = index % 64;
-            long newMask;
-            switch (subMaskIndex)
-            {
-                case 0:
-                    newMask = BitMask_0 | (uint)(1 << indexInSubMask);
-                    Interlocked.Exchange(ref BitMask_0, newMask);
-                    break;
-                case 1:
-                    newMask = BitMask_1 | (uint)(1 << indexInSubMask);
-                    Interlocked.Exchange(ref BitMask_1, newMask);
-                    break;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ClearBit(int index)
-        {
-            int subMaskIndex = index / 64;
-            int indexInSubMask = index % 64;
-            long newMask;
-            switch (subMaskIndex)
-            {
-                case 0:
-                    newMask = (BitMask_0 & (uint)(~indexInSubMask));
-                    Interlocked.Exchange(ref BitMask_0, newMask);
-                    break;
-                case 1:
-                    newMask = (BitMask_1 & (uint)(~indexInSubMask));
-                    Interlocked.Exchange(ref BitMask_1, newMask);
-                    break;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ClearAll()
-        {
-            long newMask = default;
-            Interlocked.Exchange(ref BitMask_0, newMask);
-            Interlocked.Exchange(ref BitMask_1, newMask);
-        }
-    }
-
-    public struct HasDirtyStats : IComponentData, IEnableableComponent
-    { }
-
-    public struct StatHandle : IEquatable<StatHandle>
-    {
-        public Entity Entity;
-        public int Index;
-
-        public StatHandle(Entity entity, int index)
-        {
-            Entity = entity;
-            Index = index;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool Equals(object obj)
-        {
-            if (obj is StatHandle h)
-            {
-                return Equals(h);
-            }
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(StatHandle other)
-        {
-            return this == other;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode()
-        {
-            int hash = 55339;
-            hash = hash * 104579 + Entity.GetHashCode();
-            hash = hash * 104579 + Index.GetHashCode();
-            return hash;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(StatHandle x, StatHandle y)
-        {
-            return x.Index == y.Index && x.Entity == y.Entity;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(StatHandle x, StatHandle y)
-        {
-            return x.Index != y.Index || x.Entity != y.Entity;
-        }
-    }
-
-    public struct ModifierHandle : IEquatable<ModifierHandle>
-    {
-        public Entity Entity;
-        public uint Id;
-
-        public ModifierHandle(Entity entity, uint id)
-        {
-            Entity = entity;
-            Id = id;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool Equals(object obj)
-        {
-            if (obj is ModifierHandle h)
-            {
-                return Equals(h);
-            }
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(ModifierHandle other)
-        {
-            return this == other;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode()
-        {
-            int hash = 55339;
-            hash = hash * 104579 + Entity.GetHashCode();
-            hash = hash * 104579 + Id.GetHashCode();
-            return hash;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(ModifierHandle x, ModifierHandle y)
-        {
-            return x.Entity == y.Entity && x.Id == y.Id;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(ModifierHandle x, ModifierHandle y)
-        {
-            return x.Entity != y.Entity || x.Id != y.Id;
-        }
-    }
-
-
-    public unsafe struct StatData
-    {
-        [NativeDisableUnsafePtrRestriction]
-        public Stat* StatPtr;
-        public int StatModifiersCount;
-        public void* StatModifiersPtr;
-    }
-
     [BurstCompile]
     public struct StatsUpdateSubSystem<TStatModifier, TStatModifierStack>
         where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
@@ -330,6 +21,7 @@ namespace Trove.Stats
     {
         private EntityQuery _batchRecomputeStatsQuery;
         private EntityQuery _dirtyStatsQuery;
+        private EntityQuery _statsSettingsQuery;
 
         private ComponentLookup<DirtyStatsMask> DirtyStatsMaskLookup;
         private ComponentLookup<HasDirtyStats> HasDirtyStatsLookup;
@@ -348,8 +40,19 @@ namespace Trove.Stats
         private BufferTypeHandle<StatObserver> StatObserversBufferTypeHandleRO;
 
         private NativeQueue<StatHandle> _tmpDirtyStatsQueue;
-        private NativeList<StatHandle> _changedStatsList;
-        private UnsafeParallelHashMap<StatHandle, StatData> _statsDataMap;
+
+
+        private StatsSettings GetStatsSettings()
+        {
+            if(_statsSettingsQuery.TryGetSingleton(out StatsSettings statsSettings))
+            {
+                return statsSettings;
+            }
+            else
+            {
+                return StatsSettings.Default();
+            }
+        }
 
         [BurstCompile]
         public void OnCreate(ref SystemState state)
@@ -368,6 +71,7 @@ namespace Trove.Stats
                 .WithAllRW<DirtyStatsMask>()
                 .WithAllRW<HasDirtyStats>()
                 .Build(ref state);
+            _statsSettingsQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<StatsSettings>().Build(ref state);
 
             state.RequireForUpdate(_batchRecomputeStatsQuery);
 
@@ -388,8 +92,6 @@ namespace Trove.Stats
             StatObserversBufferTypeHandleRO = state.EntityManager.GetBufferTypeHandle<StatObserver>(true);
 
             _tmpDirtyStatsQueue = new NativeQueue<StatHandle>(Allocator.Persistent);
-            _changedStatsList = new NativeList<StatHandle>(10000, Allocator.Persistent);
-            _statsDataMap = new UnsafeParallelHashMap<StatHandle, StatData>(10000, Allocator.Persistent);
         }
 
         [BurstCompile]
@@ -399,101 +101,32 @@ namespace Trove.Stats
             {
                 _tmpDirtyStatsQueue.Dispose();
             }
-            if (_changedStatsList.IsCreated)
-            {
-                _changedStatsList.Dispose();
-            }
-            if (_statsDataMap.IsCreated)
-            {
-                _statsDataMap.Dispose();
-            }
         }
 
         [BurstCompile]
         public unsafe void OnUpdate(ref SystemState state)
         {
-            bool useStatsWorld = true;
-            bool finishWithRecomputeImmediate = false;  // TODO: make configurable
-            int batchRecomputeUpdatesCount = 0; // TODO: make configurable
-
-            int statEntitiesChunkCount = _batchRecomputeStatsQuery.CalculateChunkCount();
+            StatsSettings statsSettings = GetStatsSettings();
 
             // TODO: process stat commands
+
+            int statEntitiesChunkCount = _batchRecomputeStatsQuery.CalculateChunkCount();
 
             StatsBufferLookup.Update(ref state);
             StatModifiersBufferLookupRO.Update(ref state);
             StatObserversBufferLookupRO.Update(ref state);
-
             EntityTypeHandle.Update(ref state);
             DirtyStatsMaskTypeHandle.Update(ref state);
             HasDirtyStatsTypeHandle.Update(ref state);
 
-
-            // StatsWorld
-            if(useStatsWorld)
+            if (statsSettings.BatchRecomputeUpdatesCount > 0)
             {
                 DirtyStatsMaskLookup.Update(ref state);
                 HasDirtyStatsLookup.Update(ref state);
-
-                StatsBufferTypeHandle.Update(ref state);
-                StatsBufferTypeHandleRO.Update(ref state);
-                StatModifiersBufferTypeHandle.Update(ref state);
-                StatModifiersBufferTypeHandleRO.Update(ref state);
-                StatObserversBufferTypeHandle.Update(ref state);
-                StatObserversBufferTypeHandleRO.Update(ref state);
-
-                NativeStream orderedStatChainsStream = new NativeStream(statEntitiesChunkCount, state.WorldUpdateAllocator);
-
-                state.Dependency = new MarkStatObserversDirtyJob
-                {
-                    DirtyStatsMaskLookup = DirtyStatsMaskLookup,
-                    HasDirtyStatsLookup = HasDirtyStatsLookup,
-                    StatObserversBufferLookup = StatObserversBufferLookupRO,
-
-                    EntityTypeHandle = EntityTypeHandle,
-
-                    OrderedStatChainsStream = orderedStatChainsStream.AsWriter(),
-
-                }.ScheduleParallel(_dirtyStatsQuery, state.Dependency);
-
-                state.Dependency = new CompileChangedStatsDataJob
-                {
-                    OrderedStatChainsStream = orderedStatChainsStream.AsReader(),
-                    ChangedStatsList = _changedStatsList,
-                    StatsDataMapReference = (UnsafeParallelHashMap<StatHandle, StatData>*)UnsafeUtility.AddressOf(ref _statsDataMap),
-                }.Schedule(state.Dependency);
-
-                state.Dependency = new BuildStatsDataMapJob
-                {
-                    StatsDataMap = _statsDataMap.AsParallelWriter(),
-
-                    EntityTypeHandle = EntityTypeHandle,
-                    DirtyStatsMaskTypeHandle = DirtyStatsMaskTypeHandle,
-                    HasDirtyStatsTypeHandle = HasDirtyStatsTypeHandle,
-                    StatsBufferTypeHandle = StatsBufferTypeHandle,
-                    StatModifiersBufferTypeHandle = StatModifiersBufferTypeHandle,
-                    StatObserversBufferTypeHandle = StatObserversBufferTypeHandle,
-                }.ScheduleParallel(_dirtyStatsQuery, state.Dependency);
-
-                state.Dependency = new ComputeChangedStatsJob
-                {
-                    ChangedStatsList = _changedStatsList,
-                    StatsDataMapReference = _statsDataMap.AsReadOnly(),
-                }.Schedule(state.Dependency);
-
-                orderedStatChainsStream.Dispose(state.Dependency);
-            }
-
-
-            if (batchRecomputeUpdatesCount > 0)
-            {
-                DirtyStatsMaskLookup.Update(ref state);
-                HasDirtyStatsLookup.Update(ref state);
-
                 StatModifiersBufferTypeHandleRO.Update(ref state);
                 StatObserversBufferTypeHandleRO.Update(ref state);
 
-                for (int i = 0; i < batchRecomputeUpdatesCount; i++)
+                for (int i = 0; i < statsSettings.BatchRecomputeUpdatesCount; i++)
                 {
                     // TODO: have a stats update group in which we can add systems that react to stat changes?
 
@@ -512,8 +145,8 @@ namespace Trove.Stats
                         MarkStatsDirtyStream = markStatsDirtyStream.AsWriter(),
                     }.ScheduleParallel(_dirtyStatsQuery, state.Dependency);
 
-                    bool isLastBatch = i >= batchRecomputeUpdatesCount - 1;
-                    if (isLastBatch && finishWithRecomputeImmediate)
+                    bool isLastBatch = i >= statsSettings.BatchRecomputeUpdatesCount - 1;
+                    if (isLastBatch && statsSettings.EndWithRecomputeImmediate)
                     {
                         state.Dependency = new EnqueueDirtyStatsEventsForRecomputeImmediateJob
                         {
@@ -534,7 +167,7 @@ namespace Trove.Stats
                     markStatsDirtyStream.Dispose(state.Dependency);
                 }
             }
-            else if (finishWithRecomputeImmediate)
+            else if (statsSettings.EndWithRecomputeImmediate)
             {
                 // Schedule a job to transfer dirty stats to recompute queue
                 state.Dependency = new EnqueueDirtyStatsForRecomputeImmediateJob
@@ -548,7 +181,7 @@ namespace Trove.Stats
             }
 
             // Optional final job that recomputes remaining dirty stats and observers immediately
-            if(finishWithRecomputeImmediate)
+            if(statsSettings.EndWithRecomputeImmediate)
             {
                 // TODO: infinite loop
                 state.Dependency = new RecomputeDirtyStatsImmediateJob
@@ -559,260 +192,6 @@ namespace Trove.Stats
 
                     TmpDirtyStatsQueue = _tmpDirtyStatsQueue,
                 }.Schedule(state.Dependency);
-            }
-        }
-
-
-
-        [BurstCompile]
-        public unsafe struct MarkStatObserversDirtyJob : IJobChunk
-        {
-            [NativeDisableParallelForRestriction]
-            public ComponentLookup<DirtyStatsMask> DirtyStatsMaskLookup;
-            [NativeDisableParallelForRestriction]
-            public ComponentLookup<HasDirtyStats> HasDirtyStatsLookup;
-            [ReadOnly]
-            public BufferLookup<StatObserver> StatObserversBufferLookup;
-
-            [ReadOnly]
-            public EntityTypeHandle EntityTypeHandle;
-
-            [NativeDisableParallelForRestriction]
-            public NativeStream.Writer OrderedStatChainsStream;
-
-            private UnsafeList<StatHandle> InChunkObserversList;
-            private UnsafeList<StatHandle> OutChunkObserversList;
-            private const int ObserversListInitialCapacity = 1024;
-
-            public unsafe void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-            {
-                if (chunkEnabledMask.ULong0 > 0 || chunkEnabledMask.ULong1 > 0)
-                {
-                    if (!InChunkObserversList.IsCreated)
-                    {
-                        InChunkObserversList = new UnsafeList<StatHandle>(ObserversListInitialCapacity, Allocator.Temp, NativeArrayOptions.ClearMemory);
-                    }
-                    if (!OutChunkObserversList.IsCreated)
-                    {
-                        OutChunkObserversList = new UnsafeList<StatHandle>(ObserversListInitialCapacity, Allocator.Temp, NativeArrayOptions.ClearMemory);
-                    }
-
-                    NativeArray<Entity> entities = chunk.GetNativeArray(EntityTypeHandle);
-                    OrderedStatChainsStream.BeginForEachIndex(unfilteredChunkIndex);
-                    InChunkObserversList.Clear();
-                    OutChunkObserversList.Clear();
-
-                    // Chunk iteration
-                    ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
-                    while (entityEnumerator.NextEntityIndex(out int i))
-                    {
-                        Entity entity = entities[i];
-                        ref DirtyStatsMask dirtyStatsMaskRef = ref DirtyStatsMaskLookup.GetRefRW(entity).ValueRW;
-                        DynamicBuffer<StatObserver> statObserversBuffer = StatObserversBufferLookup[entity];
-
-                        // Detect dirty stats
-                        DirtyStatsMask.Iterator dirtyStatsMaskIterator = dirtyStatsMaskRef.GetIterator();
-                        while (dirtyStatsMaskIterator.GetNextDirtyStat(out int statIndex))
-                        {
-                            StatHandle selfStatHandle = new StatHandle(entity, statIndex);
-                            OrderedStatChainsStream.Write(selfStatHandle);
-
-                            // For each observer of dirty stats, build a list of these observers
-                            for (int o = statObserversBuffer.Length - 1; o >= 0; o--)
-                            {
-                                StatObserver observer = statObserversBuffer[o];
-                                if (observer.ObservedStat == selfStatHandle)
-                                {
-                                    if (observer.ObserverStat.Entity == entity)
-                                    {
-                                        InChunkObserversList.Add(observer.ObserverStat);
-                                    }
-                                    else if (StatObserversBufferLookup.HasBuffer(observer.ObserverStat.Entity))
-                                    {
-                                        OutChunkObserversList.Add(observer.ObserverStat);
-                                    }
-                                    else
-                                    {
-                                        // TODO: build nativeStream of RemovedObservers
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // At the end of the chunk, combine observers lists so that all the guaranteed in-chunk observers come first.
-                    // This should help with lookup speeds, since lookups will be able to benefit from their caches.
-                    InChunkObserversList.AddRange(OutChunkObserversList);
-
-                    // Add observers of all detected observers to the list and mark them dirty
-                    for (int i = 0; i < InChunkObserversList.Length; i++)
-                    {
-                        StatHandle observerHandle = InChunkObserversList[i];
-
-                        OrderedStatChainsStream.Write(observerHandle);
-
-                        // Note: we already validated that the stat exists before adding it
-                        DynamicBuffer<StatObserver> observerObserversBuffer = StatObserversBufferLookup[observerHandle.Entity];
-                        ref DirtyStatsMask observerDirtyStatsMaskRef = ref DirtyStatsMaskLookup.GetRefRW(observerHandle.Entity).ValueRW;
-                        EnabledRefRW<HasDirtyStats> observerHasDirtyStatsEnabledRefRW = HasDirtyStatsLookup.GetEnabledRefRW<HasDirtyStats>(observerHandle.Entity);
-
-                        // Mark dirty
-                        StatUtilities.MarkStatForBatchRecompute(observerHandle.Index, ref observerDirtyStatsMaskRef, observerHasDirtyStatsEnabledRefRW);
-
-                        // Add observers
-                        for (int o = observerObserversBuffer.Length - 1; o >= 0; o--)
-                        {
-                            StatObserver observerObserver = observerObserversBuffer[o];
-                            if (observerObserver.ObservedStat == observerHandle)
-                            {
-                                if (observerObserver.ObserverStat.Entity == observerHandle.Entity)
-                                {
-                                    InChunkObserversList.Add(observerObserver.ObserverStat);
-                                }
-                                else if (StatObserversBufferLookup.HasBuffer(observerObserver.ObserverStat.Entity))
-                                {
-                                    InChunkObserversList.Add(observerObserver.ObserverStat);
-                                }
-                                else
-                                {
-                                    // TODO: build nativeStream of RemovedObservers
-                                }
-                            }
-                        }
-                    }
-
-                    OrderedStatChainsStream.EndForEachIndex(); 
-                }
-            }
-        }
-
-        [BurstCompile]
-        public unsafe struct CompileChangedStatsDataJob : IJob
-        {
-            public NativeStream.Reader OrderedStatChainsStream;
-            public NativeList<StatHandle> ChangedStatsList;
-            [NativeDisableUnsafePtrRestriction]
-            public UnsafeParallelHashMap<StatHandle, StatData>* StatsDataMapReference;
-
-            public void Execute()
-            {
-                ChangedStatsList.Clear();
-                for (int i = 0; i < OrderedStatChainsStream.ForEachCount; i++)
-                {
-                    OrderedStatChainsStream.BeginForEachIndex(i);
-                    while (OrderedStatChainsStream.RemainingItemCount > 0)
-                    {
-                        StatHandle statHandle = OrderedStatChainsStream.Read<StatHandle>();
-                        ChangedStatsList.Add(statHandle);
-                    }
-                    OrderedStatChainsStream.EndForEachIndex();
-                }
-
-                // Allocate stats data map
-                if (StatsDataMapReference->Capacity < ChangedStatsList.Length)
-                {
-                    StatsDataMapReference->Capacity = ChangedStatsList.Length;
-                }
-                StatsDataMapReference->Clear();
-            }
-        }
-
-        [BurstCompile]
-        public unsafe struct BuildStatsDataMapJob : IJobChunk
-        {
-            public UnsafeParallelHashMap<StatHandle, StatData>.ParallelWriter StatsDataMap;
-
-            [ReadOnly]
-            public EntityTypeHandle EntityTypeHandle;
-            public ComponentTypeHandle<DirtyStatsMask> DirtyStatsMaskTypeHandle;
-            public ComponentTypeHandle<HasDirtyStats> HasDirtyStatsTypeHandle;
-            [NativeDisableParallelForRestriction]
-            public BufferTypeHandle<Stat> StatsBufferTypeHandle;
-            [NativeDisableParallelForRestriction]
-            public BufferTypeHandle<TStatModifier> StatModifiersBufferTypeHandle;
-            [NativeDisableParallelForRestriction]
-            public BufferTypeHandle<StatObserver> StatObserversBufferTypeHandle;
-
-            public unsafe void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-            {
-                if (chunkEnabledMask.ULong0 > 0 || chunkEnabledMask.ULong1 > 0)
-                {
-                    NativeArray<Entity> entities = chunk.GetNativeArray(EntityTypeHandle);
-                    NativeArray<DirtyStatsMask> dirtyStatsMasks = chunk.GetNativeArray(ref DirtyStatsMaskTypeHandle);
-                    EnabledMask doesEntityHaveDirtyStats = chunk.GetEnabledMask(ref HasDirtyStatsTypeHandle);
-                    BufferAccessor<Stat> statsBufferAccessor = chunk.GetBufferAccessor(ref StatsBufferTypeHandle);
-                    BufferAccessor<TStatModifier> statModifiersBufferAccessor = chunk.GetBufferAccessor(ref StatModifiersBufferTypeHandle);
-                    BufferAccessor<StatObserver> statObserversBufferAccessor = chunk.GetBufferAccessor(ref StatObserversBufferTypeHandle);
-
-                    void* dirtyStatsMasksArrayPtr = dirtyStatsMasks.GetUnsafePtr();
-
-                    ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
-                    while (entityEnumerator.NextEntityIndex(out int i))
-                    {
-                        Entity entity = entities[i];
-                        ref DirtyStatsMask dirtyStatsMaskRef = ref UnsafeUtility.ArrayElementAsRef<DirtyStatsMask>(dirtyStatsMasksArrayPtr, i);
-                        DynamicBuffer<Stat> statsBuffer = statsBufferAccessor[i];
-                        DynamicBuffer<TStatModifier> statModifiersBuffer = statModifiersBufferAccessor[i];
-                        DynamicBuffer<StatObserver> statObserversBuffer = statObserversBufferAccessor[i];
-
-                        void* statsBufferPtr = statsBuffer.GetUnsafePtr();
-                        TStatModifier* modifiersBufferPtr = (TStatModifier*)statModifiersBuffer.GetUnsafePtr();
-
-                        DirtyStatsMask.Iterator dirtyStatsMaskIterator = dirtyStatsMaskRef.GetIterator();
-                        while (dirtyStatsMaskIterator.GetNextDirtyStat(out int statIndex))
-                        {
-                            StatData statData = new StatData();
-
-                            StatHandle selfStatHandle = new StatHandle(entity, statIndex);
-                            ref Stat stat = ref UnsafeUtility.ArrayElementAsRef<Stat>(statsBufferPtr, statIndex);
-
-                            statData.StatPtr = (Stat*)UnsafeUtility.AddressOf(ref stat);
-                            statData.StatModifiersCount = statModifiersBuffer.Length;
-                            statData.StatModifiersPtr = modifiersBufferPtr;
-
-                            StatsDataMap.TryAdd(selfStatHandle, statData);
-                        }
-
-                        dirtyStatsMaskRef.ClearAll();
-                        doesEntityHaveDirtyStats[i] = false;
-                    }
-                }
-            }
-        }
-
-        [BurstCompile]
-        public unsafe struct ComputeChangedStatsJob : IJob
-        {
-            public NativeList<StatHandle> ChangedStatsList;
-            [NativeDisableUnsafePtrRestriction]
-            public UnsafeParallelHashMap<StatHandle, StatData>.ReadOnly StatsDataMapReference;
-
-            public void Execute()
-            {
-                for (int i = 0; i < ChangedStatsList.Length; i++)
-                {
-                    StatHandle statHandle = ChangedStatsList[i];
-                    if(StatsDataMapReference.TryGetValue(statHandle, out StatData statData))
-                    {
-                        ref Stat stat = ref UnsafeUtility.AsRef<Stat>(statData.StatPtr);
-
-                        // Apply Modifiers
-                        TStatModifierStack modifierStack = new TStatModifierStack();
-                        modifierStack.Reset();
-                        for (int m = 0; m < statData.StatModifiersCount; m++)
-                        {
-                            TStatModifier modifier = ((TStatModifier*)statData.StatModifiersPtr)[m];
-                            if (statHandle == modifier.AffectedStat)
-                            {
-                                modifier.Apply2(
-                                    ref modifierStack,
-                                    statHandle,
-                                    ref StatsDataMapReference);
-                            }
-                        }
-                        modifierStack.Apply(ref stat);
-                    }
-                }
             }
         }
 
