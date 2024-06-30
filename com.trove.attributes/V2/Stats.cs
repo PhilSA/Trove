@@ -40,6 +40,14 @@ namespace Trove.Stats
         }
     }
 
+    // TODO
+    [System.Serializable]
+    public struct StatDefinition
+    {
+        public bool HasStat;
+        public float BaseValue;
+    }
+
     public struct StatOwner : IComponentData
     {
         public uint ModifierIdCounter;
@@ -68,6 +76,8 @@ namespace Trove.Stats
         }
     }
 
+    public struct HasDirtyStats : IComponentData, IEnableableComponent
+    { }
     public struct DirtyStatsMask : IComponentData
     {
         public struct Iterator
@@ -134,22 +144,6 @@ namespace Trove.Stats
                 nextStatIndex = -1;
                 return false;
             }
-
-            //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-            //public void ShiftMaskAndIncrementIterators()
-            //{
-            //    BitIterator++;
-            //    SubMaskBitIterator++;
-            //    SubBitMask >>= 1;
-
-            //    // Handle moving on to next submask
-            //    if (SubMaskBitIterator >= 8)
-            //    {
-            //        SubMaskIndex++;
-            //        SubMaskBitIterator = 0;
-            //        BitMask.GetSubMask(SubMaskIndex, out SubBitMask);
-            //    }
-            //}
         }
 
         public long BitMask_0;
@@ -199,18 +193,7 @@ namespace Trove.Stats
                     break;
             }
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ClearAll()
-        {
-            long newMask = default;
-            Interlocked.Exchange(ref BitMask_0, newMask);
-            Interlocked.Exchange(ref BitMask_1, newMask);
-        }
     }
-
-    public struct HasDirtyStats : IComponentData, IEnableableComponent
-    { }
 
     public struct StatHandle : IEquatable<StatHandle>
     {
