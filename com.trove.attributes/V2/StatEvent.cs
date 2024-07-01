@@ -102,43 +102,51 @@ namespace Trove.Stats
             {
                 case StatEventType.Recompute:
                     {
-                        if (RecomputeImmediate)
-                        {
-                            StatUtilities.RecomputeStatsAndObserversImmediate<TStatModifier, TStatModifierStack>(
-                                ref recomputeImmediateStatsQueue,
-                                ref statsBuffer,
-                                ref statModifiersBuffer,
-                                ref statObserversBuffer,
-                                ref statsBufferLookup,
-                                ref statModifiersBufferLookup,
-                                ref statObserversBufferLookup);
-                        }
-                        else
-                        {
-                            StatUtilities.MarkStatForBatchRecompute(
-                                StatHandle.Index,
-                                ref dirtyStatsMask,
-                                dirtyStatsMaskEnabledRefRW);
-                        }
+                        HandleRecompute(
+                            ref dirtyStatsMask,
+                            dirtyStatsMaskEnabledRefRW,
+                            ref statsBuffer,
+                            ref statModifiersBuffer,
+                            ref statObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statModifiersBufferLookup,
+                            ref statObserversBufferLookup,
+                            ref recomputeImmediateStatsQueue);
 
                         break;
                     }
                 case StatEventType.AddBaseValue:
                     {
-                        StatUtilities.MarkStatForBatchRecompute(
-                            StatHandle.Index,
+                        StatUtilities.TryResolveStatRef(
+                            StatHandle)
+
+                        HandleRecompute(
                             ref dirtyStatsMask,
-                            dirtyStatsMaskEnabledRefRW);
+                            dirtyStatsMaskEnabledRefRW,
+                            ref statsBuffer,
+                            ref statModifiersBuffer,
+                            ref statObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statModifiersBufferLookup,
+                            ref statObserversBufferLookup,
+                            ref recomputeImmediateStatsQueue);
 
                         break;
                     }
                 case StatEventType.SetBaseValue:
                     {
 
-                        StatUtilities.MarkStatForBatchRecompute(
-                            StatHandle.Index,
+
+                        HandleRecompute(
                             ref dirtyStatsMask,
-                            dirtyStatsMaskEnabledRefRW);
+                            dirtyStatsMaskEnabledRefRW,
+                            ref statsBuffer,
+                            ref statModifiersBuffer,
+                            ref statObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statModifiersBufferLookup,
+                            ref statObserversBufferLookup,
+                            ref recomputeImmediateStatsQueue);
 
                         break;
                     }
@@ -153,10 +161,16 @@ namespace Trove.Stats
                             ref dirtyStatsMaskLookup,
                             ref tmpObservedStatsList);
 
-                        StatUtilities.MarkStatForBatchRecompute(
-                            StatHandle.Index,
+                        HandleRecompute(
                             ref dirtyStatsMask,
-                            dirtyStatsMaskEnabledRefRW);
+                            dirtyStatsMaskEnabledRefRW,
+                            ref statsBuffer,
+                            ref statModifiersBuffer,
+                            ref statObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statModifiersBufferLookup,
+                            ref statObserversBufferLookup,
+                            ref recomputeImmediateStatsQueue);
 
                         if (CallbackEntity != Entity.Null &&
                             AddModifierEventCallbackBufferLookup.TryGetBuffer(CallbackEntity, out DynamicBuffer<AddModifierEventCallback> callbackBuffer))
@@ -180,13 +194,51 @@ namespace Trove.Stats
                             ref dirtyStatsMaskLookup,
                             ref tmpObservedStatsList);
 
-                        StatUtilities.MarkStatForBatchRecompute(
-                            StatHandle.Index,
+                        HandleRecompute(
                             ref dirtyStatsMask,
-                            dirtyStatsMaskEnabledRefRW);
+                            dirtyStatsMaskEnabledRefRW,
+                            ref statsBuffer,
+                            ref statModifiersBuffer,
+                            ref statObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statModifiersBufferLookup,
+                            ref statObserversBufferLookup,
+                            ref recomputeImmediateStatsQueue);
 
                         break;
                     }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void HandleRecompute(
+            ref DirtyStatsMask dirtyStatsMask,
+            EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW,
+            ref DynamicBuffer<Stat> statsBuffer,
+            ref DynamicBuffer<TStatModifier> statModifiersBuffer,
+            ref DynamicBuffer<StatObserver> statObserversBuffer,
+            ref BufferLookup<Stat> statsBufferLookup,
+            ref BufferLookup<TStatModifier> statModifiersBufferLookup,
+            ref BufferLookup<StatObserver> statObserversBufferLookup,
+            ref NativeQueue<StatHandle> recomputeImmediateStatsQueue)
+        {
+            if (RecomputeImmediate)
+            {
+                StatUtilities.RecomputeStatsAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                    ref recomputeImmediateStatsQueue,
+                    ref statsBuffer,
+                    ref statModifiersBuffer,
+                    ref statObserversBuffer,
+                    ref statsBufferLookup,
+                    ref statModifiersBufferLookup,
+                    ref statObserversBufferLookup);
+            }
+            else
+            {
+                StatUtilities.MarkStatForBatchRecompute(
+                    StatHandle.Index,
+                    ref dirtyStatsMask,
+                    dirtyStatsMaskEnabledRefRW);
             }
         }
     }

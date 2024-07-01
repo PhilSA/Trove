@@ -22,8 +22,8 @@ namespace Trove.Stats
         public void AddObservedStatsToList(ref UnsafeList<StatHandle> observedStats);
         public void Apply(
             ref TStack stack,
-            StatHandle selfStatHandle,
-            ref DynamicBuffer<Stat> selfStatsBuffer,
+            Entity cachedEntity,
+            ref DynamicBuffer<Stat> cachedStatsBuffer,
             ref BufferLookup<Stat> statsBufferLookup);
     }
 

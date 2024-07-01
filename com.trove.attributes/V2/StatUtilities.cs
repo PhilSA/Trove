@@ -3,6 +3,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
+using NUnit.Framework;
 
 namespace Trove.Stats
 {
@@ -74,13 +75,41 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryResolveStat(
+            StatHandle statHandle,
+            Entity cachedEntity,
+            ref DynamicBuffer<Stat> cachedStatsBuffer,
+            ref BufferLookup<Stat> statsBufferLookup,
+            out Stat result)
+        {
+            if (cachedEntity == statHandle.Entity)
+            {
+                if (statHandle.Index >= 0 && statHandle.Index < cachedStatsBuffer.Length)
+                {
+                    result = cachedStatsBuffer[statHandle.Index];
+                    return true;
+                }
+            }
+            else if (statsBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> resolvedStatsBuffer))
+            {
+                if (statHandle.Index >= 0 && statHandle.Index < resolvedStatsBuffer.Length)
+                {
+                    result = resolvedStatsBuffer[statHandle.Index];
+                    return true;
+                }
+            }
+            result = default;
+            return false;
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe static ref Stat TryResolveStatRef(
             StatHandle statHandle,
             ref BufferLookup<Stat> statsBufferLookup,
             out bool success)
         {
-            DynamicBuffer<Stat> resolvedStatsBuffer = default;
-            if (statsBufferLookup.TryGetBuffer(statHandle.Entity, out resolvedStatsBuffer))
+            if (statsBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> resolvedStatsBuffer))
             {
                 if (statHandle.Index >= 0 && statHandle.Index < resolvedStatsBuffer.Length)
                 {
@@ -90,6 +119,34 @@ namespace Trove.Stats
             }
             success = false;
             return ref UnsafeUtility.ArrayElementAsRef<Stat>(resolvedStatsBuffer.GetUnsafePtr(), 0);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe static ref Stat TryResolveStatRef(
+            StatHandle statHandle,
+            Entity cachedEntity,
+            ref DynamicBuffer<Stat> cachedStatsBuffer,
+            ref BufferLookup<Stat> statsBufferLookup,
+            out bool success)
+        {
+            if (cachedEntity == statHandle.Entity)
+            {
+                if (statHandle.Index >= 0 && statHandle.Index < cachedStatsBuffer.Length)
+                {
+                    success = true;
+                    return ref UnsafeUtility.ArrayElementAsRef<Stat>(cachedStatsBuffer.GetUnsafePtr(), statHandle.Index);
+                }
+            }
+            else if (statsBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> resolvedStatsBuffer))
+            {
+                if (statHandle.Index >= 0 && statHandle.Index < resolvedStatsBuffer.Length)
+                {
+                    success = true;
+                    return ref UnsafeUtility.ArrayElementAsRef<Stat>(resolvedStatsBuffer.GetUnsafePtr(), statHandle.Index);
+                }
+            }
+            success = false;
+            return ref UnsafeUtility.ArrayElementAsRef<Stat>(cachedStatsBuffer.GetUnsafePtr(), 0); ;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -129,9 +186,6 @@ namespace Trove.Stats
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RecomputeStatsAndObserversImmediate<TStatModifier, TStatModifierStack>(
             ref NativeQueue<StatHandle> statsQueue,
-            ref DynamicBuffer<Stat> statsBuffer,
-            ref DynamicBuffer<TStatModifier> statModifiersBuffer,
-            ref DynamicBuffer<StatObserver> statObserversBuffer,
             ref BufferLookup<Stat> statsBufferLookup,
             ref BufferLookup<TStatModifier> statModifiersBufferLookup,
             ref BufferLookup<StatObserver> statObserversBufferLookup)
@@ -140,39 +194,105 @@ namespace Trove.Stats
         {
             // TODO: infininte loop detection
 
-            StatHandle prevStatHandle = default;
+            Entity cachedEntity = default;
+            DynamicBuffer<Stat> cachedStatsBuffer = default;
+            DynamicBuffer<TStatModifier> cachedStatModifiersBuffer = default;
+            DynamicBuffer<StatObserver> cachedStatObserversBuffer = default;
+
             while (statsQueue.TryDequeue(out StatHandle dirtyStatHandle))
             {
-                if (dirtyStatHandle.Entity == prevStatHandle.Entity)
+                if (dirtyStatHandle.Entity != Entity.Null)
                 {
-                    RecomputeStatAndObserversImmediateInternal<TStatModifier, TStatModifierStack>(
-                        dirtyStatHandle,
-                        ref statsBuffer,
-                        ref statModifiersBuffer,
-                        ref statObserversBuffer,
-                        ref statsBufferLookup,
-                        ref statsQueue);
-                }
-                else if (statsBufferLookup.TryGetBuffer(dirtyStatHandle.Entity, out DynamicBuffer<Stat> otherStatsBuffer))
-                {
-                    DynamicBuffer<TStatModifier> otherStatModifiersBuffer = statModifiersBufferLookup[dirtyStatHandle.Entity];
-                    DynamicBuffer<StatObserver> otherStatObserversBuffer = statObserversBufferLookup[dirtyStatHandle.Entity];
+                    if (dirtyStatHandle.Entity == cachedEntity)
+                    {
+                        RecomputeStatAndAddObserversToQueue<TStatModifier, TStatModifierStack>(
+                            dirtyStatHandle,
+                            ref cachedStatsBuffer,
+                            ref cachedStatModifiersBuffer,
+                            ref cachedStatObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statsQueue);
+                    }
+                    else if (statsBufferLookup.TryGetBuffer(dirtyStatHandle.Entity, out cachedStatsBuffer))
+                    {
+                        cachedEntity = dirtyStatHandle.Entity;
+                        cachedStatModifiersBuffer = statModifiersBufferLookup[dirtyStatHandle.Entity];
+                        cachedStatObserversBuffer = statObserversBufferLookup[dirtyStatHandle.Entity];
 
-                    RecomputeStatAndObserversImmediateInternal<TStatModifier, TStatModifierStack>(
-                        dirtyStatHandle,
-                        ref otherStatsBuffer,
-                        ref otherStatModifiersBuffer,
-                        ref otherStatObserversBuffer,
-                        ref statsBufferLookup,
-                        ref statsQueue);
+                        RecomputeStatAndAddObserversToQueue<TStatModifier, TStatModifierStack>(
+                            dirtyStatHandle,
+                            ref cachedStatsBuffer,
+                            ref cachedStatModifiersBuffer,
+                            ref cachedStatObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statsQueue);
+                    }
                 }
-
-                prevStatHandle = dirtyStatHandle;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void RecomputeStatAndObserversImmediateInternal<TStatModifier, TStatModifierStack>(
+        public static void RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+            StatHandle statHandle,
+            ref DynamicBuffer<Stat> statsBuffer,
+            ref DynamicBuffer<TStatModifier> statModifiersBuffer,
+            ref DynamicBuffer<StatObserver> statObserversBuffer,
+            ref BufferLookup<Stat> statsBufferLookup,
+            ref BufferLookup<TStatModifier> statModifiersBufferLookup,
+            ref BufferLookup<StatObserver> statObserversBufferLookup,
+            ref NativeQueue<StatHandle> statsQueue)
+            where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
+            where TStatModifierStack : unmanaged, IStatsModifierStack
+        {
+            // TODO: infininte loop detection
+
+            RecomputeStatAndAddObserversToQueue<TStatModifier, TStatModifierStack>(
+                statHandle,
+                ref statsBuffer,
+                ref statModifiersBuffer,
+                ref statObserversBuffer,
+                ref statsBufferLookup,
+                ref statsQueue);
+
+            Entity cachedEntity = statHandle.Entity;
+            DynamicBuffer<Stat> cachedStatsBuffer = statsBuffer;
+            DynamicBuffer<TStatModifier> cachedStatModifiersBuffer = statModifiersBuffer;
+            DynamicBuffer<StatObserver> cachedStatObserversBuffer = statObserversBuffer;
+
+            while (statsQueue.TryDequeue(out StatHandle dirtyStatHandle))
+            {
+                if (dirtyStatHandle.Entity != Entity.Null)
+                {
+                    if (dirtyStatHandle.Entity == cachedEntity)
+                    {
+                        RecomputeStatAndAddObserversToQueue<TStatModifier, TStatModifierStack>(
+                            dirtyStatHandle,
+                            ref cachedStatsBuffer,
+                            ref cachedStatModifiersBuffer,
+                            ref cachedStatObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statsQueue);
+                    }
+                    else if (statsBufferLookup.TryGetBuffer(dirtyStatHandle.Entity, out cachedStatsBuffer))
+                    {
+                        cachedEntity = dirtyStatHandle.Entity;
+                        cachedStatModifiersBuffer = statModifiersBufferLookup[dirtyStatHandle.Entity];
+                        cachedStatObserversBuffer = statObserversBufferLookup[dirtyStatHandle.Entity];
+
+                        RecomputeStatAndAddObserversToQueue<TStatModifier, TStatModifierStack>(
+                            dirtyStatHandle,
+                            ref cachedStatsBuffer,
+                            ref cachedStatModifiersBuffer,
+                            ref cachedStatObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statsQueue);
+                    }
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void RecomputeStatAndAddObserversToQueue<TStatModifier, TStatModifierStack>(
             StatHandle statHandle,
             ref DynamicBuffer<Stat> statsBuffer,
             ref DynamicBuffer<TStatModifier> statModifiersBuffer,
@@ -216,27 +336,25 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ModifierHandle AddModifier<TStatModifier, TStatModifierStack>(
-            StatHandle affectedStatHandle,
+        public static ModifierHandle AddModifier_ObservesSameEntity<TStatModifier, TStatModifierStack>(
+            StatHandle statHandle,
             TStatModifier modifier,
             ref StatOwner statOwner,
-            ref DynamicBuffer<TStatModifier> statModifiersBuffer,
-            ref DynamicBuffer<StatObserver> statObserversBuffer,
             ref DirtyStatsMask dirtyStatsMask,
             EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW,
-            ref BufferLookup<StatObserver> statObserversBufferLookup,
-            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
+            ref DynamicBuffer<TStatModifier> statModifiersBuffer,
+            ref DynamicBuffer<StatObserver> statObserversBuffer,
             ref UnsafeList<StatHandle> tmpObservedStatsList)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
             where TStatModifierStack : unmanaged, IStatsModifierStack
         {
             ModifierHandle modifierHandle = new ModifierHandle(Entity.Null, 0);
-            if (affectedStatHandle.Index >= 0 && affectedStatHandle.Index < dirtyStatsMask.StatsCount)
+            if (statHandle.Index >= 0 && statHandle.Index < dirtyStatsMask.StatsCount)
             {
                 uint modifierId = statOwner.ModifierIdCounter++;
-                modifierHandle = new ModifierHandle(affectedStatHandle.Entity, modifierId);
+                modifierHandle = new ModifierHandle(statHandle.Entity, modifierId);
                 modifier.Id = modifierId;
-                modifier.AffectedStat = affectedStatHandle;
+                modifier.AffectedStat = statHandle;
 
                 statModifiersBuffer.Add(modifier);
 
@@ -244,17 +362,14 @@ namespace Trove.Stats
                 modifier.AddObservedStatsToList(ref tmpObservedStatsList);
                 for (int i = 0; i < tmpObservedStatsList.Length; i++)
                 {
-                    AddAsObserverOf(
-                        affectedStatHandle,
-                        tmpObservedStatsList[i],
-                        ref statObserversBuffer,
-                        ref dirtyStatsMask,
-                        dirtyStatsMaskEnabledRefRW,
-                        ref statObserversBufferLookup,
-                        ref dirtyStatsMaskLookup);
+                    StatHandle observedStatHandle = tmpObservedStatsList[i];
+                    Assert.AreEqual(observedStatHandle.Entity, statHandle.Entity);
+
+                    AddObserverToBuffer(statHandle, observedStatHandle, ref statObserversBuffer);
+                    MarkStatForBatchRecompute(observedStatHandle.Index, ref dirtyStatsMask, dirtyStatsMaskEnabledRefRW);
                 }
 
-                MarkStatForBatchRecompute(affectedStatHandle.Index, ref dirtyStatsMask, dirtyStatsMaskEnabledRefRW);
+                MarkStatForBatchRecompute(statHandle.Index, ref dirtyStatsMask, dirtyStatsMaskEnabledRefRW);
             }
             return modifierHandle;
         }
@@ -293,6 +408,82 @@ namespace Trove.Stats
                 statOwnerLookup[statHandle.Entity] = statOwner;
             }
             return modifierHandle;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ModifierHandle AddModifier<TStatModifier, TStatModifierStack>(
+            StatHandle statHandle,
+            TStatModifier modifier,
+            ref StatOwner statOwner,
+            ref DynamicBuffer<TStatModifier> statModifiersBuffer,
+            ref DynamicBuffer<StatObserver> statObserversBuffer,
+            ref DirtyStatsMask dirtyStatsMask,
+            EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW,
+            ref BufferLookup<StatObserver> statObserversBufferLookup,
+            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
+            ref UnsafeList<StatHandle> tmpObservedStatsList)
+            where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
+            where TStatModifierStack : unmanaged, IStatsModifierStack
+        {
+            ModifierHandle modifierHandle = new ModifierHandle(Entity.Null, 0);
+            if (statHandle.Index >= 0 && statHandle.Index < dirtyStatsMask.StatsCount)
+            {
+                uint modifierId = statOwner.ModifierIdCounter++;
+                modifierHandle = new ModifierHandle(statHandle.Entity, modifierId);
+                modifier.Id = modifierId;
+                modifier.AffectedStat = statHandle;
+
+                statModifiersBuffer.Add(modifier);
+
+                tmpObservedStatsList.Clear();
+                modifier.AddObservedStatsToList(ref tmpObservedStatsList);
+                for (int i = 0; i < tmpObservedStatsList.Length; i++)
+                {
+                    AddAsObserverOf(
+                        statHandle,
+                        tmpObservedStatsList[i],
+                        ref statObserversBuffer,
+                        ref dirtyStatsMask,
+                        dirtyStatsMaskEnabledRefRW,
+                        ref statObserversBufferLookup,
+                        ref dirtyStatsMaskLookup);
+                }
+
+                MarkStatForBatchRecompute(statHandle.Index, ref dirtyStatsMask, dirtyStatsMaskEnabledRefRW);
+            }
+            return modifierHandle;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RemoveModifier<TStatModifier, TStatModifierStack>(
+            StatHandle statHandle,
+            ModifierHandle modifierHandle,
+            ref ComponentLookup<StatOwner> statOwnerLookup,
+            ref BufferLookup<TStatModifier> statModifiersBufferLookup,
+            ref BufferLookup<StatObserver> statObserversBufferLookup,
+            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
+            ref UnsafeList<StatHandle> tmpObservedStatsList)
+            where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
+            where TStatModifierStack : unmanaged, IStatsModifierStack
+        {
+            if (statOwnerLookup.TryGetComponent(statHandle.Entity, out StatOwner statOwner) &&
+                statModifiersBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<TStatModifier> statModifiersBuffer) &&
+                statObserversBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
+            {
+                ref DirtyStatsMask dirtyStatsMask = ref dirtyStatsMaskLookup.GetRefRW(statHandle.Entity).ValueRW;
+                EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW = dirtyStatsMaskLookup.GetEnabledRefRW<DirtyStatsMask>(statHandle.Entity);
+                RemoveModifier<TStatModifier, TStatModifierStack>(
+                    statHandle,
+                    modifierHandle,
+                    ref statModifiersBuffer,
+                    ref statObserversBuffer,
+                    ref dirtyStatsMask,
+                    dirtyStatsMaskEnabledRefRW,
+                    ref statObserversBufferLookup,
+                    ref tmpObservedStatsList);
+
+                statOwnerLookup[statHandle.Entity] = statOwner;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -335,39 +526,7 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void RemoveModifier<TStatModifier, TStatModifierStack>(
-            StatHandle statHandle,
-            ModifierHandle modifierHandle,
-            ref ComponentLookup<StatOwner> statOwnerLookup,
-            ref BufferLookup<TStatModifier> statModifiersBufferLookup,
-            ref BufferLookup<StatObserver> statObserversBufferLookup,
-            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
-            ref UnsafeList<StatHandle> tmpObservedStatsList)
-            where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
-            where TStatModifierStack : unmanaged, IStatsModifierStack
-        {
-            if (statOwnerLookup.TryGetComponent(statHandle.Entity, out StatOwner statOwner) &&
-                statModifiersBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<TStatModifier> statModifiersBuffer) &&
-                statObserversBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
-            {
-                ref DirtyStatsMask dirtyStatsMask = ref dirtyStatsMaskLookup.GetRefRW(statHandle.Entity).ValueRW;
-                EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW = dirtyStatsMaskLookup.GetEnabledRefRW<DirtyStatsMask>(statHandle.Entity);
-                RemoveModifier<TStatModifier, TStatModifierStack>(
-                    statHandle,
-                    modifierHandle,
-                    ref statModifiersBuffer,
-                    ref statObserversBuffer,
-                    ref dirtyStatsMask,
-                    dirtyStatsMaskEnabledRefRW,
-                    ref statObserversBufferLookup,
-                    ref tmpObservedStatsList);
-
-                statOwnerLookup[statHandle.Entity] = statOwner;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AddAsObserverOf(
+        internal static void AddAsObserverOf(
             StatHandle observerStatHandle,
             StatHandle observedStatHandle,
             ref DynamicBuffer<StatObserver> observerStatObserversBuffer,
@@ -391,7 +550,7 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AddObserverToBuffer(
+        internal static void AddObserverToBuffer(
             StatHandle observerStatHandle,
             StatHandle observedStatHandle,
             ref DynamicBuffer<StatObserver> observedStatObserversBuffer)
@@ -411,7 +570,7 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void RemoveAsObserverOf(
+        internal static void RemoveAsObserverOf(
             StatHandle observerStatHandle,
             StatHandle observedStatHandle,
             ref DynamicBuffer<StatObserver> observerStatObserversBuffer,
@@ -428,7 +587,7 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void RemoveObserverFromBuffer(
+        internal static void RemoveObserverFromBuffer(
             StatHandle observerStatHandle,
             ref DynamicBuffer<StatObserver> observedStatObserversBuffer)
         {

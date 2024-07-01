@@ -395,7 +395,7 @@ namespace Trove.Stats
                     {
                         if (dirtyStatHandle.Entity == prevStatHandle.Entity)
                         {
-                            StatUtilities.RecomputeStatAndObserversImmediateInternal<TStatModifier, TStatModifierStack>(
+                            StatUtilities.RecomputeStatAndAddObserversToQueue<TStatModifier, TStatModifierStack>(
                                 dirtyStatHandle,
                                 ref prevStatsBuffer,
                                 ref prevStatModifiersBuffer,
@@ -408,7 +408,7 @@ namespace Trove.Stats
                             prevStatModifiersBuffer = StatModifiersBufferLookup[dirtyStatHandle.Entity];
                             prevStatObserversBuffer = StatObserversBufferLookup[dirtyStatHandle.Entity];
 
-                            StatUtilities.RecomputeStatAndObserversImmediateInternal<TStatModifier, TStatModifierStack>(
+                            StatUtilities.RecomputeStatAndAddObserversToQueue<TStatModifier, TStatModifierStack>(
                                 dirtyStatHandle,
                                 ref prevStatsBuffer,
                                 ref prevStatModifiersBuffer,

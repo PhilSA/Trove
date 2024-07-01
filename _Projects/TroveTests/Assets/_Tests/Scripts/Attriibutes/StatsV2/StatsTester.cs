@@ -71,8 +71,8 @@ public struct StatModifier : IBufferElementData, IStatsModifier<StatModifier.Sta
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Apply(
         ref Stack stack,
-        Trove.Stats.StatHandle selfStatHandle,
-        ref DynamicBuffer<Trove.Stats.Stat> selfStatsBuffer,
+        Entity cachedEntity,
+        ref DynamicBuffer<Trove.Stats.Stat> cachedStatsBuffer,
         ref BufferLookup<Trove.Stats.Stat> statsBufferLookup)
     {
         switch (ModifierType)
@@ -84,7 +84,7 @@ public struct StatModifier : IBufferElementData, IStatsModifier<StatModifier.Sta
                 }
             case (Type.AddFromStat):
                 {
-                    if (StatUtilities.TryResolveStat(selfStatHandle, StatA, ref selfStatsBuffer, ref statsBufferLookup, out Stat resolvedStat))
+                    if (StatUtilities.TryResolveStat(StatA, cachedEntity, ref cachedStatsBuffer, ref statsBufferLookup, out Stat resolvedStat))
                     {
                         stack.Add += resolvedStat.Value;
                     }
@@ -97,7 +97,7 @@ public struct StatModifier : IBufferElementData, IStatsModifier<StatModifier.Sta
                 }
             case (Type.AddMultiplierFromStat):
                 {
-                    if (StatUtilities.TryResolveStat(selfStatHandle, StatA, ref selfStatsBuffer, ref statsBufferLookup, out Stat resolvedStat))
+                    if (StatUtilities.TryResolveStat(StatA, cachedEntity, ref cachedStatsBuffer, ref statsBufferLookup, out Stat resolvedStat))
                     {
                         stack.AddMultiply += resolvedStat.Value;
                     }
