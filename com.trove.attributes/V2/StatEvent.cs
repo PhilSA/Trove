@@ -83,12 +83,7 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Execute(
-            ref DirtyStatsMask dirtyStatsMask,
-            EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW,
-            ref DynamicBuffer<Stat> statsBuffer,
-            ref DynamicBuffer<TStatModifier> statModifiersBuffer,
-            ref DynamicBuffer<StatObserver> statObserversBuffer,
+        public void ExecuteGlobal(
             ref ComponentLookup<StatOwner> statOwnerLookup,
             ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
             ref BufferLookup<Stat> statsBufferLookup,
@@ -117,8 +112,6 @@ namespace Trove.Stats
                     }
                 case StatEventType.AddBaseValue:
                     {
-                        StatUtilities.TryResolveStatRef(
-                            StatHandle)
 
                         HandleRecompute(
                             ref dirtyStatsMask,
@@ -211,7 +204,163 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void HandleRecompute(
+        public void ExecuteEntity(
+            Entity entity,
+            ref DirtyStatsMask dirtyStatsMask,
+            EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW,
+            ref DynamicBuffer<Stat> statsBuffer,
+            ref DynamicBuffer<TStatModifier> statModifiersBuffer,
+            ref DynamicBuffer<StatObserver> statObserversBuffer,
+            ref ComponentLookup<StatOwner> statOwnerLookup,
+            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
+            ref BufferLookup<Stat> statsBufferLookup,
+            ref BufferLookup<TStatModifier> statModifiersBufferLookup,
+            ref BufferLookup<StatObserver> statObserversBufferLookup,
+            ref BufferLookup<AddModifierEventCallback> AddModifierEventCallbackBufferLookup,
+            ref NativeQueue<StatHandle> recomputeImmediateStatsQueue,
+            ref UnsafeList<StatHandle> tmpObservedStatsList)
+        {
+            switch (EventType)
+            {
+                case StatEventType.Recompute:
+                    {
+                        HandleRecompute(
+                            ref dirtyStatsMask,
+                            dirtyStatsMaskEnabledRefRW,
+                            ref statsBuffer,
+                            ref statModifiersBuffer,
+                            ref statObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statModifiersBufferLookup,
+                            ref statObserversBufferLookup,
+                            ref recomputeImmediateStatsQueue);
+
+                        break;
+                    }
+                case StatEventType.AddBaseValue:
+                    {
+
+                        HandleRecompute(
+                            ref dirtyStatsMask,
+                            dirtyStatsMaskEnabledRefRW,
+                            ref statsBuffer,
+                            ref statModifiersBuffer,
+                            ref statObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statModifiersBufferLookup,
+                            ref statObserversBufferLookup,
+                            ref recomputeImmediateStatsQueue);
+
+                        break;
+                    }
+                case StatEventType.SetBaseValue:
+                    {
+
+
+                        HandleRecompute(
+                            ref dirtyStatsMask,
+                            dirtyStatsMaskEnabledRefRW,
+                            ref statsBuffer,
+                            ref statModifiersBuffer,
+                            ref statObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statModifiersBufferLookup,
+                            ref statObserversBufferLookup,
+                            ref recomputeImmediateStatsQueue);
+
+                        break;
+                    }
+                case StatEventType.AddModifier:
+                    {
+                        ModifierHandle addedModifierHandle = StatUtilities.AddModifier<TStatModifier, TStatModifierStack>(
+                            StatHandle,
+                            Modifier,
+                            ref statOwnerLookup,
+                            ref statModifiersBufferLookup,
+                            ref statObserversBufferLookup,
+                            ref dirtyStatsMaskLookup,
+                            ref tmpObservedStatsList);
+
+                        HandleRecompute(
+                            ref dirtyStatsMask,
+                            dirtyStatsMaskEnabledRefRW,
+                            ref statsBuffer,
+                            ref statModifiersBuffer,
+                            ref statObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statModifiersBufferLookup,
+                            ref statObserversBufferLookup,
+                            ref recomputeImmediateStatsQueue);
+
+                        if (CallbackEntity != Entity.Null &&
+                            AddModifierEventCallbackBufferLookup.TryGetBuffer(CallbackEntity, out DynamicBuffer<AddModifierEventCallback> callbackBuffer))
+                        {
+                            callbackBuffer.Add(new AddModifierEventCallback
+                            {
+                                ModifierHandle = addedModifierHandle,
+                            });
+                        }
+
+                        break;
+                    }
+                case StatEventType.RemoveModifier:
+                    {
+                        StatUtilities.RemoveModifier<TStatModifier, TStatModifierStack>(
+                            StatHandle,
+                            ModifierHandle,
+                            ref statOwnerLookup,
+                            ref statModifiersBufferLookup,
+                            ref statObserversBufferLookup,
+                            ref dirtyStatsMaskLookup,
+                            ref tmpObservedStatsList);
+
+                        HandleRecompute(
+                            ref dirtyStatsMask,
+                            dirtyStatsMaskEnabledRefRW,
+                            ref statsBuffer,
+                            ref statModifiersBuffer,
+                            ref statObserversBuffer,
+                            ref statsBufferLookup,
+                            ref statModifiersBufferLookup,
+                            ref statObserversBufferLookup,
+                            ref recomputeImmediateStatsQueue);
+
+                        break;
+                    }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void HandleRecomputeGlobal(
+            ref BufferLookup<Stat> statsBufferLookup,
+            ref BufferLookup<TStatModifier> statModifiersBufferLookup,
+            ref BufferLookup<StatObserver> statObserversBufferLookup,
+            ref NativeQueue<StatHandle> recomputeImmediateStatsQueue)
+        {
+            if (RecomputeImmediate)
+            {
+                StatUtilities.RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                    StatHandle,
+                    ref statsBuffer,
+                    ref statModifiersBuffer,
+                    ref statObserversBuffer,
+                    ref statsBufferLookup,
+                    ref statModifiersBufferLookup,
+                    ref statObserversBufferLookup,
+                    ref recomputeImmediateStatsQueue);
+            }
+            else
+            {
+                StatUtilities.MarkStatForBatchRecompute(
+                    StatHandle.Index,
+                    ref dirtyStatsMask,
+                    dirtyStatsMaskEnabledRefRW);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void HandleRecomputeEntity(
+            Entity entity,
             ref DirtyStatsMask dirtyStatsMask,
             EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW,
             ref DynamicBuffer<Stat> statsBuffer,
@@ -224,14 +373,15 @@ namespace Trove.Stats
         {
             if (RecomputeImmediate)
             {
-                StatUtilities.RecomputeStatsAndObserversImmediate<TStatModifier, TStatModifierStack>(
-                    ref recomputeImmediateStatsQueue,
+                StatUtilities.RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                    StatHandle,
                     ref statsBuffer,
                     ref statModifiersBuffer,
                     ref statObserversBuffer,
                     ref statsBufferLookup,
                     ref statModifiersBufferLookup,
-                    ref statObserversBufferLookup);
+                    ref statObserversBufferLookup,
+                    ref recomputeImmediateStatsQueue);
             }
             else
             {

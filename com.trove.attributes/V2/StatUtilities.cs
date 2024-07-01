@@ -13,8 +13,7 @@ namespace Trove.Stats
             IBaker baker,
             MonoBehaviour authoring,
             StatDefinition[] statDefinitions,
-            bool supportEntityStatEvents,
-            bool supportOnlyImmediateRecompute = false)
+            bool supportEntityStatEvents)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
             where TStatModifierStack : unmanaged, IStatsModifierStack
         {
@@ -23,6 +22,11 @@ namespace Trove.Stats
             {
                 ModifierIdCounter = 1,
             });
+            baker.AddComponent(entity, new DirtyStatsMask
+            {
+                StatsCount = statDefinitions.Length,
+            });
+            baker.SetComponentEnabled<DirtyStatsMask>(entity, true);
             DynamicBuffer<Stat> statsBuffer = baker.AddBuffer<Stat>(entity);
             DynamicBuffer<TStatModifier> statModifiersBuffer = baker.AddBuffer<TStatModifier>(entity);
             DynamicBuffer<StatObserver> statObserversBuffer = baker.AddBuffer<StatObserver>(entity);
@@ -38,21 +42,11 @@ namespace Trove.Stats
                 };
             }
 
-            if(supportEntityStatEvents)
+            if (supportEntityStatEvents)
             {
                 baker.AddComponent<HasEntityStatEvents>(entity);
                 baker.SetComponentEnabled<HasEntityStatEvents>(entity, false);
                 baker.AddBuffer<StatEvent<TStatModifier, TStatModifierStack>>(entity);
-            }
-
-            // TODO: test that this works with the queries in the subsystem
-            if (!supportOnlyImmediateRecompute)
-            {
-                baker.AddComponent(entity, new DirtyStatsMask
-                {
-                    StatsCount = statDefinitions.Length,
-                });
-                baker.SetComponentEnabled<DirtyStatsMask>(entity, true);
             }
         }
 
@@ -313,8 +307,8 @@ namespace Trove.Stats
                 if (statHandle == modifier.AffectedStat)
                 {
                     modifier.Apply(
-                    ref modifierStack,
-                        statHandle,
+                        ref modifierStack,
+                        statHandle.Entity,
                         ref statsBuffer,
                         ref statsBufferLookup);
                 }
@@ -379,9 +373,9 @@ namespace Trove.Stats
             StatHandle statHandle,
             TStatModifier modifier,
             ref ComponentLookup<StatOwner> statOwnerLookup,
+            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
             ref BufferLookup<TStatModifier> statModifiersBufferLookup,
             ref BufferLookup<StatObserver> statObserversBufferLookup,
-            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
             ref UnsafeList<StatHandle> tmpObservedStatsList)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
             where TStatModifierStack : unmanaged, IStatsModifierStack
@@ -397,12 +391,12 @@ namespace Trove.Stats
                     statHandle,
                     modifier,
                     ref statOwner,
-                    ref statModifiersBuffer,
-                    ref statObserversBuffer,
                     ref dirtyStatsMask,
                     dirtyStatsMaskEnabledRefRW,
-                    ref statObserversBufferLookup,
+                    ref statModifiersBuffer,
+                    ref statObserversBuffer,
                     ref dirtyStatsMaskLookup,
+                    ref statObserversBufferLookup,
                     ref tmpObservedStatsList);
 
                 statOwnerLookup[statHandle.Entity] = statOwner;
@@ -415,12 +409,12 @@ namespace Trove.Stats
             StatHandle statHandle,
             TStatModifier modifier,
             ref StatOwner statOwner,
-            ref DynamicBuffer<TStatModifier> statModifiersBuffer,
-            ref DynamicBuffer<StatObserver> statObserversBuffer,
             ref DirtyStatsMask dirtyStatsMask,
             EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW,
-            ref BufferLookup<StatObserver> statObserversBufferLookup,
+            ref DynamicBuffer<TStatModifier> statModifiersBuffer,
+            ref DynamicBuffer<StatObserver> statObserversBuffer,
             ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
+            ref BufferLookup<StatObserver> statObserversBufferLookup,
             ref UnsafeList<StatHandle> tmpObservedStatsList)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
             where TStatModifierStack : unmanaged, IStatsModifierStack
@@ -459,9 +453,9 @@ namespace Trove.Stats
             StatHandle statHandle,
             ModifierHandle modifierHandle,
             ref ComponentLookup<StatOwner> statOwnerLookup,
+            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
             ref BufferLookup<TStatModifier> statModifiersBufferLookup,
             ref BufferLookup<StatObserver> statObserversBufferLookup,
-            ref ComponentLookup<DirtyStatsMask> dirtyStatsMaskLookup,
             ref UnsafeList<StatHandle> tmpObservedStatsList)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
             where TStatModifierStack : unmanaged, IStatsModifierStack
@@ -475,10 +469,10 @@ namespace Trove.Stats
                 RemoveModifier<TStatModifier, TStatModifierStack>(
                     statHandle,
                     modifierHandle,
-                    ref statModifiersBuffer,
-                    ref statObserversBuffer,
                     ref dirtyStatsMask,
                     dirtyStatsMaskEnabledRefRW,
+                    ref statModifiersBuffer,
+                    ref statObserversBuffer,
                     ref statObserversBufferLookup,
                     ref tmpObservedStatsList);
 
@@ -490,10 +484,10 @@ namespace Trove.Stats
         public static void RemoveModifier<TStatModifier, TStatModifierStack>(
             StatHandle statHandle,
             ModifierHandle modifierHandle,
-            ref DynamicBuffer<TStatModifier> statModifiersBuffer,
-            ref DynamicBuffer<StatObserver> statObserversBuffer,
             ref DirtyStatsMask dirtyStatsMask,
             EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW,
+            ref DynamicBuffer<TStatModifier> statModifiersBuffer,
+            ref DynamicBuffer<StatObserver> statObserversBuffer,
             ref BufferLookup<StatObserver> statObserversBufferLookup,
             ref UnsafeList<StatHandle> tmpObservedStatsList)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData

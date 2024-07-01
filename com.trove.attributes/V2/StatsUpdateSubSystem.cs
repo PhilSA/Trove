@@ -12,6 +12,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Logging;
 using Unity.Mathematics;
+using static Codice.Client.BaseCommands.Import.Commit;
 
 
 namespace Trove.Stats
@@ -204,7 +205,7 @@ namespace Trove.Stats
         }
 
         [BurstCompile]
-        public struct ProcessStatEventsJob : IJob
+        public struct ProcessGlobalStatEventsJob : IJob
         {
             public NativeList<StatEvent<TStatModifier, TStatModifierStack>> StatEvents;
 
@@ -213,18 +214,242 @@ namespace Trove.Stats
             public BufferLookup<Stat> StatsBufferLookup;
             public BufferLookup<TStatModifier> StatModifiersBufferLookup;
             public BufferLookup<StatObserver> StatObserversBufferLookup;
+            public BufferLookup<AddModifierEventCallback> AddModifierEventCallbackBufferLookup;
+            public NativeQueue<StatHandle> RecomputeImmediateStatsQueue;
 
             public void Execute()
             {
+                UnsafeList<StatHandle> tmpObservedStatsList = new UnsafeList<StatHandle>(16, Allocator.Temp);
+
                 for (int i = 0; i < StatEvents.Length; i++)
                 {
-                    StatEvents[i].Execute();
+                    StatEvent<TStatModifier, TStatModifierStack> e = StatEvents[i];
+                    switch (e.EventType)
+                    {
+                        case StatEvent<TStatModifier, TStatModifierStack>.StatEventType.Recompute:
+                            {
+                                if (StatsBufferLookup.TryGetBuffer(e.StatHandle.Entity, out DynamicBuffer<Stat> statsBuffer))
+                                {
+                                    ref DirtyStatsMask dirtyStatsMask = ref DirtyStatsMaskLookup.GetRefRW(e.StatHandle.Entity).ValueRW;
+                                    EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW = DirtyStatsMaskLookup.GetEnabledRefRW<DirtyStatsMask>(e.StatHandle.Entity);
+
+                                    if (e.RecomputeImmediate)
+                                    {
+                                        DynamicBuffer<TStatModifier> statModifiersBuffer = StatModifiersBufferLookup[e.StatHandle.Entity];
+                                        DynamicBuffer<StatObserver> statObserversBuffer = StatObserversBufferLookup[e.StatHandle.Entity];
+
+                                        StatUtilities.RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                                            e.StatHandle,
+                                            ref statsBuffer,
+                                            ref statModifiersBuffer,
+                                            ref statObserversBuffer,
+                                            ref StatsBufferLookup,
+                                            ref StatModifiersBufferLookup,
+                                            ref StatObserversBufferLookup,
+                                            ref RecomputeImmediateStatsQueue);
+                                    }
+                                    else
+                                    {
+                                        StatUtilities.MarkStatForBatchRecompute(
+                                            e.StatHandle.Index,
+                                            ref dirtyStatsMask,
+                                            dirtyStatsMaskEnabledRefRW);
+                                    }
+                                }
+
+                                break;
+                            }
+                        case StatEvent<TStatModifier, TStatModifierStack>.StatEventType.AddBaseValue:
+                            {
+                                if (StatsBufferLookup.TryGetBuffer(e.StatHandle.Entity, out DynamicBuffer<Stat> statsBuffer))
+                                {
+                                    ref Stat statRef = ref StatUtilities.TryResolveStatRef(
+                                        e.StatHandle,
+                                        e.StatHandle.Entity,
+                                        ref statsBuffer,
+                                        ref StatsBufferLookup,
+                                        out bool success);
+                                    if (success)
+                                    {
+                                        statRef.BaseValue += e.Value;
+
+                                        ref DirtyStatsMask dirtyStatsMask = ref DirtyStatsMaskLookup.GetRefRW(e.StatHandle.Entity).ValueRW;
+                                        EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW = DirtyStatsMaskLookup.GetEnabledRefRW<DirtyStatsMask>(e.StatHandle.Entity);
+
+                                        if (e.RecomputeImmediate)
+                                        {
+                                            DynamicBuffer<TStatModifier> statModifiersBuffer = StatModifiersBufferLookup[e.StatHandle.Entity];
+                                            DynamicBuffer<StatObserver> statObserversBuffer = StatObserversBufferLookup[e.StatHandle.Entity];
+
+                                            StatUtilities.RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                                                e.StatHandle,
+                                                ref statsBuffer,
+                                                ref statModifiersBuffer,
+                                                ref statObserversBuffer,
+                                                ref StatsBufferLookup,
+                                                ref StatModifiersBufferLookup,
+                                                ref StatObserversBufferLookup,
+                                                ref RecomputeImmediateStatsQueue);
+                                        }
+                                        else
+                                        {
+                                            StatUtilities.MarkStatForBatchRecompute(
+                                                e.StatHandle.Index,
+                                                ref dirtyStatsMask,
+                                                dirtyStatsMaskEnabledRefRW);
+                                        }
+                                    }
+                                }
+
+                                break;
+                            }
+                        case StatEvent<TStatModifier, TStatModifierStack>.StatEventType.SetBaseValue:
+                            {
+                                if (StatsBufferLookup.TryGetBuffer(e.StatHandle.Entity, out DynamicBuffer<Stat> statsBuffer))
+                                {
+                                    ref Stat statRef = ref StatUtilities.TryResolveStatRef(
+                                        e.StatHandle,
+                                        e.StatHandle.Entity,
+                                        ref statsBuffer,
+                                        ref StatsBufferLookup,
+                                        out bool success);
+                                    if (success)
+                                    {
+                                        statRef.BaseValue = e.Value;
+
+                                        ref DirtyStatsMask dirtyStatsMask = ref DirtyStatsMaskLookup.GetRefRW(e.StatHandle.Entity).ValueRW;
+                                        EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW = DirtyStatsMaskLookup.GetEnabledRefRW<DirtyStatsMask>(e.StatHandle.Entity);
+
+                                        if (e.RecomputeImmediate)
+                                        {
+                                            DynamicBuffer<TStatModifier> statModifiersBuffer = StatModifiersBufferLookup[e.StatHandle.Entity];
+                                            DynamicBuffer<StatObserver> statObserversBuffer = StatObserversBufferLookup[e.StatHandle.Entity];
+
+                                            StatUtilities.RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                                                e.StatHandle,
+                                                ref statsBuffer,
+                                                ref statModifiersBuffer,
+                                                ref statObserversBuffer,
+                                                ref StatsBufferLookup,
+                                                ref StatModifiersBufferLookup,
+                                                ref StatObserversBufferLookup,
+                                                ref RecomputeImmediateStatsQueue);
+                                        }
+                                        else
+                                        {
+                                            StatUtilities.MarkStatForBatchRecompute(
+                                                e.StatHandle.Index,
+                                                ref dirtyStatsMask,
+                                                dirtyStatsMaskEnabledRefRW);
+                                        }
+                                    }
+                                }
+
+                                break;
+                            }
+                        case StatEvent<TStatModifier, TStatModifierStack>.StatEventType.AddModifier:
+                            {
+                                if (StatsBufferLookup.TryGetBuffer(e.StatHandle.Entity, out DynamicBuffer<Stat> statsBuffer))
+                                {
+                                    ref StatOwner statOwner = ref StatOwnerLookup.GetRefRW(e.StatHandle.Entity).ValueRW;
+                                    ref DirtyStatsMask dirtyStatsMask = ref DirtyStatsMaskLookup.GetRefRW(e.StatHandle.Entity).ValueRW;
+                                    EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW = DirtyStatsMaskLookup.GetEnabledRefRW<DirtyStatsMask>(e.StatHandle.Entity);
+                                    DynamicBuffer<TStatModifier> statModifiersBuffer = StatModifiersBufferLookup[e.StatHandle.Entity];
+                                    DynamicBuffer<StatObserver> statObserversBuffer = StatObserversBufferLookup[e.StatHandle.Entity];
+
+                                    ModifierHandle addedModifierHandle = StatUtilities.AddModifier<TStatModifier, TStatModifierStack>(
+                                        e.StatHandle,
+                                        e.Modifier,
+                                        ref statOwner,
+                                        ref dirtyStatsMask,
+                                        dirtyStatsMaskEnabledRefRW,
+                                        ref statModifiersBuffer,
+                                        ref statObserversBuffer,
+                                        ref DirtyStatsMaskLookup,
+                                        ref StatObserversBufferLookup,
+                                        ref tmpObservedStatsList);
+
+                                    if (e.CallbackEntity != Entity.Null &&
+                                        AddModifierEventCallbackBufferLookup.TryGetBuffer(e.CallbackEntity, out DynamicBuffer<AddModifierEventCallback> callbackBuffer))
+                                    {
+                                        callbackBuffer.Add(new AddModifierEventCallback
+                                        {
+                                            ModifierHandle = addedModifierHandle,
+                                        });
+                                    }
+
+                                    if (e.RecomputeImmediate)
+                                    {
+                                        StatUtilities.RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                                            e.StatHandle,
+                                            ref statsBuffer,
+                                            ref statModifiersBuffer,
+                                            ref statObserversBuffer,
+                                            ref StatsBufferLookup,
+                                            ref StatModifiersBufferLookup,
+                                            ref StatObserversBufferLookup,
+                                            ref RecomputeImmediateStatsQueue);
+                                    }
+                                    else
+                                    {
+                                        StatUtilities.MarkStatForBatchRecompute(
+                                            e.StatHandle.Index,
+                                            ref dirtyStatsMask,
+                                            dirtyStatsMaskEnabledRefRW);
+                                    }
+                                }
+
+                                break;
+                            }
+                        case StatEvent<TStatModifier, TStatModifierStack>.StatEventType.RemoveModifier:
+                            {
+                                if (StatsBufferLookup.TryGetBuffer(e.StatHandle.Entity, out DynamicBuffer<Stat> statsBuffer))
+                                {
+                                    ref DirtyStatsMask dirtyStatsMask = ref DirtyStatsMaskLookup.GetRefRW(e.StatHandle.Entity).ValueRW;
+                                    EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW = DirtyStatsMaskLookup.GetEnabledRefRW<DirtyStatsMask>(e.StatHandle.Entity);
+                                    DynamicBuffer<TStatModifier> statModifiersBuffer = StatModifiersBufferLookup[e.StatHandle.Entity];
+                                    DynamicBuffer<StatObserver> statObserversBuffer = StatObserversBufferLookup[e.StatHandle.Entity];
+
+                                    StatUtilities.RemoveModifier<TStatModifier, TStatModifierStack>(
+                                        e.StatHandle,
+                                        e.ModifierHandle,
+                                        ref dirtyStatsMask,
+                                        dirtyStatsMaskEnabledRefRW,
+                                        ref statModifiersBuffer,
+                                        ref statObserversBuffer,
+                                        ref StatObserversBufferLookup,
+                                        ref tmpObservedStatsList);
+
+                                    if (e.RecomputeImmediate)
+                                    {
+                                        StatUtilities.RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                                            e.StatHandle,
+                                            ref statsBuffer,
+                                            ref statModifiersBuffer,
+                                            ref statObserversBuffer,
+                                            ref StatsBufferLookup,
+                                            ref StatModifiersBufferLookup,
+                                            ref StatObserversBufferLookup,
+                                            ref RecomputeImmediateStatsQueue);
+                                    }
+                                    else
+                                    {
+                                        StatUtilities.MarkStatForBatchRecompute(
+                                            e.StatHandle.Index,
+                                            ref dirtyStatsMask,
+                                            dirtyStatsMaskEnabledRefRW);
+                                    }
+                                }
+
+                                break;
+                            }
+                    }
                 }
             }
         }
 
         [BurstCompile]
-        public unsafe struct ProcessEntityStatEventsJob : IJobChunk
+        public unsafe struct ProcessEntityStatEventsParallelJob : IJobChunk
         {
             [ReadOnly]
             public EntityTypeHandle EntityTypeHandle;
@@ -235,6 +460,16 @@ namespace Trove.Stats
             public BufferTypeHandle<Stat> StatsBufferTypeHandle;
             public BufferTypeHandle<TStatModifier> StatModifiersBufferTypeHandle;
             public BufferTypeHandle<StatObserver> StatObserversBufferTypeHandle;
+
+            public ComponentLookup<StatOwner> StatOwnerLookup;
+            public ComponentLookup<DirtyStatsMask> DirtyStatsMaskLookup;
+            public BufferLookup<Stat> StatsBufferLookup;
+            public BufferLookup<TStatModifier> StatModifiersBufferLookup;
+            public BufferLookup<StatObserver> StatObserversBufferLookup;
+            public BufferLookup<AddModifierEventCallback> AddModifierEventCallbackBufferLookup;
+            public NativeQueue<StatHandle> RecomputeImmediateStatsQueue;
+
+            private UnsafeList<StatHandle> tmpObservedStatsList;
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
@@ -250,6 +485,11 @@ namespace Trove.Stats
                     BufferAccessor<TStatModifier> statModifiersBufferAccessor = chunk.GetBufferAccessor(ref StatModifiersBufferTypeHandle);
                     BufferAccessor<StatObserver> statObserversBufferAccessor = chunk.GetBufferAccessor(ref StatObserversBufferTypeHandle);
 
+                    if(!tmpObservedStatsList.IsCreated)
+                    {
+                        tmpObservedStatsList = new UnsafeList<StatHandle>(16, Allocator.Temp);
+                    }
+
                     void* dirtyStatsMasksArrayPtr = dirtyStatsMasks.GetUnsafePtr();
 
                     ChunkEntityEnumerator entityEnumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
@@ -257,7 +497,8 @@ namespace Trove.Stats
                     {
                         Entity entity = entities[i];
                         StatOwner statOwner = statOwners[i];
-                        ref DirtyStatsMask dirtyStatsMaskRef = ref UnsafeUtility.ArrayElementAsRef<DirtyStatsMask>(dirtyStatsMasksArrayPtr, i);
+                        ref DirtyStatsMask dirtyStatsMask = ref UnsafeUtility.ArrayElementAsRef<DirtyStatsMask>(dirtyStatsMasksArrayPtr, i);
+                        EnabledRefRW<DirtyStatsMask> dirtyStatsMaskEnabledRefRW = doesEntityHaveDirtyStats.GetEnabledRefRW<DirtyStatsMask>(i);
                         DynamicBuffer<StatEvent<TStatModifier, TStatModifierStack>> statEventsBuffer = statEventsBufferAccessor[i];
                         DynamicBuffer<Stat> statsBuffer = statsBufferAccessor[i];
                         DynamicBuffer<TStatModifier> statModifiersBuffer = statModifiersBufferAccessor[i];
@@ -265,7 +506,183 @@ namespace Trove.Stats
 
                         for (int s = 0; s < statEventsBuffer.Length; s++)
                         {
-                            statEventsBuffer[s].Execute();
+                            StatEvent<TStatModifier, TStatModifierStack> e = statEventsBuffer[i];
+                            switch (e.EventType)
+                            {
+                                case StatEvent<TStatModifier, TStatModifierStack>.StatEventType.Recompute:
+                                    {
+                                        if (e.RecomputeImmediate)
+                                        {
+                                            StatUtilities.RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                                                e.StatHandle,
+                                                ref statsBuffer,
+                                                ref statModifiersBuffer,
+                                                ref statObserversBuffer,
+                                                ref StatsBufferLookup,
+                                                ref StatModifiersBufferLookup,
+                                                ref StatObserversBufferLookup,
+                                                ref RecomputeImmediateStatsQueue);
+                                        }
+                                        else
+                                        {
+                                            StatUtilities.MarkStatForBatchRecompute(
+                                                e.StatHandle.Index,
+                                                ref dirtyStatsMask,
+                                                dirtyStatsMaskEnabledRefRW);
+                                        }
+
+                                        break;
+                                    }
+                                case StatEvent<TStatModifier, TStatModifierStack>.StatEventType.AddBaseValue:
+                                    {
+                                        ref Stat statRef = ref StatUtilities.TryResolveStatRef(
+                                            e.StatHandle,
+                                            e.StatHandle.Entity,
+                                            ref statsBuffer,
+                                            ref StatsBufferLookup,
+                                            out bool success);
+                                        if (success)
+                                        {
+                                            statRef.BaseValue += e.Value;
+
+                                            if (e.RecomputeImmediate)
+                                            {
+                                                StatUtilities.RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                                                    e.StatHandle,
+                                                    ref statsBuffer,
+                                                    ref statModifiersBuffer,
+                                                    ref statObserversBuffer,
+                                                    ref StatsBufferLookup,
+                                                    ref StatModifiersBufferLookup,
+                                                    ref StatObserversBufferLookup,
+                                                    ref RecomputeImmediateStatsQueue);
+                                            }
+                                            else
+                                            {
+                                                StatUtilities.MarkStatForBatchRecompute(
+                                                    e.StatHandle.Index,
+                                                    ref dirtyStatsMask,
+                                                    dirtyStatsMaskEnabledRefRW);
+                                            }
+                                        }
+
+                                        break;
+                                    }
+                                case StatEvent<TStatModifier, TStatModifierStack>.StatEventType.SetBaseValue:
+                                    {
+                                        ref Stat statRef = ref StatUtilities.TryResolveStatRef(
+                                            e.StatHandle,
+                                            e.StatHandle.Entity,
+                                            ref statsBuffer,
+                                            ref StatsBufferLookup,
+                                            out bool success);
+                                        if (success)
+                                        {
+                                            statRef.BaseValue = e.Value;
+
+                                            if (e.RecomputeImmediate)
+                                            {
+                                                StatUtilities.RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                                                    e.StatHandle,
+                                                    ref statsBuffer,
+                                                    ref statModifiersBuffer,
+                                                    ref statObserversBuffer,
+                                                    ref StatsBufferLookup,
+                                                    ref StatModifiersBufferLookup,
+                                                    ref StatObserversBufferLookup,
+                                                    ref RecomputeImmediateStatsQueue);
+                                            }
+                                            else
+                                            {
+                                                StatUtilities.MarkStatForBatchRecompute(
+                                                    e.StatHandle.Index,
+                                                    ref dirtyStatsMask,
+                                                    dirtyStatsMaskEnabledRefRW);
+                                            }
+                                        }
+
+                                        break;
+                                    }
+                                case StatEvent<TStatModifier, TStatModifierStack>.StatEventType.AddModifier:
+                                    {
+                                        ModifierHandle addedModifierHandle = StatUtilities.AddModifier<TStatModifier, TStatModifierStack>(
+                                            e.StatHandle,
+                                            e.Modifier,
+                                            ref statOwner,
+                                            ref dirtyStatsMask,
+                                            dirtyStatsMaskEnabledRefRW,
+                                            ref statModifiersBuffer,
+                                            ref statObserversBuffer,
+                                            ref DirtyStatsMaskLookup,
+                                            ref StatObserversBufferLookup,
+                                            ref tmpObservedStatsList);
+
+                                        if (e.CallbackEntity != Entity.Null &&
+                                            AddModifierEventCallbackBufferLookup.TryGetBuffer(e.CallbackEntity, out DynamicBuffer<AddModifierEventCallback> callbackBuffer))
+                                        {
+                                            callbackBuffer.Add(new AddModifierEventCallback
+                                            {
+                                                ModifierHandle = addedModifierHandle,
+                                            });
+                                        }
+
+                                        if (e.RecomputeImmediate)
+                                        {
+                                            StatUtilities.RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                                                e.StatHandle,
+                                                ref statsBuffer,
+                                                ref statModifiersBuffer,
+                                                ref statObserversBuffer,
+                                                ref StatsBufferLookup,
+                                                ref StatModifiersBufferLookup,
+                                                ref StatObserversBufferLookup,
+                                                ref RecomputeImmediateStatsQueue);
+                                        }
+                                        else
+                                        {
+                                            StatUtilities.MarkStatForBatchRecompute(
+                                                e.StatHandle.Index,
+                                                ref dirtyStatsMask,
+                                                dirtyStatsMaskEnabledRefRW);
+                                        }
+
+                                        break;
+                                    }
+                                case StatEvent<TStatModifier, TStatModifierStack>.StatEventType.RemoveModifier:
+                                    {
+                                        StatUtilities.RemoveModifier<TStatModifier, TStatModifierStack>(
+                                            e.StatHandle,
+                                            e.ModifierHandle,
+                                            ref dirtyStatsMask,
+                                            dirtyStatsMaskEnabledRefRW,
+                                            ref statModifiersBuffer,
+                                            ref statObserversBuffer,
+                                            ref StatObserversBufferLookup,
+                                            ref tmpObservedStatsList);
+
+                                        if (e.RecomputeImmediate)
+                                        {
+                                            StatUtilities.RecomputeStatAndObserversImmediate<TStatModifier, TStatModifierStack>(
+                                                e.StatHandle,
+                                                ref statsBuffer,
+                                                ref statModifiersBuffer,
+                                                ref statObserversBuffer,
+                                                ref StatsBufferLookup,
+                                                ref StatModifiersBufferLookup,
+                                                ref StatObserversBufferLookup,
+                                                ref RecomputeImmediateStatsQueue);
+                                        }
+                                        else
+                                        {
+                                            StatUtilities.MarkStatForBatchRecompute(
+                                                e.StatHandle.Index,
+                                                ref dirtyStatsMask,
+                                                dirtyStatsMaskEnabledRefRW);
+                                        }
+
+                                        break;
+                                    }
+                            }
                         }
                     }
                 }
@@ -343,7 +760,7 @@ namespace Trove.Stats
                                 {
                                     modifier.Apply(
                                         ref modifierStack,
-                                        new StatHandle(entity, statIndex),
+                                        entity,
                                         ref statsBuffer,
                                         ref StatsBufferLookup);
                                 }

@@ -42,7 +42,7 @@ MonoBehaviour:
     x: 0
     y: 0
     width: 226.39996
-    height: 332.8
+    height: 332
   m_MinSize: {x: 202, y: 221}
   m_MaxSize: {x: 4002, y: 4021}
   m_ActualView: {fileID: 17}
@@ -93,9 +93,9 @@ MonoBehaviour:
   m_Position:
     serializedVersion: 2
     x: 0
-    y: 332.8
+    y: 332
     width: 226.39996
-    height: 390
+    height: 390.8
   m_MinSize: {x: 232, y: 271}
   m_MaxSize: {x: 10002, y: 10021}
   m_ActualView: {fileID: 15}
@@ -1258,9 +1258,9 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 1
-    y: 351.8
+    y: 351
     width: 224.39996
-    height: 369
+    height: 369.8
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1463,7 +1463,7 @@ MonoBehaviour:
     x: 1
     y: 19
     width: 224.39996
-    height: 311.8
+    height: 311
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
