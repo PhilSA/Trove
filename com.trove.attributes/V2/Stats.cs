@@ -18,13 +18,21 @@ namespace Trove.Stats
         where TStack : unmanaged, IStatsModifierStack
     {
         public uint Id { get; set; }
-        public StatHandle AffectedStat { get; set; }
+        public StatHandle AffectedStatHandle { get; set; }
         public void AddObservedStatsToList(ref UnsafeList<StatHandle> observedStats);
         public void Apply(
             ref TStack stack,
             Entity cachedEntity,
             ref DynamicBuffer<Stat> cachedStatsBuffer,
             ref BufferLookup<Stat> statsBufferLookup);
+    }
+
+    public struct BakingModifier<TStatModifier, TStatModifierStack>
+        where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData
+        where TStatModifierStack : unmanaged, IStatsModifierStack
+    {
+        public int AffectedStatIndex;
+        public TStatModifier Modifier;
     }
 
     public struct StatsSettings : IComponentData
@@ -42,12 +50,18 @@ namespace Trove.Stats
         }
     }
 
-    // TODO
     [System.Serializable]
     public struct StatDefinition
     {
-        public bool HasStat;
+        [UnityEngine.HideInInspector]
+        public int StatIndex;
         public float BaseValue;
+
+        public StatDefinition(int index, float baseValue)
+        {
+            StatIndex = index;
+            this.BaseValue = baseValue;
+        }
     }
 
     public struct StatOwner : IComponentData
@@ -58,7 +72,6 @@ namespace Trove.Stats
     [InternalBufferCapacity(3)]
     public partial struct Stat : IBufferElementData
     {
-        public byte Exists;
         public float BaseValue;
         public float Value;
     }
@@ -146,9 +159,9 @@ namespace Trove.Stats
             }
         }
 
-        public long BitMask_0;
-        public long BitMask_1;
-        public int StatsCount;
+        internal long BitMask_0;
+        internal long BitMask_1;
+        internal int StatsCount;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Iterator GetIterator()

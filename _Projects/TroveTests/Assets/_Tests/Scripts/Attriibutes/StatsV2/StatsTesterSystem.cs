@@ -14,14 +14,13 @@ using Trove.EventSystems;
 [assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.RecomputeDirtyStatsImmediateJob))]
 [assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.EnqueueDirtyStatsForRecomputeImmediateJob))]
 [assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.ApplyHasDirtyStatsJob))]
+[assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.ProcessGlobalStatEventsJob))]
 
 // Stat event jobs
+[assembly: RegisterGenericComponentType(typeof(GlobalStatEventsSingleton<StatModifier, StatModifier.Stack>))]
 [assembly: RegisterGenericJobType(typeof(EventClearListJob<StatEvent<StatModifier, StatModifier.Stack>>))]
 [assembly: RegisterGenericJobType(typeof(EventTransferQueueToListJob<StatEvent<StatModifier, StatModifier.Stack>>))]
 [assembly: RegisterGenericJobType(typeof(EventTransferStreamToListJob<StatEvent<StatModifier, StatModifier.Stack>>))]
-[assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<StatEvent<StatModifier, StatModifier.Stack>, HasEntityStatEvents>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferQueueToBufferJob<EntityStatEvent<StatModifier, StatModifier.Stack>, StatEvent<StatModifier, StatModifier.Stack>, HasEntityStatEvents>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferStreamToBufferJob<EntityStatEvent<StatModifier, StatModifier.Stack>, StatEvent<StatModifier, StatModifier.Stack>, HasEntityStatEvents>))]
 
 //[StructLayout(LayoutKind.Explicit)]
 //public struct DirtyStatsMaskValue : IDirtyStatsBitMask
@@ -99,10 +98,10 @@ partial struct StatsTesterSystem : ISystem
                     BufferLookup<Trove.Stats.StatObserver> statObserversBufferLookup = SystemAPI.GetBufferLookup<Trove.Stats.StatObserver>(false);
                     ComponentLookup<Trove.Stats.DirtyStatsMask> dirtyStatsMaskLookup = SystemAPI.GetComponentLookup<Trove.Stats.DirtyStatsMask>(false);
                     Trove.Stats.StatOwner statOwner = state.EntityManager.GetComponentData<StatOwner>(observedEntity);
-                    DynamicBuffer<StatModifier> statModifiersBuffer = state.EntityManager.GetBuffer<StatModifier>(observedEntity);
-                    DynamicBuffer<Trove.Stats.StatObserver> statObserversBuffer = state.EntityManager.GetBuffer<Trove.Stats.StatObserver>(observedEntity);
                     ref Trove.Stats.DirtyStatsMask dirtyStatsMask = ref dirtyStatsMaskLookup.GetRefRW(observedEntity).ValueRW;
                     EnabledRefRW<Trove.Stats.DirtyStatsMask> hasDirtyStatsEnabledRefRW = dirtyStatsMaskLookup.GetEnabledRefRW<Trove.Stats.DirtyStatsMask>(observedEntity);
+                    DynamicBuffer<StatModifier> statModifiersBuffer = state.EntityManager.GetBuffer<StatModifier>(observedEntity);
+                    DynamicBuffer<Trove.Stats.StatObserver> statObserversBuffer = state.EntityManager.GetBuffer<Trove.Stats.StatObserver>(observedEntity);
 
                     ModifierHandle modifierHandle1 = StatUtilities.AddModifier<StatModifier, StatModifier.Stack>(
                         new Trove.Stats.StatHandle(observedEntity, 1),
@@ -113,12 +112,12 @@ partial struct StatsTesterSystem : ISystem
                             ValueA = 0f,
                         },
                         ref statOwner,
-                        ref statModifiersBuffer,
-                        ref statObserversBuffer,
                         ref dirtyStatsMask,
                         hasDirtyStatsEnabledRefRW,
-                        ref statObserversBufferLookup,
+                        ref statModifiersBuffer,
+                        ref statObserversBuffer,
                         ref dirtyStatsMaskLookup,
+                        ref statObserversBufferLookup,
                         ref tmpObservedStatsList);
 
                     ModifierHandle modifierHandle2 = StatUtilities.AddModifier<StatModifier, StatModifier.Stack>(
@@ -130,12 +129,12 @@ partial struct StatsTesterSystem : ISystem
                             ValueA = 0f,
                         },
                         ref statOwner,
-                        ref statModifiersBuffer,
-                        ref statObserversBuffer,
                         ref dirtyStatsMask,
                         hasDirtyStatsEnabledRefRW,
-                        ref statObserversBufferLookup,
+                        ref statModifiersBuffer,
+                        ref statObserversBuffer,
                         ref dirtyStatsMaskLookup,
+                        ref statObserversBufferLookup,
                         ref tmpObservedStatsList);
                 }
 
@@ -160,12 +159,12 @@ partial struct StatsTesterSystem : ISystem
                             ValueA = 0f,
                         },
                         ref statOwner,
-                        ref statModifiersBuffer,
-                        ref statObserversBuffer,
                         ref dirtyStatsMask,
                         hasDirtyStatsEnabledRefRW,
-                        ref statObserversBufferLookup,
+                        ref statModifiersBuffer,
+                        ref statObserversBuffer,
                         ref dirtyStatsMaskLookup,
+                        ref statObserversBufferLookup,
                         ref tmpObservedStatsList);
 
                     observedEntity = observerEntity;

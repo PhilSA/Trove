@@ -42,7 +42,8 @@ RenderSettings:
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 12
+  serializedVersion: 13
+  m_BakeOnSceneLoad: 0
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -134,7 +135,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &434789911
 Transform:
   m_ObjectHideFlags: 0
@@ -165,7 +166,6 @@ MonoBehaviour:
   ChangingAttributesCount: 100000
   ChangingAttributesChildDepth: 2
   UnchangingAttributesCount: 0
-  _StatOwners: []
 --- !u!1 &1180270998
 GameObject:
   m_ObjectHideFlags: 0

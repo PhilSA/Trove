@@ -50,7 +50,7 @@ public struct StatModifier : IBufferElementData, IStatsModifier<StatModifier.Sta
 
     // TODO: how to inform of the fact that it's not the user's job to assign ID and AffectedStat
     public uint Id { get; set; }
-    public StatHandle AffectedStat { get; set; }
+    public StatHandle AffectedStatHandle { get; set; }
 
     public Type ModifierType;
     public float ValueA;

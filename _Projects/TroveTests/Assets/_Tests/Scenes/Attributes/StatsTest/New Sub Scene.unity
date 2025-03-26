@@ -42,7 +42,8 @@ RenderSettings:
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 12
+  serializedVersion: 13
+  m_BakeOnSceneLoad: 0
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -130,12 +131,12 @@ GameObject:
   - component: {fileID: 1663116737}
   - component: {fileID: 1663116739}
   m_Layer: 0
-  m_Name: StatsTester
+  m_Name: StatsV2Tester
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1663116737
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -181,7 +182,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b07cde916a7dee8408fb0be7daf7a6f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BatchRecomputeUpdatesCount: 3
+  BatchRecomputeUpdatesCount: 0
   EndWithRecomputeImmediate: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

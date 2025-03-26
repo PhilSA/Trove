@@ -13,7 +13,9 @@ public class OOPStatsTester : MonoBehaviour
     public int ChangingAttributesChildDepth;
     public int UnchangingAttributesCount;
 
-    public List<OOP_StatOwner> _StatOwners = new List<OOP_StatOwner>();
+    [NonSerialized]
+    private List<OOP_StatOwner> _StatOwners = new List<OOP_StatOwner>();
+    [NonSerialized]
     private List<OOP_StatOwner> _UpdatingStatOwners = new List<OOP_StatOwner>();
 
     void Start()
