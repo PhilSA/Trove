@@ -179,7 +179,7 @@ namespace Trove
             byte* startPtr = byteArrayPtr + (long)byteIndex;
             byte* destPtr = startPtr + (long)UnsafeUtility.SizeOf<T>();
             int copySize = endByteIndex - byteIndex;
-            UnsafeUtility.MemCpy(destPtr, startPtr, copySize);
+            UnsafeUtility.MemMove(destPtr, startPtr, copySize);
             WriteValue(byteArrayPtr, byteIndex, value);
         }
 
@@ -191,7 +191,7 @@ namespace Trove
             byte* startPtr = byteArrayPtr + (long)byteIndex;
             byte* destPtr = startPtr + (long)UnsafeUtility.SizeOf<T1>() + (long)UnsafeUtility.SizeOf<T2>();
             int copySize = endByteIndex - byteIndex;
-            UnsafeUtility.MemCpy(destPtr, startPtr, copySize);
+            UnsafeUtility.MemMove(destPtr, startPtr, copySize);
             WriteValues(byteArrayPtr, byteIndex, value1, value2);
         }
 
@@ -201,7 +201,7 @@ namespace Trove
             byte* startPtr = byteArrayPtr + (long)byteIndex;
             byte* destPtr = startPtr + (long)valueSize;
             int copySize = endByteIndex - byteIndex;
-            UnsafeUtility.MemCpy(destPtr, startPtr, copySize);
+            UnsafeUtility.MemMove(destPtr, startPtr, copySize);
             WriteValue(byteArrayPtr, byteIndex, value, valueSize);
         }
 
@@ -228,22 +228,9 @@ namespace Trove
             byte* destPtr = byteArrayPtr + (long)byteIndex;
             byte* startPtr = destPtr + (long)valueSize;
             int copySize = byteArrayLength - (byteIndex + valueSize);
-            UnsafeUtility.MemCpy(destPtr, startPtr, copySize);
+            UnsafeUtility.MemMove(destPtr, startPtr, copySize);
             newByteArrayLength = byteArrayLength - valueSize;
         }
-
-        // TODO: Can't remember what that big comments thing meant?
-        // TODO: Make sure I use MemMove instead of MemCpy when ranges could overlap
-        ///////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////  ///////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AddValue<T>(ref NativeStream.Writer stream, T value)
