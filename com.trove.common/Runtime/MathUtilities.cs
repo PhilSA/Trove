@@ -335,5 +335,11 @@ namespace Trove
             rotation = math.mul(rotation, addedRotation);
             position = aroundPoint + math.mul(rotation, localPointToTranslation);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool RangesOverlap(int startA, int lengthA, int startB, int lengthB)
+        {
+            return startA < (startB + lengthB) && startB < (startA + lengthA);
+        }
     }
 }

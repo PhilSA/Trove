@@ -3,7 +3,6 @@
     "com.trove.attributes": "file:../../../com.trove.attributes",
     "com.trove.common": "file:../../../com.trove.common",
     "com.trove.eventsystems": "file:../../../com.trove.eventsystems",
-    "com.trove.objecthandles": "file:../../../com.trove.objecthandles",
     "com.trove.polymorphicstructs": "file:../../../com.trove.polymorphicstructs",
     "com.trove.tweens": "file:../../../com.trove.tweens",
     "com.trove.utilityai": "file:../../../com.trove.utilityai",

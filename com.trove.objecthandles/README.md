@@ -1,2 +1,0 @@
-
-# Trove Object Handles
