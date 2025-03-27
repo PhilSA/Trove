@@ -448,6 +448,18 @@ namespace Trove
             }
         }
 
+        public static int PoolCalculateElementsCount<T>(in NativeList<T> dataBuffer,ref NativeList<IndexRange> freeIndexRange)
+            where T : unmanaged
+        {
+            int poolCapacity = dataBuffer.Length;
+            int freeElementsCount = 0;
+            for (int i = 0; i < freeIndexRange.Length; i++)
+            {
+                freeElementsCount += freeIndexRange[i].Length;
+            }
+            return poolCapacity - freeElementsCount;
+        }
+
         public static void PoolAdd<T>(ref NativeList<T> dataBuffer,
             ref NativeList<IndexRange> freeIndexRanges, in T element, out int elementIndex,
             float growFactor = 1.5f)
@@ -652,6 +664,18 @@ namespace Trove
                     freeIndexRanges.Add(new IndexRange { Start = initialCapacity, Length = newCapacity - initialCapacity });
                 }
             }
+        }
+
+        public static int PoolCalculateElementsCount<T>(in DynamicBuffer<T> dataBuffer,ref DynamicBuffer<IndexRange> freeIndexRange)
+            where T : unmanaged
+        {
+            int poolCapacity = dataBuffer.Length;
+            int freeElementsCount = 0;
+            for (int i = 0; i < freeIndexRange.Length; i++)
+            {
+                freeElementsCount += freeIndexRange[i].Length;
+            }
+            return poolCapacity - freeElementsCount;
         }
 
         public static void PoolAdd<T>(ref DynamicBuffer<T> dataBuffer,
