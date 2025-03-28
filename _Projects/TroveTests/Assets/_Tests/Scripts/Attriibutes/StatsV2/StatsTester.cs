@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Trove.Stats;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
@@ -12,12 +13,50 @@ public struct StatsTester : IComponentData
     public int UnchangingAttributesCount;
     public bool MakeOtherStatsDependOnFirstStatOfChangingAttributes;
 
+    public bool SupportStatsWriteback;
+
     public bool HasInitialized;
 }
 
-// TODO: configurable buffer capacities for all stat buffer types
-[InternalBufferCapacity(0)]
-public struct StatModifier : IBufferElementData, IStatsModifier<StatModifier.Stack>
+public enum StatType
+{
+    A = 0,
+    B, 
+    C,
+}
+
+public struct TestStatCustomData
+{
+    public Entity Entity;
+    public StatType StatType;
+
+    public TestStatCustomData(Entity entity, StatType statType)
+    {
+        Entity = entity;
+        StatType = statType;
+    }
+}
+
+// TODO: make builtin?
+public struct StatHandle
+{
+    public int Index;
+    public float Value;
+
+    public static StatHandle CreateUnititialized(float baseValue)
+    {
+        return new StatHandle { Index = -1, Value = baseValue };
+    }
+}
+
+public struct TestStatOwner : IComponentData
+{
+    public StatHandle StatA;
+    public StatHandle StatB;
+    public StatHandle StatC;
+}
+
+public struct TestStatModifier : IBufferElementData, IStatsModifier<TestStatModifier.Stack>
 {
     public enum Type
     {
@@ -40,69 +79,65 @@ public struct StatModifier : IBufferElementData, IStatsModifier<StatModifier.Sta
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Apply(ref Trove.Stats.Stat stat)
+        public void Apply(ref float statBaseValue, ref float statValue)
         {
-            stat.Value = stat.BaseValue;
-            stat.Value += Add;
-            stat.Value *= AddMultiply;
+            statValue = statBaseValue;
+            statValue += Add;
+            statValue *= AddMultiply;
         }
     }
-
-    // TODO: how to inform of the fact that it's not the user's job to assign ID and AffectedStat
-    public uint Id { get; set; }
-    public StatHandle AffectedStatHandle { get; set; }
+    
+    public uint ID { get; set; }
 
     public Type ModifierType;
     public float ValueA;
-    public StatHandle StatA;
+    public int StatAIndex;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddObservedStatsToList(ref UnsafeList<StatHandle> observedStats)
+    public void AddObservedStatsToList(ref NativeList<int> observedStatIndexes)
     {
         switch (ModifierType)
         {
             case (Type.AddFromStat):
             case (Type.AddMultiplierFromStat):
-                observedStats.Add(StatA);
+                observedStatIndexes.Add(StatAIndex);
                 break;
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Apply(
-        ref Stack stack,
-        Entity cachedEntity,
-        ref DynamicBuffer<Trove.Stats.Stat> cachedStatsBuffer,
-        ref BufferLookup<Trove.Stats.Stat> statsBufferLookup)
+    public void Apply(in NativeList<Stat> stats, ref Stack stack)
     {
         switch (ModifierType)
         {
             case (Type.Add):
-                {
-                    stack.Add += ValueA;
-                    break;
-                }
+            {
+                stack.Add += ValueA;
+                break;
+            }
             case (Type.AddFromStat):
+            {
+                Stat statA = stats[StatAIndex];
+                if (statA.IsCreated)
                 {
-                    if (StatUtilities.TryResolveStat(StatA, cachedEntity, ref cachedStatsBuffer, ref statsBufferLookup, out Stat resolvedStat))
-                    {
-                        stack.Add += resolvedStat.Value;
-                    }
-                    break;
+                    stack.Add += statA.Value;
                 }
+                break;
+            }
             case (Type.AddMultiplier):
-                {
-                    stack.AddMultiply += ValueA;
-                    break;
-                }
+            {
+                stack.AddMultiply += ValueA;
+                break;
+            }
             case (Type.AddMultiplierFromStat):
+            {
+                Stat statA = stats[StatAIndex];
+                if (statA.IsCreated)
                 {
-                    if (StatUtilities.TryResolveStat(StatA, cachedEntity, ref cachedStatsBuffer, ref statsBufferLookup, out Stat resolvedStat))
-                    {
-                        stack.AddMultiply += resolvedStat.Value;
-                    }
-                    break;
+                    stack.AddMultiply += statA.Value;
                 }
+                break;
+            }
         }
     }
 }

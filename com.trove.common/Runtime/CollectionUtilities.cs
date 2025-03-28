@@ -20,7 +20,6 @@ namespace Trove
     /// </summary>
     public struct PoolList<T> where T : unmanaged
     {
-
         private int _length;
         private float _growFactor;
         private float _poolGrowFactor;
@@ -32,8 +31,7 @@ namespace Trove
 
         #region NativeList PoolList
         public static PoolList<T> Create(ref NativeList<T> dataBuffer, ref NativeList<IndexRange> freeIndexRanges,
-            int capacity,
-            float poolListGrowFactor = 1.5f, float poolGrowFactor = 1.5f)
+            int capacity, float poolListGrowFactor = 1.5f, float poolGrowFactor = 1.5f)
         {
             if (capacity < 1)
             {
@@ -57,17 +55,16 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetElement(in PoolList<T> poolList, ref NativeList<T> dataBuffer, int index,
-            out T element)
+        public static T GetElement(in PoolList<T> poolList, ref NativeList<T> dataBuffer, int index)
         {
             if (CheckIndexValid(in poolList, index))
             {
-                element = dataBuffer[poolList._rangeInPool.Start + index];
-                return true;
+                return dataBuffer[poolList._rangeInPool.Start + index];
             }
-
-            element = default;
-            return false;
+            else
+            {
+                throw new IndexOutOfRangeException();
+            }
         }
 
         public static unsafe void ResolveUnsafe(in PoolList<T> poolList, ref NativeList<T> dataBuffer,
@@ -414,6 +411,7 @@ namespace Trove
             freeIndexRanges.Clear();
             freeIndexRanges.Add(new IndexRange { Start = 0, Length = capacity });
             
+            dataBuffer.SetCapacity(capacity);
             dataBuffer.Clear();
             dataBuffer.Resize(capacity, NativeArrayOptions.ClearMemory);
         }
@@ -427,23 +425,34 @@ namespace Trove
         {
             if (newCapacity > dataBuffer.Length)
             {
-                ref IndexRange lastFreeRange =
-                    ref UnsafeUtility.ArrayElementAsRef<IndexRange>(freeIndexRanges.GetUnsafePtr(), freeIndexRanges.Length - 1);
-                
                 int initialCapacity = dataBuffer.Length;
-                
+
                 // Resize datas buffer
                 dataBuffer.Resize(newCapacity, NativeArrayOptions.ClearMemory);
-                
-                // Check if we can just expand last range
-                if (lastFreeRange.Start + lastFreeRange.Length == dataBuffer.Length)
+
+                if (freeIndexRanges.Length > 0)
                 {
-                    freeIndexRanges.Length += newCapacity - initialCapacity;
+                    ref IndexRange lastFreeRange =
+                        ref UnsafeUtility.ArrayElementAsRef<IndexRange>(freeIndexRanges.GetUnsafePtr(),
+                            freeIndexRanges.Length - 1);
+
+                    // Check if we can just expand last range (if it ended at the capacity before resize)
+                    if (lastFreeRange.Start + lastFreeRange.Length == initialCapacity)
+                    {
+                        lastFreeRange.Length += newCapacity - initialCapacity;
+                    }
+                    // If not, add new range
+                    else
+                    {
+                        freeIndexRanges.Add(new IndexRange
+                            { Start = initialCapacity, Length = newCapacity - initialCapacity });
+                    }
                 }
-                // If not, add new range
+                // If there were no free ranges left at all, add new one
                 else
                 {
-                    freeIndexRanges.Add(new IndexRange { Start = initialCapacity, Length = newCapacity - initialCapacity });
+                    freeIndexRanges.Add(new IndexRange
+                        { Start = initialCapacity, Length = newCapacity - initialCapacity });
                 }
             }
         }
@@ -498,15 +507,19 @@ namespace Trove
             }
 
             // If reached this point, we haven't found a valid range. Resize pool to accomodate
-            int newCapacity = math.max((int)math.ceil(freeIndexRanges.Length * growFactor),
-                freeIndexRanges.Length + rangeLength);
+            int newCapacity = math.max((int)math.ceil(dataBuffer.Length * growFactor),
+                dataBuffer.Length + rangeLength);
             PoolResize(ref dataBuffer, ref freeIndexRanges, newCapacity);
 
             int lastRangeIndex = freeIndexRanges.Length - 1;
             ref IndexRange lastIndexRange =
                 ref UnsafeUtility.ArrayElementAsRef<IndexRange>(freeIndexRanges.GetUnsafePtr(),
                     lastRangeIndex);
-
+ 
+            if (!(lastIndexRange.Length >= rangeLength))
+            {
+                int a = 0;
+            }
             Assert.IsTrue(lastIndexRange.Length >= rangeLength);
 
             firstElementIndex = lastIndexRange.Start;

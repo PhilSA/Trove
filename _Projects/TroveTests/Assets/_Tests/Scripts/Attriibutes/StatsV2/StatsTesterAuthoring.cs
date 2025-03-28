@@ -9,6 +9,7 @@ class StatsTesterAuthoring : MonoBehaviour
     public int ChangingAttributesChildDepth;
     public int UnchangingAttributesCount;
     public bool MakeOtherStatsDependOnFirstStatOfChangingAttributes;
+    public bool SupportStatsWriteback;
 
     class Baker : Baker<StatsTesterAuthoring>
     {
@@ -23,6 +24,8 @@ class StatsTesterAuthoring : MonoBehaviour
                 ChangingAttributesChildDepth = authoring.ChangingAttributesChildDepth,
                 UnchangingAttributesCount = authoring.UnchangingAttributesCount,
                 MakeOtherStatsDependOnFirstStatOfChangingAttributes = authoring.MakeOtherStatsDependOnFirstStatOfChangingAttributes,
+                
+                SupportStatsWriteback = authoring.SupportStatsWriteback,
             });
         }
     }

@@ -1,234 +1,141 @@
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+
 using Trove.Stats;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
-using Unity.Jobs;
-using Trove.EventSystems;
-
-
-//[assembly: RegisterGenericComponentType(typeof(DirtyStatsMask<DirtyStatsMaskValue>))]
-[assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.BatchRecomputeDirtyStatsJob))]
-[assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.RecomputeDirtyStatsImmediateJob))]
-[assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.EnqueueDirtyStatsForRecomputeImmediateJob))]
-[assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.ApplyHasDirtyStatsJob))]
-[assembly: RegisterGenericJobType(typeof(StatsUpdateSubSystem<StatModifier, StatModifier.Stack>.ProcessGlobalStatEventsJob))]
-
-// Stat event jobs
-[assembly: RegisterGenericComponentType(typeof(GlobalStatEventsSingleton<StatModifier, StatModifier.Stack>))]
-[assembly: RegisterGenericJobType(typeof(EventClearListJob<StatEvent<StatModifier, StatModifier.Stack>>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferQueueToListJob<StatEvent<StatModifier, StatModifier.Stack>>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferStreamToListJob<StatEvent<StatModifier, StatModifier.Stack>>))]
-
-//[StructLayout(LayoutKind.Explicit)]
-//public struct DirtyStatsMaskValue : IDirtyStatsBitMask
-//{
-//    // Each ulong allows up to 64 stats
-//    [FieldOffset(0)]
-//    public ulong A;
-
-//    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//    public bool GetSubMask(uint index, out ulong submask)
-//    {
-//        switch (index)
-//        {
-//            case 0:
-//                submask = A;
-//                return true;
-//        }
-//        submask = default;
-//        return false;
-//    }
-
-//    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//    public int GetSubMaskCount()
-//    {
-//        return 1;
-//    }
-
-//    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//    public void SetSubMask(uint index, ulong submask)
-//    {
-//        switch (index)
-//        {
-//            case 0:
-//                A = submask;
-//                break;
-//        }
-//    }
-//}
 
 public struct UpdatingStat : IComponentData
 { }
 
-[UpdateBefore(typeof(StatsUpdateSystem))]
 partial struct StatsTesterSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<StatsTester>();
+        state.RequireForUpdate<StatsSingleton>();
     }
-
+    
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         ref StatsTester tester = ref SystemAPI.GetSingletonRW<StatsTester>().ValueRW;
-
+        StatsWorld<TestStatModifier, TestStatModifier.Stack, TestStatCustomData> statsWorld = 
+            SystemAPI.GetSingletonRW<StatsSingleton>().ValueRO.StatsWorld;
+        
+        ComponentLookup<TestStatOwner> statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
+        
         if (!tester.HasInitialized)
         {
             state.EntityManager.CompleteAllTrackedJobs();
 
-            UnsafeList<Trove.Stats.StatHandle> tmpObservedStatsList = new UnsafeList<Trove.Stats.StatHandle>(10, Allocator.Temp);
-
             for (int i = 0; i < tester.UnchangingAttributesCount; i++)
             {
-                state.EntityManager.Instantiate(tester.StatOwnerPrefab);
+                Entity newStatOwnerEntity = state.EntityManager.Instantiate(tester.StatOwnerPrefab);
+                statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
+                InitStatOwner(newStatOwnerEntity, ref statsOwnerLookup, ref statsWorld, tester.SupportStatsWriteback);
             }
 
             for (int i = 0; i < tester.ChangingAttributesCount; i++)
             {
                 Entity observedEntity = state.EntityManager.Instantiate(tester.StatOwnerPrefab);
                 state.EntityManager.AddComponentData(observedEntity, new UpdatingStat());
+                statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
+                InitStatOwner(observedEntity, ref statsOwnerLookup, ref statsWorld, tester.SupportStatsWriteback);
+                TestStatOwner observedStatOwner = statsOwnerLookup[observedEntity];
 
                 if(tester.MakeOtherStatsDependOnFirstStatOfChangingAttributes)
                 {
-                    BufferLookup<Trove.Stats.StatObserver> statObserversBufferLookup = SystemAPI.GetBufferLookup<Trove.Stats.StatObserver>(false);
-                    ComponentLookup<Trove.Stats.DirtyStatsMask> dirtyStatsMaskLookup = SystemAPI.GetComponentLookup<Trove.Stats.DirtyStatsMask>(false);
-                    Trove.Stats.StatOwner statOwner = state.EntityManager.GetComponentData<StatOwner>(observedEntity);
-                    ref Trove.Stats.DirtyStatsMask dirtyStatsMask = ref dirtyStatsMaskLookup.GetRefRW(observedEntity).ValueRW;
-                    EnabledRefRW<Trove.Stats.DirtyStatsMask> hasDirtyStatsEnabledRefRW = dirtyStatsMaskLookup.GetEnabledRefRW<Trove.Stats.DirtyStatsMask>(observedEntity);
-                    DynamicBuffer<StatModifier> statModifiersBuffer = state.EntityManager.GetBuffer<StatModifier>(observedEntity);
-                    DynamicBuffer<Trove.Stats.StatObserver> statObserversBuffer = state.EntityManager.GetBuffer<Trove.Stats.StatObserver>(observedEntity);
-
-                    ModifierHandle modifierHandle1 = StatUtilities.AddModifier<StatModifier, StatModifier.Stack>(
-                        new Trove.Stats.StatHandle(observedEntity, 1),
-                        new StatModifier
+                    statsWorld.AddStatModifier(
+                        observedStatOwner.StatB.Index,
+                        new TestStatModifier
                         {
-                            ModifierType = StatModifier.Type.AddFromStat,
-                            StatA = new StatHandle(observedEntity, 0),
+                            ModifierType = TestStatModifier.Type.AddFromStat,
+                            StatAIndex = observedStatOwner.StatA.Index,
                             ValueA = 0f,
                         },
-                        ref statOwner,
-                        ref dirtyStatsMask,
-                        hasDirtyStatsEnabledRefRW,
-                        ref statModifiersBuffer,
-                        ref statObserversBuffer,
-                        ref dirtyStatsMaskLookup,
-                        ref statObserversBufferLookup,
-                        ref tmpObservedStatsList);
-
-                    ModifierHandle modifierHandle2 = StatUtilities.AddModifier<StatModifier, StatModifier.Stack>(
-                        new Trove.Stats.StatHandle(observedEntity, 2),
-                        new StatModifier
+                        out StatModifierHandle modifierHandle);
+                    
+                    statsWorld.AddStatModifier(
+                        observedStatOwner.StatC.Index,
+                        new TestStatModifier
                         {
-                            ModifierType = StatModifier.Type.AddFromStat,
-                            StatA = new StatHandle(observedEntity, 0),
+                            ModifierType = TestStatModifier.Type.AddFromStat,
+                            StatAIndex = observedStatOwner.StatB.Index,
                             ValueA = 0f,
                         },
-                        ref statOwner,
-                        ref dirtyStatsMask,
-                        hasDirtyStatsEnabledRefRW,
-                        ref statModifiersBuffer,
-                        ref statObserversBuffer,
-                        ref dirtyStatsMaskLookup,
-                        ref statObserversBufferLookup,
-                        ref tmpObservedStatsList);
+                        out modifierHandle);
                 }
 
                 for (int j = 0; j < tester.ChangingAttributesChildDepth; j++)
                 {
-                    Entity observerEntity = state.EntityManager.Instantiate(tester.StatOwnerPrefab);
-
-                    BufferLookup<Trove.Stats.StatObserver> statObserversBufferLookup = SystemAPI.GetBufferLookup<Trove.Stats.StatObserver>(false);
-                    ComponentLookup<Trove.Stats.DirtyStatsMask> dirtyStatsMaskLookup = SystemAPI.GetComponentLookup<Trove.Stats.DirtyStatsMask>(false);
-                    Trove.Stats.StatOwner statOwner = state.EntityManager.GetComponentData<StatOwner>(observerEntity);
-                    DynamicBuffer<StatModifier> statModifiersBuffer = state.EntityManager.GetBuffer<StatModifier>(observerEntity);
-                    DynamicBuffer<Trove.Stats.StatObserver> statObserversBuffer = state.EntityManager.GetBuffer<Trove.Stats.StatObserver>(observerEntity);
-                    ref Trove.Stats.DirtyStatsMask dirtyStatsMask = ref dirtyStatsMaskLookup.GetRefRW(observerEntity).ValueRW;
-                    EnabledRefRW<Trove.Stats.DirtyStatsMask> hasDirtyStatsEnabledRefRW = dirtyStatsMaskLookup.GetEnabledRefRW<Trove.Stats.DirtyStatsMask>(observerEntity);
-
-                    ModifierHandle modifierHandle = StatUtilities.AddModifier<StatModifier, StatModifier.Stack>(
-                        new Trove.Stats.StatHandle(observerEntity, 0),
-                        new StatModifier
+                    Entity newObserverEntity = state.EntityManager.Instantiate(tester.StatOwnerPrefab);
+                    statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
+                    InitStatOwner(newObserverEntity, ref statsOwnerLookup, ref statsWorld, tester.SupportStatsWriteback);
+                    TestStatOwner newObserverStatOwner = statsOwnerLookup[newObserverEntity];
+                        
+                    statsWorld.AddStatModifier(
+                        newObserverStatOwner.StatA.Index,
+                        new TestStatModifier
                         {
-                            ModifierType = StatModifier.Type.AddFromStat,
-                            StatA = new StatHandle(observedEntity, 0),
+                            ModifierType = TestStatModifier.Type.AddFromStat,
+                            StatAIndex = observedStatOwner.StatA.Index,
                             ValueA = 0f,
                         },
-                        ref statOwner,
-                        ref dirtyStatsMask,
-                        hasDirtyStatsEnabledRefRW,
-                        ref statModifiersBuffer,
-                        ref statObserversBuffer,
-                        ref dirtyStatsMaskLookup,
-                        ref statObserversBufferLookup,
-                        ref tmpObservedStatsList);
+                        out StatModifierHandle modifierHandle);
 
-                    observedEntity = observerEntity;
+                    observedStatOwner = newObserverStatOwner;
                 }
             }
 
-            tmpObservedStatsList.Dispose();
             tester.HasInitialized = true;
         }
 
         state.Dependency = new UpdatingStatsJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime,
-            DirtyStatsMaskLookup = SystemAPI.GetComponentLookup<DirtyStatsMask>(false),
+            StatsWorld = statsWorld,
+        }.Schedule(state.Dependency);
+
+        state.Dependency = new StatGetValueJob()
+        {
+            StatsWorld = statsWorld,
         }.ScheduleParallel(state.Dependency);
+    }
+
+    private static void InitStatOwner(Entity entity, ref ComponentLookup<TestStatOwner> statsOwnerLookup,
+        ref StatsWorld<TestStatModifier, TestStatModifier.Stack, TestStatCustomData> statsWorld, bool supportStatWriteback)
+    {
+        TestStatOwner statOwner = statsOwnerLookup[entity];
+        statsWorld.CreateStat(statOwner.StatA.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.A), out statOwner.StatA.Index);
+        statsWorld.CreateStat(statOwner.StatB.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.B), out statOwner.StatB.Index);
+        statsWorld.CreateStat(statOwner.StatC.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.C), out statOwner.StatC.Index);
+        statsOwnerLookup[entity] = statOwner;
     }
 
     [BurstCompile]
     [WithAll(typeof(UpdatingStat))]
-    [WithOptions(EntityQueryOptions.IgnoreComponentEnabledState)]
     public partial struct UpdatingStatsJob : IJobEntity
     {
         public float DeltaTime;
-        [NativeDisableParallelForRestriction]
-        public ComponentLookup<DirtyStatsMask> DirtyStatsMaskLookup;
+        public StatsWorld<TestStatModifier, TestStatModifier.Stack, TestStatCustomData> StatsWorld;
 
-        void Execute(
-            Entity entity, 
-            ref DynamicBuffer<Trove.Stats.Stat> statsBuffer)
+        void Execute(ref TestStatOwner statsOwner)
         {
-            Trove.Stats.Stat stat = statsBuffer[0];
-            stat.BaseValue += DeltaTime;
-            statsBuffer[0] = stat;
-             
-            StatUtilities.MarkStatForBatchRecompute_AssumeHasComponent(
-                new StatHandle(entity, 0),
-                ref DirtyStatsMaskLookup);
+            StatsWorld.AddStatBaseValue(statsOwner.StatA.Index, DeltaTime);
         }
     }
-}
-
-
-partial struct StatsUpdateSystem : ISystem
-{
-    private StatsUpdateSubSystem<StatModifier, StatModifier.Stack> _statsUpdateSubSystem;
 
     [BurstCompile]
-    public void OnCreate(ref SystemState state)
+    public partial struct StatGetValueJob : IJobEntity
     {
-        state.RequireForUpdate<StatsTester>();
+        [ReadOnly]
+        public StatsWorld<TestStatModifier, TestStatModifier.Stack, TestStatCustomData> StatsWorld;
 
-        _statsUpdateSubSystem = new StatsUpdateSubSystem<StatModifier, StatModifier.Stack>();
-        _statsUpdateSubSystem.OnCreate(ref state);
-    }
-
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    {
-        _statsUpdateSubSystem.OnDestroy(ref state);
-    }
-
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        _statsUpdateSubSystem.OnUpdate(ref state);
+        void Execute(ref TestStatOwner statsOwner)
+        {
+            statsOwner.StatA.Value = StatsWorld.GetStat(statsOwner.StatA.Index).Value;
+        }
     }
 }
