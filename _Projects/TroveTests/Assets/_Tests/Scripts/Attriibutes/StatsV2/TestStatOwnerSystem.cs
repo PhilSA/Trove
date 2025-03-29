@@ -6,7 +6,7 @@ using Unity.Jobs;
 
 public struct StatsSingleton : IComponentData
 {
-    public StatsWriter<,> StatsWriter;
+    public StatsWorld<,> StatsWorld;
 }
 
 /// <summary>
@@ -14,7 +14,7 @@ public struct StatsSingleton : IComponentData
 /// </summary>
 partial struct TestStatSystem : ISystem
 {
-    private StatsWriter<,> _statsWriter;
+    private StatsWorld<,> _statsWorld;
     
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -23,7 +23,7 @@ partial struct TestStatSystem : ISystem
         state.RequireForUpdate<StatsSingleton>();
         
         // Create stats world
-        _statsWriter = new StatsWriter<,>(
+        _statsWorld = new StatsWorld<,>(
             10000,
             10,
             10,
@@ -33,27 +33,27 @@ partial struct TestStatSystem : ISystem
         Entity singletonEntity = state.EntityManager.CreateEntity();
         state.EntityManager.AddComponentData(singletonEntity, new StatsSingleton
         {
-            StatsWriter = _statsWriter,
+            StatsWorld = _statsWorld,
         });
     }
 
     [BurstCompile]
     public void OnDestroy(ref SystemState state)
     {
-        _statsWriter.Dispose(state.Dependency);
+        _statsWorld.Dispose(state.Dependency);
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        StatsWriter<,> statsWriter = 
-            SystemAPI.GetSingletonRW<StatsSingleton>().ValueRW.StatsWriter;
+        StatsWorld<,> statsWorld = 
+            SystemAPI.GetSingletonRW<StatsSingleton>().ValueRW.StatsWorld;
         StatsTester statsTester = SystemAPI.GetSingletonRW<StatsTester>().ValueRO;
 
         state.Dependency = new StatChangeEventsJob
         {
             SupportWriteback = statsTester.SupportStatsWriteback,
-            StatsWriter = statsWriter,
+            StatsWorld = statsWorld,
             TestStatOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false),
         }.Schedule(state.Dependency);
     }
@@ -62,16 +62,16 @@ partial struct TestStatSystem : ISystem
     public struct StatChangeEventsJob : IJob
     {
         public bool SupportWriteback;
-        public StatsWriter<,> StatsWriter;
+        public StatsWorld<,> StatsWorld;
         public ComponentLookup<TestStatOwner> TestStatOwnerLookup;
         
         public void Execute()
         {
             // Stat change events
-            for (int i = 0; i < StatsWriter.StatChangeEvents.Length; i++)
+            for (int i = 0; i < StatsWorld.StatChangeEvents.Length; i++)
             {
-                StatChangeEvent changeEvent = StatsWriter.StatChangeEvents[i];
-                TestStatCustomData testStatCustomData = StatsWriter.GetStatCustomData(changeEvent.StatIndex);
+                StatChangeEvent changeEvent = StatsWorld.StatChangeEvents[i];
+                TestStatCustomData testStatCustomData = StatsWorld.GetStatCustomData(changeEvent.StatIndex);
 
                 if (TestStatOwnerLookup.TryGetComponent(testStatCustomData.Entity, out TestStatOwner testStatOwner))
                 {
@@ -93,7 +93,7 @@ partial struct TestStatSystem : ISystem
             }
 
             // Clear events
-            StatsWriter.StatChangeEvents.Clear();
+            StatsWorld.StatChangeEvents.Clear();
         }
     }
 }

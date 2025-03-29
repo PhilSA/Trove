@@ -21,8 +21,8 @@ partial struct StatsTesterSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         ref StatsTester tester = ref SystemAPI.GetSingletonRW<StatsTester>().ValueRW;
-        StatsWriter<,> statsWriter = 
-            SystemAPI.GetSingletonRW<StatsSingleton>().ValueRO.StatsWriter;
+        StatsWorld<,> statsWorld = 
+            SystemAPI.GetSingletonRW<StatsSingleton>().ValueRO.StatsWorld;
         
         ComponentLookup<TestStatOwner> statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
         
@@ -34,7 +34,7 @@ partial struct StatsTesterSystem : ISystem
             {
                 Entity newStatOwnerEntity = state.EntityManager.Instantiate(tester.StatOwnerPrefab);
                 statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
-                InitStatOwner(newStatOwnerEntity, ref statsOwnerLookup, ref statsWriter, tester.SupportStatsWriteback);
+                InitStatOwner(newStatOwnerEntity, ref statsOwnerLookup, ref statsWorld, tester.SupportStatsWriteback);
             }
 
             for (int i = 0; i < tester.ChangingAttributesCount; i++)
@@ -42,12 +42,12 @@ partial struct StatsTesterSystem : ISystem
                 Entity observedEntity = state.EntityManager.Instantiate(tester.StatOwnerPrefab);
                 state.EntityManager.AddComponentData(observedEntity, new UpdatingStat());
                 statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
-                InitStatOwner(observedEntity, ref statsOwnerLookup, ref statsWriter, tester.SupportStatsWriteback);
+                InitStatOwner(observedEntity, ref statsOwnerLookup, ref statsWorld, tester.SupportStatsWriteback);
                 TestStatOwner observedStatOwner = statsOwnerLookup[observedEntity];
 
                 if(tester.MakeOtherStatsDependOnFirstStatOfChangingAttributes)
                 {
-                    statsWriter.AddStatModifier(
+                    statsWorld.AddStatModifier(
                         observedStatOwner.StatB.Index,
                         new TestStatModifier
                         {
@@ -57,7 +57,7 @@ partial struct StatsTesterSystem : ISystem
                         },
                         out StatModifierHandle modifierHandle);
                     
-                    statsWriter.AddStatModifier(
+                    statsWorld.AddStatModifier(
                         observedStatOwner.StatC.Index,
                         new TestStatModifier
                         {
@@ -72,10 +72,10 @@ partial struct StatsTesterSystem : ISystem
                 {
                     Entity newObserverEntity = state.EntityManager.Instantiate(tester.StatOwnerPrefab);
                     statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
-                    InitStatOwner(newObserverEntity, ref statsOwnerLookup, ref statsWriter, tester.SupportStatsWriteback);
+                    InitStatOwner(newObserverEntity, ref statsOwnerLookup, ref statsWorld, tester.SupportStatsWriteback);
                     TestStatOwner newObserverStatOwner = statsOwnerLookup[newObserverEntity];
                         
-                    statsWriter.AddStatModifier(
+                    statsWorld.AddStatModifier(
                         newObserverStatOwner.StatA.Index,
                         new TestStatModifier
                         {
@@ -95,22 +95,22 @@ partial struct StatsTesterSystem : ISystem
         state.Dependency = new UpdatingStatsJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime,
-            StatsWriter = statsWriter,
+            StatsWorld = statsWorld,
         }.Schedule(state.Dependency);
 
         state.Dependency = new StatGetValueJob()
         {
-            StatsWriter = statsWriter,
+            StatsWorld = statsWorld,
         }.ScheduleParallel(state.Dependency);
     }
 
     private static void InitStatOwner(Entity entity, ref ComponentLookup<TestStatOwner> statsOwnerLookup,
-        ref StatsWriter<,> statsWriter, bool supportStatWriteback)
+        ref StatsWorld<,> statsWorld, bool supportStatWriteback)
     {
         TestStatOwner statOwner = statsOwnerLookup[entity];
-        statsWriter.CreateStat(statOwner.StatA.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.A), out statOwner.StatA.Index);
-        statsWriter.CreateStat(statOwner.StatB.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.B), out statOwner.StatB.Index);
-        statsWriter.CreateStat(statOwner.StatC.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.C), out statOwner.StatC.Index);
+        statsWorld.CreateStat(statOwner.StatA.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.A), out statOwner.StatA.Index);
+        statsWorld.CreateStat(statOwner.StatB.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.B), out statOwner.StatB.Index);
+        statsWorld.CreateStat(statOwner.StatC.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.C), out statOwner.StatC.Index);
         statsOwnerLookup[entity] = statOwner;
     }
 
@@ -119,11 +119,11 @@ partial struct StatsTesterSystem : ISystem
     public partial struct UpdatingStatsJob : IJobEntity
     {
         public float DeltaTime;
-        public StatsWriter<,> StatsWriter;
+        public StatsWorld<,> StatsWorld;
 
         void Execute(ref TestStatOwner statsOwner)
         {
-            StatsWriter.AddStatBaseValue(statsOwner.StatA.Index, DeltaTime);
+            StatsWorld.AddStatBaseValue(statsOwner.StatA.Index, DeltaTime);
         }
     }
 
@@ -131,11 +131,11 @@ partial struct StatsTesterSystem : ISystem
     public partial struct StatGetValueJob : IJobEntity
     {
         [ReadOnly]
-        public StatsWriter<,> StatsWriter;
+        public StatsWorld<,> StatsWorld;
 
         void Execute(ref TestStatOwner statsOwner)
         {
-            statsOwner.StatA.Value = StatsWriter.TryGetStat(statsOwner.StatA.Index).Value;
+            statsOwner.StatA.Value = StatsWorld.TryGetStat(statsOwner.StatA.Index).Value;
         }
     }
 }

@@ -14,6 +14,11 @@ namespace Trove
         public int Length;
     }
 
+    public interface ICompactMultiLinkedListElement
+    {
+        public int PrevElementIndex { get; set; }
+    }
+
     /// <summary>
     /// A list that occupies a contiguous range of indexes in a pool. It if grows, it could be reallocated
     /// elsewhere in the pool
@@ -380,6 +385,120 @@ namespace Trove
             return false;
         }
     }
+
+    /// <summary>
+    /// Iterates a specified linked list in a dynamic buffer containing multiple linked lists.
+    /// Also allows removing elements during iteration.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public struct CompactMultiLinkedListIterator<T> where T : unmanaged, ICompactMultiLinkedListElement
+    {
+        private int _iteratedElementIndex;
+        private int _prevIteratedElementIndex;
+        private T _iteratedElement;
+        
+        /// <summary>
+        /// Create the iterator
+        /// </summary>
+        public CompactMultiLinkedListIterator(int linkedListLastIndex)
+        {
+            _iteratedElementIndex = linkedListLastIndex;
+            _prevIteratedElementIndex = -1;
+            _iteratedElement = default;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool GetNext(ref DynamicBuffer<T> multiLinkedListsBuffer, out T element, out int elementIndex)
+        {
+            if (_iteratedElementIndex >= 0)
+            {
+                _iteratedElement = multiLinkedListsBuffer[_iteratedElementIndex];
+
+                element = _iteratedElement;
+                elementIndex = _iteratedElementIndex;
+                
+                // Move to next index but remember previous (used for removing)
+                _prevIteratedElementIndex = _iteratedElementIndex;
+                _iteratedElementIndex = _iteratedElement.PrevElementIndex;
+                
+                return true;
+            }
+
+            element = default;
+            elementIndex = -1;
+            return false;
+        }
+
+        /// <summary>
+        /// Note: will update the last indexes in the linkedListLastIndexes following removal.
+        /// Note: GetNext() must be called before this can be used.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RemoveCurrentIteratedElementAndUpdateIndexes(
+            ref DynamicBuffer<T> multiLinkedListsBuffer, 
+            ref NativeArray<int> linkedListLastIndexes,
+            out int firstUpdatedLastIndexIndex)
+        {
+            firstUpdatedLastIndexIndex = -1;
+            int removedElementIndex = _prevIteratedElementIndex;
+
+            if (removedElementIndex < 0)
+            {
+                return;
+            }
+
+            T removedElement = _iteratedElement;
+            
+            // Remove element
+            multiLinkedListsBuffer.RemoveAt(removedElementIndex);
+
+            // Iterate all last indexes and update them 
+            for (int i = 0; i < linkedListLastIndexes.Length; i++)
+            {
+                int tmpLastIndex = linkedListLastIndexes[i];
+                
+                // If the iterated last index is greater than the removed index, decrement it
+                if (tmpLastIndex > removedElementIndex)
+                {
+                    tmpLastIndex -= 1;
+                    linkedListLastIndexes[i] = tmpLastIndex;
+                    if (firstUpdatedLastIndexIndex < 0)
+                    {
+                        firstUpdatedLastIndexIndex = i;
+                    }
+                }
+                // If the iterated last index is the one we removed, update it with the prev index of the removed element
+                else if (tmpLastIndex == removedElementIndex)
+                {
+                    linkedListLastIndexes[i] = removedElement.PrevElementIndex;
+                    if (firstUpdatedLastIndexIndex < 0)
+                    {
+                        firstUpdatedLastIndexIndex = i;
+                    }
+                }
+            }
+
+            // Iterate all buffer elements starting from the removed index to update their prev indexes
+            for (int i = _iteratedElementIndex; i < multiLinkedListsBuffer.Length; i++)
+            {
+                T iteratedElement = multiLinkedListsBuffer[i];
+                
+                // If the prev index of this element is greater than the removed one, decrement it
+                if (iteratedElement.PrevElementIndex > removedElementIndex)
+                {
+                    iteratedElement.PrevElementIndex -= 1;
+                    multiLinkedListsBuffer[i] = iteratedElement;
+                }
+                // If the prev index of this element was the removed one, change its prev index to the removed one's
+                // prev index.
+                else if (iteratedElement.PrevElementIndex == removedElementIndex)
+                {
+                    iteratedElement.PrevElementIndex = removedElement.PrevElementIndex;
+                    multiLinkedListsBuffer[i] = iteratedElement;
+                }
+            }
+        }
+    }
     
     public static class CollectionUtilities
     {
@@ -400,7 +519,21 @@ namespace Trove
                 basePtr + (insertIndex * elemSize), 
                 (long)elemSize * (initialLength - insertIndex));
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void AddToCompactMultiLinkedList<T>(ref DynamicBuffer<T> multiLinkedListBuffer,
+            ref int listLastElementIndex, T addedElement)
+            where T : unmanaged, ICompactMultiLinkedListElement
+        {
+            // Add element at the end of the buffer, and remember the previous element index
+            int addIndex = multiLinkedListBuffer.Length;
+            addedElement.PrevElementIndex = listLastElementIndex;
+            multiLinkedListBuffer.Add(addedElement);
+
+            // Update the last element index
+            listLastElementIndex = addIndex;
+        }
+
         #region NativeList Pool
         public static void PoolInit<T>(ref NativeList<T> dataBuffer, ref NativeList<IndexRange> freeIndexRanges,
             int capacity)
