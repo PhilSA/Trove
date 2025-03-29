@@ -21,8 +21,8 @@ partial struct StatsTesterSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         ref StatsTester tester = ref SystemAPI.GetSingletonRW<StatsTester>().ValueRW;
-        StatsWorld<TestStatModifier, TestStatModifier.Stack, TestStatCustomData> statsWorld = 
-            SystemAPI.GetSingletonRW<StatsSingleton>().ValueRO.StatsWorld;
+        StatsWriter<,> statsWriter = 
+            SystemAPI.GetSingletonRW<StatsSingleton>().ValueRO.StatsWriter;
         
         ComponentLookup<TestStatOwner> statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
         
@@ -34,7 +34,7 @@ partial struct StatsTesterSystem : ISystem
             {
                 Entity newStatOwnerEntity = state.EntityManager.Instantiate(tester.StatOwnerPrefab);
                 statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
-                InitStatOwner(newStatOwnerEntity, ref statsOwnerLookup, ref statsWorld, tester.SupportStatsWriteback);
+                InitStatOwner(newStatOwnerEntity, ref statsOwnerLookup, ref statsWriter, tester.SupportStatsWriteback);
             }
 
             for (int i = 0; i < tester.ChangingAttributesCount; i++)
@@ -42,12 +42,12 @@ partial struct StatsTesterSystem : ISystem
                 Entity observedEntity = state.EntityManager.Instantiate(tester.StatOwnerPrefab);
                 state.EntityManager.AddComponentData(observedEntity, new UpdatingStat());
                 statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
-                InitStatOwner(observedEntity, ref statsOwnerLookup, ref statsWorld, tester.SupportStatsWriteback);
+                InitStatOwner(observedEntity, ref statsOwnerLookup, ref statsWriter, tester.SupportStatsWriteback);
                 TestStatOwner observedStatOwner = statsOwnerLookup[observedEntity];
 
                 if(tester.MakeOtherStatsDependOnFirstStatOfChangingAttributes)
                 {
-                    statsWorld.AddStatModifier(
+                    statsWriter.AddStatModifier(
                         observedStatOwner.StatB.Index,
                         new TestStatModifier
                         {
@@ -57,7 +57,7 @@ partial struct StatsTesterSystem : ISystem
                         },
                         out StatModifierHandle modifierHandle);
                     
-                    statsWorld.AddStatModifier(
+                    statsWriter.AddStatModifier(
                         observedStatOwner.StatC.Index,
                         new TestStatModifier
                         {
@@ -72,10 +72,10 @@ partial struct StatsTesterSystem : ISystem
                 {
                     Entity newObserverEntity = state.EntityManager.Instantiate(tester.StatOwnerPrefab);
                     statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
-                    InitStatOwner(newObserverEntity, ref statsOwnerLookup, ref statsWorld, tester.SupportStatsWriteback);
+                    InitStatOwner(newObserverEntity, ref statsOwnerLookup, ref statsWriter, tester.SupportStatsWriteback);
                     TestStatOwner newObserverStatOwner = statsOwnerLookup[newObserverEntity];
                         
-                    statsWorld.AddStatModifier(
+                    statsWriter.AddStatModifier(
                         newObserverStatOwner.StatA.Index,
                         new TestStatModifier
                         {
@@ -95,22 +95,22 @@ partial struct StatsTesterSystem : ISystem
         state.Dependency = new UpdatingStatsJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime,
-            StatsWorld = statsWorld,
+            StatsWriter = statsWriter,
         }.Schedule(state.Dependency);
 
         state.Dependency = new StatGetValueJob()
         {
-            StatsWorld = statsWorld,
+            StatsWriter = statsWriter,
         }.ScheduleParallel(state.Dependency);
     }
 
     private static void InitStatOwner(Entity entity, ref ComponentLookup<TestStatOwner> statsOwnerLookup,
-        ref StatsWorld<TestStatModifier, TestStatModifier.Stack, TestStatCustomData> statsWorld, bool supportStatWriteback)
+        ref StatsWriter<,> statsWriter, bool supportStatWriteback)
     {
         TestStatOwner statOwner = statsOwnerLookup[entity];
-        statsWorld.CreateStat(statOwner.StatA.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.A), out statOwner.StatA.Index);
-        statsWorld.CreateStat(statOwner.StatB.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.B), out statOwner.StatB.Index);
-        statsWorld.CreateStat(statOwner.StatC.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.C), out statOwner.StatC.Index);
+        statsWriter.CreateStat(statOwner.StatA.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.A), out statOwner.StatA.Index);
+        statsWriter.CreateStat(statOwner.StatB.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.B), out statOwner.StatB.Index);
+        statsWriter.CreateStat(statOwner.StatC.Value, supportStatWriteback, new TestStatCustomData(entity, StatType.C), out statOwner.StatC.Index);
         statsOwnerLookup[entity] = statOwner;
     }
 
@@ -119,11 +119,11 @@ partial struct StatsTesterSystem : ISystem
     public partial struct UpdatingStatsJob : IJobEntity
     {
         public float DeltaTime;
-        public StatsWorld<TestStatModifier, TestStatModifier.Stack, TestStatCustomData> StatsWorld;
+        public StatsWriter<,> StatsWriter;
 
         void Execute(ref TestStatOwner statsOwner)
         {
-            StatsWorld.AddStatBaseValue(statsOwner.StatA.Index, DeltaTime);
+            StatsWriter.AddStatBaseValue(statsOwner.StatA.Index, DeltaTime);
         }
     }
 
@@ -131,11 +131,11 @@ partial struct StatsTesterSystem : ISystem
     public partial struct StatGetValueJob : IJobEntity
     {
         [ReadOnly]
-        public StatsWorld<TestStatModifier, TestStatModifier.Stack, TestStatCustomData> StatsWorld;
+        public StatsWriter<,> StatsWriter;
 
         void Execute(ref TestStatOwner statsOwner)
         {
-            statsOwner.StatA.Value = StatsWorld.GetStat(statsOwner.StatA.Index).Value;
+            statsOwner.StatA.Value = StatsWriter.TryGetStat(statsOwner.StatA.Index).Value;
         }
     }
 }

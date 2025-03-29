@@ -37,18 +37,6 @@ public struct TestStatCustomData
     }
 }
 
-// TODO: make builtin?
-public struct StatHandle
-{
-    public int Index;
-    public float Value;
-
-    public static StatHandle CreateUnititialized(float baseValue)
-    {
-        return new StatHandle { Index = -1, Value = baseValue };
-    }
-}
-
 public struct TestStatOwner : IComponentData
 {
     public StatHandle StatA;
