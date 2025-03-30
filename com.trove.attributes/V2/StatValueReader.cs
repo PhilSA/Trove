@@ -8,33 +8,42 @@ namespace Trove.Stats
     /// </summary>
     public struct StatValueReader
     {
-        private CachedBufferLookup<Stat> _statsCachedLookup;
+        private BufferLookup<Stat> _statsLookup;
+        private byte _statsLookupExists;
+        private DynamicBuffer<Stat> _cachedBuffer;
 
-        internal StatValueReader(CachedBufferLookup<Stat> statsCachedLookup)
+        internal StatValueReader(BufferLookup<Stat> statsLookup)
         {
-            _statsCachedLookup = statsCachedLookup;
+            _statsLookup = statsLookup;
+            _statsLookupExists = 1;
+            _cachedBuffer = default;
         }
 
-        internal void CopyCachedData(CachedBufferLookup<Stat> otherCachedLookup)
+        internal StatValueReader(DynamicBuffer<Stat> cachedBuffer)
         {
-            _statsCachedLookup.CopyCachedData(otherCachedLookup);
-        }
-
-        internal void SetCachedData(Entity entity, DynamicBuffer<Stat> buffer)
-        {
-            _statsCachedLookup.SetCachedData(entity, buffer);
+            _statsLookup = default;
+            _statsLookupExists = 0;
+            _cachedBuffer = cachedBuffer;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetStat(StatHandle statHandle, out Stat stat)
         {
-            if (_statsCachedLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> statsBuffer))
+            if (_statsLookupExists == 1)
             {
-                if (statHandle.Index < statsBuffer.Length)
+                if (_statsLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> statsBuffer))
                 {
-                    stat = statsBuffer[statHandle.Index];
-                    return true;
+                    if (statHandle.Index < statsBuffer.Length)
+                    {
+                        stat = statsBuffer[statHandle.Index];
+                        return true;
+                    }
                 }
+            }
+            else if (statHandle.Index < _cachedBuffer.Length)
+            {
+                stat = _cachedBuffer[statHandle.Index];
+                return true;
             }
 
             stat = default;

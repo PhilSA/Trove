@@ -79,8 +79,8 @@ namespace Trove.Stats
                 }
             }
                 
-            CachedBufferLookup<Stat> mockStatsCachedLookup = default;
-            CachedBufferLookup<StatObserver> mockStatObserversCachedLookup = default;
+            BufferLookup<Stat> mockStatsLookup = default;
+            BufferLookup<StatObserver> mockStatObserversLookup = default;
             
             bool modifierAdded = StatsUtilities.AddModifierPhase2<TStatModifier, TStatModifierStack>(
                 true,
@@ -89,8 +89,8 @@ namespace Trove.Stats
                 ref StatsBuffer,
                 ref StatModifiersBuffer,
                 ref StatObserversBuffer,
-                ref mockStatsCachedLookup,
-                ref mockStatObserversCachedLookup,
+                ref mockStatsLookup,
+                ref mockStatObserversLookup,
                 ref _tmpModifierObservedStatsList,
                 ref _tmpStatObserversList);
 
@@ -120,9 +120,7 @@ namespace Trove.Stats
                     ref Stat statRef =
                         ref UnsafeUtility.ArrayElementAsRef<Stat>(StatsBuffer.GetUnsafePtr(), statHandle.Index);
 
-                    StatValueReader statValueReader = new StatValueReader();
-                    statValueReader.SetCachedData(Entity, StatsBuffer);
-                    
+                    StatValueReader statValueReader = new StatValueReader(StatsBuffer);
                     StatsUtilities.UpdateSingleStatCommon<TStatModifier, TStatModifierStack>(
                         statHandle,
                         ref statValueReader,

@@ -158,14 +158,18 @@ namespace Trove.Stats
             // Apply Modifiers
             TStatModifierStack modifierStack = new TStatModifierStack();
             modifierStack.Reset();
-            CompactMultiLinkedListIterator<TStatModifier> modifiersIterator =
-                new CompactMultiLinkedListIterator<TStatModifier>(statRef.LastModifierIndex);
-            while (modifiersIterator.GetNext(in statModifiersBuffer, out TStatModifier modifier, out int modifierIndex))
+            if (statRef.LastModifierIndex >= 0)
             {
-                modifier.Apply(
-                    ref statValueReader,
-                    ref modifierStack);
-                // TODO: give a way to say "the modifier depends on a now invalid stat and must be removed"
+                CompactMultiLinkedListIterator<TStatModifier> modifiersIterator =
+                    new CompactMultiLinkedListIterator<TStatModifier>(statRef.LastModifierIndex);
+                while (modifiersIterator.GetNext(in statModifiersBuffer, out TStatModifier modifier,
+                           out int modifierIndex))
+                {
+                    modifier.Apply(
+                        ref statValueReader,
+                        ref modifierStack);
+                    // TODO: give a way to say "the modifier depends on a now invalid stat and must be removed"
+                }
             }
             modifierStack.Apply(in statRef.BaseValue, ref statRef.Value);
 
@@ -184,12 +188,15 @@ namespace Trove.Stats
                 }
 
                 // Notify Observers (add to update list)
-                CompactMultiLinkedListIterator<StatObserver> observersIterator =
-                    new CompactMultiLinkedListIterator<StatObserver>(statRef.LastObserverIndex);
-                while (observersIterator.GetNext(in statObserversBuffer, out StatObserver observer,
-                           out int observerIndex))
+                if (statRef.LastObserverIndex >= 0)
                 {
-                    tmpUpdatedStatsList.Add(observer.ObserverHandle);
+                    CompactMultiLinkedListIterator<StatObserver> observersIterator =
+                        new CompactMultiLinkedListIterator<StatObserver>(statRef.LastObserverIndex);
+                    while (observersIterator.GetNext(in statObserversBuffer, out StatObserver observer,
+                               out int observerIndex))
+                    {
+                        tmpUpdatedStatsList.Add(observer.ObserverHandle);
+                    }
                 }
             }
         }
@@ -224,8 +231,8 @@ namespace Trove.Stats
             ref DynamicBuffer<Stat> statsBufferOnAffectedStatEntity,
             ref DynamicBuffer<TStatModifier> statModifiersBufferOnAffectedStatEntity,
             ref DynamicBuffer<StatObserver> statObserversBufferOnAffectedStatEntity,
-            ref CachedBufferLookup<Stat> statsCachedLookup,
-            ref CachedBufferLookup<StatObserver> statObserversCachedLookup,
+            ref BufferLookup<Stat> statsLookup,
+            ref BufferLookup<StatObserver> statObserversLookup,
             ref NativeList<StatHandle> tmpModifierObservedStatsList,
             ref NativeList<StatObserver> tmpStatObserversList)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData,
@@ -293,8 +300,8 @@ namespace Trove.Stats
                                 ref tmpStatObserversList);
                         }
                         // Update buffers so they represent the ones on the observer entity
-                        else if (statsCachedLookup.TryGetBuffer(iteratedObserverStatHandle.Entity, out DynamicBuffer<Stat> observerStatsBuffer) &&
-                                 statObserversCachedLookup.TryGetBuffer(iteratedObserverStatHandle.Entity, out DynamicBuffer<StatObserver> observerStatObserversBuffer))
+                        else if (statsLookup.TryGetBuffer(iteratedObserverStatHandle.Entity, out DynamicBuffer<Stat> observerStatsBuffer) &&
+                                 statObserversLookup.TryGetBuffer(iteratedObserverStatHandle.Entity, out DynamicBuffer<StatObserver> observerStatObserversBuffer))
                         {
                             StatsUtilities.AddObserversOfStatToList(
                                 iteratedObserverStatHandle,
@@ -332,8 +339,8 @@ namespace Trove.Stats
                             ref statObserversBufferOnAffectedStatEntity);
                     }
                     // Update buffers so they represent the ones on the observer entity
-                    else if (statsCachedLookup.TryGetBuffer(observedStatHandle.Entity, out DynamicBuffer<Stat> observedStatsBuffer) &&
-                               statObserversCachedLookup.TryGetBuffer(observedStatHandle.Entity,
+                    else if (statsLookup.TryGetBuffer(observedStatHandle.Entity, out DynamicBuffer<Stat> observedStatsBuffer) &&
+                               statObserversLookup.TryGetBuffer(observedStatHandle.Entity,
                                    out DynamicBuffer<StatObserver> observedStatObserversBuffer))
                     {
                         StatsUtilities.AddStatAsObserverOfOtherStat(
