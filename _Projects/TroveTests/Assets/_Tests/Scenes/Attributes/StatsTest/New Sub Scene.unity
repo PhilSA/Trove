@@ -151,9 +151,9 @@ MonoBehaviour:
   StatOwnerPrefab: {fileID: 8018081520556862554, guid: 7edf6eb4b9c94ff4ab2aa466033024e5,
     type: 3}
   ChangingAttributesCount: 100000
-  ChangingAttributesChildDepth: 2
+  ChangingAttributesChildDepth: 0
   UnchangingAttributesCount: 0
-  MakeLocalStatsDependOnEachOther: 0
+  MakeLocalStatsDependOnEachOther: 1
 --- !u!4 &890191725
 Transform:
   m_ObjectHideFlags: 0

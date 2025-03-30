@@ -25,6 +25,7 @@ public struct TestStatOwner : IComponentData
     public float tmp;
 }
 
+[InternalBufferCapacity(8)]
 public struct TestStatModifier : IBufferElementData, IStatsModifier<TestStatModifier.Stack>
 {
     public enum Type
@@ -76,7 +77,7 @@ public struct TestStatModifier : IBufferElementData, IStatsModifier<TestStatModi
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Apply(ref StatsHandler statsHandler, ref Stack stack)
+    public void Apply(ref StatsReader statsReader, ref Stack stack)
     {
         switch (ModifierType)
         {
@@ -87,7 +88,7 @@ public struct TestStatModifier : IBufferElementData, IStatsModifier<TestStatModi
             }
             case (Type.AddFromStat):
             {
-                if (statsHandler.TryGetStat(StatHandleA, out Stat statA))
+                if (statsReader.TryGetStat(StatHandleA, out Stat statA))
                 {
                     stack.Add += statA.Value;
                 }
@@ -100,7 +101,7 @@ public struct TestStatModifier : IBufferElementData, IStatsModifier<TestStatModi
             }
             case (Type.AddToMultiplierFromStat):
             {
-                if (statsHandler.TryGetStat(StatHandleA, out Stat statA))
+                if (statsReader.TryGetStat(StatHandleA, out Stat statA))
                 {
                     stack.Multiplier += statA.Value;
                 }

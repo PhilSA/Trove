@@ -58,11 +58,10 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool CreateStat(
+        internal static void CreateStat(
             Entity entity, 
             float baseValue, 
             bool produceChangeEvents, 
-            ref StatsOwner statsOwner,
             ref DynamicBuffer<Stat> statsBuffer,
             out StatHandle statHandle)
         {
@@ -83,24 +82,14 @@ namespace Trove.Stats
                 ProduceChangeEvents = produceChangeEvents ? (byte)1 : (byte)0,
             };
             
-            if (statsOwner.FastStatsStorage.HasRoom())
-            {
-                statHandle.Index = statsOwner.FastStatsStorage.Length;
-                statsOwner.FastStatsStorage.Add(newStat);
-                return true;
-            }
-            else
-            {
-                statHandle.Index = FastStatsStorage.Capacity + statsBuffer.Length;
-                statsBuffer.Add(newStat);
-                return true;
-            }
+            statHandle.Index = statsBuffer.Length;
+            statsBuffer.Add(newStat);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void UpdateSingleStatCommon<TStatModifier, TStatModifierStack>(
             StatHandle statHandle,
-            ref StatsHandler statsHandler,
+            ref StatsReader statsReader,
             ref Stat statRef,
             ref DynamicBuffer<TStatModifier> statModifiersBuffer,
             ref DynamicBuffer<StatObserver> statObserversBuffer,
@@ -122,7 +111,7 @@ namespace Trove.Stats
                            out int modifierIndex))
                 {
                     modifier.Apply(
-                        ref statsHandler,
+                        ref statsReader,
                         ref modifierStack);
                     // TODO: give a way to say "the modifier depends on a now invalid stat and must be removed"
                 }
@@ -187,136 +176,72 @@ namespace Trove.Stats
         internal static void AddStatAsObserverOfOtherStat(
             StatHandle observerStatHandle, 
             StatHandle observedStatHandle,
-            ref StatsOwner statsOwnerOfObservedStat,
-            ref SingleEntityStatsHandler statsHandlerForObservedStat,
+            ref DynamicBuffer<Stat> statsBufferOnObservedStat,
             ref DynamicBuffer<StatObserver> statObserversBufferOnObservedStatEntity)
         {
             Assert.IsTrue(observerStatHandle.Entity != Entity.Null);
 
-            if (statsHandlerForObservedStat.TryGetStat(observedStatHandle, in statsOwnerOfObservedStat, out Stat observedStat))
+            if (observedStatHandle.Index < statsBufferOnObservedStat.Length)
             {
+                Stat observedStat = statsBufferOnObservedStat[observedStatHandle.Index];
+                
                 CollectionUtilities.AddToCompactMultiLinkedList(
                     ref statObserversBufferOnObservedStatEntity,
                     ref observedStat.LastObserverIndex, 
                     new StatObserver { ObserverHandle = observerStatHandle });
-
-                statsHandlerForObservedStat.TrySetStat(observedStatHandle, observedStat, ref statsOwnerOfObservedStat);
+                
+                statsBufferOnObservedStat[observedStatHandle.Index] = observedStat;
             }
             // TODO: else?
         }
-    }
 
-    /// <summary>
-    /// Iterates a specified linked list in a dynamic buffer containing multiple linked lists.
-    /// Also allows removing elements during iteration.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public struct CompactMultiLinkedListIterator<T> where T : unmanaged, ICompactMultiLinkedListElement
-    {
-        private int _iteratedElementIndex;
-        private int _prevIteratedElementIndex;
-        private T _iteratedElement;
-        
-        /// <summary>
-        /// Create the iterator
-        /// </summary>
-        public CompactMultiLinkedListIterator(int linkedListLastIndex)
-        {
-            _iteratedElementIndex = linkedListLastIndex;
-            _prevIteratedElementIndex = -1;
-            _iteratedElement = default;
-        }
-        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool GetNext(in DynamicBuffer<T> multiLinkedListsBuffer, out T element, out int elementIndex)
+        public static bool TryGetStat(StatHandle statHandle, ref BufferLookup<Stat> statsBufferLookup, out Stat stat)
         {
-            if (_iteratedElementIndex >= 0)
+            if (statsBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> datasBuffer))
             {
-                _iteratedElement = multiLinkedListsBuffer[_iteratedElementIndex];
-
-                element = _iteratedElement;
-                elementIndex = _iteratedElementIndex;
-                
-                // Move to next index but remember previous (used for removing)
-                _prevIteratedElementIndex = _iteratedElementIndex;
-                _iteratedElementIndex = _iteratedElement.PrevElementIndex;
-                
-                return true;
+                if (statHandle.Index < datasBuffer.Length)
+                {
+                    stat = datasBuffer[statHandle.Index];
+                    return true;
+                }
             }
 
-            element = default;
-            elementIndex = -1;
+            stat = default;
             return false;
         }
 
-        /// <summary>
-        /// Note: will update the last indexes in the linkedListLastIndexes following removal.
-        /// Note: GetNext() must be called before this can be used.
-        /// </summary>
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RemoveCurrentIteratedElementAndUpdateIndexes(
-            ref DynamicBuffer<T> multiLinkedListsBuffer, 
-            ref NativeArray<int> linkedListLastIndexes,
-            out int firstUpdatedLastIndexIndex)
+        internal static unsafe ref Stat GetStatRefUnsafe(StatHandle statHandle, ref BufferLookup<Stat> statsBufferLookup, out bool success, ref Stat nullResult)
         {
-            firstUpdatedLastIndexIndex = -1;
-            int removedElementIndex = _prevIteratedElementIndex;
-
-            if (removedElementIndex < 0)
+            if (statsBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> statsBuffer))
             {
-                return;
-            }
-
-            T removedElement = _iteratedElement;
-            
-            // Remove element
-            multiLinkedListsBuffer.RemoveAt(removedElementIndex);
-
-            // Iterate all last indexes and update them 
-            for (int i = 0; i < linkedListLastIndexes.Length; i++)
-            {
-                int tmpLastIndex = linkedListLastIndexes[i];
-                
-                // If the iterated last index is greater than the removed index, decrement it
-                if (tmpLastIndex > removedElementIndex)
+                if (statHandle.Index < statsBuffer.Length)
                 {
-                    tmpLastIndex -= 1;
-                    linkedListLastIndexes[i] = tmpLastIndex;
-                    if (firstUpdatedLastIndexIndex < 0)
-                    {
-                        firstUpdatedLastIndexIndex = i;
-                    }
-                }
-                // If the iterated last index is the one we removed, update it with the prev index of the removed element
-                else if (tmpLastIndex == removedElementIndex)
-                {
-                    linkedListLastIndexes[i] = removedElement.PrevElementIndex;
-                    if (firstUpdatedLastIndexIndex < 0)
-                    {
-                        firstUpdatedLastIndexIndex = i;
-                    }
+                    success = true;
+                    return ref UnsafeUtility.ArrayElementAsRef<Stat>(statsBuffer.GetUnsafePtr(), statHandle.Index);
                 }
             }
 
-            // Iterate all buffer elements starting from the removed index to update their prev indexes
-            for (int i = _iteratedElementIndex; i < multiLinkedListsBuffer.Length; i++)
+            success = false;
+            return ref nullResult;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool TrySetStat(StatHandle statHandle, Stat stat, ref BufferLookup<Stat> statsBufferLookup)
+        {
+            if (statsBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> datasBuffer))
             {
-                T iteratedElement = multiLinkedListsBuffer[i];
-                
-                // If the prev index of this element is greater than the removed one, decrement it
-                if (iteratedElement.PrevElementIndex > removedElementIndex)
+                if (statHandle.Index < datasBuffer.Length)
                 {
-                    iteratedElement.PrevElementIndex -= 1;
-                    multiLinkedListsBuffer[i] = iteratedElement;
-                }
-                // If the prev index of this element was the removed one, change its prev index to the removed one's
-                // prev index.
-                else if (iteratedElement.PrevElementIndex == removedElementIndex)
-                {
-                    iteratedElement.PrevElementIndex = removedElement.PrevElementIndex;
-                    multiLinkedListsBuffer[i] = iteratedElement;
+                    datasBuffer[statHandle.Index] = stat;
+                    return true;
                 }
             }
+
+            stat = default;
+            return false;
         }
     }
 }

@@ -20,8 +20,7 @@ namespace Trove.Stats
 
         public void CreateStat(float baseValue, bool produceChangeEvents, out StatHandle statHandle)
         {
-            StatsUtilities.CreateStat(Entity, baseValue, produceChangeEvents, ref StatsOwner, ref StatsBuffer, out statHandle);
-            Baker.SetComponent(Entity, StatsOwner);
+            StatsUtilities.CreateStat(Entity, baseValue, produceChangeEvents, ref StatsBuffer, out statHandle);
         }
     }
 }
