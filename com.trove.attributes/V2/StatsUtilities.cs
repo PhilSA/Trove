@@ -298,23 +298,29 @@ namespace Trove.Stats
             }
             modifierStack.Apply(ref statRef.BaseValue, ref statRef.Value);
 
-            // Stat change events
-            if (statRef.ProduceChangeEvents == 1 && statChangeEventsList.IsCreated)
+            // TODO: what if a modifier stack changes base value? Would be good to make that impossible
+            // If the stat value really changed
+            if (initialStat.Value != statRef.Value)
             {
-                statChangeEventsList.Add(new StatChangeEvent
+                // Stat change events
+                if (statRef.ProduceChangeEvents == 1 && statChangeEventsList.IsCreated)
                 {
-                    StatHandle = statHandle,
-                    PrevValue = initialStat,
-                    NewValue = statRef,
-                });
-            }
+                    statChangeEventsList.Add(new StatChangeEvent
+                    {
+                        StatHandle = statHandle,
+                        PrevValue = initialStat,
+                        NewValue = statRef,
+                    });
+                }
 
-            // Notify Observers (add to update list)
-            CompactMultiLinkedListIterator<StatObserver> observersIterator =
-                new CompactMultiLinkedListIterator<StatObserver>(statRef.LastObserverIndex);
-            while (observersIterator.GetNext(ref statObserversBuffer, out StatObserver observer, out int observerIndex))
-            {
-                tmpUpdatedStatsList.Add(observer.ObserverHandle);
+                // Notify Observers (add to update list)
+                CompactMultiLinkedListIterator<StatObserver> observersIterator =
+                    new CompactMultiLinkedListIterator<StatObserver>(statRef.LastObserverIndex);
+                while (observersIterator.GetNext(ref statObserversBuffer, out StatObserver observer,
+                           out int observerIndex))
+                {
+                    tmpUpdatedStatsList.Add(observer.ObserverHandle);
+                }
             }
         }
 
@@ -328,64 +334,45 @@ namespace Trove.Stats
             list.Clear();
         }
 
-        internal static void AddObserversOfStatToList(StatHandle statHandle, ref NativeList<StatObserver> statObserversList)
+        internal static void AddObserversOfStatToList(
+            StatHandle statHandle, 
+            in DynamicBuffer<Stat> statsBufferOnStatEntity,
+            in DynamicBuffer<StatObserver> statObserversBufferOnStatEntity,
+            ref NativeList<StatObserver> statObserversList)
         {
             Assert.IsTrue(statHandle.Entity != Entity.Null);
 
-            if (!_isForBaking)
+            if (statHandle.Index < statsBufferOnStatEntity.Length)
             {
-                UpdateBuffers(statHandle.Entity);
-            }
+                Stat stat = statsBufferOnStatEntity[statHandle.Index];
 
-            if (statHandle.Index < _latestStatsBufferOnObservedStat.Length)
-            {
-                Stat stat = _latestStatsBufferOnObservedStat[statHandle.Index];
-
-                int iteratedPrevObserverIndex = stat.LastObserverIndex;
-                while (iteratedPrevObserverIndex >= 0)
+                CompactMultiLinkedListIterator<StatObserver> observersIterator =
+                    new CompactMultiLinkedListIterator<StatObserver>(stat.LastObserverIndex);
+                while (observersIterator.GetNext(in statObserversBufferOnStatEntity,
+                           out StatObserver observerOfStat, out int observerIndex))
                 {
-                    StatObserver statObserver = _latestStatObserversBufferOnObservedStat[iteratedPrevObserverIndex];
-                    statObserversList.Add(statObserver);
-                    iteratedPrevObserverIndex = statObserver.PrevObserverIndex;
+                    statObserversList.Add(observerOfStat);
                 }
             }
             // TODO: else? 
         }
 
-        internal static bool AddStatAsObserverOfOtherStat(StatHandle observerStatHandle, StatHandle observedStatHandle)
+        internal static void AddStatAsObserverOfOtherStat(
+            StatHandle observerStatHandle, 
+            StatHandle observedStatHandle,
+            ref DynamicBuffer<Stat> statsBufferOnObservedStatEntity,
+            ref DynamicBuffer<StatObserver> statObserversBufferOnObservedStatEntity)
         {
             Assert.IsTrue(observerStatHandle.Entity != Entity.Null);
 
-            // When we're not in baking, we have to update our observers buffer based on the observed stat entity.
-            if (!_isForBaking)
-            {
-                bool updateBuffersSuccess = UpdateBuffers(observedStatHandle.Entity);
-                if (!updateBuffersSuccess)
-                {
-                    return false;
-                }
-            }
-            // In baking, we always assume we're staying on the same observers buffer.
-            else
-            {
-                Assert.IsTrue(observerStatHandle.Entity == observedStatHandle.Entity);
-            }
+            Stat observedStat = statsBufferOnObservedStatEntity[observedStatHandle.Index];
 
-            Stat observedStat = _latestStatsBufferOnObservedStat[observedStatHandle.Index];
+            CollectionUtilities.AddToCompactMultiLinkedList(
+                ref statObserversBufferOnObservedStatEntity,
+                ref observedStat.LastObserverIndex, 
+                new StatObserver { ObserverHandle = observerStatHandle });
 
-            // Add observer at the end of the buffer, and remember the previous observer index
-            int observerAddIndex = _latestStatObserversBufferOnObservedStat.Length;
-            _latestStatObserversBufferOnObservedStat.Add(new StatObserver
-            {
-                PrevObserverIndex = observedStat.LastObserverIndex,
-                ObserverHandle = observerStatHandle,
-            });
-
-            // Update the last observer index for the observed stat
-            observedStat.LastObserverIndex = observerAddIndex;
-            _latestStatsBufferOnObservedStat[observedStatHandle.Index] = observedStat;
-
-            return true;
+            statsBufferOnObservedStatEntity[observedStatHandle.Index] = observedStat;
         }
     }
 }

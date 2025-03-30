@@ -17,12 +17,12 @@ namespace Trove.Stats
         
         private StatValueReader _statValueReader;
 
-        private NativeList<StatChangeEvent> _statChangeEventsList;
         private NativeList<StatHandle> _tmpModifierObservedStatsList;
         private NativeList<StatObserver> _tmpStatObserversList;
         private NativeList<StatHandle> _tmpUpdatedStatsList;
         private NativeList<int> _tmpLastIndexesList;
 
+        private NativeList<StatChangeEvent> _statChangeEventsList;
         public NativeList<StatChangeEvent> StatChangeEventsList
         {
             get { return _statChangeEventsList; }
@@ -352,7 +352,7 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryAddStatModifier(StatHandle affectedStatHandle, TStatModifier modifier, out StatModifierHandle statModifierHandle)
+        public bool TryAddStatModifierOLD(StatHandle affectedStatHandle, TStatModifier modifier, out StatModifierHandle statModifierHandle)
         {
             if (TryGetStatAndBuffer(affectedStatHandle, out Stat stat, out DynamicBuffer<Stat> statsBuffer) &&
                 TryGetStatModifiersBuffer(affectedStatHandle.Entity, out DynamicBuffer<TStatModifier> statModifiersBuffer) &&
@@ -391,6 +391,172 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryAddStatModifier(StatHandle affectedStatHandle, TStatModifier modifier, out StatModifierHandle statModifierHandle)
+        {
+            if (TryGetStatAndBuffer(affectedStatHandle, out Stat stat, out DynamicBuffer<Stat> statsBuffer) &&
+                TryGetStatModifiersBuffer(affectedStatHandle.Entity, out DynamicBuffer<TStatModifier> statModifiersBuffer) &&
+                TryGetStatObserversBuffer(affectedStatHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
+            {
+                ref StatsOwner statsOwnerRef = ref _statsOwnerLookup.GetRefRW(affectedStatHandle.Entity).ValueRW;
+                DynamicBuffer<Stat> statsBufferOnAffectedStatEntity = statsBuffer;
+                DynamicBuffer<TStatModifier> statModifiersBufferOnAffectedStatEntity = statModifiersBuffer;
+                DynamicBuffer<StatObserver> statObserversBufferOnAffectedStatEntity = statObserversBuffer;
+
+                statModifierHandle = new StatModifierHandle
+                {
+                    AffectedStatHandle = affectedStatHandle,
+                };
+
+                // Increment modifier Id (local to entity)
+                statsOwnerRef.ModifierIDCounter++;
+                modifier.ID = statsOwnerRef.ModifierIDCounter;
+                statModifierHandle.ModifierID = modifier.ID;
+
+                // Ensure lists are created and cleared
+                StatsUtilities.EnsureClearedValidTempList(ref _tmpModifierObservedStatsList);
+                StatsUtilities.EnsureClearedValidTempList(ref _tmpStatObserversList);
+
+                // Get observed stats of modifier
+                modifier.AddObservedStatsToList(ref _tmpModifierObservedStatsList);
+
+                // In baking, don't allow observing stats from other entities
+                // if (isForBaking)
+                // {
+                //     for (int i = 0; i < tmpModifierObservedStatsList.Length; i++)
+                //     {
+                //         StatHandle observedStatHandle = tmpModifierObservedStatsList[i];
+                //
+                //         if (observedStatHandle.Entity != affectedStatHandle.Entity)
+                //         {
+                //             throw new Exception(
+                //                 "Adding stat modifiers that observe stats of entities other than the baked entity is not allowed during baking.");
+                //             return false;
+                //         }
+                //     }
+                // }
+                
+                bool modifierCanBeAdded = true;
+                {
+                    // Make sure the modifier wouldn't make the stat observe itself (would cause infinite loop)
+                    for (int j = 0; j < _tmpModifierObservedStatsList.Length; j++)
+                    {
+                        StatHandle modifierObservedStatHandle = _tmpModifierObservedStatsList[j];
+                        if (affectedStatHandle == modifierObservedStatHandle)
+                        {
+                            modifierCanBeAdded = false;
+                            break;
+                        }
+                    }
+                    
+                    // Don't allow infinite observer loops.
+                    // Follow the chain of stats that would react to this stat's changes if the modifier was added (follow the 
+                    // observers chain). If we end up finding this stat anywhere in the chain, it would cause an infinite loop.
+                    // TODO: an alternative would be to configure a max stats update chain length and early exit an update if over limit
+                    if (modifierCanBeAdded)
+                    {
+                        // Start by adding the affected stat's observers
+                        StatsUtilities.AddObserversOfStatToList(
+                            affectedStatHandle, 
+                            in statsBufferOnAffectedStatEntity,
+                            in statObserversBufferOnAffectedStatEntity,
+                            ref _tmpStatObserversList);
+                        
+                        // TODO: make sure this verification loop can't possibly end up being infinite either. It could be infinite if we haven't guaranteed loop detection for other modifier adds...
+                        for (int i = 0; i < _tmpStatObserversList.Length; i++)
+                        {
+                            StatHandle iteratedObserverStatHandle = _tmpStatObserversList[i].ObserverHandle;
+
+                            // If we find the affected stat down the chain of stats that it observes,
+                            // it would create an infinite loop. Prevent adding modifier.
+                            if (iteratedObserverStatHandle == affectedStatHandle)
+                            {
+                                modifierCanBeAdded = false;
+                                break;
+                            }
+
+                            // Add the affected stat to the observers chain list if the iterated observer is
+                            // an observed stat of the modifier. Because if we proceed with adding the modifier, the
+                            // affected stat would be added as an observer of all modifier observed stats
+                            for (int j = 0; j < _tmpModifierObservedStatsList.Length; j++)
+                            {
+                                StatHandle modifierObservedStatHandle = _tmpModifierObservedStatsList[j];
+                                if (iteratedObserverStatHandle == modifierObservedStatHandle)
+                                {
+                                    _tmpModifierObservedStatsList.Add(affectedStatHandle);
+                                }
+                            }
+                            
+                            // Update buffers so they represent the ones on the observer entity
+                            if (TryGetStatsBuffer(iteratedObserverStatHandle.Entity,
+                                    out DynamicBuffer<Stat> observerStatsBuffer) &&
+                                TryGetStatObserversBuffer(iteratedObserverStatHandle.Entity,
+                                    out DynamicBuffer<StatObserver> observerStatObserversBuffer))
+                            {
+                                // Add the observer's observers to the list
+                                StatsUtilities.AddObserversOfStatToList(
+                                    iteratedObserverStatHandle,
+                                    in observerStatsBuffer,
+                                    in observerStatObserversBuffer,
+                                    ref _tmpStatObserversList);
+                            }
+                        }
+                    }
+                }
+                
+                if (modifierCanBeAdded)
+                {
+                    // Add modifier
+                    {
+                        Stat affectedStat = statsBufferOnAffectedStatEntity[affectedStatHandle.Index];
+
+                        // Add modifier at the end of the buffer, and remember the previous modifier index
+                        int modifierAddIndex = statModifiersBufferOnAffectedStatEntity.Length;
+                        modifier.PrevModifierIndex = affectedStat.LastObserverIndex;
+                        statModifiersBufferOnAffectedStatEntity.Add(modifier);
+
+                        // Update the last modifier index for the affected stat
+                        affectedStat.LastObserverIndex = modifierAddIndex;
+
+                        statsBufferOnAffectedStatEntity[affectedStatHandle.Index] = affectedStat;
+                    }
+                    
+                    // Add affected stat as observer of all observed stats
+                    for (int i = 0; i < _tmpModifierObservedStatsList.Length; i++)
+                    {
+                        StatHandle observedStatHandle = _tmpModifierObservedStatsList[i];
+                        
+                        // In baking, we always assume we're staying on the same observers buffer.
+                        // if(isBaking)
+                        // {
+                        //     Assert.IsTrue(observerStatHandle.Entity == observedStatHandle.Entity);
+                        // }
+                        
+                        // Update buffers so they represent the ones on the observed entity
+                        if (TryGetStatsBuffer(observedStatHandle.Entity, out DynamicBuffer<Stat> observedStatsBuffer) &&
+                            TryGetStatObserversBuffer(observedStatHandle.Entity,
+                                out DynamicBuffer<StatObserver> observedStatObserversBuffer))
+                        {
+                            StatsUtilities.AddStatAsObserverOfOtherStat(
+                                affectedStatHandle,
+                                observedStatHandle,
+                                ref observedStatsBuffer,
+                                ref observedStatObserversBuffer);
+                        }
+                    }
+                
+                    // Update stat following modifier add
+                    ref Stat statRef = ref TryGetStatRefUnsafe(affectedStatHandle, out bool success, ref _nullStat);
+                    UpdateStatRef(affectedStatHandle, ref statRef, ref statModifiersBuffer, ref statObserversBuffer);
+
+                    return true;
+                }
+            }
+
+            statModifierHandle = default;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetStatModifier(StatModifierHandle modifierHandle, out TStatModifier statModifier)
         {
             if (TryGetStatModifiersBuffer(modifierHandle.AffectedStatHandle.Entity,
@@ -411,6 +577,7 @@ namespace Trove.Stats
             return false;
         }
 
+        // TODO: make sure to review this whole thing
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe bool TryRemoveStatModifier(StatModifierHandle modifierHandle)
         {
@@ -422,7 +589,7 @@ namespace Trove.Stats
             {       
                 CompactMultiLinkedListIterator<TStatModifier> modifiersIterator =
                     new CompactMultiLinkedListIterator<TStatModifier>(stat.LastModifierIndex);
-                while (modifiersIterator.GetNext(ref statModifiersBuffer, out TStatModifier modifier, out int modifierIndex))
+                while (modifiersIterator.GetNext(in statModifiersBuffer, out TStatModifier modifier, out int modifierIndex))
                 {
                     if (modifier.ID == modifierHandle.ModifierID)
                     {
@@ -484,7 +651,7 @@ namespace Trove.Stats
                                     CompactMultiLinkedListIterator<StatObserver> observersIterator =
                                         new CompactMultiLinkedListIterator<StatObserver>(observedStat
                                             .LastObserverIndex);
-                                    while (observersIterator.GetNext(ref statObserversBuffer,
+                                    while (observersIterator.GetNext(in statObserversBuffer,
                                                out StatObserver observerOfObservedStat, out int observerIndex))
                                     {
                                         if (observerOfObservedStat.ObserverHandle == modifierHandle.AffectedStatHandle)

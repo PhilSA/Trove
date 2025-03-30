@@ -408,7 +408,7 @@ namespace Trove
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool GetNext(ref DynamicBuffer<T> multiLinkedListsBuffer, out T element, out int elementIndex)
+        public bool GetNext(in DynamicBuffer<T> multiLinkedListsBuffer, out T element, out int elementIndex)
         {
             if (_iteratedElementIndex >= 0)
             {
