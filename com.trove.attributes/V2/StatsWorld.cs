@@ -352,55 +352,13 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryAddStatModifierOLD(StatHandle affectedStatHandle, TStatModifier modifier, out StatModifierHandle statModifierHandle)
-        {
-            if (TryGetStatAndBuffer(affectedStatHandle, out Stat stat, out DynamicBuffer<Stat> statsBuffer) &&
-                TryGetStatModifiersBuffer(affectedStatHandle.Entity, out DynamicBuffer<TStatModifier> statModifiersBuffer) &&
-                TryGetStatObserversBuffer(affectedStatHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
-            {
-                ref StatsOwner statsOwnerRef = ref _statsOwnerLookup.GetRefRW(affectedStatHandle.Entity).ValueRW;
-
-                StatObserversHandler statObserversHandler = new StatObserversHandler(
-                    _statsLookup,
-                    _latestStatsEntity,
-                    _latestStatsBuffer,
-                    _statObserversLookup,
-                    _latestStatObserversEntity,
-                    _latestStatObserverBuffer);
-                
-                StatsUtilities.AddModifierCommon<TStatModifier, TStatModifierStack>(
-                    false,
-                    true,
-                    affectedStatHandle, 
-                    ref modifier, 
-                    ref statObserversHandler,
-                    ref statsOwnerRef,
-                    out statModifierHandle,
-                    ref statsBuffer,
-                    ref statModifiersBuffer,
-                    ref _tmpModifierObservedStatsList,
-                    ref _tmpStatObserversList);
-                
-                // Update stat following modifier add
-                ref Stat statRef = ref TryGetStatRefUnsafe(affectedStatHandle, out bool success, ref _nullStat);
-                UpdateStatRef(affectedStatHandle, ref statRef, ref statModifiersBuffer, ref statObserversBuffer);
-            }
-
-            statModifierHandle = default;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryAddStatModifier(StatHandle affectedStatHandle, TStatModifier modifier, out StatModifierHandle statModifierHandle)
         {
-            if (TryGetStatAndBuffer(affectedStatHandle, out Stat stat, out DynamicBuffer<Stat> statsBuffer) &&
-                TryGetStatModifiersBuffer(affectedStatHandle.Entity, out DynamicBuffer<TStatModifier> statModifiersBuffer) &&
-                TryGetStatObserversBuffer(affectedStatHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
+            if (TryGetStatAndBuffer(affectedStatHandle, out Stat stat, out DynamicBuffer<Stat> statsBufferOnAffectedStatEntity) &&
+                TryGetStatModifiersBuffer(affectedStatHandle.Entity, out DynamicBuffer<TStatModifier> statModifiersBufferOnAffectedStatEntity) &&
+                TryGetStatObserversBuffer(affectedStatHandle.Entity, out DynamicBuffer<StatObserver> statObserversBufferOnAffectedStatEntity))
             {
                 ref StatsOwner statsOwnerRef = ref _statsOwnerLookup.GetRefRW(affectedStatHandle.Entity).ValueRW;
-                DynamicBuffer<Stat> statsBufferOnAffectedStatEntity = statsBuffer;
-                DynamicBuffer<TStatModifier> statModifiersBufferOnAffectedStatEntity = statModifiersBuffer;
-                DynamicBuffer<StatObserver> statObserversBufferOnAffectedStatEntity = statObserversBuffer;
 
                 statModifierHandle = new StatModifierHandle
                 {
@@ -508,15 +466,7 @@ namespace Trove.Stats
                     // Add modifier
                     {
                         Stat affectedStat = statsBufferOnAffectedStatEntity[affectedStatHandle.Index];
-
-                        // Add modifier at the end of the buffer, and remember the previous modifier index
-                        int modifierAddIndex = statModifiersBufferOnAffectedStatEntity.Length;
-                        modifier.PrevModifierIndex = affectedStat.LastObserverIndex;
-                        statModifiersBufferOnAffectedStatEntity.Add(modifier);
-
-                        // Update the last modifier index for the affected stat
-                        affectedStat.LastObserverIndex = modifierAddIndex;
-
+                        CollectionUtilities.AddToCompactMultiLinkedList(ref statModifiersBufferOnAffectedStatEntity, ref affectedStat.LastModifierIndex, modifier);
                         statsBufferOnAffectedStatEntity[affectedStatHandle.Index] = affectedStat;
                     }
                     
@@ -546,7 +496,11 @@ namespace Trove.Stats
                 
                     // Update stat following modifier add
                     ref Stat statRef = ref TryGetStatRefUnsafe(affectedStatHandle, out bool success, ref _nullStat);
-                    UpdateStatRef(affectedStatHandle, ref statRef, ref statModifiersBuffer, ref statObserversBuffer);
+                    UpdateStatRef(
+                        affectedStatHandle, 
+                        ref statRef, 
+                        ref statModifiersBufferOnAffectedStatEntity, 
+                        ref statObserversBufferOnAffectedStatEntity);
 
                     return true;
                 }

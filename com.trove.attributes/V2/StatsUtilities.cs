@@ -142,135 +142,6 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool AddModifierCommon<TStatModifier, TStatModifierStack>(
-            bool isForBaking,
-            bool infiniteLoopsDetection,
-            StatHandle affectedStatHandle,
-            ref TStatModifier modifier,
-            ref StatObserversHandler statObserversHandler,
-            ref StatsOwner statsOwner,
-            out StatModifierHandle statModifierHandle,
-            ref DynamicBuffer<Stat> statsBufferOnAffectedStatEntity,
-            ref DynamicBuffer<TStatModifier> statModifiersBufferOnAffectedStatEntity,
-            ref NativeList<StatHandle> tmpModifierObservedStatsList,
-            ref NativeList<StatObserver> tmpStatObserversList)
-            where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactMultiLinkedListElement
-            where TStatModifierStack : unmanaged, IStatsModifierStack
-        {
-            statModifierHandle = new StatModifierHandle
-            {
-                AffectedStatHandle = affectedStatHandle,
-            };
-
-            // Increment modifier Id (local to entity)
-            statsOwner.ModifierIDCounter++;
-            modifier.ID = statsOwner.ModifierIDCounter;
-            statModifierHandle.ModifierID = modifier.ID;
-
-            // Ensure lists are created and cleared
-            EnsureClearedValidTempList(ref tmpModifierObservedStatsList);
-            EnsureClearedValidTempList(ref tmpStatObserversList);
-
-            // Get observed stats of modifier
-            modifier.AddObservedStatsToList(ref tmpModifierObservedStatsList);
-
-            // In baking, don't allow observing stats from other entities
-            if (isForBaking)
-            {
-                for (int i = 0; i < tmpModifierObservedStatsList.Length; i++)
-                {
-                    StatHandle observedStatHandle = tmpModifierObservedStatsList[i];
-
-                    if (observedStatHandle.Entity != affectedStatHandle.Entity)
-                    {
-                        throw new Exception(
-                            "Adding stat modifiers that observe stats of entities other than the baked entity is not allowed during baking.");
-                        return false;
-                    }
-                }
-            }
-            
-            bool modifierCanBeAdded = true;
-            {
-                // Make sure the modifier wouldn't make the stat observe itself (would cause infinite loop)
-                for (int j = 0; j < tmpModifierObservedStatsList.Length; j++)
-                {
-                    StatHandle modifierObservedStatHandle = tmpModifierObservedStatsList[j];
-                    if (affectedStatHandle == modifierObservedStatHandle)
-                    {
-                        modifierCanBeAdded = false;
-                        break;
-                    }
-                }
-                
-                // Don't allow infinite observer loops.
-                // Follow the chain of stats that would react to this stat's changes if the modifier was added (follow the 
-                // observers chain). If we end up finding this stat anywhere in the chain, it would cause an infinite loop.
-                if (modifierCanBeAdded && infiniteLoopsDetection)
-                {
-                    statObserversHandler.AddObserversOfStatToList(affectedStatHandle, ref tmpStatObserversList);
-                    
-                    // TODO: make sure this verification loop can't possibly end up being infinite either. It could be infinite if we haven't guaranteed loop detection for other modifier adds...
-                    for (int i = 0; i < tmpStatObserversList.Length; i++)
-                    {
-                        StatObserver statObserver = tmpStatObserversList[i];
-
-                        // If we find the affected stat down the chain of stats that it observes,
-                        // it would create an infinite loop. Prevent adding modifier.
-                        if (statObserver.ObserverHandle == affectedStatHandle)
-                        {
-                            modifierCanBeAdded = false;
-                            break;
-                        }
-
-                        // Check the all the observed stats of affected stat, and add them to the list if we're iterating
-                        // their observed stat
-                        for (int j = 0; j < tmpModifierObservedStatsList.Length; j++)
-                        {
-                            StatHandle modifierObservedStatHandle = tmpModifierObservedStatsList[j];
-                            if (statObserver.ObserverHandle == modifierObservedStatHandle)
-                            {
-                                tmpModifierObservedStatsList.Add(modifierObservedStatHandle);
-                            }
-                        }
-
-                        statObserversHandler.AddObserversOfStatToList(statObserver.ObserverHandle,
-                            ref tmpStatObserversList);
-                    }
-                }
-            }
-            
-            if (modifierCanBeAdded)
-            {
-                // Add modifier
-                {
-                    Stat affectedStat = statsBufferOnAffectedStatEntity[affectedStatHandle.Index];
-
-                    // Add modifier at the end of the buffer, and remember the previous modifier index
-                    int modifierAddIndex = statModifiersBufferOnAffectedStatEntity.Length;
-                    modifier.PrevModifierIndex = affectedStat.LastObserverIndex;
-                    statModifiersBufferOnAffectedStatEntity.Add(modifier);
-
-                    // Update the last modifier index for the affected stat
-                    affectedStat.LastObserverIndex = modifierAddIndex;
-
-                    statsBufferOnAffectedStatEntity[affectedStatHandle.Index] = affectedStat;
-                }
-                
-                // Add affected stat as observer of observed stats
-                for (int i = 0; i < tmpModifierObservedStatsList.Length; i++)
-                {
-                    StatHandle observedStatHandle = tmpModifierObservedStatsList[i];
-                    statObserversHandler.AddStatAsObserverOfOtherStat(affectedStatHandle, observedStatHandle);
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void UpdateSingleStatCommon<TStatModifier, TStatModifierStack>(
             StatHandle statHandle,
             ref StatValueReader statValueReader,
@@ -289,7 +160,7 @@ namespace Trove.Stats
             modifierStack.Reset();
             CompactMultiLinkedListIterator<TStatModifier> modifiersIterator =
                 new CompactMultiLinkedListIterator<TStatModifier>(statRef.LastModifierIndex);
-            while (modifiersIterator.GetNext(ref statModifiersBuffer, out TStatModifier modifier, out int modifierIndex))
+            while (modifiersIterator.GetNext(in statModifiersBuffer, out TStatModifier modifier, out int modifierIndex))
             {
                 modifier.Apply(
                     in statValueReader,
@@ -316,7 +187,7 @@ namespace Trove.Stats
                 // Notify Observers (add to update list)
                 CompactMultiLinkedListIterator<StatObserver> observersIterator =
                     new CompactMultiLinkedListIterator<StatObserver>(statRef.LastObserverIndex);
-                while (observersIterator.GetNext(ref statObserversBuffer, out StatObserver observer,
+                while (observersIterator.GetNext(in statObserversBuffer, out StatObserver observer,
                            out int observerIndex))
                 {
                     tmpUpdatedStatsList.Add(observer.ObserverHandle);
