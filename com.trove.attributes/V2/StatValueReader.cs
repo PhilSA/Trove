@@ -8,42 +8,27 @@ namespace Trove.Stats
     /// </summary>
     public struct StatValueReader
     {
-        private BufferLookup<Stat> _statsLookup;
-        private Entity _latestStatsEntity;
-        private DynamicBuffer<Stat> _latestStatsBuffer;
+        private CachedBufferLookup<Stat> _statsCachedLookup;
 
-        internal StatValueReader(ref BufferLookup<Stat> statsLookup)
+        internal StatValueReader(CachedBufferLookup<Stat> statsCachedLookup)
         {
-            _statsLookup = statsLookup;
-            _latestStatsEntity = Entity.Null;
-            _latestStatsBuffer = default;
+            _statsCachedLookup = statsCachedLookup;
         }
 
-        internal void UpdateCacheData(Entity latestStatsEntity, DynamicBuffer<Stat> latestStatsBuffer)
+        internal void CopyCachedData(CachedBufferLookup<Stat> otherCachedLookup)
         {
-            _latestStatsEntity = latestStatsEntity;
-            _latestStatsBuffer = latestStatsBuffer;
+            _statsCachedLookup.CopyCachedData(otherCachedLookup);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TryGetStatsBuffer(StatHandle statHandle, out DynamicBuffer<Stat> statsBuffer)
+        internal void SetCachedData(Entity entity, DynamicBuffer<Stat> buffer)
         {
-            if (statHandle.Entity != Entity.Null &&
-                (statHandle.Entity == _latestStatsEntity ||
-                 _statsLookup.TryGetBuffer(statHandle.Entity, out _latestStatsBuffer)))
-            {
-                statsBuffer = _latestStatsBuffer;
-                return true;
-            }
-
-            statsBuffer = default;
-            return false;
+            _statsCachedLookup.SetCachedData(entity, buffer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetStat(StatHandle statHandle, out Stat stat)
         {
-            if (TryGetStatsBuffer(statHandle, out DynamicBuffer<Stat> statsBuffer))
+            if (_statsCachedLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> statsBuffer))
             {
                 if (statHandle.Index < statsBuffer.Length)
                 {

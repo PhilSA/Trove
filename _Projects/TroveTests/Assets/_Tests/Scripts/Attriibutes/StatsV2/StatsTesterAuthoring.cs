@@ -1,5 +1,6 @@
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 class StatsTesterAuthoring : MonoBehaviour
 {
@@ -8,8 +9,7 @@ class StatsTesterAuthoring : MonoBehaviour
     public int ChangingAttributesCount;
     public int ChangingAttributesChildDepth;
     public int UnchangingAttributesCount;
-    public bool MakeOtherStatsDependOnFirstStatOfChangingAttributes;
-    public bool SupportStatsWriteback;
+    public bool MakeLocalStatsDependOnEachOther;
 
     class Baker : Baker<StatsTesterAuthoring>
     {
@@ -23,9 +23,7 @@ class StatsTesterAuthoring : MonoBehaviour
                 ChangingAttributesCount = authoring.ChangingAttributesCount,
                 ChangingAttributesChildDepth = authoring.ChangingAttributesChildDepth,
                 UnchangingAttributesCount = authoring.UnchangingAttributesCount,
-                MakeOtherStatsDependOnFirstStatOfChangingAttributes = authoring.MakeOtherStatsDependOnFirstStatOfChangingAttributes,
-                
-                SupportStatsWriteback = authoring.SupportStatsWriteback,
+                MakeLocalStatsDependOnEachOther = authoring.MakeLocalStatsDependOnEachOther,
             });
         }
     }

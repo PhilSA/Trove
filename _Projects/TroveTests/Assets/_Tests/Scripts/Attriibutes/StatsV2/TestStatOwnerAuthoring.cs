@@ -18,12 +18,17 @@ class TestStatOwnerAuthoring : MonoBehaviour
         public override void Bake(TestStatOwnerAuthoring authoring)
         {
             Entity entity = GetEntity(authoring, TransformUsageFlags.None);
-            AddComponent(entity, new TestStatOwner
-            {
-                StatA = StatHandle.CreateUnititialized(authoring.StatA),
-                StatB = StatHandle.CreateUnititialized(authoring.StatB),
-                StatC = StatHandle.CreateUnititialized(authoring.StatC),
-            });
+            
+            StatsBaker<TestStatModifier, TestStatModifier.Stack> statsBaker = 
+                new StatsBaker<TestStatModifier, TestStatModifier.Stack>(this, entity);
+            statsBaker.AddComponents();
+            TestStatOwner testStatOwner = new TestStatOwner();
+            
+            statsBaker.CreateStat(authoring.StatA, true, out testStatOwner.StatA);
+            statsBaker.CreateStat(authoring.StatB, true, out testStatOwner.StatB);
+            statsBaker.CreateStat(authoring.StatC, true, out testStatOwner.StatC);
+            
+            AddComponent(entity, testStatOwner);
         }
     }
 }

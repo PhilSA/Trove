@@ -11,30 +11,9 @@ public struct StatsTester : IComponentData
     public int ChangingAttributesCount;
     public int ChangingAttributesChildDepth;
     public int UnchangingAttributesCount;
-    public bool MakeOtherStatsDependOnFirstStatOfChangingAttributes;
-
-    public bool SupportStatsWriteback;
+    public bool MakeLocalStatsDependOnEachOther;
 
     public bool HasInitialized;
-}
-
-public enum StatType
-{
-    A = 0,
-    B, 
-    C,
-}
-
-public struct TestStatCustomData
-{
-    public Entity Entity;
-    public StatType StatType;
-
-    public TestStatCustomData(Entity entity, StatType statType)
-    {
-        Entity = entity;
-        StatType = statType;
-    }
 }
 
 public struct TestStatOwner : IComponentData
@@ -42,6 +21,8 @@ public struct TestStatOwner : IComponentData
     public StatHandle StatA;
     public StatHandle StatB;
     public StatHandle StatC;
+
+    public float tmp;
 }
 
 public struct TestStatModifier : IBufferElementData, IStatsModifier<TestStatModifier.Stack>
@@ -50,51 +31,52 @@ public struct TestStatModifier : IBufferElementData, IStatsModifier<TestStatModi
     {
         Add,
         AddFromStat,
-        AddMultiplier,
-        AddMultiplierFromStat,
+        AddToMultiplier,
+        AddToMultiplierFromStat,
     }
 
     public struct Stack : IStatsModifierStack
     {
         public float Add;
-        public float AddMultiply;
+        public float Multiplier;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reset()
         {
             Add = 0f;
-            AddMultiply = 1f;
+            Multiplier = 1f;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Apply(ref float statBaseValue, ref float statValue)
+        public void Apply(in float statBaseValue, ref float statValue)
         {
             statValue = statBaseValue;
             statValue += Add;
-            statValue *= AddMultiply;
+            statValue *= Multiplier;
         }
     }
-    
+
+    public int PrevElementIndex { get; set; }
     public uint ID { get; set; }
 
     public Type ModifierType;
     public float ValueA;
-    public int StatAIndex;
-
+    public StatHandle StatHandleA;
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddObservedStatsToList(ref NativeList<int> observedStatIndexes)
+    public void AddObservedStatsToList(ref NativeList<StatHandle> observedStatHandles)
     {
         switch (ModifierType)
         {
             case (Type.AddFromStat):
-            case (Type.AddMultiplierFromStat):
-                observedStatIndexes.Add(StatAIndex);
+            case (Type.AddToMultiplierFromStat):
+                observedStatHandles.Add(StatHandleA);
                 break;
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Apply(in NativeList<Stat> stats, ref Stack stack)
+    public void Apply(ref StatValueReader statValueReader, ref Stack stack)
     {
         switch (ModifierType)
         {
@@ -105,24 +87,22 @@ public struct TestStatModifier : IBufferElementData, IStatsModifier<TestStatModi
             }
             case (Type.AddFromStat):
             {
-                Stat statA = stats[StatAIndex];
-                if (statA.IsCreated)
+                if (statValueReader.TryGetStat(StatHandleA, out Stat statA))
                 {
                     stack.Add += statA.Value;
                 }
                 break;
             }
-            case (Type.AddMultiplier):
+            case (Type.AddToMultiplier):
             {
-                stack.AddMultiply += ValueA;
+                stack.Multiplier += ValueA;
                 break;
             }
-            case (Type.AddMultiplierFromStat):
+            case (Type.AddToMultiplierFromStat):
             {
-                Stat statA = stats[StatAIndex];
-                if (statA.IsCreated)
+                if (statValueReader.TryGetStat(StatHandleA, out Stat statA))
                 {
-                    stack.AddMultiply += statA.Value;
+                    stack.Multiplier += statA.Value;
                 }
                 break;
             }

@@ -646,10 +646,6 @@ namespace Trove
                 ref UnsafeUtility.ArrayElementAsRef<IndexRange>(freeIndexRanges.GetUnsafePtr(),
                     lastRangeIndex);
  
-            if (!(lastIndexRange.Length >= rangeLength))
-            {
-                int a = 0;
-            }
             Assert.IsTrue(lastIndexRange.Length >= rangeLength);
 
             firstElementIndex = lastIndexRange.Start;
@@ -878,10 +874,6 @@ namespace Trove
                 ref UnsafeUtility.ArrayElementAsRef<IndexRange>(freeIndexRanges.GetUnsafePtr(),
                     lastRangeIndex);
  
-            if (!(lastIndexRange.Length >= rangeLength))
-            {
-                int a = 0;
-            }
             Assert.IsTrue(lastIndexRange.Length >= rangeLength);
 
             firstElementIndex = lastIndexRange.Start;

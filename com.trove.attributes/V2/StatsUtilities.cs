@@ -163,13 +163,12 @@ namespace Trove.Stats
             while (modifiersIterator.GetNext(in statModifiersBuffer, out TStatModifier modifier, out int modifierIndex))
             {
                 modifier.Apply(
-                    in statValueReader,
+                    ref statValueReader,
                     ref modifierStack);
                 // TODO: give a way to say "the modifier depends on a now invalid stat and must be removed"
             }
-            modifierStack.Apply(ref statRef.BaseValue, ref statRef.Value);
+            modifierStack.Apply(in statRef.BaseValue, ref statRef.Value);
 
-            // TODO: what if a modifier stack changes base value? Would be good to make that impossible
             // If the stat value really changed
             if (initialStat.Value != statRef.Value)
             {
@@ -193,6 +192,162 @@ namespace Trove.Stats
                     tmpUpdatedStatsList.Add(observer.ObserverHandle);
                 }
             }
+        }
+
+        internal static void AddModifierPhase1<TStatModifier, TStatModifierStack>(
+            StatHandle affectedStatHandle,
+            ref StatsOwner statsOwnerRef,
+            ref TStatModifier modifier,
+            ref NativeList<StatHandle> tmpModifierObservedStatsList,
+            out StatModifierHandle statModifierHandle)
+            where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactMultiLinkedListElement
+            where TStatModifierStack : unmanaged, IStatsModifierStack
+        {
+            statModifierHandle = new StatModifierHandle
+            {
+                AffectedStatHandle = affectedStatHandle,
+            };
+
+            // Increment modifier Id (local to entity)
+            statsOwnerRef.ModifierIDCounter++;
+            modifier.ID = statsOwnerRef.ModifierIDCounter;
+            statModifierHandle.ModifierID = modifier.ID;
+
+            // Get observed stats of modifier
+            modifier.AddObservedStatsToList(ref tmpModifierObservedStatsList);
+        }
+
+        internal static bool AddModifierPhase2<TStatModifier, TStatModifierStack>(
+            bool allStatsAreOnAffectedStatEntity,
+            StatHandle affectedStatHandle,
+            in TStatModifier modifier,
+            ref DynamicBuffer<Stat> statsBufferOnAffectedStatEntity,
+            ref DynamicBuffer<TStatModifier> statModifiersBufferOnAffectedStatEntity,
+            ref DynamicBuffer<StatObserver> statObserversBufferOnAffectedStatEntity,
+            ref CachedBufferLookup<Stat> statsCachedLookup,
+            ref CachedBufferLookup<StatObserver> statObserversCachedLookup,
+            ref NativeList<StatHandle> tmpModifierObservedStatsList,
+            ref NativeList<StatObserver> tmpStatObserversList)
+            where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData,
+            ICompactMultiLinkedListElement
+            where TStatModifierStack : unmanaged, IStatsModifierStack
+        {
+            bool modifierCanBeAdded = true;
+            {
+                // Make sure the modifier wouldn't make the stat observe itself (would cause infinite loop)
+                for (int j = 0; j < tmpModifierObservedStatsList.Length; j++)
+                {
+                    StatHandle modifierObservedStatHandle = tmpModifierObservedStatsList[j];
+                    if (affectedStatHandle == modifierObservedStatHandle)
+                    {
+                        modifierCanBeAdded = false;
+                        break;
+                    }
+                }
+
+                // Don't allow infinite observer loops.
+                // Follow the chain of stats that would react to this stat's changes if the modifier was added (follow the 
+                // observers chain). If we end up finding this stat anywhere in the chain, it would cause an infinite loop.
+                // TODO: an alternative would be to configure a max stats update chain length and early exit an update if over limit
+                if (modifierCanBeAdded)
+                {
+                    // Start by adding the affected stat's observers
+                    StatsUtilities.AddObserversOfStatToList(
+                        affectedStatHandle,
+                        in statsBufferOnAffectedStatEntity,
+                        in statObserversBufferOnAffectedStatEntity,
+                        ref tmpStatObserversList);
+
+                    // TODO: make sure this verification loop can't possibly end up being infinite either. It could be infinite if we haven't guaranteed loop detection for other modifier adds...
+                    for (int i = 0; i < tmpStatObserversList.Length; i++)
+                    {
+                        StatHandle iteratedObserverStatHandle = tmpStatObserversList[i].ObserverHandle;
+
+                        // If we find the affected stat down the chain of stats that it observes,
+                        // it would create an infinite loop. Prevent adding modifier.
+                        if (iteratedObserverStatHandle == affectedStatHandle)
+                        {
+                            modifierCanBeAdded = false;
+                            break;
+                        }
+
+                        // Add the affected stat to the observers chain list if the iterated observer is
+                        // an observed stat of the modifier. Because if we proceed with adding the modifier, the
+                        // affected stat would be added as an observer of all modifier observed stats
+                        for (int j = 0; j < tmpModifierObservedStatsList.Length; j++)
+                        {
+                            StatHandle modifierObservedStatHandle = tmpModifierObservedStatsList[j];
+                            if (iteratedObserverStatHandle == modifierObservedStatHandle)
+                            {
+                                tmpModifierObservedStatsList.Add(affectedStatHandle);
+                            }
+                        }
+
+                        // Add the observer's observers to the list
+                        if (allStatsAreOnAffectedStatEntity)
+                        {
+                            StatsUtilities.AddObserversOfStatToList(
+                                iteratedObserverStatHandle,
+                                in statsBufferOnAffectedStatEntity,
+                                in statObserversBufferOnAffectedStatEntity,
+                                ref tmpStatObserversList);
+                        }
+                        // Update buffers so they represent the ones on the observer entity
+                        else if (statsCachedLookup.TryGetBuffer(iteratedObserverStatHandle.Entity, out DynamicBuffer<Stat> observerStatsBuffer) &&
+                                 statObserversCachedLookup.TryGetBuffer(iteratedObserverStatHandle.Entity, out DynamicBuffer<StatObserver> observerStatObserversBuffer))
+                        {
+                            StatsUtilities.AddObserversOfStatToList(
+                                iteratedObserverStatHandle,
+                                in observerStatsBuffer,
+                                in observerStatObserversBuffer,
+                                ref tmpStatObserversList);
+                        }
+                    }
+                }
+            }
+
+            if (modifierCanBeAdded)
+            {
+                // Add modifier
+                {
+                    Stat affectedStat = statsBufferOnAffectedStatEntity[affectedStatHandle.Index];
+                    CollectionUtilities.AddToCompactMultiLinkedList(ref statModifiersBufferOnAffectedStatEntity,
+                        ref affectedStat.LastModifierIndex, modifier);
+                    statsBufferOnAffectedStatEntity[affectedStatHandle.Index] = affectedStat;
+                }
+
+                // Add affected stat as observer of all observed stats
+                for (int i = 0; i < tmpModifierObservedStatsList.Length; i++)
+                {
+                    StatHandle observedStatHandle = tmpModifierObservedStatsList[i];
+                    
+                    if (allStatsAreOnAffectedStatEntity)
+                    {
+                        Assert.IsTrue(observedStatHandle.Entity == affectedStatHandle.Entity);
+                        
+                        StatsUtilities.AddStatAsObserverOfOtherStat(
+                            affectedStatHandle,
+                            observedStatHandle,
+                            ref statsBufferOnAffectedStatEntity,
+                            ref statObserversBufferOnAffectedStatEntity);
+                    }
+                    // Update buffers so they represent the ones on the observer entity
+                    else if (statsCachedLookup.TryGetBuffer(observedStatHandle.Entity, out DynamicBuffer<Stat> observedStatsBuffer) &&
+                               statObserversCachedLookup.TryGetBuffer(observedStatHandle.Entity,
+                                   out DynamicBuffer<StatObserver> observedStatObserversBuffer))
+                    {
+                        StatsUtilities.AddStatAsObserverOfOtherStat(
+                            affectedStatHandle,
+                            observedStatHandle,
+                            ref observedStatsBuffer,
+                            ref observedStatObserversBuffer);
+                    }
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

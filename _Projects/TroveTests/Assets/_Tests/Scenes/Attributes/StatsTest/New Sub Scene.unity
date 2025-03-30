@@ -153,8 +153,7 @@ MonoBehaviour:
   ChangingAttributesCount: 100000
   ChangingAttributesChildDepth: 2
   UnchangingAttributesCount: 0
-  MakeOtherStatsDependOnFirstStatOfChangingAttributes: 0
-  SupportStatsWriteback: 0
+  MakeLocalStatsDependOnEachOther: 0
 --- !u!4 &890191725
 Transform:
   m_ObjectHideFlags: 0

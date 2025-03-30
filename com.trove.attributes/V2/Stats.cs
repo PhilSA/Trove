@@ -12,7 +12,7 @@ namespace Trove.Stats
     public interface IStatsModifierStack
     {
         public void Reset();
-        public void Apply(ref float statBaseValue, ref float statValue);
+        public void Apply(in float statBaseValue, ref float statValue);
     }
 
     public interface IStatsModifier<TStatModifierStack> : ICompactMultiLinkedListElement
@@ -21,7 +21,7 @@ namespace Trove.Stats
         public uint ID { get; set; } // TODO: is it ok for set to be public
         public void AddObservedStatsToList(ref NativeList<StatHandle> observedStatHandles);
         public void Apply(
-            in StatValueReader statValueReader,
+            ref StatValueReader statValueReader,
             ref TStatModifierStack stack);
     }
 

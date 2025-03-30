@@ -1,5 +1,7 @@
+using System;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
 namespace Trove.Stats
@@ -8,24 +10,39 @@ namespace Trove.Stats
         where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactMultiLinkedListElement
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
-        internal IBaker Baker;
-        internal Entity Entity;
-        internal StatsOwner StatsOwner;
-        internal DynamicBuffer<Stat> StatsBuffer;
-        internal DynamicBuffer<TStatModifier> StatModifiersBuffer;
-        internal DynamicBuffer<StatObserver> StatObserversBuffer;
-        internal NativeList<StatHandle> TmpObserversStatHandles;
+        private IBaker Baker;
+        private Entity Entity;
+        
+        private StatsOwner StatsOwner;
+        private DynamicBuffer<Stat> StatsBuffer;
+        private DynamicBuffer<TStatModifier> StatModifiersBuffer;
+        private DynamicBuffer<StatObserver> StatObserversBuffer;
+
+        private NativeList<StatHandle> _tmpUpdatedStatsList;
+        private NativeList<StatHandle> _tmpModifierObservedStatsList;
+        private NativeList<StatObserver> _tmpStatObserversList;
 
         public StatsBaker(IBaker baker, Entity entity)
         {
             Baker = baker;
             Entity = entity;
-            TmpObserversStatHandles = new NativeList<StatHandle>(Allocator.Temp);
             
-            StatsOwner = new StatsOwner();
-            StatsBuffer = baker.AddBuffer<Stat>(entity);
-            StatModifiersBuffer = baker.AddBuffer<TStatModifier>(entity);
-            StatObserversBuffer = baker.AddBuffer<StatObserver>(entity);
+            StatsOwner = default;
+            StatsBuffer = default;
+            StatModifiersBuffer = default;
+            StatObserversBuffer = default;
+
+            _tmpUpdatedStatsList = default;
+            _tmpModifierObservedStatsList = default;
+            _tmpStatObserversList = default;
+        }
+
+        public void AddComponents()
+        {
+            Baker.AddComponent(Entity, StatsOwner);
+            StatsBuffer = Baker.AddBuffer<Stat>(Entity);
+            StatModifiersBuffer = Baker.AddBuffer<TStatModifier>(Entity);
+            StatObserversBuffer = Baker.AddBuffer<StatObserver>(Entity);
         }
         
         public void CreateStat(float baseValue, bool produceChangeEvents, out StatHandle statHandle)
@@ -33,89 +50,89 @@ namespace Trove.Stats
             StatsUtilities.CreateStatCommon(Entity, baseValue, produceChangeEvents, out statHandle, ref StatsBuffer);
         }
 
-        public bool TryAddModifier(StatHandle statHandle, TStatModifier modifier,
+        public bool TryAddModifier(StatHandle affectedStatHandle, TStatModifier modifier,
             out StatModifierHandle statModifierHandle)
         {
-            // TODO
-            // StatsUtilities.AddModifierCommonPhase1<TStatModifier, TStatModifierStack>(
-            //     statHandle,
-            //     ref modifier,
-            //     ref StatsOwner,
-            //     out statModifierHandle,
-            //     ref TmpObserversStatHandles);
-            //
-            // bool modifierCanBeAdded = true;
-            // for (int i = 0; i < TmpObserversStatHandles.Length; i++)
-            // {
-            //     StatHandle observedStatHandle = TmpObserversStatHandles[i];
-            //     
-            //     if (observedStatHandle.Entity != Entity)
-            //     {
-            //         throw new Exception(
-            //             "Modifiers added during baking cannot observe stats on entities other than the baked entity");
-            //     }
-            //     
-            //     if (IsStatHandlePresentDownObserversChain(observedStatHandle, statHandle))
-            //     {
-            //         modifierCanBeAdded = false;
-            //         break;
-            //     }
-            // }
-            //
-            // // Only add modifier if no infinite loop would be created
-            // if (modifierCanBeAdded)
-            // {
-            //     Stat stat = StatsBuffer[statHandle.Index];
-            //     
-            //     StatsUtilities.AddModifierCommonPhase2<TStatModifier, TStatModifierStack>(
-            //         statHandle,
-            //         ref stat,
-            //         modifier,
-            //         in TmpObserversStatHandles,
-            //         ref StatsBuffer,
-            //         in StatModifiersBuffer,
-            //         in StatObserversBuffer);
-            //
-            //     // Write back stat data
-            //     StatsBuffer[statHandle.Index] = stat;
-            //
-            //     // TODO:
-            //     // Stat update
-            //     // ref Stat statRef = ref TryGetStatRef(statHandle, out bool statSuccess, ref _nullStat);
-            //     // UpdateStat(statHandle,
-            //     //     ref statRef,
-            //     //     ref statModifiersBuffer,
-            //     //     ref statObserversBuffer);
-            //
-            //     return true;
-            // }
-            // else
-            // {
-            //     Debug.Log(
-            //         "Warning: stat modifier couldn't be added because it would've created an infinite stats update loop. The stat it affects would either directly or indirectly react to its own changes down the reactive stats chain.");
-            // }
+            // Ensure lists are created and cleared
+            StatsUtilities.EnsureClearedValidTempList(ref _tmpModifierObservedStatsList);
+            StatsUtilities.EnsureClearedValidTempList(ref _tmpStatObserversList);
+            
+            StatsUtilities.AddModifierPhase1<TStatModifier, TStatModifierStack>(
+                affectedStatHandle,
+                ref StatsOwner,
+                ref modifier,
+                ref _tmpModifierObservedStatsList,
+                out statModifierHandle);
+            
+            Baker.SetComponent(Entity, StatsOwner);
+                
+            // In baking, don't allow observing stats from other entities
+            for (int i = 0; i < _tmpModifierObservedStatsList.Length; i++)
+            {
+                StatHandle observedStatHandle = _tmpModifierObservedStatsList[i];
+        
+                if (observedStatHandle.Entity != affectedStatHandle.Entity)
+                {
+                    throw new Exception(
+                        "Adding stat modifiers that observe stats of entities other than the baked entity is not allowed during baking.");
+                    return false;
+                }
+            }
+                
+            CachedBufferLookup<Stat> mockStatsCachedLookup = default;
+            CachedBufferLookup<StatObserver> mockStatObserversCachedLookup = default;
+            
+            bool modifierAdded = StatsUtilities.AddModifierPhase2<TStatModifier, TStatModifierStack>(
+                true,
+                affectedStatHandle,
+                in modifier,
+                ref StatsBuffer,
+                ref StatModifiersBuffer,
+                ref StatObserversBuffer,
+                ref mockStatsCachedLookup,
+                ref mockStatObserversCachedLookup,
+                ref _tmpModifierObservedStatsList,
+                ref _tmpStatObserversList);
+
+            if (modifierAdded)
+            {
+                // Update stat following modifier add
+                UpdateStat(affectedStatHandle);
+                
+                return true;
+            }
 
             statModifierHandle = default;
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsStatHandlePresentDownObserversChain(StatHandle statHandle, StatHandle observerStatHandle)
+        private unsafe void UpdateStat(StatHandle statHandle)
         {
-            if (statHandle != observerStatHandle)
+            StatsUtilities.EnsureClearedValidTempList(ref _tmpUpdatedStatsList);
+            _tmpUpdatedStatsList.Add(statHandle);
+            
+            NativeList<StatChangeEvent> mockStatChangeEventsList = default;
+
+            for (int i = 0; i < _tmpUpdatedStatsList.Length; i++)
             {
-                // TODO
+                if (statHandle.Index < StatsBuffer.Length)
+                {
+                    ref Stat statRef =
+                        ref UnsafeUtility.ArrayElementAsRef<Stat>(StatsBuffer.GetUnsafePtr(), statHandle.Index);
 
-                return true;
+                    StatValueReader statValueReader = new StatValueReader();
+                    statValueReader.SetCachedData(Entity, StatsBuffer);
+                    
+                    StatsUtilities.UpdateSingleStatCommon<TStatModifier, TStatModifierStack>(
+                        statHandle,
+                        ref statValueReader,
+                        ref statRef,
+                        ref StatModifiersBuffer,
+                        ref StatObserversBuffer,
+                        ref mockStatChangeEventsList,
+                        ref _tmpUpdatedStatsList);
+                }
             }
-
-            return false;
-        }
-
-        public void Finalize()
-        {
-            Baker.AddComponent(Entity, StatsOwner);
         }
     }
-
 }
