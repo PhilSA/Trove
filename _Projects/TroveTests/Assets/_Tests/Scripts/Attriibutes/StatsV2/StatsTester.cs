@@ -76,7 +76,7 @@ public struct TestStatModifier : IBufferElementData, IStatsModifier<TestStatModi
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Apply(ref StatValueReader statValueReader, ref Stack stack)
+    public void Apply(ref StatsHandler statsHandler, ref Stack stack)
     {
         switch (ModifierType)
         {
@@ -87,7 +87,7 @@ public struct TestStatModifier : IBufferElementData, IStatsModifier<TestStatModi
             }
             case (Type.AddFromStat):
             {
-                if (statValueReader.TryGetStat(StatHandleA, out Stat statA))
+                if (statsHandler.TryGetStat(StatHandleA, out Stat statA))
                 {
                     stack.Add += statA.Value;
                 }
@@ -100,7 +100,7 @@ public struct TestStatModifier : IBufferElementData, IStatsModifier<TestStatModi
             }
             case (Type.AddToMultiplierFromStat):
             {
-                if (statValueReader.TryGetStat(StatHandleA, out Stat statA))
+                if (statsHandler.TryGetStat(StatHandleA, out Stat statA))
                 {
                     stack.Multiplier += statA.Value;
                 }

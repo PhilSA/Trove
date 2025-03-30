@@ -122,9 +122,10 @@ partial struct StatsTesterSystem : ISystem
     [BurstCompile]
     public partial struct StatGetValueJob : IJobEntity
     {
-        void Execute(ref TestStatOwner statsOwner, in DynamicBuffer<Stat> statsBuffer)
+        void Execute(Entity entity, ref TestStatOwner test, ref StatsOwner statsOwner, in DynamicBuffer<Stat> statsBuffer)
         {
-            StatsUtilities.TryGetStatValue(statsOwner.StatA, in statsBuffer, out statsOwner.tmp);
+            SingleEntityStatsHandler statsHandler = new SingleEntityStatsHandler(entity, in statsBuffer);
+            test.tmp = statsHandler.GetStatAtIndex(0, in statsOwner).Value;
         }
     }
 }

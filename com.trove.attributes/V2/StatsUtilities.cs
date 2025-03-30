@@ -3,11 +3,30 @@ using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Assertions;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 
 namespace Trove.Stats
 {
     public static class StatsUtilities
     {
+        public static void BakeStatsComponents<TStatModifier, TStatModifierStack>(IBaker baker, Entity entity, out StatsBaker<TStatModifier, TStatModifierStack> statsBaker)
+            where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactMultiLinkedListElement
+            where TStatModifierStack : unmanaged, IStatsModifierStack
+        {
+            baker.AddComponent(entity,new StatsOwner());
+            statsBaker =  new StatsBaker<TStatModifier, TStatModifierStack>
+            {
+                Baker = baker,
+                Entity = entity,
+
+                StatsOwner = default,
+                StatsBuffer = baker.AddBuffer<Stat>(entity),
+                StatModifiersBuffer = baker.AddBuffer<TStatModifier>(entity),
+                StatObserversBuffer = baker.AddBuffer<StatObserver>(entity),
+            };
+        }
+        
         public static void AddStatsComponents<TStatModifier, TStatModifierStack>(Entity entity, EntityManager entityManager)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactMultiLinkedListElement
             where TStatModifierStack : unmanaged, IStatsModifierStack
@@ -39,86 +58,13 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float GetStatValue(
-            StatHandle statHandle, 
-            in DynamicBuffer<Stat> statsBuffer)
-        {
-            return statsBuffer[statHandle.Index].Value;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Stat GetStat(
-            StatHandle statHandle, 
-            in DynamicBuffer<Stat> statsBuffer)
-        {
-            return statsBuffer[statHandle.Index];
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetStatValue(
-            StatHandle statHandle, 
-            in DynamicBuffer<Stat> statsBuffer,
-            out float value)
-        {
-            if (statHandle.Index < statsBuffer.Length)
-            {
-                Stat stat = statsBuffer[statHandle.Index];
-                value = stat.Value;
-                return true;
-            }
-
-            value = default;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetStat(
-            StatHandle statHandle, 
-            in DynamicBuffer<Stat> statsBuffer,
-            out Stat stat)
-        {
-            if (statHandle.Index < statsBuffer.Length)
-            {
-                stat = statsBuffer[statHandle.Index];
-                return true;
-            }
-
-            stat = default;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetStatValue(
-            StatHandle statHandle, 
-            in BufferLookup<Stat> statsLookup,
-            out float value)
-        {
-            if (statsLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> statsBuffer))
-            {
-                return TryGetStatValue(statHandle, in statsBuffer, out value);
-            }
-            
-            value = default;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetStat(
-            StatHandle statHandle, 
-            in BufferLookup<Stat> statsLookup,
-            out Stat stat)
-        {
-            if (statsLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> statsBuffer))
-            {
-                return TryGetStat(statHandle, in statsBuffer, out stat);
-            }
-
-            stat = default;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void CreateStatCommon(Entity entity, float baseValue, bool produceChangeEvents, out StatHandle statHandle, ref DynamicBuffer<Stat> StatsBuffer)
+        internal static bool CreateStat(
+            Entity entity, 
+            float baseValue, 
+            bool produceChangeEvents, 
+            ref StatsOwner statsOwner,
+            ref DynamicBuffer<Stat> statsBuffer,
+            out StatHandle statHandle)
         {
             statHandle = new StatHandle
             {
@@ -136,15 +82,25 @@ namespace Trove.Stats
                 
                 ProduceChangeEvents = produceChangeEvents ? (byte)1 : (byte)0,
             };
-            statHandle.Index = StatsBuffer.Length;
             
-            StatsBuffer.Add(newStat);
+            if (statsOwner.FastStatsStorage.HasRoom())
+            {
+                statHandle.Index = statsOwner.FastStatsStorage.Length;
+                statsOwner.FastStatsStorage.Add(newStat);
+                return true;
+            }
+            else
+            {
+                statHandle.Index = FastStatsStorage.Capacity + statsBuffer.Length;
+                statsBuffer.Add(newStat);
+                return true;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void UpdateSingleStatCommon<TStatModifier, TStatModifierStack>(
             StatHandle statHandle,
-            ref StatValueReader statValueReader,
+            ref StatsHandler statsHandler,
             ref Stat statRef,
             ref DynamicBuffer<TStatModifier> statModifiersBuffer,
             ref DynamicBuffer<StatObserver> statObserversBuffer,
@@ -166,7 +122,7 @@ namespace Trove.Stats
                            out int modifierIndex))
                 {
                     modifier.Apply(
-                        ref statValueReader,
+                        ref statsHandler,
                         ref modifierStack);
                     // TODO: give a way to say "the modifier depends on a now invalid stat and must be removed"
                 }
@@ -201,162 +157,6 @@ namespace Trove.Stats
             }
         }
 
-        internal static void AddModifierPhase1<TStatModifier, TStatModifierStack>(
-            StatHandle affectedStatHandle,
-            ref StatsOwner statsOwnerRef,
-            ref TStatModifier modifier,
-            ref NativeList<StatHandle> tmpModifierObservedStatsList,
-            out StatModifierHandle statModifierHandle)
-            where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactMultiLinkedListElement
-            where TStatModifierStack : unmanaged, IStatsModifierStack
-        {
-            statModifierHandle = new StatModifierHandle
-            {
-                AffectedStatHandle = affectedStatHandle,
-            };
-
-            // Increment modifier Id (local to entity)
-            statsOwnerRef.ModifierIDCounter++;
-            modifier.ID = statsOwnerRef.ModifierIDCounter;
-            statModifierHandle.ModifierID = modifier.ID;
-
-            // Get observed stats of modifier
-            modifier.AddObservedStatsToList(ref tmpModifierObservedStatsList);
-        }
-
-        internal static bool AddModifierPhase2<TStatModifier, TStatModifierStack>(
-            bool allStatsAreOnAffectedStatEntity,
-            StatHandle affectedStatHandle,
-            in TStatModifier modifier,
-            ref DynamicBuffer<Stat> statsBufferOnAffectedStatEntity,
-            ref DynamicBuffer<TStatModifier> statModifiersBufferOnAffectedStatEntity,
-            ref DynamicBuffer<StatObserver> statObserversBufferOnAffectedStatEntity,
-            ref BufferLookup<Stat> statsLookup,
-            ref BufferLookup<StatObserver> statObserversLookup,
-            ref NativeList<StatHandle> tmpModifierObservedStatsList,
-            ref NativeList<StatObserver> tmpStatObserversList)
-            where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData,
-            ICompactMultiLinkedListElement
-            where TStatModifierStack : unmanaged, IStatsModifierStack
-        {
-            bool modifierCanBeAdded = true;
-            {
-                // Make sure the modifier wouldn't make the stat observe itself (would cause infinite loop)
-                for (int j = 0; j < tmpModifierObservedStatsList.Length; j++)
-                {
-                    StatHandle modifierObservedStatHandle = tmpModifierObservedStatsList[j];
-                    if (affectedStatHandle == modifierObservedStatHandle)
-                    {
-                        modifierCanBeAdded = false;
-                        break;
-                    }
-                }
-
-                // Don't allow infinite observer loops.
-                // Follow the chain of stats that would react to this stat's changes if the modifier was added (follow the 
-                // observers chain). If we end up finding this stat anywhere in the chain, it would cause an infinite loop.
-                // TODO: an alternative would be to configure a max stats update chain length and early exit an update if over limit
-                if (modifierCanBeAdded)
-                {
-                    // Start by adding the affected stat's observers
-                    StatsUtilities.AddObserversOfStatToList(
-                        affectedStatHandle,
-                        in statsBufferOnAffectedStatEntity,
-                        in statObserversBufferOnAffectedStatEntity,
-                        ref tmpStatObserversList);
-
-                    // TODO: make sure this verification loop can't possibly end up being infinite either. It could be infinite if we haven't guaranteed loop detection for other modifier adds...
-                    for (int i = 0; i < tmpStatObserversList.Length; i++)
-                    {
-                        StatHandle iteratedObserverStatHandle = tmpStatObserversList[i].ObserverHandle;
-
-                        // If we find the affected stat down the chain of stats that it observes,
-                        // it would create an infinite loop. Prevent adding modifier.
-                        if (iteratedObserverStatHandle == affectedStatHandle)
-                        {
-                            modifierCanBeAdded = false;
-                            break;
-                        }
-
-                        // Add the affected stat to the observers chain list if the iterated observer is
-                        // an observed stat of the modifier. Because if we proceed with adding the modifier, the
-                        // affected stat would be added as an observer of all modifier observed stats
-                        for (int j = 0; j < tmpModifierObservedStatsList.Length; j++)
-                        {
-                            StatHandle modifierObservedStatHandle = tmpModifierObservedStatsList[j];
-                            if (iteratedObserverStatHandle == modifierObservedStatHandle)
-                            {
-                                tmpModifierObservedStatsList.Add(affectedStatHandle);
-                            }
-                        }
-
-                        // Add the observer's observers to the list
-                        if (allStatsAreOnAffectedStatEntity)
-                        {
-                            StatsUtilities.AddObserversOfStatToList(
-                                iteratedObserverStatHandle,
-                                in statsBufferOnAffectedStatEntity,
-                                in statObserversBufferOnAffectedStatEntity,
-                                ref tmpStatObserversList);
-                        }
-                        // Update buffers so they represent the ones on the observer entity
-                        else if (statsLookup.TryGetBuffer(iteratedObserverStatHandle.Entity, out DynamicBuffer<Stat> observerStatsBuffer) &&
-                                 statObserversLookup.TryGetBuffer(iteratedObserverStatHandle.Entity, out DynamicBuffer<StatObserver> observerStatObserversBuffer))
-                        {
-                            StatsUtilities.AddObserversOfStatToList(
-                                iteratedObserverStatHandle,
-                                in observerStatsBuffer,
-                                in observerStatObserversBuffer,
-                                ref tmpStatObserversList);
-                        }
-                    }
-                }
-            }
-
-            if (modifierCanBeAdded)
-            {
-                // Add modifier
-                {
-                    Stat affectedStat = statsBufferOnAffectedStatEntity[affectedStatHandle.Index];
-                    CollectionUtilities.AddToCompactMultiLinkedList(ref statModifiersBufferOnAffectedStatEntity,
-                        ref affectedStat.LastModifierIndex, modifier);
-                    statsBufferOnAffectedStatEntity[affectedStatHandle.Index] = affectedStat;
-                }
-
-                // Add affected stat as observer of all observed stats
-                for (int i = 0; i < tmpModifierObservedStatsList.Length; i++)
-                {
-                    StatHandle observedStatHandle = tmpModifierObservedStatsList[i];
-                    
-                    if (allStatsAreOnAffectedStatEntity)
-                    {
-                        Assert.IsTrue(observedStatHandle.Entity == affectedStatHandle.Entity);
-                        
-                        StatsUtilities.AddStatAsObserverOfOtherStat(
-                            affectedStatHandle,
-                            observedStatHandle,
-                            ref statsBufferOnAffectedStatEntity,
-                            ref statObserversBufferOnAffectedStatEntity);
-                    }
-                    // Update buffers so they represent the ones on the observer entity
-                    else if (statsLookup.TryGetBuffer(observedStatHandle.Entity, out DynamicBuffer<Stat> observedStatsBuffer) &&
-                               statObserversLookup.TryGetBuffer(observedStatHandle.Entity,
-                                   out DynamicBuffer<StatObserver> observedStatObserversBuffer))
-                    {
-                        StatsUtilities.AddStatAsObserverOfOtherStat(
-                            affectedStatHandle,
-                            observedStatHandle,
-                            ref observedStatsBuffer,
-                            ref observedStatObserversBuffer);
-                    }
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void EnsureClearedValidTempList<T>(ref NativeList<T> list) where T : unmanaged
         {
@@ -368,17 +168,12 @@ namespace Trove.Stats
         }
 
         internal static void AddObserversOfStatToList(
-            StatHandle statHandle, 
-            in DynamicBuffer<Stat> statsBufferOnStatEntity,
+            in Stat stat,
             in DynamicBuffer<StatObserver> statObserversBufferOnStatEntity,
             ref NativeList<StatObserver> statObserversList)
         {
-            Assert.IsTrue(statHandle.Entity != Entity.Null);
-
-            if (statHandle.Index < statsBufferOnStatEntity.Length)
+            if (stat.LastObserverIndex >= 0)
             {
-                Stat stat = statsBufferOnStatEntity[statHandle.Index];
-
                 CompactMultiLinkedListIterator<StatObserver> observersIterator =
                     new CompactMultiLinkedListIterator<StatObserver>(stat.LastObserverIndex);
                 while (observersIterator.GetNext(in statObserversBufferOnStatEntity,
@@ -387,25 +182,141 @@ namespace Trove.Stats
                     statObserversList.Add(observerOfStat);
                 }
             }
-            // TODO: else? 
         }
 
         internal static void AddStatAsObserverOfOtherStat(
             StatHandle observerStatHandle, 
             StatHandle observedStatHandle,
-            ref DynamicBuffer<Stat> statsBufferOnObservedStatEntity,
+            ref StatsOwner statsOwnerOfObservedStat,
+            ref SingleEntityStatsHandler statsHandlerForObservedStat,
             ref DynamicBuffer<StatObserver> statObserversBufferOnObservedStatEntity)
         {
             Assert.IsTrue(observerStatHandle.Entity != Entity.Null);
 
-            Stat observedStat = statsBufferOnObservedStatEntity[observedStatHandle.Index];
+            if (statsHandlerForObservedStat.TryGetStat(observedStatHandle, in statsOwnerOfObservedStat, out Stat observedStat))
+            {
+                CollectionUtilities.AddToCompactMultiLinkedList(
+                    ref statObserversBufferOnObservedStatEntity,
+                    ref observedStat.LastObserverIndex, 
+                    new StatObserver { ObserverHandle = observerStatHandle });
 
-            CollectionUtilities.AddToCompactMultiLinkedList(
-                ref statObserversBufferOnObservedStatEntity,
-                ref observedStat.LastObserverIndex, 
-                new StatObserver { ObserverHandle = observerStatHandle });
+                statsHandlerForObservedStat.TrySetStat(observedStatHandle, observedStat, ref statsOwnerOfObservedStat);
+            }
+            // TODO: else?
+        }
+    }
 
-            statsBufferOnObservedStatEntity[observedStatHandle.Index] = observedStat;
+    /// <summary>
+    /// Iterates a specified linked list in a dynamic buffer containing multiple linked lists.
+    /// Also allows removing elements during iteration.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public struct CompactMultiLinkedListIterator<T> where T : unmanaged, ICompactMultiLinkedListElement
+    {
+        private int _iteratedElementIndex;
+        private int _prevIteratedElementIndex;
+        private T _iteratedElement;
+        
+        /// <summary>
+        /// Create the iterator
+        /// </summary>
+        public CompactMultiLinkedListIterator(int linkedListLastIndex)
+        {
+            _iteratedElementIndex = linkedListLastIndex;
+            _prevIteratedElementIndex = -1;
+            _iteratedElement = default;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool GetNext(in DynamicBuffer<T> multiLinkedListsBuffer, out T element, out int elementIndex)
+        {
+            if (_iteratedElementIndex >= 0)
+            {
+                _iteratedElement = multiLinkedListsBuffer[_iteratedElementIndex];
+
+                element = _iteratedElement;
+                elementIndex = _iteratedElementIndex;
+                
+                // Move to next index but remember previous (used for removing)
+                _prevIteratedElementIndex = _iteratedElementIndex;
+                _iteratedElementIndex = _iteratedElement.PrevElementIndex;
+                
+                return true;
+            }
+
+            element = default;
+            elementIndex = -1;
+            return false;
+        }
+
+        /// <summary>
+        /// Note: will update the last indexes in the linkedListLastIndexes following removal.
+        /// Note: GetNext() must be called before this can be used.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RemoveCurrentIteratedElementAndUpdateIndexes(
+            ref DynamicBuffer<T> multiLinkedListsBuffer, 
+            ref NativeArray<int> linkedListLastIndexes,
+            out int firstUpdatedLastIndexIndex)
+        {
+            firstUpdatedLastIndexIndex = -1;
+            int removedElementIndex = _prevIteratedElementIndex;
+
+            if (removedElementIndex < 0)
+            {
+                return;
+            }
+
+            T removedElement = _iteratedElement;
+            
+            // Remove element
+            multiLinkedListsBuffer.RemoveAt(removedElementIndex);
+
+            // Iterate all last indexes and update them 
+            for (int i = 0; i < linkedListLastIndexes.Length; i++)
+            {
+                int tmpLastIndex = linkedListLastIndexes[i];
+                
+                // If the iterated last index is greater than the removed index, decrement it
+                if (tmpLastIndex > removedElementIndex)
+                {
+                    tmpLastIndex -= 1;
+                    linkedListLastIndexes[i] = tmpLastIndex;
+                    if (firstUpdatedLastIndexIndex < 0)
+                    {
+                        firstUpdatedLastIndexIndex = i;
+                    }
+                }
+                // If the iterated last index is the one we removed, update it with the prev index of the removed element
+                else if (tmpLastIndex == removedElementIndex)
+                {
+                    linkedListLastIndexes[i] = removedElement.PrevElementIndex;
+                    if (firstUpdatedLastIndexIndex < 0)
+                    {
+                        firstUpdatedLastIndexIndex = i;
+                    }
+                }
+            }
+
+            // Iterate all buffer elements starting from the removed index to update their prev indexes
+            for (int i = _iteratedElementIndex; i < multiLinkedListsBuffer.Length; i++)
+            {
+                T iteratedElement = multiLinkedListsBuffer[i];
+                
+                // If the prev index of this element is greater than the removed one, decrement it
+                if (iteratedElement.PrevElementIndex > removedElementIndex)
+                {
+                    iteratedElement.PrevElementIndex -= 1;
+                    multiLinkedListsBuffer[i] = iteratedElement;
+                }
+                // If the prev index of this element was the removed one, change its prev index to the removed one's
+                // prev index.
+                else if (iteratedElement.PrevElementIndex == removedElementIndex)
+                {
+                    iteratedElement.PrevElementIndex = removedElement.PrevElementIndex;
+                    multiLinkedListsBuffer[i] = iteratedElement;
+                }
+            }
         }
     }
 }
