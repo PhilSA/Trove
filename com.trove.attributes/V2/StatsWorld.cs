@@ -160,7 +160,7 @@ namespace Trove.Stats
             {
                 StatHandle newStatHandle = _tmpUpdatedStatsList[i];
                 
-                ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(statHandle, ref _statsLookup, out bool getStatSuccess, ref _nullStat);
+                ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(newStatHandle, ref _statsLookup, out bool getStatSuccess, ref _nullStat);
                 if (getStatSuccess)
                 {
                     if (statRef.LastModifierIndex >= 0)
@@ -193,7 +193,6 @@ namespace Trove.Stats
             StatsReader statsReader = new StatsReader(in _statsLookup);
             
             StatsUtilities.EnsureClearedValidTempList(ref _tmpUpdatedStatsList);
-            _tmpUpdatedStatsList.Add(statHandle);
             
             DynamicBuffer<TStatModifier> initialStatModifiersBuffer = default;
             DynamicBuffer<StatObserver> initialStatObserversBuffer = default;
@@ -226,7 +225,7 @@ namespace Trove.Stats
             {
                 StatHandle newStatHandle = _tmpUpdatedStatsList[i];
                 
-                ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(statHandle, ref _statsLookup, out bool getStatSuccess, ref _nullStat);
+                ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(newStatHandle, ref _statsLookup, out bool getStatSuccess, ref _nullStat);
                 if (getStatSuccess)
                 {
                     if (statRef.LastModifierIndex >= 0)
