@@ -256,9 +256,32 @@ namespace Trove.Stats.Tests
 
         private void AssertBufferLengths(Entity entity, int statsLength, int modifiersLength, int observersLength)
         {
-            Assert.AreEqual(statsLength, EntityManager.GetBuffer<Stat>(entity).Length);
-            Assert.AreEqual(modifiersLength, EntityManager.GetBuffer<StatModifier<StatsTestsStatModifier, StatsTestsStatModifier.Stack>>(entity).Length);
-            Assert.AreEqual(observersLength, EntityManager.GetBuffer<StatObserver>(entity).Length);
+            if (EntityManager.HasBuffer<Stat>(entity))
+            {
+                Assert.AreEqual(statsLength, EntityManager.GetBuffer<Stat>(entity).Length);
+            }
+            else
+            {
+                Assert.AreEqual(0, statsLength);
+            }
+
+            if (EntityManager.HasBuffer<StatModifier<StatsTestsStatModifier, StatsTestsStatModifier.Stack>>(entity))
+            {
+                Assert.AreEqual(modifiersLength, EntityManager.GetBuffer<StatModifier<StatsTestsStatModifier, StatsTestsStatModifier.Stack>>(entity).Length);
+            }
+            else
+            {
+                Assert.AreEqual(0, modifiersLength);
+            }
+
+            if (EntityManager.HasBuffer<StatObserver>(entity))
+            {
+                Assert.AreEqual(observersLength, EntityManager.GetBuffer<StatObserver>(entity).Length);
+            }
+            else
+            {
+                Assert.AreEqual(0, observersLength);
+            }
         }
 
         [Test]
@@ -2290,6 +2313,95 @@ namespace Trove.Stats.Tests
             }
         }
 
+        [Test]
+        public void DestroyObservedStat()
+        {
+            bool success = false;
+            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+
+            Entity entity1 = CreateStatsEntity(0, 10f, true,
+                out StatHandle statHandle1A, out _, out _);
+            Entity entity2 = CreateStatsEntity(0, 10f, true,
+                out StatHandle statHandle2A, out _, out _);
+
+            UpdateStatsWorld(ref statsWorld);
+
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out Stat stat1A,
+                out int stat1AModifiersCount, out int stat1AObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out Stat stat2A,
+                out int stat2AModifiersCount, out int stat2AObserversCount);
+
+            // Make 1A an observer of 2A
+            success = statsWorld.TryAddStatModifier(
+                statHandle1A,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle2A,
+                },
+                out StatModifierHandle modifier1);
+            Assert.IsTrue(success);
+
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                out stat1AModifiersCount, out stat1AObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+                out stat2AModifiersCount, out stat2AObserversCount);
+            
+            Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(10f));
+            Assert.IsTrue(stat1A.Value.IsRoughlyEqual(20f));
+            Assert.AreEqual(1, stat1AModifiersCount);
+            Assert.AreEqual(0, stat1AObserversCount);
+            Assert.IsTrue(stat2A.BaseValue.IsRoughlyEqual(10f));
+            Assert.IsTrue(stat2A.Value.IsRoughlyEqual(10f));
+            Assert.AreEqual(0, stat2AModifiersCount);
+            Assert.AreEqual(1, stat2AObserversCount);
+            AssertBufferLengths(entity1, 3, 1, 0);
+            AssertBufferLengths(entity2, 3, 0, 1);
+            
+            // Destroy entity2 (so destroy stat 2A)
+            EntityManager.DestroyEntity(entity2);
+            UpdateStatsWorld(ref statsWorld);
+
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                out stat1AModifiersCount, out stat1AObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+                out stat2AModifiersCount, out stat2AObserversCount);
+            
+            Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(10f));
+            // TODO: A stats reaction isn't triggered on destroy by default...
+            // it would have to be triggered manually in some destroy pipeline.
+            // But in theory we could also cache the last known value in the modifier struct...
+            Assert.IsTrue(stat1A.Value.IsRoughlyEqual(20f)); 
+            Assert.AreEqual(1, stat1AModifiersCount);
+            Assert.AreEqual(0, stat1AObserversCount);
+            Assert.IsTrue(stat2A.BaseValue.IsRoughlyEqual(0f));
+            Assert.IsTrue(stat2A.Value.IsRoughlyEqual(0f));
+            Assert.AreEqual(0, stat2AModifiersCount);
+            Assert.AreEqual(0, stat2AObserversCount);
+            AssertBufferLengths(entity1, 3, 1, 0);
+            AssertBufferLengths(entity2, 0, 0, 0);
+            
+            // Remove modifier
+            success = statsWorld.TryRemoveStatModifier(modifier1);
+            Assert.IsTrue(success);
+
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                out stat1AModifiersCount, out stat1AObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+                out stat2AModifiersCount, out stat2AObserversCount);
+            
+            Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(10f));
+            Assert.IsTrue(stat1A.Value.IsRoughlyEqual(10f));
+            Assert.AreEqual(0, stat1AModifiersCount);
+            Assert.AreEqual(0, stat1AObserversCount);
+            Assert.IsTrue(stat2A.BaseValue.IsRoughlyEqual(0f));
+            Assert.IsTrue(stat2A.Value.IsRoughlyEqual(0f));
+            Assert.AreEqual(0, stat2AModifiersCount);
+            Assert.AreEqual(0, stat2AObserversCount);
+            AssertBufferLengths(entity1, 3, 0, 0);
+            AssertBufferLengths(entity2, 0, 0, 0);
+        }
+
         // [Test]
         // public void ComplexTree()
         // {
@@ -2428,138 +2540,6 @@ namespace Trove.Stats.Tests
         //     Assert.AreEqual(0, observers1.Length);
         // }
         //
-        //
-        // [Test]
-        // public void DestroyObservedAttribute()
-        // {
-        //     Entity entity1 = CreateStatsEntity(true, true, true);
-        //     Entity entity2 = CreateStatsEntity(true, true, true);
-        //     Entity entity3 = CreateStatsEntity(true, true, true);
-        //     AttributeReference attribute1A = new AttributeReference(entity1, (int)AttributeType.A);
-        //     AttributeReference attribute1B = new AttributeReference(entity1, (int)AttributeType.B);
-        //     AttributeReference attribute1C = new AttributeReference(entity1, (int)AttributeType.C);
-        //     AttributeReference attribute2A = new AttributeReference(entity2, (int)AttributeType.A);
-        //     AttributeReference attribute2B = new AttributeReference(entity2, (int)AttributeType.B);
-        //     AttributeReference attribute2C = new AttributeReference(entity2, (int)AttributeType.C);
-        //     AttributeReference attribute3A = new AttributeReference(entity3, (int)AttributeType.A);
-        //     AttributeReference attribute3B = new AttributeReference(entity3, (int)AttributeType.B);
-        //     AttributeReference attribute3C = new AttributeReference(entity3, (int)AttributeType.C);
-        //
-        //     AttributeChanger attributeChanger = CreateStatsWorld();
-        //
-        //     AttributeValues values1A = EntityManager.GetComponentData<AttributeA>(entity1).Values;
-        //     AttributeValues values1B = EntityManager.GetComponentData<AttributeB>(entity1).Values;
-        //     AttributeValues values1C = EntityManager.GetComponentData<AttributeC>(entity1).Values;
-        //     AttributeValues values2A = EntityManager.GetComponentData<AttributeA>(entity2).Values;
-        //     AttributeValues values2B = EntityManager.GetComponentData<AttributeB>(entity2).Values;
-        //     AttributeValues values2C = EntityManager.GetComponentData<AttributeC>(entity2).Values;
-        //     AttributeValues values3A = EntityManager.GetComponentData<AttributeA>(entity3).Values;
-        //     AttributeValues values3B = EntityManager.GetComponentData<AttributeB>(entity3).Values;
-        //     AttributeValues values3C = EntityManager.GetComponentData<AttributeC>(entity3).Values;
-        //     DynamicBuffer<AttributeModifier> modifiers1 = EntityManager.GetBuffer<AttributeModifier>(entity1);
-        //     DynamicBuffer<AttributeObserver> observers1 = EntityManager.GetBuffer<AttributeObserver>(entity1);
-        //     DynamicBuffer<AttributeModifier> modifiers2 = EntityManager.GetBuffer<AttributeModifier>(entity2);
-        //     DynamicBuffer<AttributeObserver> observers2 = EntityManager.GetBuffer<AttributeObserver>(entity2);
-        //     DynamicBuffer<AttributeModifier> modifiers3 = EntityManager.GetBuffer<AttributeModifier>(entity3);
-        //     DynamicBuffer<AttributeObserver> observers3 = EntityManager.GetBuffer<AttributeObserver>(entity3);
-        //
-        //     ModifierReference modifierReference = default;
-        //     attributeChanger.AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), out modifierReference);
-        //     attributeChanger.AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), out modifierReference);
-        //     attributeChanger.AddModifier(attribute1B, AttributeModifier.Create_AddFromAttribute(attribute2A), out modifierReference);
-        //     attributeChanger.AddModifier(attribute1C, AttributeModifier.Create_AddFromAttribute(attribute2B), out modifierReference);
-        //     attributeChanger.AddModifier(attribute2A, AttributeModifier.Create_AddFromAttribute(attribute2B), out modifierReference);
-        //     attributeChanger.AddModifier(attribute2C, AttributeModifier.Create_AddFromAttribute(attribute1B), out modifierReference);
-        //     attributeChanger.AddModifier(attribute3A, AttributeModifier.Create_AddFromAttribute(attribute2C), out modifierReference);
-        //     attributeChanger.AddModifier(attribute2A, AttributeModifier.Create_AddFromAttribute(attribute3B), out modifierReference);
-        //     attributeChanger.AddModifier(attribute3C, AttributeModifier.Create_AddFromAttribute(attribute1A), out modifierReference);
-        //
-        //     values1A = EntityManager.GetComponentData<AttributeA>(entity1).Values;
-        //     values1B = EntityManager.GetComponentData<AttributeB>(entity1).Values;
-        //     values1C = EntityManager.GetComponentData<AttributeC>(entity1).Values;
-        //     values2A = EntityManager.GetComponentData<AttributeA>(entity2).Values;
-        //     values2B = EntityManager.GetComponentData<AttributeB>(entity2).Values;
-        //     values2C = EntityManager.GetComponentData<AttributeC>(entity2).Values;
-        //     values3A = EntityManager.GetComponentData<AttributeA>(entity3).Values;
-        //     values3B = EntityManager.GetComponentData<AttributeB>(entity3).Values;
-        //     values3C = EntityManager.GetComponentData<AttributeC>(entity3).Values;
-        //     modifiers1 = EntityManager.GetBuffer<AttributeModifier>(entity1);
-        //     observers1 = EntityManager.GetBuffer<AttributeObserver>(entity1);
-        //     modifiers2 = EntityManager.GetBuffer<AttributeModifier>(entity2);
-        //     observers2 = EntityManager.GetBuffer<AttributeObserver>(entity2);
-        //     modifiers3 = EntityManager.GetBuffer<AttributeModifier>(entity3);
-        //     observers3 = EntityManager.GetBuffer<AttributeObserver>(entity3);
-        //
-        //     Assert.IsTrue(values1A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values1A.Value.IsRoughlyEqual(70f));
-        //     Assert.IsTrue(values1B.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values1B.Value.IsRoughlyEqual(40f));
-        //     Assert.IsTrue(values1C.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values1C.Value.IsRoughlyEqual(20f));
-        //     Assert.IsTrue(values2A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values2A.Value.IsRoughlyEqual(30f));
-        //     Assert.IsTrue(values2B.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values2B.Value.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values2C.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values2C.Value.IsRoughlyEqual(50f));
-        //     Assert.IsTrue(values3A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values3A.Value.IsRoughlyEqual(60f));
-        //     Assert.IsTrue(values3B.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values3B.Value.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values3C.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values3C.Value.IsRoughlyEqual(80f));
-        //     Assert.AreEqual(4, modifiers1.Length);
-        //     Assert.AreEqual(2, observers1.Length);
-        //     Assert.AreEqual(3, modifiers2.Length);
-        //     Assert.AreEqual(5, observers2.Length);
-        //     Assert.AreEqual(2, modifiers3.Length);
-        //     Assert.AreEqual(1, observers3.Length);
-        //
-        //     // Destroy entity and prepare attributes owner for destruction
-        //     {
-        //         EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
-        //
-        //         Entity commandsEntity = AttributeCommandElement.CreateAttributeCommandsEntity(ecb, out DynamicBuffer<AttributeCommand> attributeCommands);
-        //         MakeTestEntity(ref ecb, commandsEntity);
-        //
-        //         AttributeUtilities.NotifyAttributesOwnerDestruction(entity2, ref observers2, ref attributeCommands);
-        //          
-        //         ecb.DestroyEntity(entity2);
-        //         ecb.Playback(EntityManager);
-        //         ecb.Dispose();
-        //
-        //         // After ecb playback, process commands to recalculate
-        //         UpdateProcessCommandsSystem();
-        //     }
-        //
-        //     values1A = EntityManager.GetComponentData<AttributeA>(entity1).Values;
-        //     values1B = EntityManager.GetComponentData<AttributeB>(entity1).Values;
-        //     values1C = EntityManager.GetComponentData<AttributeC>(entity1).Values;
-        //     values3A = EntityManager.GetComponentData<AttributeA>(entity3).Values;
-        //     values3B = EntityManager.GetComponentData<AttributeB>(entity3).Values;
-        //     values3C = EntityManager.GetComponentData<AttributeC>(entity3).Values;
-        //     modifiers1 = EntityManager.GetBuffer<AttributeModifier>(entity1);
-        //     observers1 = EntityManager.GetBuffer<AttributeObserver>(entity1);
-        //     modifiers3 = EntityManager.GetBuffer<AttributeModifier>(entity3);
-        //     observers3 = EntityManager.GetBuffer<AttributeObserver>(entity3);
-        //
-        //     Assert.IsTrue(values1A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values1A.Value.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values1B.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values1B.Value.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values1C.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values1C.Value.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values3A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values3A.Value.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values3B.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values3B.Value.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values3C.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values3C.Value.IsRoughlyEqual(20f));
-        //     Assert.AreEqual(0, modifiers1.Length);
-        //     Assert.AreEqual(1, observers1.Length);
-        //     Assert.AreEqual(1, modifiers3.Length);
-        //     Assert.AreEqual(1, observers3.Length);
-        // }
         //
         // [Test]
         // public void InfiniteObserversLoopPrevention()
