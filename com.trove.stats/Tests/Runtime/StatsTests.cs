@@ -1786,17 +1786,15 @@ namespace Trove.Stats.Tests
             // Add modifier
             // -------------------------------------------------
             
-            // Null entity
+            // Invalid StatHandle (entity)
+            
+            // Invalid StatHandle (index)
             
             // No StatsOwner buffer
             
             // No Stats buffer
             
             // No modifiers buffer
-            
-            // Invalid StatHandle (entity)
-            
-            // Invalid StatHandle (index)
             
             // -------------------------------------------------
             // Remove modifier
