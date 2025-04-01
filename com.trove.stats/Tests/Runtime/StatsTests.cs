@@ -2662,6 +2662,121 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat9.Value.IsRoughlyEqual(144f)); // Add 5 and 7 and 8
         }
         
+        [Test]
+        public void InfiniteObserversLoopPrevention()
+        {
+            //                                             6->\
+            // Try to create an infinite observers loop: 1->2->3->4
+            //                                                  \->1  (this one would cause the infinite loop)
+            //                                                   \->5
+            // ( A->B means "A observes B" )
+        
+            bool success = false;
+            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            
+            Entity entity1 = CreateStatsEntity(0, 10f, true,
+                out StatHandle statHandle1, out StatHandle statHandle4, out _);
+            Entity entity2 = CreateStatsEntity(0, 10f, true,
+                out StatHandle statHandle2, out StatHandle statHandle5, out _);
+            Entity entity3 = CreateStatsEntity(0, 10f, true,
+                out StatHandle statHandle3, out StatHandle statHandle6, out _);
+
+            UpdateStatsWorld(ref statsWorld);
+
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out Stat stat1,
+                out int stat1ModifiersCount, out int stat1ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle2, ref statsWorld, out Stat stat2,
+                out int stat2ModifiersCount, out int stat2ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle3, ref statsWorld, out Stat stat3,
+                out int stat3ModifiersCount, out int stat3ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle4, ref statsWorld, out Stat stat4,
+                out int stat4ModifiersCount, out int stat4ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle5, ref statsWorld, out Stat stat5,
+                out int stat5ModifiersCount, out int stat5ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle6, ref statsWorld, out Stat stat6,
+                out int stat6ModifiersCount, out int stat6ObserversCount);
+            
+            // This one shouldn't work (self-observing stat)
+            success = statsWorld.TryAddStatModifier(
+                statHandle1,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle1,
+                },
+                out _);
+            Assert.IsFalse(success);
+            
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out stat1,
+                out stat1ModifiersCount, out stat1ObserversCount);
+            Assert.AreEqual(0, stat1ModifiersCount);
+            
+            success = statsWorld.TryAddStatModifier(
+                statHandle1,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle2,
+                },
+                out _);
+            Assert.IsTrue(success);
+            success = statsWorld.TryAddStatModifier(
+                statHandle2,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle3,
+                },
+                out _);
+            Assert.IsTrue(success);
+            success = statsWorld.TryAddStatModifier(
+                statHandle3,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle4,
+                },
+                out _);
+            Assert.IsTrue(success);
+            success = statsWorld.TryAddStatModifier(
+                statHandle6,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle3,
+                },
+                out _);
+            Assert.IsTrue(success);
+            success = statsWorld.TryAddStatModifier(
+                statHandle3,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle5,
+                },
+                out _);
+            Assert.IsTrue(success);
+            
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out stat1,
+                out stat1ModifiersCount, out stat1ObserversCount);
+            Assert.AreEqual(1, stat1ModifiersCount);
+            
+            // This one shouldn't work
+            success = statsWorld.TryAddStatModifier(
+                statHandle3,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle1,
+                },
+                out _);
+            Assert.IsFalse(success);
+            
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out stat1,
+                out stat1ModifiersCount, out stat1ObserversCount);
+            Assert.AreEqual(1, stat1ModifiersCount);
+        }
+        
         // [Test]
         // public void SelfRemoveModifierAndObserver()
         // {
@@ -2712,98 +2827,5 @@ namespace Trove.Stats.Tests
         //     Assert.AreEqual(0, observers1.Length);
         // }
         //
-        //
-        // [Test]
-        // public void InfiniteObserversLoopPrevention()
-        // {
-        //     //                                             6->\
-        //     // Try to create an infinite observers loop: 1->2->3->4
-        //     //                                                  \->1  (this one would cause the infinite loop)
-        //     //                                                   \->5
-        //     // ( A->B means "A observes B" )
-        //
-        //     ModifierReference tmpModifierID = default;
-        //
-        //     Entity entity1 = CreateStatsEntity(true, false, false);
-        //     Entity entity2 = CreateStatsEntity(true, false, false);
-        //     Entity entity3 = CreateStatsEntity(true, false, false);
-        //     Entity entity4 = CreateStatsEntity(true, false, false);
-        //     Entity entity5 = CreateStatsEntity(true, false, false);
-        //     Entity entity6 = CreateStatsEntity(true, false, false);
-        //
-        //     AttributeReference attribute1A = new AttributeReference(entity1, (int)AttributeType.A);
-        //     AttributeReference attribute2A = new AttributeReference(entity2, (int)AttributeType.A);
-        //     AttributeReference attribute3A = new AttributeReference(entity3, (int)AttributeType.A);
-        //     AttributeReference attribute4A = new AttributeReference(entity4, (int)AttributeType.A);
-        //     AttributeReference attribute5A = new AttributeReference(entity5, (int)AttributeType.A);
-        //     AttributeReference attribute6A = new AttributeReference(entity6, (int)AttributeType.A);
-        //
-        //     AttributeChanger attributeChanger = CreateStatsWorld();
-        //
-        //     attributeChanger.AddModifier(attribute6A, AttributeModifier.Create_AddFromAttribute(attribute3A), out tmpModifierID);
-        //     attributeChanger.AddModifier(attribute1A, AttributeModifier.Create_AddFromAttribute(attribute2A), out tmpModifierID);
-        //     attributeChanger.AddModifier(attribute2A, AttributeModifier.Create_AddFromAttribute(attribute3A), out tmpModifierID);
-        //     attributeChanger.AddModifier(attribute3A, AttributeModifier.Create_AddFromAttribute(attribute4A), out tmpModifierID);
-        //     attributeChanger.AddModifier(attribute3A, AttributeModifier.Create_AddFromAttribute(attribute1A), out tmpModifierID);
-        //     attributeChanger.AddModifier(attribute3A, AttributeModifier.Create_AddFromAttribute(attribute5A), out tmpModifierID);
-        //
-        //     AttributeValues values1A = EntityManager.GetComponentData<AttributeA>(entity1).Values;
-        //     AttributeValues values2A = EntityManager.GetComponentData<AttributeA>(entity2).Values;
-        //     AttributeValues values3A = EntityManager.GetComponentData<AttributeA>(entity3).Values;
-        //     AttributeValues values4A = EntityManager.GetComponentData<AttributeA>(entity4).Values;
-        //     AttributeValues values5A = EntityManager.GetComponentData<AttributeA>(entity5).Values;
-        //     DynamicBuffer<AttributeModifier> modifiers1 = EntityManager.GetBuffer<AttributeModifier>(entity1);
-        //     DynamicBuffer<AttributeModifier> modifiers2 = EntityManager.GetBuffer<AttributeModifier>(entity2);
-        //     DynamicBuffer<AttributeModifier> modifiers3 = EntityManager.GetBuffer<AttributeModifier>(entity3);
-        //     DynamicBuffer<AttributeModifier> modifiers4 = EntityManager.GetBuffer<AttributeModifier>(entity4);
-        //     DynamicBuffer<AttributeModifier> modifiers5 = EntityManager.GetBuffer<AttributeModifier>(entity5);
-        //     DynamicBuffer<AttributeObserver> observers1 = EntityManager.GetBuffer<AttributeObserver>(entity1);
-        //     DynamicBuffer<AttributeObserver> observers2 = EntityManager.GetBuffer<AttributeObserver>(entity2);
-        //     DynamicBuffer<AttributeObserver> observers3 = EntityManager.GetBuffer<AttributeObserver>(entity3);
-        //     DynamicBuffer<AttributeObserver> observers4 = EntityManager.GetBuffer<AttributeObserver>(entity4);
-        //     DynamicBuffer<AttributeObserver> observers5 = EntityManager.GetBuffer<AttributeObserver>(entity5);
-        //
-        //     // Check that the modifier making 3 observe 1 wasn't added, because it would've caused a loop
-        //     Assert.AreEqual(1, modifiers1.Length);
-        //     Assert.AreEqual(1, modifiers2.Length);
-        //     Assert.AreEqual(2, modifiers3.Length); // 2 successful, 1 unsuccessful
-        //     Assert.AreEqual(0, modifiers4.Length);
-        //     Assert.AreEqual(0, modifiers5.Length);
-        //     Assert.AreEqual(0, observers1.Length);
-        //     Assert.AreEqual(1, observers2.Length);
-        //     Assert.AreEqual(2, observers3.Length);
-        //     Assert.AreEqual(1, observers4.Length);
-        //     Assert.AreEqual(1, observers5.Length);
-        //
-        //     Assert.IsTrue(values1A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values1A.Value.IsRoughlyEqual(50f));
-        //     Assert.IsTrue(values2A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values2A.Value.IsRoughlyEqual(40f));
-        //     Assert.IsTrue(values3A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values3A.Value.IsRoughlyEqual(30f));
-        //     Assert.IsTrue(values4A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values4A.Value.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values5A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values5A.Value.IsRoughlyEqual(10f));
-        //
-        //     attributeChanger.AddBaseValue(attribute3A, 1f);
-        //
-        //     values1A = EntityManager.GetComponentData<AttributeA>(entity1).Values;
-        //     values2A = EntityManager.GetComponentData<AttributeA>(entity2).Values;
-        //     values3A = EntityManager.GetComponentData<AttributeA>(entity3).Values;
-        //     values4A = EntityManager.GetComponentData<AttributeA>(entity4).Values;
-        //     values5A = EntityManager.GetComponentData<AttributeA>(entity5).Values;
-        //
-        //     Assert.IsTrue(values1A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values1A.Value.IsRoughlyEqual(51f));
-        //     Assert.IsTrue(values2A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values2A.Value.IsRoughlyEqual(41f));
-        //     Assert.IsTrue(values3A.BaseValue.IsRoughlyEqual(11f));
-        //     Assert.IsTrue(values3A.Value.IsRoughlyEqual(31f));
-        //     Assert.IsTrue(values4A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values4A.Value.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values5A.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values5A.Value.IsRoughlyEqual(10f));
-        // }
     }
 }
