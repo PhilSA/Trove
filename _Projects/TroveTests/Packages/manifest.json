@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.trove.attributes": "file:../../../com.trove.attributes",
+    "com.trove.stats": "file:../../../com.trove.stats",
     "com.trove.common": "file:../../../com.trove.common",
     "com.trove.eventsystems": "file:../../../com.trove.eventsystems",
     "com.trove.polymorphicstructs": "file:../../../com.trove.polymorphicstructs",
@@ -52,10 +52,9 @@
     "com.unity.modules.xr": "1.0.0"
   },
   "testables": [
-    "com.trove.attributes",
+    "com.trove.stats",
     "com.trove.utilityai",
     "com.trove.common",
-    "com.trove.objecthandles",
     "com.trove.polymorphicstructs",
     "com.trove.tweens",
     "com.trove.eventsystems"
