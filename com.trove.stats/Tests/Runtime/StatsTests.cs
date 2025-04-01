@@ -2776,56 +2776,5 @@ namespace Trove.Stats.Tests
                 out stat1ModifiersCount, out stat1ObserversCount);
             Assert.AreEqual(1, stat1ModifiersCount);
         }
-        
-        // [Test]
-        // public void SelfRemoveModifierAndObserver()
-        // {
-        //     Entity entity1 = CreateStatsEntity(true, true, true);
-        //     Entity entity2 = CreateStatsEntity(true, true, true);
-        //     Entity entity3 = CreateStatsEntity(true, true, true);
-        //     AttributeReference attributeA = new AttributeReference(entity1, (int)AttributeType.A);
-        //     AttributeReference attributeB = new AttributeReference(entity2, (int)AttributeType.B);
-        //     AttributeReference attributeC = new AttributeReference(entity3, (int)AttributeType.C);
-        //
-        //     AttributeChanger attributeChanger = CreateStatsWorld();
-        //
-        //     DynamicBuffer<AttributeModifier> modifiers1 = EntityManager.GetBuffer<AttributeModifier>(entity1);
-        //     DynamicBuffer<AttributeObserver> observers1 = EntityManager.GetBuffer<AttributeObserver>(entity1);
-        //     DynamicBuffer<AttributeModifier> modifiers2 = EntityManager.GetBuffer<AttributeModifier>(entity2);
-        //     DynamicBuffer<AttributeObserver> observers2 = EntityManager.GetBuffer<AttributeObserver>(entity2);
-        //     DynamicBuffer<AttributeModifier> modifiers3 = EntityManager.GetBuffer<AttributeModifier>(entity3);
-        //     DynamicBuffer<AttributeObserver> observers3 = EntityManager.GetBuffer<AttributeObserver>(entity3);
-        //
-        //     AttributeValues valuesA = EntityManager.GetComponentData<AttributeA>(entity1).Values;
-        //
-        //     attributeChanger.AddModifier(attributeA, AttributeModifier.Create_AddFromAttribute(attributeB), out ModifierReference modifier1);
-        //     attributeChanger.AddModifier(attributeC, AttributeModifier.Create_AddFromAttribute(attributeA), out ModifierReference modifier2);
-        //
-        //     valuesA = EntityManager.GetComponentData<AttributeA>(entity1).Values;
-        //     Assert.IsTrue(valuesA.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(valuesA.Value.IsRoughlyEqual(20f));
-        //     Assert.AreEqual(1, modifiers1.Length);
-        //     Assert.AreEqual(1, observers1.Length);
-        //     Assert.AreEqual(0, modifiers2.Length);
-        //     Assert.AreEqual(1, observers2.Length);
-        //     Assert.AreEqual(1, modifiers3.Length);
-        //     Assert.AreEqual(0, observers3.Length);
-        //
-        //     EntityManager.DestroyEntity(entity2);
-        //     EntityManager.DestroyEntity(entity3);
-        //
-        //     modifiers1 = EntityManager.GetBuffer<AttributeModifier>(entity1);
-        //     observers1 = EntityManager.GetBuffer<AttributeObserver>(entity1);
-        //
-        //     attributeChanger = CreateStatsWorld();
-        //     attributeChanger.RecalculateAttributeAndAllObservers(attributeA);
-        //
-        //     valuesA = EntityManager.GetComponentData<AttributeA>(entity1).Values;
-        //     Assert.IsTrue(valuesA.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(valuesA.Value.IsRoughlyEqual(10f));
-        //     Assert.AreEqual(0, modifiers1.Length);
-        //     Assert.AreEqual(0, observers1.Length);
-        // }
-        //
     }
 }
