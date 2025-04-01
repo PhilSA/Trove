@@ -33,6 +33,7 @@ namespace Trove.Stats.Tests
         {
             Add,
             AddFromStat,
+            AddFromTwoStats,
             AddFromTwoStatsMax,
             AddInt,
         }
@@ -85,6 +86,7 @@ namespace Trove.Stats.Tests
                 case (Type.AddFromStat):
                     observedStatHandles.Add(StatHandleA);
                     break;
+                case (Type.AddFromTwoStats):
                 case (Type.AddFromTwoStatsMax):
                     observedStatHandles.Add(StatHandleA);
                     observedStatHandles.Add(StatHandleB);
@@ -111,6 +113,20 @@ namespace Trove.Stats.Tests
                         break;
                     }
 
+                    MustRemove = true;
+                    shouldProduceModifierTriggerEvent = true;
+                    break;
+                }
+                case (Type.AddFromTwoStats):
+                {
+                    if (statsReader.TryGetStat(StatHandleA, out float statAValue, out float _) &&
+                        statsReader.TryGetStat(StatHandleB, out float statBValue, out float _))
+                    {
+                        stack.Add += statAValue;
+                        stack.Add += statBValue;
+                        break;
+                    }
+                    
                     MustRemove = true;
                     shouldProduceModifierTriggerEvent = true;
                     break;
@@ -2402,93 +2418,249 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 0, 0, 0);
         }
 
-        // [Test]
-        // public void ComplexTree()
-        // {
-        //     /*
-        //      *           1
-        //      *         /   \
-        //      *        2 --> 3
-        //      *       /  \ /  \
-        //      *      4    5    6
-        //      *       \ / | \ /
-        //      *        7 <-- 8
-        //      *         \ | /
-        //      *           9
-        //      *           
-        //      * (    A                       )
-        //      * (   /   means B observes A   )
-        //      * (  B  (bottom observes top)  )
-        //      * 
-        //      * ( A --> B means A observes B )
-        //     */
-        //
-        //     Entity entity1 = CreateStatsEntity(true, true, true);
-        //     Entity entity2 = CreateStatsEntity(true, true, true);
-        //     Entity entity3 = CreateStatsEntity(true, true, true);
-        //     Entity entity4 = CreateStatsEntity(true, true, true);
-        //     Entity entity5 = CreateStatsEntity(true, true, true);
-        //     Entity entity6 = CreateStatsEntity(true, true, true);
-        //     Entity entity7 = CreateStatsEntity(true, true, true);
-        //     Entity entity8 = CreateStatsEntity(true, true, true);
-        //     Entity entity9 = CreateStatsEntity(true, true, true);
-        //     AttributeReference attribute1 = new AttributeReference(entity1, (int)AttributeType.A);
-        //     AttributeReference attribute2 = new AttributeReference(entity2, (int)AttributeType.A);
-        //     AttributeReference attribute3 = new AttributeReference(entity3, (int)AttributeType.A);
-        //     AttributeReference attribute4 = new AttributeReference(entity4, (int)AttributeType.A);
-        //     AttributeReference attribute5 = new AttributeReference(entity5, (int)AttributeType.A);
-        //     AttributeReference attribute6 = new AttributeReference(entity6, (int)AttributeType.A);
-        //     AttributeReference attribute7 = new AttributeReference(entity7, (int)AttributeType.A);
-        //     AttributeReference attribute8 = new AttributeReference(entity8, (int)AttributeType.A);
-        //     AttributeReference attribute9 = new AttributeReference(entity9, (int)AttributeType.A);
-        //
-        //     ModifierReference modifier = default;
-        //     AttributeChanger attributeChanger = CreateStatsWorld();
-        //     attributeChanger.AddModifier(attribute2, AttributeModifier.Create_AddFromAttribute(attribute1), out modifier);
-        //     attributeChanger.AddModifier(attribute2, AttributeModifier.Create_AddFromAttribute(attribute3), out modifier);
-        //     attributeChanger.AddModifier(attribute3, AttributeModifier.Create_AddFromAttribute(attribute1), out modifier);
-        //     attributeChanger.AddModifier(attribute4, AttributeModifier.Create_AddFromAttribute(attribute2), out modifier);
-        //     attributeChanger.AddModifier(attribute5, AttributeModifier.Create_AddFromAttribute(attribute2), out modifier);
-        //     attributeChanger.AddModifier(attribute5, AttributeModifier.Create_AddFromAttribute(attribute3), out modifier);
-        //     attributeChanger.AddModifier(attribute6, AttributeModifier.Create_AddFromAttribute(attribute3), out modifier);
-        //     attributeChanger.AddModifier(attribute7, AttributeModifier.Create_AddFromAttribute(attribute4), out modifier);
-        //     attributeChanger.AddModifier(attribute7, AttributeModifier.Create_AddFromAttribute(attribute5), out modifier);
-        //     attributeChanger.AddModifier(attribute8, AttributeModifier.Create_AddFromAttribute(attribute5), out modifier);
-        //     attributeChanger.AddModifier(attribute8, AttributeModifier.Create_AddFromAttribute(attribute6), out modifier);
-        //     attributeChanger.AddModifier(attribute8, AttributeModifier.Create_AddFromAttribute(attribute7), out modifier);
-        //     attributeChanger.AddModifier(attribute9, AttributeModifier.Create_AddFromAttribute(attribute5), out modifier);
-        //     attributeChanger.AddModifier(attribute9, AttributeModifier.Create_AddFromAttribute(attribute7), out modifier);
-        //     attributeChanger.AddModifier(attribute9, AttributeModifier.Create_AddFromAttribute(attribute8), out modifier);
-        //
-        //     AttributeValues values1 = EntityManager.GetComponentData<AttributeA>(entity1).Values;
-        //     AttributeValues values2 = EntityManager.GetComponentData<AttributeA>(entity2).Values;
-        //     AttributeValues values3 = EntityManager.GetComponentData<AttributeA>(entity3).Values;
-        //     AttributeValues values4 = EntityManager.GetComponentData<AttributeA>(entity4).Values;
-        //     AttributeValues values5 = EntityManager.GetComponentData<AttributeA>(entity5).Values;
-        //     AttributeValues values6 = EntityManager.GetComponentData<AttributeA>(entity6).Values;
-        //     AttributeValues values7 = EntityManager.GetComponentData<AttributeA>(entity7).Values;
-        //     AttributeValues values8 = EntityManager.GetComponentData<AttributeA>(entity8).Values;
-        //     AttributeValues values9 = EntityManager.GetComponentData<AttributeA>(entity9).Values;
-        //
-        //     Assert.IsTrue(values1.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values1.Value.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values2.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values2.Value.IsRoughlyEqual(40f));
-        //     Assert.IsTrue(values3.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values3.Value.IsRoughlyEqual(20f));
-        //     Assert.IsTrue(values4.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values4.Value.IsRoughlyEqual(50f));
-        //     Assert.IsTrue(values5.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values5.Value.IsRoughlyEqual(70f));
-        //     Assert.IsTrue(values6.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values6.Value.IsRoughlyEqual(30f));
-        //     Assert.IsTrue(values7.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values7.Value.IsRoughlyEqual(130f));
-        //     Assert.IsTrue(values8.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values8.Value.IsRoughlyEqual(240f));
-        //     Assert.IsTrue(values9.BaseValue.IsRoughlyEqual(10f));
-        //     Assert.IsTrue(values9.Value.IsRoughlyEqual(450f));
-        // }
+        [Test]
+        public void ComplexTree()
+        {
+            /*
+             *           1
+             *         /   \
+             *        2 --> 3
+             *       /  \ /  \
+             *      4    5    6
+             *       \ / | \ /
+             *        7 <-- 8
+             *         \ | /
+             *           9
+             *           
+             * (    A                       )
+             * (   /   means B observes A   )
+             * (  B  (bottom observes top)  )
+             * 
+             * ( A --> B means A observes B )
+            */
+            
+            bool success = false;
+            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            
+            Entity entity1 = CreateStatsEntity(0, 10f, true,
+                out StatHandle statHandle1, out StatHandle statHandle4, out StatHandle statHandle7);
+            Entity entity2 = CreateStatsEntity(0, 10f, true,
+                out StatHandle statHandle2, out StatHandle statHandle5, out StatHandle statHandle8);
+            Entity entity3 = CreateStatsEntity(0, 10f, true,
+                out StatHandle statHandle3, out StatHandle statHandle6, out StatHandle statHandle9);
+
+            UpdateStatsWorld(ref statsWorld);
+
+            statsWorld.TrySetStatBaseValue(statHandle1, 1f);
+            statsWorld.TrySetStatBaseValue(statHandle2, 2f);
+            statsWorld.TrySetStatBaseValue(statHandle3, 3f);
+            statsWorld.TrySetStatBaseValue(statHandle4, 4f);
+            statsWorld.TrySetStatBaseValue(statHandle5, 5f);
+            statsWorld.TrySetStatBaseValue(statHandle6, 6f);
+            statsWorld.TrySetStatBaseValue(statHandle7, 7f);
+            statsWorld.TrySetStatBaseValue(statHandle8, 8f);
+            statsWorld.TrySetStatBaseValue(statHandle9, 9f);
+
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out Stat stat1,
+                out int stat1ModifiersCount, out int stat1ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle2, ref statsWorld, out Stat stat2,
+                out int stat2ModifiersCount, out int stat2ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle3, ref statsWorld, out Stat stat3,
+                out int stat3ModifiersCount, out int stat3ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle4, ref statsWorld, out Stat stat4,
+                out int stat4ModifiersCount, out int stat4ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle5, ref statsWorld, out Stat stat5,
+                out int stat5ModifiersCount, out int stat5ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle6, ref statsWorld, out Stat stat6,
+                out int stat6ModifiersCount, out int stat6ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle7, ref statsWorld, out Stat stat7,
+                out int stat7ModifiersCount, out int stat7ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle8, ref statsWorld, out Stat stat8,
+                out int stat8ModifiersCount, out int stat8ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle9, ref statsWorld, out Stat stat9,
+                out int stat9ModifiersCount, out int stat9ObserversCount);
+            
+            Assert.IsTrue(stat1.Value.IsRoughlyEqual(1f));
+            Assert.IsTrue(stat2.Value.IsRoughlyEqual(2f));
+            Assert.IsTrue(stat3.Value.IsRoughlyEqual(3f));
+            Assert.IsTrue(stat4.Value.IsRoughlyEqual(4f));
+            Assert.IsTrue(stat5.Value.IsRoughlyEqual(5f));
+            Assert.IsTrue(stat6.Value.IsRoughlyEqual(6f));
+            Assert.IsTrue(stat7.Value.IsRoughlyEqual(7f));
+            Assert.IsTrue(stat8.Value.IsRoughlyEqual(8f));
+            Assert.IsTrue(stat9.Value.IsRoughlyEqual(9f));
+            
+            statsWorld.TryAddStatModifier(
+                statHandle2,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle1,
+                },
+                out StatModifierHandle modifier2_1);
+            statsWorld.TryAddStatModifier(
+                statHandle2,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle3,
+                },
+                out StatModifierHandle modifier2_3);
+            statsWorld.TryAddStatModifier(
+                statHandle3,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle1,
+                },
+                out StatModifierHandle modifier3_1);
+            statsWorld.TryAddStatModifier(
+                statHandle4,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle2,
+                },
+                out StatModifierHandle modifier4_2);
+            statsWorld.TryAddStatModifier(
+                statHandle5,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromTwoStats,
+                    StatHandleA = statHandle2,
+                    StatHandleB = statHandle3,
+                },
+                out StatModifierHandle modifier5_23);
+            statsWorld.TryAddStatModifier(
+                statHandle6,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle3,
+                },
+                out StatModifierHandle modifier6_3);
+            statsWorld.TryAddStatModifier(
+                statHandle7,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromTwoStats,
+                    StatHandleA = statHandle4,
+                    StatHandleB = statHandle5,
+                },
+                out StatModifierHandle modifier7_45);
+            statsWorld.TryAddStatModifier(
+                statHandle8,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromTwoStats,
+                    StatHandleA = statHandle5,
+                    StatHandleB = statHandle6,
+                },
+                out StatModifierHandle modifier8_56);
+            statsWorld.TryAddStatModifier(
+                statHandle8,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle7,
+                },
+                out StatModifierHandle modifier8_7);
+            statsWorld.TryAddStatModifier(
+                statHandle9,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle5,
+                },
+                out StatModifierHandle modifier9_5);
+            statsWorld.TryAddStatModifier(
+                statHandle9,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromTwoStats,
+                    StatHandleA = statHandle7,
+                    StatHandleB = statHandle8,
+                },
+                out StatModifierHandle modifier9_78);
+
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out stat1,
+                out stat1ModifiersCount, out stat1ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle2, ref statsWorld, out stat2,
+                out stat2ModifiersCount, out stat2ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle3, ref statsWorld, out stat3,
+                out stat3ModifiersCount, out stat3ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle4, ref statsWorld, out stat4,
+                out stat4ModifiersCount, out stat4ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle5, ref statsWorld, out stat5,
+                out stat5ModifiersCount, out stat5ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle6, ref statsWorld, out stat6,
+                out stat6ModifiersCount, out stat6ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle7, ref statsWorld, out stat7,
+                out stat7ModifiersCount, out stat7ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle8, ref statsWorld, out stat8,
+                out stat8ModifiersCount, out stat8ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle9, ref statsWorld, out stat9,
+                out stat9ModifiersCount, out stat9ObserversCount);
+            
+            Assert.IsTrue(stat1.BaseValue.IsRoughlyEqual(1f));
+            Assert.IsTrue(stat1.Value.IsRoughlyEqual(1f));
+            Assert.IsTrue(stat2.BaseValue.IsRoughlyEqual(2f));
+            Assert.IsTrue(stat2.Value.IsRoughlyEqual(7f)); // Add 1 and 3
+            Assert.IsTrue(stat3.BaseValue.IsRoughlyEqual(3f));
+            Assert.IsTrue(stat3.Value.IsRoughlyEqual(4f)); // Add 1
+            Assert.IsTrue(stat4.BaseValue.IsRoughlyEqual(4f));
+            Assert.IsTrue(stat4.Value.IsRoughlyEqual(11f)); // Add 2
+            Assert.IsTrue(stat5.BaseValue.IsRoughlyEqual(5f));
+            Assert.IsTrue(stat5.Value.IsRoughlyEqual(16f)); // Add 2 and 3
+            Assert.IsTrue(stat6.BaseValue.IsRoughlyEqual(6f));
+            Assert.IsTrue(stat6.Value.IsRoughlyEqual(10f)); // Add 3
+            Assert.IsTrue(stat7.BaseValue.IsRoughlyEqual(7f));
+            Assert.IsTrue(stat7.Value.IsRoughlyEqual(34f)); // Add 4 and 5
+            Assert.IsTrue(stat8.BaseValue.IsRoughlyEqual(8f));
+            Assert.IsTrue(stat8.Value.IsRoughlyEqual(68f)); // Add 5 and 6 and 7
+            Assert.IsTrue(stat9.BaseValue.IsRoughlyEqual(9f));
+            Assert.IsTrue(stat9.Value.IsRoughlyEqual(127f)); // Add 5 and 7 and 8
+            
+            statsWorld.TryAddStatBaseValue(statHandle1, 1f);
+
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out stat1,
+                out stat1ModifiersCount, out stat1ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle2, ref statsWorld, out stat2,
+                out stat2ModifiersCount, out stat2ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle3, ref statsWorld, out stat3,
+                out stat3ModifiersCount, out stat3ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle4, ref statsWorld, out stat4,
+                out stat4ModifiersCount, out stat4ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle5, ref statsWorld, out stat5,
+                out stat5ModifiersCount, out stat5ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle6, ref statsWorld, out stat6,
+                out stat6ModifiersCount, out stat6ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle7, ref statsWorld, out stat7,
+                out stat7ModifiersCount, out stat7ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle8, ref statsWorld, out stat8,
+                out stat8ModifiersCount, out stat8ObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle9, ref statsWorld, out stat9,
+                out stat9ModifiersCount, out stat9ObserversCount);
+            
+            Assert.IsTrue(stat1.BaseValue.IsRoughlyEqual(2f));
+            Assert.IsTrue(stat1.Value.IsRoughlyEqual(2f));
+            Assert.IsTrue(stat2.BaseValue.IsRoughlyEqual(2f));
+            Assert.IsTrue(stat2.Value.IsRoughlyEqual(9f)); // Add 1 and 3
+            Assert.IsTrue(stat3.BaseValue.IsRoughlyEqual(3f));
+            Assert.IsTrue(stat3.Value.IsRoughlyEqual(5f)); // Add 1
+            Assert.IsTrue(stat4.BaseValue.IsRoughlyEqual(4f));
+            Assert.IsTrue(stat4.Value.IsRoughlyEqual(13f)); // Add 2
+            Assert.IsTrue(stat5.BaseValue.IsRoughlyEqual(5f));
+            Assert.IsTrue(stat5.Value.IsRoughlyEqual(19f)); // Add 2 and 3
+            Assert.IsTrue(stat6.BaseValue.IsRoughlyEqual(6f));
+            Assert.IsTrue(stat6.Value.IsRoughlyEqual(11f)); // Add 3
+            Assert.IsTrue(stat7.BaseValue.IsRoughlyEqual(7f));
+            Assert.IsTrue(stat7.Value.IsRoughlyEqual(39f)); // Add 4 and 5
+            Assert.IsTrue(stat8.BaseValue.IsRoughlyEqual(8f));
+            Assert.IsTrue(stat8.Value.IsRoughlyEqual(77f)); // Add 5 and 6 and 7
+            Assert.IsTrue(stat9.BaseValue.IsRoughlyEqual(9f));
+            Assert.IsTrue(stat9.Value.IsRoughlyEqual(144f)); // Add 5 and 7 and 8
+        }
         
         // [Test]
         // public void SelfRemoveModifierAndObserver()

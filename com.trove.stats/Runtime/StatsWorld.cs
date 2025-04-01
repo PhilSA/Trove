@@ -103,7 +103,7 @@ namespace Trove.Stats
         }
 
         /// <summary>
-        /// Note: does not clear the list
+        /// Note: does not clear the supplied list
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetModifiersOfStat(StatHandle statHandle, ref NativeList<StatModifierAndHandle<TStatModifier, TStatModifierStack>> modifiers)
@@ -158,6 +158,27 @@ namespace Trove.Stats
 
                     return true;
                 }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Note: does not clear the supplied list
+        /// Note: useful to store observers before destroying an entity, and then manually update all observers after
+        /// destroy. An observers update isn't automatically called when a stats entity is destroyed. (TODO:?) 
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetAllObservers(Entity entity, ref NativeList<StatObserver> observersList)
+        {
+            if (_statObserversLookup.TryGetBuffer(entity, out DynamicBuffer<StatObserver> statObserversBuffer))
+            {
+                for (int i = 0; i < statObserversBuffer.Length; i++)
+                {
+                    observersList.Add(statObserversBuffer[i]);
+                }
+
+                return true;
             }
 
             return false;
