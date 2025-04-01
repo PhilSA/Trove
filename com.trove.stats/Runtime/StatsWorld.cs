@@ -715,7 +715,7 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RemoveAllStatModifiersOfStat(StatHandle statHandle)
+        public bool TryRemoveAllStatModifiersOfStat(StatHandle statHandle)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(statHandle, ref _statsLookup, out bool getStatSuccess, ref _nullStat);
             if (getStatSuccess &&
@@ -732,7 +732,10 @@ namespace Trove.Stats
                         AffectedStatHandle = statHandle,
                     });
                 }
+                return true;
             }
+
+            return false;
         }
 
         /// <summary>

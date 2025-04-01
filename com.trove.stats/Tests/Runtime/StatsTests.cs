@@ -1793,76 +1793,501 @@ namespace Trove.Stats.Tests
         }
 
         [Test]
-        public void ModifierAddRemoveCases()
+        public void InvalidStatOperations()
         {
             bool success = false;
             StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
 
-            Entity entity1 = CreateStatsEntity(0, 10f, true, out StatHandle statHandle1A, out StatHandle statHandle1B,
-                out StatHandle statHandle1C);
-            Entity entity2 = CreateStatsEntity(0, 10f, true, out StatHandle statHandle2A, out StatHandle statHandle2B,
-                out StatHandle statHandle2C);
-            Entity entity3 = CreateStatsEntity(0, 10f, true, out StatHandle statHandle3A, out StatHandle statHandle3B,
-                out StatHandle statHandle3C);
+            // Invalid stats entity cases
+            {
+                Entity entity = CreateTestEntity(0);
+                UpdateStatsWorld(ref statsWorld);
+                
+                StatHandle invalidEntityStatHandle = new StatHandle(entity, 0);
+                
+                success = statsWorld.TryCreateStat(entity, 10f, false, out _);
+                Assert.IsFalse(success);
+                
+                success = statsWorld.TryGetStat(invalidEntityStatHandle, out _, out _);
+                Assert.IsFalse(success);
+                
+                success = statsWorld.TryAddStatBaseValue(invalidEntityStatHandle, 1f);
+                Assert.IsFalse(success);
+                
+                success = statsWorld.TryAddStatModifier(
+                    invalidEntityStatHandle,
+                    new StatsTestsStatModifier
+                    {
+                        ModifierType = StatsTestsStatModifier.Type.Add,
+                        ValueA = 1f,
+                    },
+                    out StatModifierHandle modifier1);
+                Assert.IsFalse(success);
+                
+                success = statsWorld.TryRemoveStatModifier(modifier1);
+                Assert.IsFalse(success);
+            }
             
-            UpdateStatsWorld(ref statsWorld);
+            // Valid stats entity cases
+            {
+                Entity entity = CreateStatsEntity(0, 10f, true, out StatHandle statHandleA,
+                    out StatHandle statHandleB, out StatHandle statHandleC);
+                
+                UpdateStatsWorld(ref statsWorld);
+                
+                // Invalid stats handle
+                {
+                    StatHandle statHandleInvalid = statHandleA;
+                    statHandleInvalid.Index = 99999;
+                    
+                    success = statsWorld.TryGetStat(statHandleInvalid, out _, out _);
+                    Assert.IsFalse(success);
+                    
+                    success = statsWorld.TryAddStatBaseValue(statHandleInvalid, 1f);
+                    Assert.IsFalse(success);
+                    
+                    success = statsWorld.TryAddStatModifier(
+                        statHandleInvalid,
+                        new StatsTestsStatModifier
+                        {
+                            ModifierType = StatsTestsStatModifier.Type.Add,
+                            ValueA = 1f,
+                        },
+                        out StatModifierHandle modifier2);
+                    Assert.IsFalse(success);
+                    
+                    success = statsWorld.TryRemoveStatModifier(modifier2);
+                    Assert.IsFalse(success);
+                }
+            }
+        }
 
+        [Test]
+        public void AddRemoveModifierCases()
+        {
+            bool success = false;
+            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+
+            Entity entity1 = CreateStatsEntity(0, 10f, true, 
+                out StatHandle statHandle1A, out StatHandle statHandle1B, out StatHandle statHandle1C);
+
+            UpdateStatsWorld(ref statsWorld);
+            
             GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out Stat stat1A,
                 out int stat1AModifiersCount, out int stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out Stat stat2A,
-                out int stat2AModifiersCount, out int stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out Stat stat3A,
-                out int stat3AModifiersCount, out int stat3AObserversCount);
-
-            // -------------------------------------------------
-            // Add modifier
-            // -------------------------------------------------
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out Stat stat1B,
+                out int stat1BModifiersCount, out int stat1BObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out Stat stat1C,
+                out int stat1CModifiersCount, out int stat1CObserversCount);
             
-            // Invalid StatHandle (entity)
+            // Added modifiers to stats (parenthesis is observed stat):
+            // Modifiers buffer: 1-A(C), 2-B(A), 3-A(C), 4-B(A), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
             
-            // Invalid StatHandle (index)
-            
-            // No StatsOwner buffer
-            
-            // No Stats buffer
-            
-            // No modifiers buffer
-            
-            // -------------------------------------------------
-            // Remove modifier
-            // -------------------------------------------------
-            
-            // Remove first in buffer
-            
-            // Remove middle
-            
-            // Remove last in buffer
-            
-            // Remove first for stat but not for buffer
-            
-            // Remove last for stat but not for buffer
-            
-            // RemoveAll
-            
-            // Remove same handle multiple times
-
-
             success = statsWorld.TryAddStatModifier(
-                statHandle2A,
+                statHandle1A,
                 new StatsTestsStatModifier
                 {
-                    ModifierType = StatsTestsStatModifier.Type.Add,
-                    ValueA = 2f,
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle1C,
                 },
                 out StatModifierHandle modifier1);
             Assert.IsTrue(success);
-
+            
+            success = statsWorld.TryAddStatModifier(
+                statHandle1B,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle1A,
+                },
+                out StatModifierHandle modifier2);
+            Assert.IsTrue(success);
+            
+            success = statsWorld.TryAddStatModifier(
+                statHandle1A,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle1C,
+                },
+                out StatModifierHandle modifier3);
+            Assert.IsTrue(success);
+            
+            success = statsWorld.TryAddStatModifier(
+                statHandle1B,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle1A,
+                },
+                out StatModifierHandle modifier4);
+            Assert.IsTrue(success);
+            
+            success = statsWorld.TryAddStatModifier(
+                statHandle1A,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle1C,
+                },
+                out StatModifierHandle modifier5);
+            Assert.IsTrue(success);
+            
+            success = statsWorld.TryAddStatModifier(
+                statHandle1B,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle1A,
+                },
+                out StatModifierHandle modifier6);
+            Assert.IsTrue(success);
+            
+            success = statsWorld.TryAddStatModifier(
+                statHandle1A,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle1C,
+                },
+                out StatModifierHandle modifier7);
+            Assert.IsTrue(success);
+            
+            success = statsWorld.TryAddStatModifier(
+                statHandle1B,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle1A,
+                },
+                out StatModifierHandle modifier8);
+            Assert.IsTrue(success);
+            
             GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
-                out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
-                out stat3AModifiersCount, out stat3AObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                out stat1BModifiersCount, out stat1BObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                out stat1CModifiersCount, out stat1CObserversCount);
+            
+            Assert.AreEqual(4, stat1AModifiersCount);
+            Assert.AreEqual(4, stat1AObserversCount);
+            Assert.AreEqual(4, stat1BModifiersCount);
+            Assert.AreEqual(0, stat1BObserversCount);
+            Assert.AreEqual(0, stat1CModifiersCount);
+            Assert.AreEqual(4, stat1CObserversCount);
+            AssertBufferLengths(entity1, 3, 8, 8);
+            
+            // Remove middle modifier
+            {
+                // Modifiers buffer: 1-A(C), 2-B(A), 3-A(C), 4-B(A), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
+                
+                success = statsWorld.TryRemoveStatModifier(modifier4);
+                Assert.IsTrue(success);
+                
+                // Modifiers buffer: 1-A(C), 2-B(A), 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
+                
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                    out stat1AModifiersCount, out stat1AObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                    out stat1BModifiersCount, out stat1BObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                    out stat1CModifiersCount, out stat1CObserversCount);
+            
+                Assert.AreEqual(4, stat1AModifiersCount);
+                Assert.AreEqual(3, stat1AObserversCount);
+                Assert.AreEqual(3, stat1BModifiersCount);
+                Assert.AreEqual(0, stat1BObserversCount);
+                Assert.AreEqual(0, stat1CModifiersCount);
+                Assert.AreEqual(4, stat1CObserversCount);
+                AssertBufferLengths(entity1, 3, 7, 7);
+                
+                // Try removing it a second time
+                success = statsWorld.TryRemoveStatModifier(modifier4);
+                Assert.IsFalse(success);
+            }
+            
+            // Remove first modifier for stat but not for buffer
+            {
+                // Modifiers buffer: 1-A(C), 2-B(A), 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
+                
+                success = statsWorld.TryRemoveStatModifier(modifier2);
+                Assert.IsTrue(success);
+                
+                // Modifiers buffer: 1-A(C), 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
+                
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                    out stat1AModifiersCount, out stat1AObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                    out stat1BModifiersCount, out stat1BObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                    out stat1CModifiersCount, out stat1CObserversCount);
+            
+                Assert.AreEqual(4, stat1AModifiersCount);
+                Assert.AreEqual(2, stat1AObserversCount);
+                Assert.AreEqual(2, stat1BModifiersCount);
+                Assert.AreEqual(0, stat1BObserversCount);
+                Assert.AreEqual(0, stat1CModifiersCount);
+                Assert.AreEqual(4, stat1CObserversCount);
+                AssertBufferLengths(entity1, 3, 6, 6);
+                
+                // Try removing it a second time
+                success = statsWorld.TryRemoveStatModifier(modifier2);
+                Assert.IsFalse(success);
+            }
+            
+            // Remove first modifier in buffer
+            {
+                // Modifiers buffer: 1-A(C), 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
+                
+                success = statsWorld.TryRemoveStatModifier(modifier1);
+                Assert.IsTrue(success);
+                
+                // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
+                
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                    out stat1AModifiersCount, out stat1AObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                    out stat1BModifiersCount, out stat1BObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                    out stat1CModifiersCount, out stat1CObserversCount);
+            
+                Assert.AreEqual(3, stat1AModifiersCount);
+                Assert.AreEqual(2, stat1AObserversCount);
+                Assert.AreEqual(2, stat1BModifiersCount);
+                Assert.AreEqual(0, stat1BObserversCount);
+                Assert.AreEqual(0, stat1CModifiersCount);
+                Assert.AreEqual(3, stat1CObserversCount);
+                AssertBufferLengths(entity1, 3, 5, 5);
+                
+                // Try removing it a second time
+                success = statsWorld.TryRemoveStatModifier(modifier1);
+                Assert.IsFalse(success);
+            }
+            
+            // Try to add new modifier then remove
+            {
+                // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
+                
+                success = statsWorld.TryAddStatModifier(
+                    statHandle1B,
+                    new StatsTestsStatModifier
+                    {
+                        ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                        StatHandleA = statHandle1A,
+                    },
+                    out StatModifierHandle modifier9);
+                Assert.IsTrue(success);
+                
+                // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A), 9-B(A)
+            
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                    out stat1AModifiersCount, out stat1AObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                    out stat1BModifiersCount, out stat1BObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                    out stat1CModifiersCount, out stat1CObserversCount);
+            
+                Assert.AreEqual(3, stat1AModifiersCount);
+                Assert.AreEqual(3, stat1AObserversCount);
+                Assert.AreEqual(3, stat1BModifiersCount);
+                Assert.AreEqual(0, stat1BObserversCount);
+                Assert.AreEqual(0, stat1CModifiersCount);
+                Assert.AreEqual(3, stat1CObserversCount);
+                AssertBufferLengths(entity1, 3, 6, 6);
+                
+                // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A), 9-B(A)
+                
+                success = statsWorld.TryRemoveStatModifier(modifier9);
+                Assert.IsTrue(success);
+                
+                // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
+            
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                    out stat1AModifiersCount, out stat1AObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                    out stat1BModifiersCount, out stat1BObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                    out stat1CModifiersCount, out stat1CObserversCount);
+            
+                Assert.AreEqual(3, stat1AModifiersCount);
+                Assert.AreEqual(2, stat1AObserversCount);
+                Assert.AreEqual(2, stat1BModifiersCount);
+                Assert.AreEqual(0, stat1BObserversCount);
+                Assert.AreEqual(0, stat1CModifiersCount);
+                Assert.AreEqual(3, stat1CObserversCount);
+                AssertBufferLengths(entity1, 3, 5, 5);
+                
+                // Try removing it a second time
+                success = statsWorld.TryRemoveStatModifier(modifier9);
+                Assert.IsFalse(success);
+            }
+            
+            // Remove last for stat but not for buffer
+            {
+                // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
+                
+                success = statsWorld.TryRemoveStatModifier(modifier7);
+                Assert.IsTrue(success);
+                
+                // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 8-B(A)
+                
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                    out stat1AModifiersCount, out stat1AObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                    out stat1BModifiersCount, out stat1BObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                    out stat1CModifiersCount, out stat1CObserversCount);
+            
+                Assert.AreEqual(2, stat1AModifiersCount);
+                Assert.AreEqual(2, stat1AObserversCount);
+                Assert.AreEqual(2, stat1BModifiersCount);
+                Assert.AreEqual(0, stat1BObserversCount);
+                Assert.AreEqual(0, stat1CModifiersCount);
+                Assert.AreEqual(2, stat1CObserversCount);
+                AssertBufferLengths(entity1, 3, 4, 4);
+                
+                // Try removing it a second time
+                success = statsWorld.TryRemoveStatModifier(modifier7);
+                Assert.IsFalse(success);
+            }
+            
+            // Remove last modifier in buffer
+            {
+                // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 8-B(A)
+                
+                success = statsWorld.TryRemoveStatModifier(modifier8);
+                Assert.IsTrue(success);
+                
+                // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A)
+                
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                    out stat1AModifiersCount, out stat1AObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                    out stat1BModifiersCount, out stat1BObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                    out stat1CModifiersCount, out stat1CObserversCount);
+            
+                Assert.AreEqual(2, stat1AModifiersCount);
+                Assert.AreEqual(1, stat1AObserversCount);
+                Assert.AreEqual(1, stat1BModifiersCount);
+                Assert.AreEqual(0, stat1BObserversCount);
+                Assert.AreEqual(0, stat1CModifiersCount);
+                Assert.AreEqual(2, stat1CObserversCount);
+                AssertBufferLengths(entity1, 3, 3, 3);
+                
+                // Try removing it a second time
+                success = statsWorld.TryRemoveStatModifier(modifier8);
+                Assert.IsFalse(success);
+            }
+            
+            // RemoveAll
+            {
+                // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A)
+                
+                success = statsWorld.TryRemoveAllStatModifiersOfStat(statHandle1A);
+                Assert.IsTrue(success);
+                
+                // Modifiers buffer: 6-B(A)
+                
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                    out stat1AModifiersCount, out stat1AObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                    out stat1BModifiersCount, out stat1BObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                    out stat1CModifiersCount, out stat1CObserversCount);
+            
+                Assert.AreEqual(0, stat1AModifiersCount);
+                Assert.AreEqual(1, stat1AObserversCount);
+                Assert.AreEqual(1, stat1BModifiersCount);
+                Assert.AreEqual(0, stat1BObserversCount);
+                Assert.AreEqual(0, stat1CModifiersCount);
+                Assert.AreEqual(0, stat1CObserversCount);
+                AssertBufferLengths(entity1, 3, 1, 1);
+                
+                // Try a second time
+                
+                success = statsWorld.TryRemoveAllStatModifiersOfStat(statHandle1A);
+                Assert.IsTrue(success);
+                
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                    out stat1AModifiersCount, out stat1AObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                    out stat1BModifiersCount, out stat1BObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                    out stat1CModifiersCount, out stat1CObserversCount);
+            
+                Assert.AreEqual(0, stat1AModifiersCount);
+                Assert.AreEqual(1, stat1AObserversCount);
+                Assert.AreEqual(1, stat1BModifiersCount);
+                Assert.AreEqual(0, stat1BObserversCount);
+                Assert.AreEqual(0, stat1CModifiersCount);
+                Assert.AreEqual(0, stat1CObserversCount);
+                AssertBufferLengths(entity1, 3, 1, 1);
+                
+                // Modifiers buffer: 6-B(A)
+                
+                success = statsWorld.TryRemoveAllStatModifiersOfStat(statHandle1C);
+                Assert.IsTrue(success);
+                
+                // Modifiers buffer: 6-B(A)
+                
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                    out stat1AModifiersCount, out stat1AObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                    out stat1BModifiersCount, out stat1BObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                    out stat1CModifiersCount, out stat1CObserversCount);
+            
+                Assert.AreEqual(0, stat1AModifiersCount);
+                Assert.AreEqual(1, stat1AObserversCount);
+                Assert.AreEqual(1, stat1BModifiersCount);
+                Assert.AreEqual(0, stat1BObserversCount);
+                Assert.AreEqual(0, stat1CModifiersCount);
+                Assert.AreEqual(0, stat1CObserversCount);
+                AssertBufferLengths(entity1, 3, 1, 1);
+                
+                // Modifiers buffer: 6-B(A)
+                
+                success = statsWorld.TryRemoveAllStatModifiersOfStat(statHandle1B);
+                Assert.IsTrue(success);
+                
+                // Modifiers buffer: 
+                
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                    out stat1AModifiersCount, out stat1AObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                    out stat1BModifiersCount, out stat1BObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                    out stat1CModifiersCount, out stat1CObserversCount);
+            
+                Assert.AreEqual(0, stat1AModifiersCount);
+                Assert.AreEqual(0, stat1AObserversCount);
+                Assert.AreEqual(0, stat1BModifiersCount);
+                Assert.AreEqual(0, stat1BObserversCount);
+                Assert.AreEqual(0, stat1CModifiersCount);
+                Assert.AreEqual(0, stat1CObserversCount);
+                AssertBufferLengths(entity1, 3, 0, 0);
+                
+                // Try a second time 
+                success = statsWorld.TryRemoveAllStatModifiersOfStat(statHandle1B);
+                Assert.IsTrue(success);
+                
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                    out stat1AModifiersCount, out stat1AObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                    out stat1BModifiersCount, out stat1BObserversCount);
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                    out stat1CModifiersCount, out stat1CObserversCount);
+            
+                Assert.AreEqual(0, stat1AModifiersCount);
+                Assert.AreEqual(0, stat1AObserversCount);
+                Assert.AreEqual(0, stat1BModifiersCount);
+                Assert.AreEqual(0, stat1BObserversCount);
+                Assert.AreEqual(0, stat1CModifiersCount);
+                Assert.AreEqual(0, stat1CObserversCount);
+                AssertBufferLengths(entity1, 3, 0, 0);
+            }
         }
 
         // [Test]
