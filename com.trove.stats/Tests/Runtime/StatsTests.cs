@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Trove.Stats;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using UnityEngine;
 
 [assembly: RegisterGenericComponentType(typeof(StatModifier<Trove.Stats.Tests.StatsTestsStatModifier, Trove.Stats.Tests.StatsTestsStatModifier.Stack>))]
@@ -183,6 +185,7 @@ namespace Trove.Stats.Tests
         [TearDown]
         public void TearDown()
         {
+            EntityManager.CompleteAllTrackedJobs();
             EntityQuery testEntitiesQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<TestEntity>().Build(EntityManager);
             EntityManager.DestroyEntity(testEntitiesQuery);
         }
@@ -237,17 +240,17 @@ namespace Trove.Stats.Tests
 
         public StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> CreateStatsWorld()
         {
-            ref SystemState state = ref World.GetOrCreateSystemManaged<SimulationSystemGroup>().CheckedStateRef;
+            ref SystemState state = ref World.GetOrCreateSystemManaged<EndSimulationEntityCommandBufferSystem>().CheckedStateRef;
             StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = 
                 new StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(ref state);
-            statsWorld.Update(ref state);
+            statsWorld.UpdateDataAndLookups(ref state); 
             return statsWorld;
         }
 
         public void UpdateStatsWorld(ref StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld)
         {
-            ref SystemState state = ref World.GetOrCreateSystemManaged<SimulationSystemGroup>().CheckedStateRef;
-            statsWorld.Update(ref state);
+            ref SystemState state = ref World.GetOrCreateSystemManaged<EndSimulationEntityCommandBufferSystem>().CheckedStateRef;
+            statsWorld.UpdateDataAndLookups(ref state);
         }
 
         public Entity CreateStatsEntity(
@@ -2353,7 +2356,9 @@ namespace Trove.Stats.Tests
 
             UpdateStatsWorld(ref statsWorld);
             
+            statsWorld.SupportStatChangeEvents = true;
             statsWorld.StatChangeEventsList = new NativeList<StatChangeEvent>(Allocator.Temp);
+            statsWorld.SupportModifierTriggerEvents = true;
             statsWorld.ModifierTriggerEventsList = new NativeList<StatModifierHandle>(Allocator.Temp);
 
             // This modifier does not change stat value. No stat change
@@ -2878,6 +2883,103 @@ namespace Trove.Stats.Tests
             GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out stat1,
                 out stat1ModifiersCount, out stat1ObserversCount);
             Assert.AreEqual(1, stat1ModifiersCount);
+        }
+
+        [Test]
+        public void StatWorldParallelImpossibleTest()
+        {
+            EntityManager.CompleteAllTrackedJobs();
+            
+            bool success = false;
+            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            
+            Entity entity1 = CreateStatsEntity(0, 10f, true,
+                out StatHandle statHandle1, out StatHandle statHandle2, out _);
+            
+            UpdateStatsWorld(ref statsWorld);
+
+            // Two single-thread jobs using the same StatsWorld in parallel
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                JobHandle dep1 = new StatsWorldJob
+                {
+                    StatHandle = statHandle1,
+                    StatsWorld = statsWorld,
+                }.Schedule(default);
+                JobHandle dep2 = new StatsWorldJob
+                {
+                    StatHandle = statHandle1,
+                    StatsWorld = statsWorld,
+                }.Schedule(default);
+                
+                JobHandle dep3 = JobHandle.CombineDependencies(dep1, dep2);
+                dep3.Complete();
+            });
+
+            // A parallel-for job using a StatsWorld
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                JobHandle dep4 = new StatsWorldParallelJob
+                {
+                    StatHandle = statHandle1,
+                    StatsWorld = statsWorld,
+                }.Schedule(10, 1, default);
+                dep4.Complete();
+            });
+
+            // A parallel-for job using a [ReadOnly] StatsWorld that writes to something
+            {
+                JobHandle dep4 = new StatsWorldReadOnlyParallelJob
+                {
+                    StatHandle = statHandle1,
+                    StatsWorld = statsWorld,
+                }.Schedule(10, 1, default);
+                dep4.Complete();
+            }
+        }
+
+        private struct StatsWorldJob : IJob
+        {
+            public StatHandle StatHandle;
+            public StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsWorld;
+            
+            public void Execute()
+            {
+                StatsWorld.TryAddStatBaseValue(StatHandle, 1f);
+            }
+        }
+
+        private struct StatsWorldParallelJob : IJobParallelFor
+        {
+            public StatHandle StatHandle;
+            public StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsWorld;
+            
+            public void Execute(int index)
+            {
+                StatsWorld.TryAddStatBaseValue(StatHandle, 1f);
+            }
+        }
+
+        private struct StatsWorldReadOnlyParallelJob : IJobParallelFor
+        {
+            public StatHandle StatHandle;
+            [ReadOnly]
+            public StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsWorld;
+            
+            public void Execute(int index)
+            {
+                bool success = true;
+                try
+                {
+                    StatsWorld.TryAddStatBaseValue(StatHandle, 1f);
+                }
+                catch (InvalidOperationException e)
+                {
+                    Debug.Log(e);
+                    success = false;
+                }
+                Assert.IsFalse(success);
+            }
         }
     }
 }

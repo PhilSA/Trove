@@ -4,6 +4,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Assertions;
+using UnityEngine;
 
 namespace Trove.Stats
 {
@@ -22,15 +23,15 @@ namespace Trove.Stats
         private UnsafeList<StatHandle> _tmpUpdatedStatsList;
         private UnsafeList<int> _tmpLastIndexesList;
 
-        [NativeDisableContainerSafetyRestriction] // TODO: I may not want disabled safeties for this one?
+        public bool SupportStatChangeEvents { get; set; }
         private NativeList<StatChangeEvent> _statChangeEventsList;
         public NativeList<StatChangeEvent> StatChangeEventsList
         {
             get { return _statChangeEventsList; }
             set { _statChangeEventsList = value; }
         }
-        
-        [NativeDisableContainerSafetyRestriction]  // TODO: I may not want disabled safeties for this one?
+
+        public bool SupportModifierTriggerEvents { get; set; }
         private NativeList<StatModifierHandle> _modifierTriggerEventsList;
         public NativeList<StatModifierHandle> ModifierTriggerEventsList
         {
@@ -39,7 +40,6 @@ namespace Trove.Stats
         }
 
         private Stat _nullStat;
-        private StatsOwner _nullStatsOwner;
 
         public StatsWorld(ref SystemState state)
         {
@@ -52,15 +52,16 @@ namespace Trove.Stats
             _tmpStatObserversList = default;
             _tmpUpdatedStatsList = default;
             _tmpLastIndexesList = default;
-            _modifierTriggerEventsList = default;
-            
+ 
+            SupportStatChangeEvents = false;
             _statChangeEventsList = default;
-            
+            SupportModifierTriggerEvents = false;
+            _modifierTriggerEventsList = default;
+             
             _nullStat = default;
-            _nullStatsOwner = default;
         }
 
-        public void Update(ref SystemState state)
+        public void UpdateDataAndLookups(ref SystemState state)
         {
             _statsOwnerLookup.Update(ref state);
             _statsLookup.Update(ref state);
@@ -71,7 +72,6 @@ namespace Trove.Stats
             _tmpStatObserversList = default;
             _tmpUpdatedStatsList = default;
             _tmpLastIndexesList = default;
-            _modifierTriggerEventsList = default;
             
             _nullStat = default;
         }
@@ -374,7 +374,9 @@ namespace Trove.Stats
                         ref statObserversBuffer, 
                         ref _statChangeEventsList,
                         ref _tmpUpdatedStatsList,
-                        ref _modifierTriggerEventsList);
+                        ref _modifierTriggerEventsList,
+                        SupportStatChangeEvents,
+                        SupportModifierTriggerEvents);
                 }
             }
         }
@@ -409,7 +411,9 @@ namespace Trove.Stats
                 ref initialStatObserversBuffer, 
                 ref _statChangeEventsList,
                 ref _tmpUpdatedStatsList,
-                ref _modifierTriggerEventsList);
+                ref _modifierTriggerEventsList,
+                SupportStatChangeEvents,
+                SupportModifierTriggerEvents);
             
             // Then update following stats
             DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer = default;
@@ -441,7 +445,9 @@ namespace Trove.Stats
                         ref statObserversBuffer, 
                         ref _statChangeEventsList,
                         ref _tmpUpdatedStatsList,
-                        ref _modifierTriggerEventsList);
+                        ref _modifierTriggerEventsList,
+                        SupportStatChangeEvents,
+                        SupportModifierTriggerEvents);
                 }
             }
         }

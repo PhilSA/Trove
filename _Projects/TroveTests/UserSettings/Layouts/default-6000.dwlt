@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_PixelRect:
     serializedVersion: 2
-    x: 0
+    x: -1920
     y: 43
     width: 1920
     height: 989
   m_ShowMode: 4
-  m_Title: Console
+  m_Title: Project
   m_RootView: {fileID: 10}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -39,9 +39,9 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 598
+    x: 864
     y: 0
-    width: 654
+    width: 387
     height: 572
   m_MinSize: {x: 52, y: 76}
   m_MaxSize: {x: 4002, y: 4026}
@@ -69,12 +69,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1252
+    width: 1251
     height: 572
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 18
+  controlID: 27
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -94,7 +94,7 @@ MonoBehaviour:
     x: 0
     y: 0
     width: 284
-    height: 429
+    height: 428
   m_MinSize: {x: 202, y: 226}
   m_MaxSize: {x: 4002, y: 4026}
   m_ActualView: {fileID: 18}
@@ -119,7 +119,7 @@ MonoBehaviour:
   - {fileID: 6}
   m_Position:
     serializedVersion: 2
-    x: 1252
+    x: 1251
     y: 0
     width: 284
     height: 933
@@ -144,9 +144,9 @@ MonoBehaviour:
   m_Position:
     serializedVersion: 2
     x: 0
-    y: 429
+    y: 428
     width: 284
-    height: 504
+    height: 505
   m_MinSize: {x: 232, y: 276}
   m_MaxSize: {x: 10002, y: 10026}
   m_ActualView: {fileID: 16}
@@ -179,7 +179,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 100}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 0
-  controlID: 148
+  controlID: 150
   draggingID: 0
 --- !u!114 &8
 MonoBehaviour:
@@ -196,9 +196,9 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 1536
+    x: 1535
     y: 0
-    width: 384
+    width: 385
     height: 933
   m_MinSize: {x: 276, y: 76}
   m_MaxSize: {x: 4001, y: 4026}
@@ -224,7 +224,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 572
-    width: 1252
+    width: 1251
     height: 361
   m_MinSize: {x: 101, y: 126}
   m_MaxSize: {x: 4001, y: 4026}
@@ -323,7 +323,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1252
+    width: 1251
     height: 933
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 16192}
@@ -347,7 +347,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 598
+    width: 864
     height: 572
   m_MinSize: {x: 201, y: 226}
   m_MaxSize: {x: 4001, y: 4026}
@@ -379,9 +379,9 @@ MonoBehaviour:
     m_TextWithWhitespace: "Test Runner\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 599
+    x: 865
     y: 24
-    width: 652
+    width: 385
     height: 546
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -395,7 +395,7 @@ MonoBehaviour:
     m_ContainerData: []
     m_OverlaysVisible: 1
   m_Spl:
-    ID: 157
+    ID: 159
     splitterInitialOffset: 0
     currentActiveSplitter: -1
     realSizes:
@@ -422,7 +422,7 @@ MonoBehaviour:
   m_TestListGUIs:
   - m_Window: {fileID: 15}
     runProgress:
-      RunGuid: b707ce8b-2b65-4a28-a4f4-0520205997fc
+      RunGuid: f540946a-2362-4cd2-bf35-b2f7434c0ed8
       ExecutionSettings:
         m_TargetPlatform: 0
         m_HasTargetPlatform: 0
@@ -435,7 +435,7 @@ MonoBehaviour:
         filters:
         - testMode: 2
           testNames:
-          - Trove.Stats.Tests.StatsTests.InfiniteObserversLoopPrevention
+          - Trove.Stats.Tests.StatsTests.StatWorldParallelImpossible
           groupNames: []
           categoryNames: []
           assemblyNames: []
@@ -506,7 +506,7 @@ MonoBehaviour:
     m_SelectedOption: 0
   - m_Window: {fileID: 15}
     runProgress:
-      RunGuid: b707ce8b-2b65-4a28-a4f4-0520205997fc
+      RunGuid: f540946a-2362-4cd2-bf35-b2f7434c0ed8
       ExecutionSettings:
         m_TargetPlatform: 0
         m_HasTargetPlatform: 0
@@ -519,7 +519,7 @@ MonoBehaviour:
         filters:
         - testMode: 2
           testNames:
-          - Trove.Stats.Tests.StatsTests.InfiniteObserversLoopPrevention
+          - Trove.Stats.Tests.StatsTests.StatWorldParallelImpossible
           groupNames: []
           categoryNames: []
           assemblyNames: []
@@ -568,7 +568,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1058
+      parentId: 1060
       parentUniqueId: '[TroveTests][suite]'
     - id: 1012
       uniqueId: 'com.trove.common.tests.dll/[com.trove.common.tests][Trove][suite]'
@@ -768,7 +768,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1058
+      parentId: 1060
       parentUniqueId: '[TroveTests][suite]'
     - id: 1022
       uniqueId: 'com.trove.eventsystems.tests.dll/[Trove][suite]'
@@ -950,11 +950,11 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1019
       parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests][suite]'
-    - id: 1034
+    - id: 1036
       uniqueId: '[com.trove.stats.tests.dll][suite]'
       name: com.trove.stats.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.stats.tests.dll
-      resultStatus: 1
+      resultStatus: 2
       duration: 0
       messages: 
       output: 
@@ -964,45 +964,13 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1058
+      parentId: 1060
       parentUniqueId: '[TroveTests][suite]'
-    - id: 1035
+    - id: 1037
       uniqueId: 'com.trove.stats.tests.dll/[Trove][suite]'
       name: Trove
       fullName: Trove
-      resultStatus: 1
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1034
-      parentUniqueId: '[com.trove.stats.tests.dll][suite]'
-    - id: 1036
-      uniqueId: 'com.trove.stats.tests.dll/Trove/[Stats][suite]'
-      name: Stats
-      fullName: Trove.Stats
-      resultStatus: 1
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1035
-      parentUniqueId: 'com.trove.stats.tests.dll/[Trove][suite]'
-    - id: 1037
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/[com.trove.stats.tests][Trove.Stats.Tests][suite]'
-      name: Tests
-      fullName: Trove.Stats.Tests
-      resultStatus: 1
+      resultStatus: 2
       duration: 0
       messages: 
       output: 
@@ -1013,12 +981,12 @@ MonoBehaviour:
       isSuite: 1
       categories: []
       parentId: 1036
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/[Stats][suite]'
-    - id: 1025
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-      name: StatsTests
-      fullName: Trove.Stats.Tests.StatsTests
-      resultStatus: 1
+      parentUniqueId: '[com.trove.stats.tests.dll][suite]'
+    - id: 1038
+      uniqueId: 'com.trove.stats.tests.dll/Trove/[Stats][suite]'
+      name: Stats
+      fullName: Trove.Stats
+      resultStatus: 2
       duration: 0
       messages: 
       output: 
@@ -1029,13 +997,45 @@ MonoBehaviour:
       isSuite: 1
       categories: []
       parentId: 1037
+      parentUniqueId: 'com.trove.stats.tests.dll/[Trove][suite]'
+    - id: 1039
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/[com.trove.stats.tests][Trove.Stats.Tests][suite]'
+      name: Tests
+      fullName: Trove.Stats.Tests
+      resultStatus: 2
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1038
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/[Stats][suite]'
+    - id: 1025
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+      name: StatsTests
+      fullName: Trove.Stats.Tests.StatsTests
+      resultStatus: 2
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1039
       parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/[com.trove.stats.tests][Trove.Stats.Tests][suite]'
     - id: 1030
       uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.AddRemoveModifierCases]'
       name: AddRemoveModifierCases
       fullName: Trove.Stats.Tests.StatsTests.AddRemoveModifierCases
       resultStatus: 1
-      duration: 0.0510753
+      duration: 0.0518532
       messages: 
       output: 
       stacktrace: 
@@ -1052,7 +1052,7 @@ MonoBehaviour:
       name: BasicStatOperations
       fullName: Trove.Stats.Tests.StatsTests.BasicStatOperations
       resultStatus: 1
-      duration: 0.0025148
+      duration: 0.0027674
       messages: 
       output: 
       stacktrace: 
@@ -1069,7 +1069,7 @@ MonoBehaviour:
       name: ComplexTree
       fullName: Trove.Stats.Tests.StatsTests.ComplexTree
       resultStatus: 1
-      duration: 0.0102435
+      duration: 0.0099413
       messages: 
       output: 
       stacktrace: 
@@ -1086,7 +1086,7 @@ MonoBehaviour:
       name: CrossEntityStatModifiers
       fullName: Trove.Stats.Tests.StatsTests.CrossEntityStatModifiers
       resultStatus: 1
-      duration: 0.0241483
+      duration: 0.0216535
       messages: 
       output: 
       stacktrace: 
@@ -1103,7 +1103,7 @@ MonoBehaviour:
       name: DestroyObservedStat
       fullName: Trove.Stats.Tests.StatsTests.DestroyObservedStat
       resultStatus: 1
-      duration: 0.0024947
+      duration: 0.0024803
       messages: 
       output: 
       stacktrace: 
@@ -1120,7 +1120,7 @@ MonoBehaviour:
       name: InfiniteObserversLoopPrevention
       fullName: Trove.Stats.Tests.StatsTests.InfiniteObserversLoopPrevention
       resultStatus: 1
-      duration: 0.0286145
+      duration: 0.0046544
       messages: 
       output: 
       stacktrace: 
@@ -1137,7 +1137,7 @@ MonoBehaviour:
       name: InvalidStatOperations
       fullName: Trove.Stats.Tests.StatsTests.InvalidStatOperations
       resultStatus: 1
-      duration: 0.0039453
+      duration: 0.0035249
       messages: 
       output: 
       stacktrace: 
@@ -1154,7 +1154,7 @@ MonoBehaviour:
       name: SameEntityStatModifiers
       fullName: Trove.Stats.Tests.StatsTests.SameEntityStatModifiers
       resultStatus: 1
-      duration: 0.0127951
+      duration: 0.0120401
       messages: 
       output: 
       stacktrace: 
@@ -1166,7 +1166,62 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1025
       parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-    - id: 1040
+    - id: 1031
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.StatEventsTest]'
+      name: StatEventsTest
+      fullName: Trove.Stats.Tests.StatsTests.StatEventsTest
+      resultStatus: 1
+      duration: 0.0283642
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1025
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+    - id: 1035
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.StatWorldParallelImpossible]'
+      name: StatWorldParallelImpossible
+      fullName: Trove.Stats.Tests.StatsTests.StatWorldParallelImpossible
+      resultStatus: 2
+      duration: 0.0193402
+      messages: 'TearDown : System.InvalidOperationException : The previously scheduled
+        job StatsTests:StatsWorldJob writes to the BufferTypeHandle<Unity.Collections.NativeText.ReadOnly>
+        StatsWorldJob.StatsWorld._statObserversLookup. You must call JobHandle.Complete()
+        on the job StatsTests:StatsWorldJob, before you can deallocate the BufferTypeHandle<Unity.Collections.NativeText.ReadOnly>
+        safely.'
+      output: 
+      stacktrace: "--TearDown\r\n  at (wrapper managed-to-native) Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle.CheckDeallocateAndThrow_Injected(Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle&)\r\n 
+        at Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle.CheckDeallocateAndThrow
+        (Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle handle) [0x00000] in
+        <612ea0208cc847f49d539e6511ed3cd5>:0 \r\n  at Unity.Entities.ComponentSafetyHandles.CompleteAllJobsAndInvalidateArrays
+        () [0x00018] in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentSafetyHandles.cs:216
+        \r\n  at Unity.Entities.ComponentDependencyManager.CompleteAllJobsAndInvalidateArrays
+        () [0x00006] in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentDependencyManager.cs:156
+        \r\n  at Unity.Entities.EntityDataAccess.BeforeStructuralChange () [0x0001e]
+        in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs:414
+        \r\n  at Unity.Entities.EntityDataAccess.BeginStructuralChanges () [0x00008]
+        in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs:420
+        \r\n  at Unity.Entities.EntityManager.DestroyEntity (Unity.Entities.EntityQuery
+        entityQuery) [0x0001f] in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityManager.cs:3391
+        \r\n  at Trove.Stats.Tests.StatsTests.TearDown () [0x00022] in C:\\Projects\\Trove\\com.trove.stats\\Tests\\Runtime\\StatsTests.cs:189
+        \r\n  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)\r\n 
+        at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags
+        invokeAttr, System.Reflection.Binder binder, System.Object[] parameters,
+        System.Globalization.CultureInfo culture) [0x0006a] in <13c0c460649d4ce49f991e2c222fa635>:0 "
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1025
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+    - id: 1042
       uniqueId: '[com.trove.tweens.tests.dll][suite]'
       name: com.trove.tweens.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.tweens.tests.dll
@@ -1180,9 +1235,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1058
+      parentId: 1060
       parentUniqueId: '[TroveTests][suite]'
-    - id: 1041
+    - id: 1043
       uniqueId: 'com.trove.tweens.tests.dll/[Trove][suite]'
       name: Trove
       fullName: Trove
@@ -1196,9 +1251,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1040
+      parentId: 1042
       parentUniqueId: '[com.trove.tweens.tests.dll][suite]'
-    - id: 1042
+    - id: 1044
       uniqueId: 'com.trove.tweens.tests.dll/Trove/[Tweens][suite]'
       name: Tweens
       fullName: Trove.Tweens
@@ -1212,9 +1267,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1041
+      parentId: 1043
       parentUniqueId: 'com.trove.tweens.tests.dll/[Trove][suite]'
-    - id: 1043
+    - id: 1045
       uniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/[com.trove.tweens.tests][Trove.Tweens.Tests][suite]'
       name: Tests
       fullName: Trove.Tweens.Tests
@@ -1228,9 +1283,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1042
+      parentId: 1044
       parentUniqueId: 'com.trove.tweens.tests.dll/Trove/[Tweens][suite]'
-    - id: 1038
+    - id: 1040
       uniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/Tests/[com.trove.tweens.tests][Trove.Tweens.Tests.TweenTests][suite]'
       name: TweenTests
       fullName: Trove.Tweens.Tests.TweenTests
@@ -1244,7 +1299,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1043
+      parentId: 1045
       parentUniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/[com.trove.tweens.tests][Trove.Tweens.Tests][suite]'
     - id: 1035
       uniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/Tests/TweenTests/[com.trove.tweens.tests][Trove.Tweens.Tests.TweenTests.Test]'
@@ -1263,7 +1318,7 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1034
       parentUniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/Tests/[com.trove.tweens.tests][Trove.Tweens.Tests.TweenTests][suite]'
-    - id: 1051
+    - id: 1053
       uniqueId: '[com.trove.utilityai.tests.dll][suite]'
       name: com.trove.utilityai.tests.dll
       fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.utilityai.tests.dll
@@ -1277,9 +1332,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1058
+      parentId: 1060
       parentUniqueId: '[TroveTests][suite]'
-    - id: 1052
+    - id: 1054
       uniqueId: 'com.trove.utilityai.tests.dll/[Trove][suite]'
       name: Trove
       fullName: Trove
@@ -1293,9 +1348,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1051
+      parentId: 1053
       parentUniqueId: '[com.trove.utilityai.tests.dll][suite]'
-    - id: 1053
+    - id: 1055
       uniqueId: 'com.trove.utilityai.tests.dll/Trove/[UtilityAI][suite]'
       name: UtilityAI
       fullName: Trove.UtilityAI
@@ -1309,9 +1364,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1052
+      parentId: 1054
       parentUniqueId: 'com.trove.utilityai.tests.dll/[Trove][suite]'
-    - id: 1054
+    - id: 1056
       uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/[com.trove.utilityai.tests][Trove.UtilityAI.Tests][suite]'
       name: Tests
       fullName: Trove.UtilityAI.Tests
@@ -1325,9 +1380,9 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1053
+      parentId: 1055
       parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/[UtilityAI][suite]'
-    - id: 1044
+    - id: 1046
       uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
       name: ReasonerTests
       fullName: Trove.UtilityAI.Tests.ReasonerTests
@@ -1341,7 +1396,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1054
+      parentId: 1056
       parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/[com.trove.utilityai.tests][Trove.UtilityAI.Tests][suite]'
     - id: 1046
       uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.ActionSelectors]'
@@ -1445,12 +1500,57 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1040
       parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
-    m_ResultText: InfiniteObserversLoopPrevention (0.029s)
-    m_ResultStacktrace: 
+    m_ResultText: "StatWorldParallelImpossible (0.019s)\n---\nTearDown : System.InvalidOperationException
+      : The previously scheduled job StatsTests:StatsWorldJob writes to the BufferTypeHandle<Unity.Collections.NativeText.ReadOnly>
+      StatsWorldJob.StatsWorld._statObserversLookup. You must call JobHandle.Complete()
+      on the job StatsTests:StatsWorldJob, before you can deallocate the BufferTypeHandle<Unity.Collections.NativeText.ReadOnly>
+      safely.\n---\n--TearDown\r\n  at (wrapper managed-to-native) Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle.CheckDeallocateAndThrow_Injected(Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle&)\r\n 
+      at Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle.CheckDeallocateAndThrow
+      (Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle handle) [0x00000] in
+      <612ea0208cc847f49d539e6511ed3cd5>:0 \r\n  at Unity.Entities.ComponentSafetyHandles.CompleteAllJobsAndInvalidateArrays
+      () [0x00018] in <color=#40a0ff><a href=\".\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentSafetyHandles.cs\"
+      line=\"216 \r\">Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentSafetyHandles.cs:216
+      \r</a></color>\n  at Unity.Entities.ComponentDependencyManager.CompleteAllJobsAndInvalidateArrays
+      () [0x00006] in <color=#40a0ff><a href=\".\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentDependencyManager.cs\"
+      line=\"156 \r\">Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentDependencyManager.cs:156
+      \r</a></color>\n  at Unity.Entities.EntityDataAccess.BeforeStructuralChange
+      () [0x0001e] in <color=#40a0ff><a href=\".\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs\"
+      line=\"414 \r\">Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs:414
+      \r</a></color>\n  at Unity.Entities.EntityDataAccess.BeginStructuralChanges
+      () [0x00008] in <color=#40a0ff><a href=\".\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs\"
+      line=\"420 \r\">Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs:420
+      \r</a></color>\n  at Unity.Entities.EntityManager.DestroyEntity (Unity.Entities.EntityQuery
+      entityQuery) [0x0001f] in <color=#40a0ff><a href=\".\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityManager.cs\"
+      line=\"3391 \r\">Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityManager.cs:3391
+      \r</a></color>\n  at Trove.Stats.Tests.StatsTests.TearDown () [0x00022] in
+      <color=#40a0ff><a href=\"C:\\Projects\\Trove\\com.trove.stats\\Tests\\Runtime\\StatsTests.cs\"
+      line=\"189 \r\">..\\..\\com.trove.stats\\Tests\\Runtime\\StatsTests.cs:189
+      \r</a></color>\n  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)\r\n 
+      at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags
+      invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo
+      culture) [0x0006a] in <13c0c460649d4ce49f991e2c222fa635>:0"
+    m_ResultStacktrace: "--TearDown\r\n  at (wrapper managed-to-native) Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle.CheckDeallocateAndThrow_Injected(Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle&)\r\n 
+      at Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle.CheckDeallocateAndThrow
+      (Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle handle) [0x00000] in
+      <612ea0208cc847f49d539e6511ed3cd5>:0 \r\n  at Unity.Entities.ComponentSafetyHandles.CompleteAllJobsAndInvalidateArrays
+      () [0x00018] in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentSafetyHandles.cs:216
+      \r\n  at Unity.Entities.ComponentDependencyManager.CompleteAllJobsAndInvalidateArrays
+      () [0x00006] in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentDependencyManager.cs:156
+      \r\n  at Unity.Entities.EntityDataAccess.BeforeStructuralChange () [0x0001e]
+      in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs:414
+      \r\n  at Unity.Entities.EntityDataAccess.BeginStructuralChanges () [0x00008]
+      in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs:420
+      \r\n  at Unity.Entities.EntityManager.DestroyEntity (Unity.Entities.EntityQuery
+      entityQuery) [0x0001f] in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityManager.cs:3391
+      \r\n  at Trove.Stats.Tests.StatsTests.TearDown () [0x00022] in C:\\Projects\\Trove\\com.trove.stats\\Tests\\Runtime\\StatsTests.cs:189
+      \r\n  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)\r\n 
+      at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags
+      invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo
+      culture) [0x0006a] in <13c0c460649d4ce49f991e2c222fa635>:0 "
     m_TestListState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: da61ba2d
-      m_LastClickedID: 767189466
+      m_SelectedIDs: 937abf53
+      m_LastClickedID: 1405057683
       m_ExpandedIDs: 4cafbb808407cdb8de18d9b95e9f80ba58f5b9c4348fddc7a40680c9f08570cfec9aa3cf388841d98f1870df7e55e5e939b52cfc4ed5b90a06dd1d154760891f35631e20781a9322511b16451844d16cbe3d137affffff7f
       m_RenameOverlay:
         m_UserAcceptedRename: 0
@@ -1481,7 +1581,7 @@ MonoBehaviour:
     m_SelectedOption: 0
   - m_Window: {fileID: 0}
     runProgress:
-      RunGuid: b707ce8b-2b65-4a28-a4f4-0520205997fc
+      RunGuid: f540946a-2362-4cd2-bf35-b2f7434c0ed8
       ExecutionSettings:
         m_TargetPlatform: 0
         m_HasTargetPlatform: 0
@@ -1494,7 +1594,7 @@ MonoBehaviour:
         filters:
         - testMode: 2
           testNames:
-          - Trove.Stats.Tests.StatsTests.InfiniteObserversLoopPrevention
+          - Trove.Stats.Tests.StatsTests.StatWorldParallelImpossible
           groupNames: []
           categoryNames: []
           assemblyNames: []
@@ -1562,16 +1662,16 @@ MonoBehaviour:
   m_MaxSize: {x: 10000, y: 10000}
   m_TitleContent:
     m_Text: Project
-    m_Image: {fileID: -5467254957812901981, guid: 0000000000000000d000000000000000,
+    m_Image: {fileID: -5179483145760003458, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 
     m_TextWithWhitespace: "Project\u200B"
   m_Pos:
     serializedVersion: 2
     x: 1
-    y: 453
+    y: 452
     width: 282
-    height: 478
+    height: 479
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1593,7 +1693,8 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SkipHidden: 0
     m_SearchArea: 1
-    m_Folders: []
+    m_Folders:
+    - Assets/_Tests/Scripts/Stats
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1611,7 +1712,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 3af30000
     m_LastClickedID: 62266
-    m_ExpandedIDs: 0000000078bf00007abf00007cbf00007ebf000080bf000082bf000084bf000086bf000088bf00008abf00008cbf00008ebf000090bf000092bf000094bf000096bf000098bf00009abf00009cbf00009ebf0000
+    m_ExpandedIDs: 00000000cefa0000d0fa0000d2fa0000d4fa0000d6fa0000d8fa0000dafa0000dcfa0000defa0000e0fa0000e2fa0000e4fa0000e6fa0000e8fa0000eafa0000ecfa0000eefa0000f0fa0000f2fa0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1637,10 +1738,10 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 1164}
+    scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 0000000078bf00007abf00007cbf00007ebf000080bf000082bf000084bf000086bf000088bf00008abf00008cbf00008ebf000090bf000092bf000094bf000096bf000098bf00009abf00009cbf00009ebf0000
+    m_ExpandedIDs: 00000000cefa0000d0fa0000d2fa0000d4fa0000d6fa0000d8fa0000dafa0000dcfa0000defa0000e0fa0000e2fa0000e4fa0000e6fa0000e8fa0000eafa0000ecfa0000eefa0000f0fa0000f2fa0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1714,15 +1815,15 @@ MonoBehaviour:
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
     m_Text: Inspector
-    m_Image: {fileID: -2667387946076563598, guid: 0000000000000000d000000000000000,
+    m_Image: {fileID: -440750813802333266, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 
     m_TextWithWhitespace: "Inspector\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 1537
+    x: 1536
     y: 24
-    width: 383
+    width: 384
     height: 907
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1764,7 +1865,7 @@ MonoBehaviour:
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
     m_Text: Hierarchy
-    m_Image: {fileID: 7966133145522015247, guid: 0000000000000000d000000000000000,
+    m_Image: {fileID: -3734745235275155857, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 
     m_TextWithWhitespace: "Hierarchy\u200B"
@@ -1773,7 +1874,7 @@ MonoBehaviour:
     x: 1
     y: 24
     width: 282
-    height: 403
+    height: 402
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1790,7 +1891,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: b882ffff8a95ffffa8a3ffff1cb7ffff5cc3ffff24fbffff
+      m_ExpandedIDs: 2c58ffffb65effff2c67ffff7a6dffff8675ffff547cfffff282ffff7896ffff809cffffd4a6ffffd0b6ffffeabcffff24fbffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1831,7 +1932,7 @@ MonoBehaviour:
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
     m_Text: Scene
-    m_Image: {fileID: 2593428753322112591, guid: 0000000000000000d000000000000000,
+    m_Image: {fileID: 8634526014445323508, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 
     m_TextWithWhitespace: "Scene\u200B"
@@ -1839,7 +1940,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 24
-    width: 597
+    width: 863
     height: 546
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -2255,9 +2356,9 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: -59.31108, y: 1.1892776, z: -8.362927}
+    m_Target: {x: -59.43499, y: 1.3381634, z: -9.3617325}
     speed: 2
-    m_Value: {x: -59.31108, y: 1.1892776, z: -8.362927}
+    m_Value: {x: -59.43499, y: 1.3381634, z: -9.3617325}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -2303,9 +2404,9 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-    m_Target: {x: -0.13813862, y: 0.65971214, z: -0.12517244, w: -0.7280466}
+    m_Target: {x: -0.1306196, y: 0.68356466, z: -0.1263019, w: -0.70692885}
     speed: 2
-    m_Value: {x: -0.13813862, y: 0.65971214, z: -0.12517244, w: -0.7280466}
+    m_Value: {x: -0.1306196, y: 0.68356466, z: -0.1263019, w: -0.70692885}
   m_Size:
     m_Target: 8.317896
     speed: 2
@@ -2359,7 +2460,7 @@ MonoBehaviour:
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
     m_Text: Game
-    m_Image: {fileID: -6423792434712278376, guid: 0000000000000000d000000000000000,
+    m_Image: {fileID: 4621777727084837110, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 
     m_TextWithWhitespace: "Game\u200B"
@@ -2367,7 +2468,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: -1920
     y: 79
-    width: 597
+    width: 863
     height: 546
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -2386,7 +2487,7 @@ MonoBehaviour:
   m_ShowGizmos: 0
   m_TargetDisplay: 0
   m_ClearColor: {r: 0, g: 0, b: 0, a: 0}
-  m_TargetSize: {x: 597, y: 525}
+  m_TargetSize: {x: 863, y: 525}
   m_TextureFilterMode: 0
   m_TextureHideFlags: 61
   m_RenderIMGUI: 1
@@ -2401,8 +2502,8 @@ MonoBehaviour:
     m_VRangeLocked: 0
     hZoomLockedByDefault: 0
     vZoomLockedByDefault: 0
-    m_HBaseRangeMin: -298.5
-    m_HBaseRangeMax: 298.5
+    m_HBaseRangeMin: -431.5
+    m_HBaseRangeMax: 431.5
     m_VBaseRangeMin: -262.5
     m_VBaseRangeMax: 262.5
     m_HAllowExceedBaseRangeMin: 1
@@ -2422,23 +2523,23 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 597
+      width: 863
       height: 525
     m_Scale: {x: 1.25, y: 1.25}
-    m_Translation: {x: 298.5, y: 262.5}
+    m_Translation: {x: 431.5, y: 262.5}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -238.8
+      x: -345.2
       y: -210
-      width: 477.6
+      width: 690.4
       height: 420
     m_MinimalGUI: 1
   m_defaultScale: 1
-  m_LastWindowPixelSize: {x: 597, y: 546}
+  m_LastWindowPixelSize: {x: 863, y: 546}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000
@@ -2461,7 +2562,7 @@ MonoBehaviour:
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
     m_Text: Console
-    m_Image: {fileID: -4327648978806127646, guid: 0000000000000000d000000000000000,
+    m_Image: {fileID: -4950941429401207979, guid: 0000000000000000d000000000000000,
       type: 0}
     m_Tooltip: 
     m_TextWithWhitespace: "Console\u200B"
@@ -2469,7 +2570,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 596
-    width: 1251
+    width: 1250
     height: 335
   m_SerializedDataModeController:
     m_DataMode: 0

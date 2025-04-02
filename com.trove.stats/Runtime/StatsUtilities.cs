@@ -118,7 +118,9 @@ namespace Trove.Stats
             ref DynamicBuffer<StatObserver> statObserversBuffer,
             ref NativeList<StatChangeEvent> statChangeEventsList,
             ref UnsafeList<StatHandle> tmpUpdatedStatsList,
-            ref NativeList<StatModifierHandle> modifierTriggerEventsList)
+            ref NativeList<StatModifierHandle> modifierTriggerEventsList,
+            bool supportStatChangeEvents,
+            bool supportModifierTriggerEvents)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
             where TStatModifierStack : unmanaged, IStatsModifierStack
         {
@@ -143,7 +145,7 @@ namespace Trove.Stats
                     statModifiersBuffer[modifierIndex] = modifier;
                         
                     // Handle modifier trigger events
-                    if (addModifierTriggerEvent && modifierTriggerEventsList.IsCreated)
+                    if (addModifierTriggerEvent && supportModifierTriggerEvents && modifierTriggerEventsList.IsCreated)
                     {
                         modifierTriggerEventsList.Add(new StatModifierHandle
                         {
@@ -159,7 +161,7 @@ namespace Trove.Stats
             if (initialStat.Value != statRef.Value)
             {
                 // Stat change events
-                if (statRef.ProduceChangeEvents == 1 && statChangeEventsList.IsCreated)
+                if (statRef.ProduceChangeEvents == 1 && supportStatChangeEvents && statChangeEventsList.IsCreated)
                 {
                     statChangeEventsList.Add(new StatChangeEvent
                     {

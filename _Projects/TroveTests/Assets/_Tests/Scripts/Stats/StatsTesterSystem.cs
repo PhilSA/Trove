@@ -45,7 +45,7 @@ partial struct StatsTesterSystem : ISystem
 
                 if(tester.MakeLocalStatsDependOnEachOther)
                 {
-                    _statsWorld.Update(ref state);
+                    _statsWorld.UpdateDataAndLookups(ref state);
                     
                     _statsWorld.TryAddStatModifier(
                         observedStatOwner.StatB,
@@ -74,7 +74,7 @@ partial struct StatsTesterSystem : ISystem
                     statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
                     TestStatOwner newObserverStatOwner = statsOwnerLookup[newObserverEntity];
                     
-                    _statsWorld.Update(ref state);
+                    _statsWorld.UpdateDataAndLookups(ref state);
                     
                     _statsWorld.TryAddStatModifier(
                         newObserverStatOwner.StatA,
@@ -93,7 +93,7 @@ partial struct StatsTesterSystem : ISystem
             tester.HasInitialized = true;
         }
         
-        _statsWorld.Update(ref state);
+        _statsWorld.UpdateDataAndLookups(ref state);
 
         state.Dependency = new UpdatingStatsJob
         {
