@@ -36,6 +36,7 @@ namespace Trove.Stats.Tests
             AddFromTwoStats,
             AddFromTwoStatsMax,
             AddInt,
+            SelfRemoveWhenStatAbove1000,
         }
 
         public struct Stack : IStatsModifierStack
@@ -84,6 +85,7 @@ namespace Trove.Stats.Tests
             switch (ModifierType)
             {
                 case (Type.AddFromStat):
+                case (Type.SelfRemoveWhenStatAbove1000):
                     observedStatHandles.Add(StatHandleA);
                     break;
                 case (Type.AddFromTwoStats):
@@ -97,7 +99,7 @@ namespace Trove.Stats.Tests
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Apply(ref StatsReader statsReader, ref Stack stack, out bool shouldProduceModifierTriggerEvent)
         {
-            shouldProduceModifierTriggerEvent = false;
+            shouldProduceModifierTriggerEvent = true;
             switch (ModifierType)
             {
                 case (Type.Add):
@@ -110,11 +112,10 @@ namespace Trove.Stats.Tests
                     if (statsReader.TryGetStat(StatHandleA, out float statAValue, out float _))
                     {
                         stack.Add += statAValue;
-                        break;
+                        return;
                     }
 
                     MustRemove = true;
-                    shouldProduceModifierTriggerEvent = true;
                     break;
                 }
                 case (Type.AddFromTwoStats):
@@ -124,11 +125,10 @@ namespace Trove.Stats.Tests
                     {
                         stack.Add += statAValue;
                         stack.Add += statBValue;
-                        break;
+                        return;
                     }
                     
                     MustRemove = true;
-                    shouldProduceModifierTriggerEvent = true;
                     break;
                 }
                 case (Type.AddFromTwoStatsMax):
@@ -137,11 +137,10 @@ namespace Trove.Stats.Tests
                         statsReader.TryGetStat(StatHandleB, out float statBValue, out float _))
                     {
                         stack.Add += math.max(statAValue, statBValue);
-                        break;
+                        return;
                     }
                     
                     MustRemove = true;
-                    shouldProduceModifierTriggerEvent = true;
                     break;
                 }
                 case (Type.AddInt):
@@ -150,6 +149,20 @@ namespace Trove.Stats.Tests
                     int stackAddInt = StatsUtilities.AsInt(stack.Add);
                     stackAddInt += StatsUtilities.AsInt(ValueA);
                     stack.Add = StatsUtilities.AsFloat(stackAddInt);
+                    break;
+                }
+                case (Type.SelfRemoveWhenStatAbove1000):
+                {
+                    if (statsReader.TryGetStat(StatHandleA, out float statAValue, out float _))
+                    {
+                        if (statAValue > 1000f)
+                        {
+                            MustRemove = true;
+                        }
+                        return;
+                    }
+
+                    MustRemove = true; 
                     break;
                 }
             }
@@ -2327,6 +2340,96 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1CObserversCount);
                 AssertBufferLengths(entity1, 3, 0, 0);
             }
+        }
+
+        [Test]
+        public void StatEventsTest()
+        {
+            bool success = false;
+            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+
+            Entity entity1 = CreateStatsEntity(0, 10f, true,
+                out StatHandle statHandle1, out StatHandle statHandle2, out StatHandle statHandle3);
+
+            UpdateStatsWorld(ref statsWorld);
+            
+            statsWorld.StatChangeEventsList = new NativeList<StatChangeEvent>(Allocator.Temp);
+            statsWorld.ModifierTriggerEventsList = new NativeList<StatModifierHandle>(Allocator.Temp);
+
+            // This modifier does not change stat value. No stat change
+            // Triggers mod 1
+            success = statsWorld.TryAddStatModifier(
+                statHandle1,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.SelfRemoveWhenStatAbove1000,
+                    StatHandleA = statHandle2,
+                },
+                out StatModifierHandle modifier1);
+            
+            // Changes stat 2
+            // Triggers mod 2 and mod 1
+            success = statsWorld.TryAddStatModifier(
+                statHandle2,
+                new StatsTestsStatModifier
+                {
+                    ModifierType = StatsTestsStatModifier.Type.AddFromStat,
+                    StatHandleA = statHandle3,
+                },
+                out StatModifierHandle modifier2);
+            
+            // Changes stat 3 and 2
+            // Triggers mod 2 and mod 1
+            statsWorld.TryAddStatBaseValue(statHandle3, 1f);
+
+            int stat1ChangeEvents = 0;
+            int stat2ChangeEvents = 0;
+            int stat3ChangeEvents = 0;
+            int modifier1TriggerEvents = 0;
+            int modifier2TriggerEvents = 0;
+            
+            for (int i = 0; i < statsWorld.StatChangeEventsList.Length; i++)
+            {
+                StatChangeEvent changedStat = statsWorld.StatChangeEventsList[i];
+
+                if (changedStat.StatHandle == statHandle1)
+                {
+                    stat1ChangeEvents++;
+                }
+                if (changedStat.StatHandle == statHandle2)
+                {
+                    stat2ChangeEvents++;
+                }
+                if (changedStat.StatHandle == statHandle3)
+                {
+                    stat3ChangeEvents++;
+                }
+            }
+            
+            for (int i = 0; i < statsWorld.ModifierTriggerEventsList.Length; i++)
+            {
+                StatModifierHandle triggeredModifier = statsWorld.ModifierTriggerEventsList[i];
+
+                if (triggeredModifier == modifier1)
+                {
+                    modifier1TriggerEvents++;
+                }
+                if (triggeredModifier == modifier2)
+                {
+                    modifier2TriggerEvents++;
+                }
+            }
+            
+            Assert.AreEqual(3, statsWorld.StatChangeEventsList.Length);
+            Assert.AreEqual(5, statsWorld.ModifierTriggerEventsList.Length);
+            Assert.AreEqual(0, stat1ChangeEvents);
+            Assert.AreEqual(2, stat2ChangeEvents);
+            Assert.AreEqual(1, stat3ChangeEvents);
+            Assert.AreEqual(3, modifier1TriggerEvents);
+            Assert.AreEqual(2, modifier2TriggerEvents);
+
+            statsWorld.StatChangeEventsList.Dispose();
+            statsWorld.ModifierTriggerEventsList.Dispose();
         }
 
         [Test]

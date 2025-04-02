@@ -253,7 +253,6 @@ namespace PolymorphicStructsSourceGenerators
             // For each element matching this pipeline, handle output
             context.RegisterSourceOutput(polyTypeManagerAndStructsValuesProvider, TypeManagerSourceOutputter);
             context.RegisterSourceOutput(polyUnionStructAndStructsValuesProvider, UnionStructSourceOutputter);
-
         }
 
         private void GenerateAttributes(IncrementalGeneratorInitializationContext context)
