@@ -11,6 +11,8 @@ public partial class RestaurantGameUISystem : SystemBase
 
     protected override void OnUpdate()
     {
+        EntityManager.CompleteAllTrackedJobs();
+        
         if(GameUI != null)
         {
             // Restaurant info

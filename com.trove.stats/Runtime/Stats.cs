@@ -49,6 +49,7 @@ namespace Trove.Stats
         public uint ID;
         public TStatModifier Modifier;
         public int PrevElementIndexData;
+        
         public int PrevElementIndex
         {
             get => PrevElementIndexData;
@@ -60,6 +61,7 @@ namespace Trove.Stats
     {
         public StatHandle ObserverHandle;
         public int PrevElementIndexData;
+        
         public int PrevElementIndex
         {
             get => PrevElementIndexData;
