@@ -31,39 +31,43 @@ namespace Trove.Stats
         public uint ModifierIDCounter;
     }
 
-    [InternalBufferCapacity(8)]
-    public struct Stat : IBufferElementData
+    public partial struct Stat : IBufferElementData
     {
         public float BaseValue;
         public float Value;
 
-        // TODO: how to prevent users from touching any of these fields
         public int LastModifierIndex;
         public int LastObserverIndex;
         
         public byte ProduceChangeEvents;
     }
 
-    // TODO: capacity?
-    [InternalBufferCapacity(8)]
-    public struct StatModifier<TStatModifier, TStatModifierStack> : IBufferElementData, ICompactMultiLinkedListElement
+    public partial struct StatModifier<TStatModifier, TStatModifierStack> : IBufferElementData, ICompactMultiLinkedListElement
         where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
         public uint ID;
-        public int PrevElementIndex { get; set; }
         public TStatModifier Modifier;
+        public int PrevElementIndexData;
+        public int PrevElementIndex
+        {
+            get => PrevElementIndexData;
+            set => PrevElementIndexData = value;
+        }
     }
 
-    [InternalBufferCapacity(8)]
-    public struct StatObserver : IBufferElementData, ICompactMultiLinkedListElement
+    public partial struct StatObserver : IBufferElementData, ICompactMultiLinkedListElement
     {
         public StatHandle ObserverHandle;
-        public int PrevElementIndex { get; set; }
+        public int PrevElementIndexData;
+        public int PrevElementIndex
+        {
+            get => PrevElementIndexData;
+            set => PrevElementIndexData = value;
+        }
     }
 
-    [InternalBufferCapacity(0)]
-    public struct StatChangeEvent : IBufferElementData
+    public struct StatChangeEvent
     {
         public StatHandle StatHandle;
         public Stat PrevValue;

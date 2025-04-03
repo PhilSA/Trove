@@ -7,7 +7,6 @@ using Unity.Mathematics;
 [assembly: RegisterGenericComponentType(typeof(StatModifier<SampleStatModifier, SampleStatModifier.Stack>))]
 
 // TODO: Tweak internal buffer capacity for your use case
-[InternalBufferCapacity(0)]
 public struct SampleStatModifier : IStatsModifier<SampleStatModifier.Stack>
 {
     // TODO: Customize the modifier types
