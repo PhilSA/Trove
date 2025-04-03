@@ -7,8 +7,8 @@ namespace Trove.Stats
     public struct StatsWorldData<TStatModifierStack>
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
-        public NativeList<StatChangeEvent> StatChangeEventsList;
-        public NativeList<StatModifierHandle> ModifierTriggerEventsList;
+        public NativeList<StatChangeEvent> StatChangeEventsList { get; private set; }
+        public NativeList<StatModifierHandle> ModifierTriggerEventsList { get; private set; }
 
         internal NativeList<StatHandle> _tmpModifierObservedStatsList;
         internal NativeList<StatObserver> _tmpStatObserversList;

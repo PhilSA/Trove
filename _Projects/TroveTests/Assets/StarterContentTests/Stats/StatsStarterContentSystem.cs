@@ -48,6 +48,8 @@ partial struct StatsStarterContentSystem : ISystem
             StatsAccessor.TryGetStat(stats.Intelligence, out statValues.Intelligence, out _);
             StatsAccessor.TryGetStat(stats.Dexterity, out statValues.Dexterity, out _);
 
+            StatsAccessor.TrySetStatProduceChangeEvents(stats.Intelligence, true);
+
             if (StatsAccessor.TryCalculateModifiersCount(stats.Intelligence, out int intelligenceModifiersCount))
             {
                 if (intelligenceModifiersCount <= 0)
@@ -64,6 +66,9 @@ partial struct StatsStarterContentSystem : ISystem
             }
             
             StatsAccessor.TryAddStatBaseValue(stats.Dexterity, DeltaTime, ref StatsWorldData);
+            
+            UnityEngine.Debug.Log($"Detected {StatsWorldData.StatChangeEventsList.Length} stat change events");
+            StatsWorldData.StatChangeEventsList.Clear();
         }
     }
 }
