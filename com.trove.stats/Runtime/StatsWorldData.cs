@@ -7,8 +7,10 @@ namespace Trove.Stats
     public struct StatsWorldData<TStatModifierStack>
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
-        public NativeList<StatChangeEvent> StatChangeEventsList { get; private set; }
-        public NativeList<StatModifierHandle> ModifierTriggerEventsList { get; private set; }
+        private NativeList<StatChangeEvent> _statChangeEventsList;
+        public NativeList<StatChangeEvent> StatChangeEventsList => _statChangeEventsList;
+        private NativeList<StatModifierHandle> _modifierTriggerEventsList;
+        public NativeList<StatModifierHandle> ModifierTriggerEventsList => _modifierTriggerEventsList;
 
         internal NativeList<StatHandle> _tmpModifierObservedStatsList;
         internal NativeList<StatObserver> _tmpStatObserversList;
@@ -19,8 +21,8 @@ namespace Trove.Stats
 
         public StatsWorldData(Allocator allocator)
         {
-            StatChangeEventsList = new NativeList<StatChangeEvent>(allocator);
-            ModifierTriggerEventsList = new NativeList<StatModifierHandle>(allocator);
+            _statChangeEventsList = new NativeList<StatChangeEvent>(allocator);
+            _modifierTriggerEventsList = new NativeList<StatModifierHandle>(allocator);
 
             _tmpModifierObservedStatsList = new NativeList<StatHandle>(Allocator.Persistent);
             _tmpStatObserversList = new NativeList<StatObserver>(Allocator.Persistent);
@@ -32,14 +34,14 @@ namespace Trove.Stats
 
         public void Dispose(JobHandle dep = default)
         {
-            if (StatChangeEventsList.IsCreated)
+            if (_statChangeEventsList.IsCreated)
             {
-                StatChangeEventsList.Dispose(dep);
+                _statChangeEventsList.Dispose(dep);
             }
 
-            if (ModifierTriggerEventsList.IsCreated)
+            if (_modifierTriggerEventsList.IsCreated)
             {
-                ModifierTriggerEventsList.Dispose(dep);
+                _modifierTriggerEventsList.Dispose(dep);
             }
 
             if (_tmpModifierObservedStatsList.IsCreated)
