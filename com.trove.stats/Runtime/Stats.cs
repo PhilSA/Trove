@@ -19,7 +19,7 @@ namespace Trove.Stats
     public interface IStatsModifier<TStatModifierStack>
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
-        public void AddObservedStatsToList(ref UnsafeList<StatHandle> observedStatHandles);
+        public void AddObservedStatsToList(ref NativeList<StatHandle> observedStatHandles);
         public void Apply(
             ref StatsReader statsReader,
             ref TStatModifierStack stack,
@@ -154,7 +154,7 @@ namespace Trove.Stats
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetStat(StatHandle statHandle, out float value, out float baseValue)
         {
-            return StatsUtilities.TryGetStat(statHandle, ref _statsBufferLookup, out value, out baseValue);
+            return StatsUtilities.TryGetStat(statHandle, in _statsBufferLookup, out value, out baseValue);
         }
     }
 

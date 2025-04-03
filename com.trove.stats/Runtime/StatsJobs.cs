@@ -15,14 +15,15 @@ namespace Trove.Stats
         where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactMultiLinkedListElement
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
-        public StatsWorld<TStatModifier, TStatModifierStack> StatsWorld;
+        public StatsAccessor<TStatModifier, TStatModifierStack> StatsAccessor;
+        public StatsWorldData<TStatModifierStack> StatsWorldData;
         public NativeList<StatHandle> StatsToUpdate;
         
         public void Execute()
         {
             for (int i = 0; i < StatsToUpdate.Length; i++)
             {
-                StatsWorld.TryUpdateStat(StatsToUpdate[i]);
+                StatsAccessor.TryUpdateStat(StatsToUpdate[i], ref StatsWorldData);
             }
             StatsToUpdate.Clear();
         }
@@ -38,14 +39,15 @@ namespace Trove.Stats
         where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactMultiLinkedListElement
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
-        public StatsWorld<TStatModifier, TStatModifierStack> StatsWorld;
+        public StatsAccessor<TStatModifier, TStatModifierStack> StatsAccessor;
+        public StatsWorldData<TStatModifierStack> StatsWorldData;
         public NativeQueue<StatHandle> StatsToUpdate;
         
         public void Execute()
         {
             while(StatsToUpdate.TryDequeue(out StatHandle statHandle))
             {
-                StatsWorld.TryUpdateStat(statHandle);
+                StatsAccessor.TryUpdateStat(statHandle, ref StatsWorldData);
             }
             StatsToUpdate.Clear();
         }
@@ -61,7 +63,8 @@ namespace Trove.Stats
         where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactMultiLinkedListElement
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
-        public StatsWorld<TStatModifier, TStatModifierStack> StatsWorld;
+        public StatsAccessor<TStatModifier, TStatModifierStack> StatsAccessor;
+        public StatsWorldData<TStatModifierStack> StatsWorldData;
         public NativeStream.Reader StatsToUpdate;
         
         public void Execute()
@@ -72,7 +75,7 @@ namespace Trove.Stats
                 while (StatsToUpdate.RemainingItemCount > 0)
                 {
                     StatHandle statHandle = StatsToUpdate.Read<StatHandle>();
-                    StatsWorld.TryUpdateStat(statHandle);
+                    StatsAccessor.TryUpdateStat(statHandle, ref StatsWorldData);
                 }
                 StatsToUpdate.EndForEachIndex();
             }

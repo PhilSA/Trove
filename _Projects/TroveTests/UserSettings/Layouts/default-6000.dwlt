@@ -14,69 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_PixelRect:
     serializedVersion: 2
-    x: -1920
-    y: 43
-    width: 1920
-    height: 989
+    x: 0
+    y: 43.2
+    width: 2048
+    height: 1060.8
   m_ShowMode: 4
   m_Title: Project
-  m_RootView: {fileID: 10}
+  m_RootView: {fileID: 8}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
   m_Maximized: 1
 --- !u!114 &2
-MonoBehaviour:
-  m_ObjectHideFlags: 52
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 12006, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: TestRunnerWindow
-  m_EditorClassIdentifier: 
-  m_Children: []
-  m_Position:
-    serializedVersion: 2
-    x: 864
-    y: 0
-    width: 387
-    height: 572
-  m_MinSize: {x: 52, y: 76}
-  m_MaxSize: {x: 4002, y: 4026}
-  m_ActualView: {fileID: 15}
-  m_Panes:
-  - {fileID: 15}
-  m_Selected: 0
-  m_LastSelected: 0
---- !u!114 &3
-MonoBehaviour:
-  m_ObjectHideFlags: 52
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 12010, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Children:
-  - {fileID: 14}
-  - {fileID: 2}
-  m_Position:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1251
-    height: 572
-  m_MinSize: {x: 200, y: 50}
-  m_MaxSize: {x: 16192, y: 8096}
-  vertical: 0
-  controlID: 27
-  draggingID: 0
---- !u!114 &4
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -93,16 +41,16 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 284
-    height: 428
+    width: 302.40002
+    height: 460.8
   m_MinSize: {x: 202, y: 226}
   m_MaxSize: {x: 4002, y: 4026}
-  m_ActualView: {fileID: 18}
+  m_ActualView: {fileID: 16}
   m_Panes:
-  - {fileID: 18}
+  - {fileID: 16}
   m_Selected: 0
   m_LastSelected: 0
---- !u!114 &5
+--- !u!114 &3
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -115,20 +63,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Children:
+  - {fileID: 2}
   - {fileID: 4}
-  - {fileID: 6}
   m_Position:
     serializedVersion: 2
-    x: 1251
+    x: 1333.6
     y: 0
-    width: 284
-    height: 933
+    width: 302.40002
+    height: 1004.80005
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 106
+  controlID: 54
   draggingID: 0
---- !u!114 &6
+--- !u!114 &4
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -144,17 +92,17 @@ MonoBehaviour:
   m_Position:
     serializedVersion: 2
     x: 0
-    y: 428
-    width: 284
-    height: 505
+    y: 460.8
+    width: 302.40002
+    height: 544.00006
   m_MinSize: {x: 232, y: 276}
   m_MaxSize: {x: 10002, y: 10026}
-  m_ActualView: {fileID: 16}
+  m_ActualView: {fileID: 14}
   m_Panes:
-  - {fileID: 16}
+  - {fileID: 14}
   m_Selected: 0
   m_LastSelected: 0
---- !u!114 &7
+--- !u!114 &5
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -167,21 +115,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Children:
-  - {fileID: 13}
-  - {fileID: 5}
-  - {fileID: 8}
+  - {fileID: 11}
+  - {fileID: 3}
+  - {fileID: 6}
   m_Position:
     serializedVersion: 2
     x: 0
     y: 36
-    width: 1920
-    height: 933
-  m_MinSize: {x: 400, y: 100}
-  m_MaxSize: {x: 32384, y: 16192}
+    width: 2048
+    height: 1004.80005
+  m_MinSize: {x: 300, y: 100}
+  m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 150
+  controlID: 24
   draggingID: 0
---- !u!114 &8
+--- !u!114 &6
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -196,18 +144,18 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 1535
+    x: 1636
     y: 0
-    width: 385
-    height: 933
+    width: 412
+    height: 1004.80005
   m_MinSize: {x: 276, y: 76}
   m_MaxSize: {x: 4001, y: 4026}
-  m_ActualView: {fileID: 17}
+  m_ActualView: {fileID: 15}
   m_Panes:
-  - {fileID: 17}
+  - {fileID: 15}
   m_Selected: 0
   m_LastSelected: 0
---- !u!114 &9
+--- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -223,17 +171,17 @@ MonoBehaviour:
   m_Position:
     serializedVersion: 2
     x: 0
-    y: 572
-    width: 1251
-    height: 361
+    y: 668.8
+    width: 1333.6
+    height: 336.00006
   m_MinSize: {x: 101, y: 126}
   m_MaxSize: {x: 4001, y: 4026}
-  m_ActualView: {fileID: 21}
+  m_ActualView: {fileID: 19}
   m_Panes:
-  - {fileID: 21}
+  - {fileID: 19}
   m_Selected: 0
   m_LastSelected: 0
---- !u!114 &10
+--- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -246,22 +194,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Children:
-  - {fileID: 11}
-  - {fileID: 7}
-  - {fileID: 12}
+  - {fileID: 9}
+  - {fileID: 5}
+  - {fileID: 10}
   m_Position:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1920
-    height: 989
+    width: 2048
+    height: 1060.8
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
   m_UseTopView: 1
   m_TopViewHeight: 36
   m_UseBottomView: 1
   m_BottomViewHeight: 20
---- !u!114 &11
+--- !u!114 &9
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -278,12 +226,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1920
+    width: 2048
     height: 36
   m_MinSize: {x: 0, y: 0}
   m_MaxSize: {x: 0, y: 0}
   m_LastLoadedLayoutName: 
---- !u!114 &12
+--- !u!114 &10
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -299,12 +247,12 @@ MonoBehaviour:
   m_Position:
     serializedVersion: 2
     x: 0
-    y: 969
-    width: 1920
+    y: 1040.8
+    width: 2048
     height: 20
   m_MinSize: {x: 0, y: 0}
   m_MaxSize: {x: 0, y: 0}
---- !u!114 &13
+--- !u!114 &11
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -317,20 +265,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Children:
-  - {fileID: 3}
-  - {fileID: 9}
+  - {fileID: 12}
+  - {fileID: 7}
   m_Position:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1251
-    height: 933
-  m_MinSize: {x: 200, y: 100}
-  m_MaxSize: {x: 16192, y: 16192}
+    width: 1333.6
+    height: 1004.80005
+  m_MinSize: {x: 100, y: 100}
+  m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 56
+  controlID: 25
   draggingID: 0
---- !u!114 &14
+--- !u!114 &12
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -347,17 +295,18 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 864
-    height: 572
+    width: 1333.6
+    height: 668.8
   m_MinSize: {x: 201, y: 226}
   m_MaxSize: {x: 4001, y: 4026}
-  m_ActualView: {fileID: 19}
+  m_ActualView: {fileID: 17}
   m_Panes:
-  - {fileID: 19}
-  - {fileID: 20}
+  - {fileID: 17}
+  - {fileID: 18}
+  - {fileID: 13}
   m_Selected: 0
-  m_LastSelected: 1
---- !u!114 &15
+  m_LastSelected: 2
+--- !u!114 &13
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -366,23 +315,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 13401, guid: 0000000000000000e000000000000000, type: 0}
+  m_Script: {fileID: 12070, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_MinSize: {x: 50, y: 50}
+  m_MinSize: {x: 900, y: 216}
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
-    m_Text: Test Runner
-    m_Image: {fileID: 0}
-    m_Tooltip: Test framework for running Edit mode and Play mode tests in Unity.
-      Part of the com.unity.test-framework package.
-    m_TextWithWhitespace: "Test Runner\u200B"
+    m_Text: Profiler
+    m_Image: {fileID: 2169972056302973491, guid: 0000000000000000d000000000000000,
+      type: 0}
+    m_Tooltip: 
+    m_TextWithWhitespace: "Profiler\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 865
-    y: 24
-    width: 385
-    height: 546
+    x: 0
+    y: 79.200005
+    width: 1332.6
+    height: 642.8
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -394,1259 +343,998 @@ MonoBehaviour:
     m_SaveData: []
     m_ContainerData: []
     m_OverlaysVisible: 1
-  m_Spl:
-    ID: 159
-    splitterInitialOffset: 0
-    currentActiveSplitter: -1
-    realSizes:
-    - 357
-    - 119
-    relativeSizes:
-    - 0.75
-    - 0.25
-    minSizes:
-    - 32
-    - 32
-    maxSizes:
-    - 0
-    - 0
-    lastTotalSize: 476
-    splitSize: 6
-    xOffset: 0
-    m_Version: 1
-    oldRealSizes: 
-    oldMinSizes: 
-    oldMaxSizes: 
-    oldSplitSize: 0
-  m_TestTypeToolbarIndex: 1
-  m_TestListGUIs:
-  - m_Window: {fileID: 15}
-    runProgress:
-      RunGuid: f540946a-2362-4cd2-bf35-b2f7434c0ed8
-      ExecutionSettings:
-        m_TargetPlatform: 0
-        m_HasTargetPlatform: 0
-        filter:
-          testMode: 0
-          testNames: []
-          groupNames: []
-          categoryNames: []
-          assemblyNames: []
-        filters:
-        - testMode: 2
-          testNames:
-          - Trove.Stats.Tests.StatsTests.StatWorldParallelImpossible
-          groupNames: []
-          categoryNames: []
-          assemblyNames: []
-        runSynchronously: 0
-        playerHeartbeatTimeout: 600
-        orderedTestNames: []
-        ignoreTests: []
-        featureFlags:
-          fileCleanUpCheck: 0
-          requiresSplashScreen: 0
-          strictDomainReload: 0
-          disableNestedEnumeratorBugfix: 0
-        randomOrderSeed: 0
-      HasFinished: 1
-      Progress: 0.9999999
-      CurrentStepName: Unlock Reload Assemblies
-      CurrentStageName: 
-    m_NewResultList:
-    - id: 1059
-      uniqueId: '[TroveTests][suite]'
-      name: TroveTests
-      fullName: TroveTests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 
-      parentUniqueId: 
-    m_ResultText: 
-    m_ResultStacktrace: 
-    m_TestListState:
-      scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 
-      m_LastClickedID: 0
-      m_ExpandedIDs: 511b1645ffffff7f
-      m_RenameOverlay:
-        m_UserAcceptedRename: 0
-        m_Name: 
-        m_OriginalName: 
-        m_EditFieldRect:
-          serializedVersion: 2
-          x: 0
-          y: 0
-          width: 0
-          height: 0
-        m_UserData: 0
-        m_IsWaitingForDelay: 0
-        m_IsRenaming: 0
-        m_OriginalEventType: 11
-        m_IsRenamingFilename: 0
-        m_TrimLeadingAndTrailingWhitespace: 0
-        m_ClientGUIView: {fileID: 0}
-      m_SearchString: 
-    m_TestRunnerUIFilter:
-      PassedHidden: 0
-      FailedHidden: 0
-      NotRunHidden: 0
-      m_SearchString: 
-      selectedCategories: []
-      availableCategories:
-      - Uncategorized
-    m_SelectedOption: 0
-  - m_Window: {fileID: 15}
-    runProgress:
-      RunGuid: f540946a-2362-4cd2-bf35-b2f7434c0ed8
-      ExecutionSettings:
-        m_TargetPlatform: 0
-        m_HasTargetPlatform: 0
-        filter:
-          testMode: 0
-          testNames: []
-          groupNames: []
-          categoryNames: []
-          assemblyNames: []
-        filters:
-        - testMode: 2
-          testNames:
-          - Trove.Stats.Tests.StatsTests.StatWorldParallelImpossible
-          groupNames: []
-          categoryNames: []
-          assemblyNames: []
-        runSynchronously: 0
-        playerHeartbeatTimeout: 600
-        orderedTestNames: []
-        ignoreTests: []
-        featureFlags:
-          fileCleanUpCheck: 0
-          requiresSplashScreen: 0
-          strictDomainReload: 0
-          disableNestedEnumeratorBugfix: 0
-        randomOrderSeed: 0
-      HasFinished: 1
-      Progress: 0.9999999
-      CurrentStepName: Unlock Reload Assemblies
-      CurrentStageName: 
-    m_NewResultList:
-    - id: 1000
-      uniqueId: '[TroveTests][suite]'
-      name: TroveTests
-      fullName: TroveTests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 
-      parentUniqueId: 
-    - id: 1011
-      uniqueId: '[com.trove.common.tests.dll][suite]'
-      name: com.trove.common.tests.dll
-      fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.common.tests.dll
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1060
-      parentUniqueId: '[TroveTests][suite]'
-    - id: 1012
-      uniqueId: 'com.trove.common.tests.dll/[com.trove.common.tests][Trove][suite]'
-      name: Trove
-      fullName: Trove
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1011
-      parentUniqueId: '[com.trove.common.tests.dll][suite]'
-    - id: 1001
-      uniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.BitUtilitiesTests][suite]'
-      name: BitUtilitiesTests
-      fullName: Trove.BitUtilitiesTests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1012
-      parentUniqueId: 'com.trove.common.tests.dll/[com.trove.common.tests][Trove][suite]'
-    - id: 1002
-      uniqueId: 'com.trove.common.tests.dll/Trove/BitUtilitiesTests/[com.trove.common.tests][Trove.BitUtilitiesTests.Test]'
-      name: Test
-      fullName: Trove.BitUtilitiesTests.Test
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1001
-      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.BitUtilitiesTests][suite]'
-    - id: 1003
-      uniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
-      name: ParametricCurveTests
-      fullName: Trove.ParametricCurveTests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1012
-      parentUniqueId: 'com.trove.common.tests.dll/[com.trove.common.tests][Trove][suite]'
-    - id: 1004
-      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Bypass]'
-      name: Bypass
-      fullName: Trove.ParametricCurveTests.Bypass
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1003
-      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
-    - id: 1007
-      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Exponential]'
-      name: Exponential
-      fullName: Trove.ParametricCurveTests.Exponential
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1003
-      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
-    - id: 1006
-      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Linear]'
-      name: Linear
-      fullName: Trove.ParametricCurveTests.Linear
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1003
-      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
-    - id: 1009
-      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Logistic]'
-      name: Logistic
-      fullName: Trove.ParametricCurveTests.Logistic
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1003
-      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
-    - id: 1010
-      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Logit]'
-      name: Logit
-      fullName: Trove.ParametricCurveTests.Logit
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1003
-      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
-    - id: 1008
-      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Sine]'
-      name: Sine
-      fullName: Trove.ParametricCurveTests.Sine
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1003
-      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
-    - id: 1005
-      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Step]'
-      name: Step
-      fullName: Trove.ParametricCurveTests.Step
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1003
-      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
-    - id: 1021
-      uniqueId: '[com.trove.eventsystems.tests.dll][suite]'
-      name: com.trove.eventsystems.tests.dll
-      fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.eventsystems.tests.dll
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1060
-      parentUniqueId: '[TroveTests][suite]'
-    - id: 1022
-      uniqueId: 'com.trove.eventsystems.tests.dll/[Trove][suite]'
-      name: Trove
-      fullName: Trove
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1021
-      parentUniqueId: '[com.trove.eventsystems.tests.dll][suite]'
-    - id: 1023
-      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/[EventSystems][suite]'
-      name: EventSystems
-      fullName: Trove.EventSystems
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1022
-      parentUniqueId: 'com.trove.eventsystems.tests.dll/[Trove][suite]'
-    - id: 1024
-      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
-      name: Tests
-      fullName: Trove.EventSystems.Tests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1023
-      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/[EventSystems][suite]'
-    - id: 1013
-      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityEventTests][suite]'
-      name: EntityEventTests
-      fullName: Trove.EventSystems.Tests.EntityEventTests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1024
-      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
-    - id: 1014
-      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/EntityEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityEventTests.EntityEventTest1]'
-      name: EntityEventTest1
-      fullName: Trove.EventSystems.Tests.EntityEventTests.EntityEventTest1
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1013
-      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityEventTests][suite]'
-    - id: 1015
-      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityPolymorphicEventTests][suite]'
-      name: EntityPolymorphicEventTests
-      fullName: Trove.EventSystems.Tests.EntityPolymorphicEventTests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1024
-      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
-    - id: 1016
-      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/EntityPolymorphicEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityPolymorphicEventTest1]'
-      name: EntityPolymorphicEventTest1
-      fullName: Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityPolymorphicEventTest1
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1015
-      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityPolymorphicEventTests][suite]'
-    - id: 1017
-      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalEventTests][suite]'
-      name: GlobalEventTests
-      fullName: Trove.EventSystems.Tests.GlobalEventTests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1024
-      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
-    - id: 1018
-      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/GlobalEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalEventTests.GlobalEventTest1]'
-      name: GlobalEventTest1
-      fullName: Trove.EventSystems.Tests.GlobalEventTests.GlobalEventTest1
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1017
-      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalEventTests][suite]'
-    - id: 1019
-      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests][suite]'
-      name: GlobalPolymorphicEventTests
-      fullName: Trove.EventSystems.Tests.GlobalPolymorphicEventTests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1024
-      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
-    - id: 1020
-      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/GlobalPolymorphicEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalPolymorphicEventTest1]'
-      name: GlobalPolymorphicEventTest1
-      fullName: Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalPolymorphicEventTest1
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1019
-      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests][suite]'
-    - id: 1036
-      uniqueId: '[com.trove.stats.tests.dll][suite]'
-      name: com.trove.stats.tests.dll
-      fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.stats.tests.dll
-      resultStatus: 2
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1060
-      parentUniqueId: '[TroveTests][suite]'
-    - id: 1037
-      uniqueId: 'com.trove.stats.tests.dll/[Trove][suite]'
-      name: Trove
-      fullName: Trove
-      resultStatus: 2
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1036
-      parentUniqueId: '[com.trove.stats.tests.dll][suite]'
-    - id: 1038
-      uniqueId: 'com.trove.stats.tests.dll/Trove/[Stats][suite]'
-      name: Stats
-      fullName: Trove.Stats
-      resultStatus: 2
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1037
-      parentUniqueId: 'com.trove.stats.tests.dll/[Trove][suite]'
-    - id: 1039
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/[com.trove.stats.tests][Trove.Stats.Tests][suite]'
-      name: Tests
-      fullName: Trove.Stats.Tests
-      resultStatus: 2
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1038
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/[Stats][suite]'
-    - id: 1025
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-      name: StatsTests
-      fullName: Trove.Stats.Tests.StatsTests
-      resultStatus: 2
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1039
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/[com.trove.stats.tests][Trove.Stats.Tests][suite]'
-    - id: 1030
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.AddRemoveModifierCases]'
-      name: AddRemoveModifierCases
-      fullName: Trove.Stats.Tests.StatsTests.AddRemoveModifierCases
-      resultStatus: 1
-      duration: 0.0518532
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1025
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-    - id: 1026
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.BasicStatOperations]'
-      name: BasicStatOperations
-      fullName: Trove.Stats.Tests.StatsTests.BasicStatOperations
-      resultStatus: 1
-      duration: 0.0027674
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1025
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-    - id: 1032
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.ComplexTree]'
-      name: ComplexTree
-      fullName: Trove.Stats.Tests.StatsTests.ComplexTree
-      resultStatus: 1
-      duration: 0.0099413
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1025
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-    - id: 1028
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.CrossEntityStatModifiers]'
-      name: CrossEntityStatModifiers
-      fullName: Trove.Stats.Tests.StatsTests.CrossEntityStatModifiers
-      resultStatus: 1
-      duration: 0.0216535
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1025
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-    - id: 1031
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.DestroyObservedStat]'
-      name: DestroyObservedStat
-      fullName: Trove.Stats.Tests.StatsTests.DestroyObservedStat
-      resultStatus: 1
-      duration: 0.0024803
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1025
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-    - id: 1033
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.InfiniteObserversLoopPrevention]'
-      name: InfiniteObserversLoopPrevention
-      fullName: Trove.Stats.Tests.StatsTests.InfiniteObserversLoopPrevention
-      resultStatus: 1
-      duration: 0.0046544
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1025
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-    - id: 1029
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.InvalidStatOperations]'
-      name: InvalidStatOperations
-      fullName: Trove.Stats.Tests.StatsTests.InvalidStatOperations
-      resultStatus: 1
-      duration: 0.0035249
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1025
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-    - id: 1027
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.SameEntityStatModifiers]'
-      name: SameEntityStatModifiers
-      fullName: Trove.Stats.Tests.StatsTests.SameEntityStatModifiers
-      resultStatus: 1
-      duration: 0.0120401
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1025
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-    - id: 1031
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.StatEventsTest]'
-      name: StatEventsTest
-      fullName: Trove.Stats.Tests.StatsTests.StatEventsTest
-      resultStatus: 1
-      duration: 0.0283642
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1025
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-    - id: 1035
-      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.StatWorldParallelImpossible]'
-      name: StatWorldParallelImpossible
-      fullName: Trove.Stats.Tests.StatsTests.StatWorldParallelImpossible
-      resultStatus: 2
-      duration: 0.0193402
-      messages: 'TearDown : System.InvalidOperationException : The previously scheduled
-        job StatsTests:StatsWorldJob writes to the BufferTypeHandle<Unity.Collections.NativeText.ReadOnly>
-        StatsWorldJob.StatsWorld._statObserversLookup. You must call JobHandle.Complete()
-        on the job StatsTests:StatsWorldJob, before you can deallocate the BufferTypeHandle<Unity.Collections.NativeText.ReadOnly>
-        safely.'
-      output: 
-      stacktrace: "--TearDown\r\n  at (wrapper managed-to-native) Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle.CheckDeallocateAndThrow_Injected(Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle&)\r\n 
-        at Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle.CheckDeallocateAndThrow
-        (Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle handle) [0x00000] in
-        <612ea0208cc847f49d539e6511ed3cd5>:0 \r\n  at Unity.Entities.ComponentSafetyHandles.CompleteAllJobsAndInvalidateArrays
-        () [0x00018] in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentSafetyHandles.cs:216
-        \r\n  at Unity.Entities.ComponentDependencyManager.CompleteAllJobsAndInvalidateArrays
-        () [0x00006] in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentDependencyManager.cs:156
-        \r\n  at Unity.Entities.EntityDataAccess.BeforeStructuralChange () [0x0001e]
-        in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs:414
-        \r\n  at Unity.Entities.EntityDataAccess.BeginStructuralChanges () [0x00008]
-        in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs:420
-        \r\n  at Unity.Entities.EntityManager.DestroyEntity (Unity.Entities.EntityQuery
-        entityQuery) [0x0001f] in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityManager.cs:3391
-        \r\n  at Trove.Stats.Tests.StatsTests.TearDown () [0x00022] in C:\\Projects\\Trove\\com.trove.stats\\Tests\\Runtime\\StatsTests.cs:189
-        \r\n  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)\r\n 
-        at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags
-        invokeAttr, System.Reflection.Binder binder, System.Object[] parameters,
-        System.Globalization.CultureInfo culture) [0x0006a] in <13c0c460649d4ce49f991e2c222fa635>:0 "
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1025
-      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
-    - id: 1042
-      uniqueId: '[com.trove.tweens.tests.dll][suite]'
-      name: com.trove.tweens.tests.dll
-      fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.tweens.tests.dll
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1060
-      parentUniqueId: '[TroveTests][suite]'
-    - id: 1043
-      uniqueId: 'com.trove.tweens.tests.dll/[Trove][suite]'
-      name: Trove
-      fullName: Trove
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1042
-      parentUniqueId: '[com.trove.tweens.tests.dll][suite]'
-    - id: 1044
-      uniqueId: 'com.trove.tweens.tests.dll/Trove/[Tweens][suite]'
-      name: Tweens
-      fullName: Trove.Tweens
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1043
-      parentUniqueId: 'com.trove.tweens.tests.dll/[Trove][suite]'
-    - id: 1045
-      uniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/[com.trove.tweens.tests][Trove.Tweens.Tests][suite]'
-      name: Tests
-      fullName: Trove.Tweens.Tests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1044
-      parentUniqueId: 'com.trove.tweens.tests.dll/Trove/[Tweens][suite]'
-    - id: 1040
-      uniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/Tests/[com.trove.tweens.tests][Trove.Tweens.Tests.TweenTests][suite]'
-      name: TweenTests
-      fullName: Trove.Tweens.Tests.TweenTests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1045
-      parentUniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/[com.trove.tweens.tests][Trove.Tweens.Tests][suite]'
-    - id: 1035
-      uniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/Tests/TweenTests/[com.trove.tweens.tests][Trove.Tweens.Tests.TweenTests.Test]'
-      name: Test
-      fullName: Trove.Tweens.Tests.TweenTests.Test
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1034
-      parentUniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/Tests/[com.trove.tweens.tests][Trove.Tweens.Tests.TweenTests][suite]'
-    - id: 1053
-      uniqueId: '[com.trove.utilityai.tests.dll][suite]'
-      name: com.trove.utilityai.tests.dll
-      fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.utilityai.tests.dll
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1060
-      parentUniqueId: '[TroveTests][suite]'
-    - id: 1054
-      uniqueId: 'com.trove.utilityai.tests.dll/[Trove][suite]'
-      name: Trove
-      fullName: Trove
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1053
-      parentUniqueId: '[com.trove.utilityai.tests.dll][suite]'
-    - id: 1055
-      uniqueId: 'com.trove.utilityai.tests.dll/Trove/[UtilityAI][suite]'
-      name: UtilityAI
-      fullName: Trove.UtilityAI
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1054
-      parentUniqueId: 'com.trove.utilityai.tests.dll/[Trove][suite]'
-    - id: 1056
-      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/[com.trove.utilityai.tests][Trove.UtilityAI.Tests][suite]'
-      name: Tests
-      fullName: Trove.UtilityAI.Tests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1055
-      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/[UtilityAI][suite]'
-    - id: 1046
-      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
-      name: ReasonerTests
-      fullName: Trove.UtilityAI.Tests.ReasonerTests
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1056
-      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/[com.trove.utilityai.tests][Trove.UtilityAI.Tests][suite]'
-    - id: 1046
-      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.ActionSelectors]'
-      name: ActionSelectors
-      fullName: Trove.UtilityAI.Tests.ReasonerTests.ActionSelectors
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1040
-      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
-    - id: 1043
-      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.ActionVersions]'
-      name: ActionVersions
-      fullName: Trove.UtilityAI.Tests.ReasonerTests.ActionVersions
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1040
-      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
-    - id: 1044
-      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.ActionWithoutConsiderations]'
-      name: ActionWithoutConsiderations
-      fullName: Trove.UtilityAI.Tests.ReasonerTests.ActionWithoutConsiderations
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1040
-      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
-    - id: 1042
-      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.ConsiderationVersions]'
-      name: ConsiderationVersions
-      fullName: Trove.UtilityAI.Tests.ReasonerTests.ConsiderationVersions
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1040
-      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
-    - id: 1041
-      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.FullWorkflow]'
-      name: FullWorkflow
-      fullName: Trove.UtilityAI.Tests.ReasonerTests.FullWorkflow
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1040
-      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
-    - id: 1045
-      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.ScoreCompensation]'
-      name: ScoreCompensation
-      fullName: Trove.UtilityAI.Tests.ReasonerTests.ScoreCompensation
-      resultStatus: 0
-      duration: 0
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1040
-      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
-    m_ResultText: "StatWorldParallelImpossible (0.019s)\n---\nTearDown : System.InvalidOperationException
-      : The previously scheduled job StatsTests:StatsWorldJob writes to the BufferTypeHandle<Unity.Collections.NativeText.ReadOnly>
-      StatsWorldJob.StatsWorld._statObserversLookup. You must call JobHandle.Complete()
-      on the job StatsTests:StatsWorldJob, before you can deallocate the BufferTypeHandle<Unity.Collections.NativeText.ReadOnly>
-      safely.\n---\n--TearDown\r\n  at (wrapper managed-to-native) Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle.CheckDeallocateAndThrow_Injected(Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle&)\r\n 
-      at Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle.CheckDeallocateAndThrow
-      (Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle handle) [0x00000] in
-      <612ea0208cc847f49d539e6511ed3cd5>:0 \r\n  at Unity.Entities.ComponentSafetyHandles.CompleteAllJobsAndInvalidateArrays
-      () [0x00018] in <color=#40a0ff><a href=\".\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentSafetyHandles.cs\"
-      line=\"216 \r\">Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentSafetyHandles.cs:216
-      \r</a></color>\n  at Unity.Entities.ComponentDependencyManager.CompleteAllJobsAndInvalidateArrays
-      () [0x00006] in <color=#40a0ff><a href=\".\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentDependencyManager.cs\"
-      line=\"156 \r\">Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentDependencyManager.cs:156
-      \r</a></color>\n  at Unity.Entities.EntityDataAccess.BeforeStructuralChange
-      () [0x0001e] in <color=#40a0ff><a href=\".\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs\"
-      line=\"414 \r\">Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs:414
-      \r</a></color>\n  at Unity.Entities.EntityDataAccess.BeginStructuralChanges
-      () [0x00008] in <color=#40a0ff><a href=\".\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs\"
-      line=\"420 \r\">Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs:420
-      \r</a></color>\n  at Unity.Entities.EntityManager.DestroyEntity (Unity.Entities.EntityQuery
-      entityQuery) [0x0001f] in <color=#40a0ff><a href=\".\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityManager.cs\"
-      line=\"3391 \r\">Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityManager.cs:3391
-      \r</a></color>\n  at Trove.Stats.Tests.StatsTests.TearDown () [0x00022] in
-      <color=#40a0ff><a href=\"C:\\Projects\\Trove\\com.trove.stats\\Tests\\Runtime\\StatsTests.cs\"
-      line=\"189 \r\">..\\..\\com.trove.stats\\Tests\\Runtime\\StatsTests.cs:189
-      \r</a></color>\n  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)\r\n 
-      at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags
-      invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo
-      culture) [0x0006a] in <13c0c460649d4ce49f991e2c222fa635>:0"
-    m_ResultStacktrace: "--TearDown\r\n  at (wrapper managed-to-native) Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle.CheckDeallocateAndThrow_Injected(Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle&)\r\n 
-      at Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle.CheckDeallocateAndThrow
-      (Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle handle) [0x00000] in
-      <612ea0208cc847f49d539e6511ed3cd5>:0 \r\n  at Unity.Entities.ComponentSafetyHandles.CompleteAllJobsAndInvalidateArrays
-      () [0x00018] in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentSafetyHandles.cs:216
-      \r\n  at Unity.Entities.ComponentDependencyManager.CompleteAllJobsAndInvalidateArrays
-      () [0x00006] in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\ComponentDependencyManager.cs:156
-      \r\n  at Unity.Entities.EntityDataAccess.BeforeStructuralChange () [0x0001e]
-      in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs:414
-      \r\n  at Unity.Entities.EntityDataAccess.BeginStructuralChanges () [0x00008]
-      in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityDataAccess.cs:420
-      \r\n  at Unity.Entities.EntityManager.DestroyEntity (Unity.Entities.EntityQuery
-      entityQuery) [0x0001f] in .\\Library\\PackageCache\\com.unity.entities@1eebe0437e56\\Unity.Entities\\EntityManager.cs:3391
-      \r\n  at Trove.Stats.Tests.StatsTests.TearDown () [0x00022] in C:\\Projects\\Trove\\com.trove.stats\\Tests\\Runtime\\StatsTests.cs:189
-      \r\n  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)\r\n 
-      at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags
-      invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo
-      culture) [0x0006a] in <13c0c460649d4ce49f991e2c222fa635>:0 "
-    m_TestListState:
-      scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 937abf53
-      m_LastClickedID: 1405057683
-      m_ExpandedIDs: 4cafbb808407cdb8de18d9b95e9f80ba58f5b9c4348fddc7a40680c9f08570cfec9aa3cf388841d98f1870df7e55e5e939b52cfc4ed5b90a06dd1d154760891f35631e20781a9322511b16451844d16cbe3d137affffff7f
-      m_RenameOverlay:
-        m_UserAcceptedRename: 0
-        m_Name: 
-        m_OriginalName: 
-        m_EditFieldRect:
-          serializedVersion: 2
-          x: 0
-          y: 0
-          width: 0
-          height: 0
-        m_UserData: 0
-        m_IsWaitingForDelay: 0
-        m_IsRenaming: 0
-        m_OriginalEventType: 11
-        m_IsRenamingFilename: 0
-        m_TrimLeadingAndTrailingWhitespace: 0
-        m_ClientGUIView: {fileID: 0}
-      m_SearchString: 
-    m_TestRunnerUIFilter:
-      PassedHidden: 0
-      FailedHidden: 0
-      NotRunHidden: 0
-      m_SearchString: 
-      selectedCategories: []
-      availableCategories:
-      - Uncategorized
-    m_SelectedOption: 0
-  - m_Window: {fileID: 0}
-    runProgress:
-      RunGuid: f540946a-2362-4cd2-bf35-b2f7434c0ed8
-      ExecutionSettings:
-        m_TargetPlatform: 0
-        m_HasTargetPlatform: 0
-        filter:
-          testMode: 0
-          testNames: []
-          groupNames: []
-          categoryNames: []
-          assemblyNames: []
-        filters:
-        - testMode: 2
-          testNames:
-          - Trove.Stats.Tests.StatsTests.StatWorldParallelImpossible
-          groupNames: []
-          categoryNames: []
-          assemblyNames: []
-        runSynchronously: 0
-        playerHeartbeatTimeout: 600
-        orderedTestNames: []
-        ignoreTests: []
-        featureFlags:
-          fileCleanUpCheck: 0
-          requiresSplashScreen: 0
-          strictDomainReload: 0
-          disableNestedEnumeratorBugfix: 0
-        randomOrderSeed: 0
-      HasFinished: 1
-      Progress: 0.9999999
-      CurrentStepName: Unlock Reload Assemblies
-      CurrentStageName: 
-    m_NewResultList: []
-    m_ResultText: 
-    m_ResultStacktrace: 
-    m_TestListState:
-      scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 
-      m_LastClickedID: 0
-      m_ExpandedIDs: 
-      m_RenameOverlay:
-        m_UserAcceptedRename: 0
-        m_Name: 
-        m_OriginalName: 
-        m_EditFieldRect:
-          serializedVersion: 2
-          x: 0
-          y: 0
-          width: 0
-          height: 0
-        m_UserData: 0
-        m_IsWaitingForDelay: 0
-        m_IsRenaming: 0
-        m_OriginalEventType: 11
-        m_IsRenamingFilename: 0
-        m_TrimLeadingAndTrailingWhitespace: 0
-        m_ClientGUIView: {fileID: 0}
-      m_SearchString: 
-    m_TestRunnerUIFilter:
-      PassedHidden: 0
-      FailedHidden: 0
-      NotRunHidden: 0
-      m_SearchString: 
-      selectedCategories: []
-      availableCategories: []
-    m_SelectedOption: 0
---- !u!114 &16
+  m_Recording: 1
+  m_ActiveNativePlatformSupportModuleName: 
+  m_AllModules:
+  - rid: 1640243806954324037
+  - rid: 1640243806954324038
+  - rid: 1640243806954324039
+  - rid: 1640243806954324040
+  - rid: 1640243806954324041
+  - rid: 1640243806954324042
+  - rid: 1640243806954324043
+  - rid: 1640243806954324044
+  - rid: 1640243806954324045
+  - rid: 1640243806954324046
+  - rid: 1640243806954324047
+  - rid: 1640243806954324048
+  - rid: 1640243806954324049
+  - rid: 1640243806954324050
+  - rid: 1640243806954324051
+  - rid: 1640243806954324052
+  - rid: 1640243806954324053
+  m_CallstackRecordMode: 1
+  m_ClearOnPlay: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 1640243806954324037
+      type: {class: CPUProfilerModule, ns: UnityEditorInternal.Profiling, asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.CPUProfilerModule, UnityEditor.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+        m_ViewType: 1
+        updateViewLive: 0
+        m_CurrentFrameIndex: 12192
+        m_HierarchyOverruledThreadFromSelection: 0
+        m_ProfilerViewFilteringOptions: 5
+        m_FrameDataHierarchyView:
+          m_Serialized: 1
+          m_TreeViewState:
+            scrollPos: {x: 0, y: 0}
+            m_SelectedIDs: 
+            m_LastClickedID: 0
+            m_ExpandedIDs: 
+            m_RenameOverlay:
+              m_UserAcceptedRename: 0
+              m_Name: 
+              m_OriginalName: 
+              m_EditFieldRect:
+                serializedVersion: 2
+                x: 0
+                y: 0
+                width: 0
+                height: 0
+              m_UserData: 0
+              m_IsWaitingForDelay: 0
+              m_IsRenaming: 0
+              m_OriginalEventType: 11
+              m_IsRenamingFilename: 0
+              m_TrimLeadingAndTrailingWhitespace: 0
+              m_ClientGUIView: {fileID: 0}
+            m_SearchString: 
+          m_MultiColumnHeaderState:
+            m_Columns:
+            - width: 200
+              sortedAscending: 1
+              headerContent:
+                m_Text: Overview
+                m_Image: {fileID: 0}
+                m_Tooltip: 
+                m_TextWithWhitespace: "Overview\u200B"
+              contextMenuText: 
+              headerTextAlignment: 0
+              sortingArrowAlignment: 2
+              minWidth: 200
+              maxWidth: 1000000
+              autoResize: 1
+              allowToggleVisibility: 0
+              canSort: 1
+              userData: 0
+            - width: 80
+              sortedAscending: 0
+              headerContent:
+                m_Text: Total
+                m_Image: {fileID: 0}
+                m_Tooltip: 
+                m_TextWithWhitespace: "Total\u200B"
+              contextMenuText: 
+              headerTextAlignment: 0
+              sortingArrowAlignment: 2
+              minWidth: 50
+              maxWidth: 1000000
+              autoResize: 0
+              allowToggleVisibility: 1
+              canSort: 1
+              userData: 0
+            - width: 80
+              sortedAscending: 0
+              headerContent:
+                m_Text: Self
+                m_Image: {fileID: 0}
+                m_Tooltip: 
+                m_TextWithWhitespace: "Self\u200B"
+              contextMenuText: 
+              headerTextAlignment: 0
+              sortingArrowAlignment: 2
+              minWidth: 50
+              maxWidth: 1000000
+              autoResize: 0
+              allowToggleVisibility: 1
+              canSort: 1
+              userData: 0
+            - width: 80
+              sortedAscending: 0
+              headerContent:
+                m_Text: Calls
+                m_Image: {fileID: 0}
+                m_Tooltip: 
+                m_TextWithWhitespace: "Calls\u200B"
+              contextMenuText: 
+              headerTextAlignment: 0
+              sortingArrowAlignment: 2
+              minWidth: 50
+              maxWidth: 1000000
+              autoResize: 0
+              allowToggleVisibility: 1
+              canSort: 1
+              userData: 0
+            - width: 80
+              sortedAscending: 0
+              headerContent:
+                m_Text: GC Alloc
+                m_Image: {fileID: 0}
+                m_Tooltip: 
+                m_TextWithWhitespace: "GC Alloc\u200B"
+              contextMenuText: 
+              headerTextAlignment: 0
+              sortingArrowAlignment: 2
+              minWidth: 50
+              maxWidth: 1000000
+              autoResize: 0
+              allowToggleVisibility: 1
+              canSort: 1
+              userData: 0
+            - width: 80
+              sortedAscending: 0
+              headerContent:
+                m_Text: Time ms
+                m_Image: {fileID: 0}
+                m_Tooltip: 
+                m_TextWithWhitespace: "Time ms\u200B"
+              contextMenuText: 
+              headerTextAlignment: 0
+              sortingArrowAlignment: 2
+              minWidth: 50
+              maxWidth: 1000000
+              autoResize: 0
+              allowToggleVisibility: 1
+              canSort: 1
+              userData: 0
+            - width: 80
+              sortedAscending: 0
+              headerContent:
+                m_Text: Self ms
+                m_Image: {fileID: 0}
+                m_Tooltip: 
+                m_TextWithWhitespace: "Self ms\u200B"
+              contextMenuText: 
+              headerTextAlignment: 0
+              sortingArrowAlignment: 2
+              minWidth: 50
+              maxWidth: 1000000
+              autoResize: 0
+              allowToggleVisibility: 1
+              canSort: 1
+              userData: 0
+            - width: 25
+              sortedAscending: 0
+              headerContent:
+                m_Text: 
+                m_Image: {fileID: -5161429177145976760, guid: 0000000000000000d000000000000000,
+                  type: 0}
+                m_Tooltip: Warnings
+                m_TextWithWhitespace: 
+              contextMenuText: 
+              headerTextAlignment: 0
+              sortingArrowAlignment: 2
+              minWidth: 25
+              maxWidth: 25
+              autoResize: 0
+              allowToggleVisibility: 1
+              canSort: 1
+              userData: 0
+            m_VisibleColumns: 0000000001000000020000000300000004000000050000000600000007000000
+            m_SortedColumns: 05000000
+          m_ThreadIndexInThreadNames: 0
+          m_DetailedViewType: 0
+          m_DetailedViewSpliterState:
+            ID: 0
+            splitterInitialOffset: 0
+            currentActiveSplitter: -1
+            realSizes:
+            - 0
+            - 0
+            relativeSizes:
+            - 0.7
+            - 0.3
+            minSizes:
+            - 450
+            - 50
+            maxSizes:
+            - 0
+            - 0
+            lastTotalSize: 0
+            splitSize: 6
+            xOffset: 0
+            m_Version: 1
+            oldRealSizes: 
+            oldMinSizes: 
+            oldMaxSizes: 
+            oldSplitSize: 0
+          m_DetailedObjectsView:
+            m_SelectedID: -1
+            m_TreeViewState:
+              scrollPos: {x: 0, y: 0}
+              m_SelectedIDs: 
+              m_LastClickedID: 0
+              m_ExpandedIDs: 
+              m_RenameOverlay:
+                m_UserAcceptedRename: 0
+                m_Name: 
+                m_OriginalName: 
+                m_EditFieldRect:
+                  serializedVersion: 2
+                  x: 0
+                  y: 0
+                  width: 0
+                  height: 0
+                m_UserData: 0
+                m_IsWaitingForDelay: 0
+                m_IsRenaming: 0
+                m_OriginalEventType: 11
+                m_IsRenamingFilename: 0
+                m_TrimLeadingAndTrailingWhitespace: 0
+                m_ClientGUIView: {fileID: 0}
+              m_SearchString: 
+            m_MultiColumnHeaderState:
+              m_Columns: []
+              m_VisibleColumns: 
+              m_SortedColumns: 
+            m_VertSplit:
+              ID: 0
+              splitterInitialOffset: 0
+              currentActiveSplitter: 0
+              realSizes: []
+              relativeSizes: []
+              minSizes: []
+              maxSizes: []
+              lastTotalSize: 0
+              splitSize: 0
+              xOffset: 0
+              m_Version: 1
+              oldRealSizes: 
+              oldMinSizes: 
+              oldMaxSizes: 
+              oldSplitSize: 0
+          m_DetailedCallsView:
+            m_SelectedID: -1
+            m_VertSplit:
+              ID: 0
+              splitterInitialOffset: 0
+              currentActiveSplitter: 0
+              realSizes: []
+              relativeSizes: []
+              minSizes: []
+              maxSizes: []
+              lastTotalSize: 0
+              splitSize: 0
+              xOffset: 0
+              m_Version: 1
+              oldRealSizes: 
+              oldMinSizes: 
+              oldMaxSizes: 
+              oldSplitSize: 0
+            m_CalleesTreeView:
+              m_ViewState:
+                scrollPos: {x: 0, y: 0}
+                m_SelectedIDs: 
+                m_LastClickedID: 0
+                m_ExpandedIDs: 
+                m_RenameOverlay:
+                  m_UserAcceptedRename: 0
+                  m_Name: 
+                  m_OriginalName: 
+                  m_EditFieldRect:
+                    serializedVersion: 2
+                    x: 0
+                    y: 0
+                    width: 0
+                    height: 0
+                  m_UserData: 0
+                  m_IsWaitingForDelay: 0
+                  m_IsRenaming: 0
+                  m_OriginalEventType: 11
+                  m_IsRenamingFilename: 0
+                  m_TrimLeadingAndTrailingWhitespace: 0
+                  m_ClientGUIView: {fileID: 0}
+                m_SearchString: 
+              m_ViewHeaderState:
+                m_Columns:
+                - width: 150
+                  sortedAscending: 1
+                  headerContent:
+                    m_Text: Called From
+                    m_Image: {fileID: 0}
+                    m_Tooltip: 'Parents the selected function is called from
+
+
+                      (Press
+                      ''F'' for frame selection)'
+                    m_TextWithWhitespace: "Called From\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 150
+                  maxWidth: 1000000
+                  autoResize: 1
+                  allowToggleVisibility: 0
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: Calls
+                    m_Image: {fileID: 0}
+                    m_Tooltip: Total number of calls in a selected frame
+                    m_TextWithWhitespace: "Calls\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: GC Alloc
+                    m_Image: {fileID: 0}
+                    m_Tooltip: 
+                    m_TextWithWhitespace: "GC Alloc\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: Time ms
+                    m_Image: {fileID: 0}
+                    m_Tooltip: Total time the selected function spends within a parent
+                    m_TextWithWhitespace: "Time ms\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: Time %
+                    m_Image: {fileID: 0}
+                    m_Tooltip: Shows how often the selected function was called from
+                      the parent call
+                    m_TextWithWhitespace: "Time %\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                m_VisibleColumns: 0000000001000000020000000300000004000000
+                m_SortedColumns: 03000000
+            m_CallersTreeView:
+              m_ViewState:
+                scrollPos: {x: 0, y: 0}
+                m_SelectedIDs: 
+                m_LastClickedID: 0
+                m_ExpandedIDs: 
+                m_RenameOverlay:
+                  m_UserAcceptedRename: 0
+                  m_Name: 
+                  m_OriginalName: 
+                  m_EditFieldRect:
+                    serializedVersion: 2
+                    x: 0
+                    y: 0
+                    width: 0
+                    height: 0
+                  m_UserData: 0
+                  m_IsWaitingForDelay: 0
+                  m_IsRenaming: 0
+                  m_OriginalEventType: 11
+                  m_IsRenamingFilename: 0
+                  m_TrimLeadingAndTrailingWhitespace: 0
+                  m_ClientGUIView: {fileID: 0}
+                m_SearchString: 
+              m_ViewHeaderState:
+                m_Columns:
+                - width: 150
+                  sortedAscending: 1
+                  headerContent:
+                    m_Text: Called From
+                    m_Image: {fileID: 0}
+                    m_Tooltip: 'Parents the selected function is called from
+
+
+                      (Press
+                      ''F'' for frame selection)'
+                    m_TextWithWhitespace: "Called From\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 150
+                  maxWidth: 1000000
+                  autoResize: 1
+                  allowToggleVisibility: 0
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: Calls
+                    m_Image: {fileID: 0}
+                    m_Tooltip: Total number of calls in a selected frame
+                    m_TextWithWhitespace: "Calls\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: GC Alloc
+                    m_Image: {fileID: 0}
+                    m_Tooltip: 
+                    m_TextWithWhitespace: "GC Alloc\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: Time ms
+                    m_Image: {fileID: 0}
+                    m_Tooltip: Total time the selected function spends within a parent
+                    m_TextWithWhitespace: "Time ms\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: Time %
+                    m_Image: {fileID: 0}
+                    m_Tooltip: Shows how often the selected function was called from
+                      the parent call
+                    m_TextWithWhitespace: "Time %\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                m_VisibleColumns: 0000000001000000020000000300000004000000
+                m_SortedColumns: 03000000
+          m_FullThreadName: Main Thread
+          m_ThreadName: Main Thread
+          <threadId>k__BackingField: 0
+          <threadIndex>k__BackingField: -1
+          m_GroupName: 
+    - rid: 1640243806954324038
+      type: {class: GPUProfilerModule, ns: UnityEditorInternal.Profiling, asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.GPUProfilerModule, UnityEditor.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+        m_ViewType: 0
+        updateViewLive: 0
+        m_CurrentFrameIndex: -1
+        m_HierarchyOverruledThreadFromSelection: 0
+        m_ProfilerViewFilteringOptions: 1
+        m_FrameDataHierarchyView:
+          m_Serialized: 0
+          m_TreeViewState:
+            scrollPos: {x: 0, y: 0}
+            m_SelectedIDs: 
+            m_LastClickedID: 0
+            m_ExpandedIDs: 
+            m_RenameOverlay:
+              m_UserAcceptedRename: 0
+              m_Name: 
+              m_OriginalName: 
+              m_EditFieldRect:
+                serializedVersion: 2
+                x: 0
+                y: 0
+                width: 0
+                height: 0
+              m_UserData: 0
+              m_IsWaitingForDelay: 0
+              m_IsRenaming: 0
+              m_OriginalEventType: 11
+              m_IsRenamingFilename: 0
+              m_TrimLeadingAndTrailingWhitespace: 0
+              m_ClientGUIView: {fileID: 0}
+            m_SearchString: 
+          m_MultiColumnHeaderState:
+            m_Columns: []
+            m_VisibleColumns: 
+            m_SortedColumns: 
+          m_ThreadIndexInThreadNames: 0
+          m_DetailedViewType: 0
+          m_DetailedViewSpliterState:
+            ID: 0
+            splitterInitialOffset: 0
+            currentActiveSplitter: 0
+            realSizes: []
+            relativeSizes: []
+            minSizes: []
+            maxSizes: []
+            lastTotalSize: 0
+            splitSize: 0
+            xOffset: 0
+            m_Version: 1
+            oldRealSizes: 
+            oldMinSizes: 
+            oldMaxSizes: 
+            oldSplitSize: 0
+          m_DetailedObjectsView:
+            m_SelectedID: 0
+            m_TreeViewState:
+              scrollPos: {x: 0, y: 0}
+              m_SelectedIDs: 
+              m_LastClickedID: 0
+              m_ExpandedIDs: 
+              m_RenameOverlay:
+                m_UserAcceptedRename: 0
+                m_Name: 
+                m_OriginalName: 
+                m_EditFieldRect:
+                  serializedVersion: 2
+                  x: 0
+                  y: 0
+                  width: 0
+                  height: 0
+                m_UserData: 0
+                m_IsWaitingForDelay: 0
+                m_IsRenaming: 0
+                m_OriginalEventType: 11
+                m_IsRenamingFilename: 0
+                m_TrimLeadingAndTrailingWhitespace: 0
+                m_ClientGUIView: {fileID: 0}
+              m_SearchString: 
+            m_MultiColumnHeaderState:
+              m_Columns: []
+              m_VisibleColumns: 
+              m_SortedColumns: 
+            m_VertSplit:
+              ID: 0
+              splitterInitialOffset: 0
+              currentActiveSplitter: 0
+              realSizes: []
+              relativeSizes: []
+              minSizes: []
+              maxSizes: []
+              lastTotalSize: 0
+              splitSize: 0
+              xOffset: 0
+              m_Version: 1
+              oldRealSizes: 
+              oldMinSizes: 
+              oldMaxSizes: 
+              oldSplitSize: 0
+          m_DetailedCallsView:
+            m_SelectedID: -1
+            m_VertSplit:
+              ID: 0
+              splitterInitialOffset: 0
+              currentActiveSplitter: 0
+              realSizes: []
+              relativeSizes: []
+              minSizes: []
+              maxSizes: []
+              lastTotalSize: 0
+              splitSize: 0
+              xOffset: 0
+              m_Version: 1
+              oldRealSizes: 
+              oldMinSizes: 
+              oldMaxSizes: 
+              oldSplitSize: 0
+            m_CalleesTreeView:
+              m_ViewState:
+                scrollPos: {x: 0, y: 0}
+                m_SelectedIDs: 
+                m_LastClickedID: 0
+                m_ExpandedIDs: 
+                m_RenameOverlay:
+                  m_UserAcceptedRename: 0
+                  m_Name: 
+                  m_OriginalName: 
+                  m_EditFieldRect:
+                    serializedVersion: 2
+                    x: 0
+                    y: 0
+                    width: 0
+                    height: 0
+                  m_UserData: 0
+                  m_IsWaitingForDelay: 0
+                  m_IsRenaming: 0
+                  m_OriginalEventType: 11
+                  m_IsRenamingFilename: 0
+                  m_TrimLeadingAndTrailingWhitespace: 0
+                  m_ClientGUIView: {fileID: 0}
+                m_SearchString: 
+              m_ViewHeaderState:
+                m_Columns:
+                - width: 150
+                  sortedAscending: 1
+                  headerContent:
+                    m_Text: Called From
+                    m_Image: {fileID: 0}
+                    m_Tooltip: 'Parents the selected function is called from
+
+
+                      (Press
+                      ''F'' for frame selection)'
+                    m_TextWithWhitespace: "Called From\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 150
+                  maxWidth: 1000000
+                  autoResize: 1
+                  allowToggleVisibility: 0
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: Calls
+                    m_Image: {fileID: 0}
+                    m_Tooltip: Total number of calls in a selected frame
+                    m_TextWithWhitespace: "Calls\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: GC Alloc
+                    m_Image: {fileID: 0}
+                    m_Tooltip: 
+                    m_TextWithWhitespace: "GC Alloc\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: Time ms
+                    m_Image: {fileID: 0}
+                    m_Tooltip: Total time the selected function spends within a parent
+                    m_TextWithWhitespace: "Time ms\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: Time %
+                    m_Image: {fileID: 0}
+                    m_Tooltip: Shows how often the selected function was called from
+                      the parent call
+                    m_TextWithWhitespace: "Time %\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                m_VisibleColumns: 0000000001000000020000000300000004000000
+                m_SortedColumns: 03000000
+            m_CallersTreeView:
+              m_ViewState:
+                scrollPos: {x: 0, y: 0}
+                m_SelectedIDs: 
+                m_LastClickedID: 0
+                m_ExpandedIDs: 
+                m_RenameOverlay:
+                  m_UserAcceptedRename: 0
+                  m_Name: 
+                  m_OriginalName: 
+                  m_EditFieldRect:
+                    serializedVersion: 2
+                    x: 0
+                    y: 0
+                    width: 0
+                    height: 0
+                  m_UserData: 0
+                  m_IsWaitingForDelay: 0
+                  m_IsRenaming: 0
+                  m_OriginalEventType: 11
+                  m_IsRenamingFilename: 0
+                  m_TrimLeadingAndTrailingWhitespace: 0
+                  m_ClientGUIView: {fileID: 0}
+                m_SearchString: 
+              m_ViewHeaderState:
+                m_Columns:
+                - width: 150
+                  sortedAscending: 1
+                  headerContent:
+                    m_Text: Called From
+                    m_Image: {fileID: 0}
+                    m_Tooltip: 'Parents the selected function is called from
+
+
+                      (Press
+                      ''F'' for frame selection)'
+                    m_TextWithWhitespace: "Called From\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 150
+                  maxWidth: 1000000
+                  autoResize: 1
+                  allowToggleVisibility: 0
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: Calls
+                    m_Image: {fileID: 0}
+                    m_Tooltip: Total number of calls in a selected frame
+                    m_TextWithWhitespace: "Calls\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: GC Alloc
+                    m_Image: {fileID: 0}
+                    m_Tooltip: 
+                    m_TextWithWhitespace: "GC Alloc\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: Time ms
+                    m_Image: {fileID: 0}
+                    m_Tooltip: Total time the selected function spends within a parent
+                    m_TextWithWhitespace: "Time ms\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                - width: 60
+                  sortedAscending: 0
+                  headerContent:
+                    m_Text: Time %
+                    m_Image: {fileID: 0}
+                    m_Tooltip: Shows how often the selected function was called from
+                      the parent call
+                    m_TextWithWhitespace: "Time %\u200B"
+                  contextMenuText: 
+                  headerTextAlignment: 0
+                  sortingArrowAlignment: 2
+                  minWidth: 60
+                  maxWidth: 1000000
+                  autoResize: 0
+                  allowToggleVisibility: 1
+                  canSort: 1
+                  userData: 0
+                m_VisibleColumns: 0000000001000000020000000300000004000000
+                m_SortedColumns: 03000000
+          m_FullThreadName: Main Thread
+          m_ThreadName: Main Thread
+          <threadId>k__BackingField: 0
+          <threadIndex>k__BackingField: -1
+          m_GroupName: 
+    - rid: 1640243806954324039
+      type: {class: RenderingProfilerModule, ns: UnityEditorInternal.Profiling, asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.RenderingProfilerModule, UnityEditor.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+    - rid: 1640243806954324040
+      type: {class: MemoryProfilerModule, ns: UnityEditorInternal.Profiling, asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.MemoryProfilerModule, UnityEditor.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+        m_ViewSplit:
+          ID: 0
+          splitterInitialOffset: 0
+          currentActiveSplitter: -1
+          realSizes:
+          - 0
+          - 0
+          relativeSizes:
+          - 0.7
+          - 0.3
+          minSizes:
+          - 450
+          - 50
+          maxSizes:
+          - 0
+          - 0
+          lastTotalSize: 0
+          splitSize: 6
+          xOffset: 0
+          m_Version: 1
+          oldRealSizes: 
+          oldMinSizes: 
+          oldMaxSizes: 
+          oldSplitSize: 0
+    - rid: 1640243806954324041
+      type: {class: AudioProfilerModule, ns: UnityEditorInternal.Profiling, asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.AudioProfilerModule, UnityEditor.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+        m_ShowInactiveDSPChains: 0
+        m_HighlightAudibleDSPChains: 1
+        m_DSPGraphZoomFactor: 1
+        m_DSPGraphHorizontalLayout: 0
+    - rid: 1640243806954324042
+      type: {class: VideoProfilerModule, ns: UnityEditorInternal.Profiling, asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.VideoProfilerModule, UnityEditor.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+    - rid: 1640243806954324043
+      type: {class: PhysicsProfilerModule, ns: UnityEditorInternal.Profiling, asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.PhysicsProfilerModule, UnityEditor.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+    - rid: 1640243806954324044
+      type: {class: Physics2DProfilerModule, ns: UnityEditorInternal.Profiling, asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.Physics2DProfilerModule, UnityEditor.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+    - rid: 1640243806954324045
+      type: {class: UIProfilerModule, ns: UnityEditorInternal.Profiling, asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.UIProfilerModule, UnityEditor.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+    - rid: 1640243806954324046
+      type: {class: UIDetailsProfilerModule, ns: UnityEditorInternal.Profiling, asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.UIDetailsProfilerModule, UnityEditor.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+    - rid: 1640243806954324047
+      type: {class: GlobalIlluminationProfilerModule, ns: UnityEditorInternal.Profiling,
+        asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.GlobalIlluminationProfilerModule,
+          UnityEditor.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+    - rid: 1640243806954324048
+      type: {class: VirtualTexturingProfilerModule, ns: UnityEditorInternal.Profiling,
+        asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.VirtualTexturingProfilerModule,
+          UnityEditor.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+        m_VTProfilerView:
+          rid: 1640243806954324054
+    - rid: 1640243806954324049
+      type: {class: FileIOProfilerModule, ns: UnityEditorInternal.Profiling, asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.FileIOProfilerModule, UnityEditor.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+    - rid: 1640243806954324050
+      type: {class: AssetLoadingProfilerModule, ns: UnityEditorInternal.Profiling,
+        asm: UnityEditor.CoreModule}
+      data:
+        m_Identifier: UnityEditorInternal.Profiling.AssetLoadingProfilerModule, UnityEditor.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        m_PaneScroll: {x: 0, y: 0}
+    - rid: 1640243806954324051
+      type: {class: MemoryProfilerModule, ns: Unity.Entities.Editor, asm: Unity.Entities.Editor}
+      data:
+        m_Identifier: Unity.Entities.Editor.MemoryProfilerModule, Unity.Entities.Editor,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    - rid: 1640243806954324052
+      type: {class: RuntimeContentManagerProfilerModule, ns: , asm: Unity.Entities.Editor}
+      data:
+        m_Identifier: RuntimeContentManagerProfilerModule, Unity.Entities.Editor,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    - rid: 1640243806954324053
+      type: {class: StructuralChangesProfilerModule, ns: Unity.Entities.Editor, asm: Unity.Entities.Editor}
+      data:
+        m_Identifier: Unity.Entities.Editor.StructuralChangesProfilerModule, Unity.Entities.Editor,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    - rid: 1640243806954324054
+      type: {class: VirtualTexturingProfilerView, ns: UnityEditor, asm: UnityEditor.CoreModule}
+      data:
+        m_SortAscending: 0
+        m_SortedColumn: -1
+--- !u!114 &14
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1669,9 +1357,9 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 1
-    y: 452
-    width: 282
-    height: 479
+    y: 484.8
+    width: 300.40002
+    height: 518.00006
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1694,7 +1382,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/_Tests/Scripts/Stats
+    - Packages/com.trove.tweens/Tests/Runtime
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1712,7 +1400,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 3af30000
     m_LastClickedID: 62266
-    m_ExpandedIDs: 00000000cefa0000d0fa0000d2fa0000d4fa0000d6fa0000d8fa0000dafa0000dcfa0000defa0000e0fa0000e2fa0000e4fa0000e6fa0000e8fa0000eafa0000ecfa0000eefa0000f0fa0000f2fa0000
+    m_ExpandedIDs: 0000000076bf000078bf00007abf00007cbf00007ebf000080bf000082bf000084bf000086bf000088bf00008abf00008cbf00008ebf000090bf000092bf000094bf000096bf000098bf00009abf00009cbf00009ebf0000a0bf0000a2bf0000a4bf0000a6bf0000a8bf0000aabf0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1738,10 +1426,10 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 0}
+    scrollPos: {x: 0, y: 1224}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000cefa0000d0fa0000d2fa0000d4fa0000d6fa0000d8fa0000dafa0000dcfa0000defa0000e0fa0000e2fa0000e4fa0000e6fa0000e8fa0000eafa0000ecfa0000eefa0000f0fa0000f2fa0000
+    m_ExpandedIDs: 0000000076bf000078bf00007abf00007cbf00007ebf000080bf000082bf000084bf000086bf000088bf00008abf00008cbf00008ebf000090bf000092bf000094bf000096bf000098bf00009abf00009cbf00009ebf0000a0bf0000a2bf0000a4bf0000a6bf0000a8bf0000aabf0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1758,7 +1446,7 @@ MonoBehaviour:
       m_OriginalEventType: 11
       m_IsRenamingFilename: 1
       m_TrimLeadingAndTrailingWhitespace: 0
-      m_ClientGUIView: {fileID: 6}
+      m_ClientGUIView: {fileID: 4}
     m_SearchString: 
     m_CreateAssetUtility:
       m_EndAction: {fileID: 0}
@@ -1799,7 +1487,7 @@ MonoBehaviour:
     m_GridSize: 16
   m_SkipHiddenPackages: 0
   m_DirectoriesAreaWidth: 99
---- !u!114 &17
+--- !u!114 &15
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1821,10 +1509,10 @@ MonoBehaviour:
     m_TextWithWhitespace: "Inspector\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 1536
+    x: 1637
     y: 24
-    width: 384
-    height: 907
+    width: 411
+    height: 978.80005
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1849,7 +1537,7 @@ MonoBehaviour:
   m_LockTracker:
     m_IsLocked: 0
   m_PreviewWindow: {fileID: 0}
---- !u!114 &18
+--- !u!114 &16
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1873,8 +1561,8 @@ MonoBehaviour:
     serializedVersion: 2
     x: 1
     y: 24
-    width: 282
-    height: 402
+    width: 300.40002
+    height: 434.8
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1891,7 +1579,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 2c58ffffb65effff2c67ffff7a6dffff8675ffff547cfffff282ffff7896ffff809cffffd4a6ffffd0b6ffffeabcffff24fbffff
+      m_ExpandedIDs: acbbffffdcc1ffff36c6ffff92c9ffffa8d0ffffdcd2ffff3ad7ffff24fbffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1916,7 +1604,7 @@ MonoBehaviour:
       m_IsLocked: 0
     m_CurrentSortingName: TransformSorting
   m_WindowGUID: 4c969a2b90040154d917609493e03593
---- !u!114 &19
+--- !u!114 &17
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1940,8 +1628,8 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 24
-    width: 863
-    height: 546
+    width: 1332.6
+    height: 642.8
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -2356,9 +2044,9 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: -59.43499, y: 1.3381634, z: -9.3617325}
+    m_Target: {x: -59.50464, y: 1.4980745, z: -9.960358}
     speed: 2
-    m_Value: {x: -59.43499, y: 1.3381634, z: -9.3617325}
+    m_Value: {x: -59.50464, y: 1.4980745, z: -9.960358}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -2404,13 +2092,13 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-    m_Target: {x: -0.1306196, y: 0.68356466, z: -0.1263019, w: -0.70692885}
+    m_Target: {x: -0.12499007, y: 0.69678754, z: -0.12528926, w: -0.6951189}
     speed: 2
-    m_Value: {x: -0.1306196, y: 0.68356466, z: -0.1263019, w: -0.70692885}
+    m_Value: {x: -0.12499007, y: 0.69678754, z: -0.12528926, w: -0.6951189}
   m_Size:
-    m_Target: 8.317896
+    m_Target: 8.90108
     speed: 2
-    m_Value: 8.317896
+    m_Value: 8.90108
   m_Ortho:
     m_Target: 0
     speed: 2
@@ -2431,7 +2119,7 @@ MonoBehaviour:
   m_LastSceneViewRotation: {x: 0, y: 0, z: 0, w: 0}
   m_LastSceneViewOrtho: 0
   m_Viewpoint:
-    m_SceneView: {fileID: 19}
+    m_SceneView: {fileID: 17}
     m_CameraOverscanSettings:
       m_Opacity: 50
       m_Scale: 1
@@ -2444,7 +2132,7 @@ MonoBehaviour:
     name: 
     section: 
   m_ViewIsLockedToObject: 0
---- !u!114 &20
+--- !u!114 &18
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2466,10 +2154,10 @@ MonoBehaviour:
     m_TextWithWhitespace: "Game\u200B"
   m_Pos:
     serializedVersion: 2
-    x: -1920
-    y: 79
-    width: 863
-    height: 546
+    x: 0
+    y: 79.200005
+    width: 1332.6
+    height: 642.8
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -2487,7 +2175,7 @@ MonoBehaviour:
   m_ShowGizmos: 0
   m_TargetDisplay: 0
   m_ClearColor: {r: 0, g: 0, b: 0, a: 0}
-  m_TargetSize: {x: 863, y: 525}
+  m_TargetSize: {x: 1332.6, y: 621.8}
   m_TextureFilterMode: 0
   m_TextureHideFlags: 61
   m_RenderIMGUI: 1
@@ -2502,10 +2190,10 @@ MonoBehaviour:
     m_VRangeLocked: 0
     hZoomLockedByDefault: 0
     vZoomLockedByDefault: 0
-    m_HBaseRangeMin: -431.5
-    m_HBaseRangeMax: 431.5
-    m_VBaseRangeMin: -262.5
-    m_VBaseRangeMax: 262.5
+    m_HBaseRangeMin: -533.04
+    m_HBaseRangeMax: 533.04
+    m_VBaseRangeMin: -248.72
+    m_VBaseRangeMax: 248.72
     m_HAllowExceedBaseRangeMin: 1
     m_HAllowExceedBaseRangeMax: 1
     m_VAllowExceedBaseRangeMin: 1
@@ -2523,30 +2211,30 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 863
-      height: 525
+      width: 1332.6
+      height: 621.8
     m_Scale: {x: 1.25, y: 1.25}
-    m_Translation: {x: 431.5, y: 262.5}
+    m_Translation: {x: 666.3, y: 310.9}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -345.2
-      y: -210
-      width: 690.4
-      height: 420
+      x: -533.04
+      y: -248.72
+      width: 1066.08
+      height: 497.44
     m_MinimalGUI: 1
   m_defaultScale: 1
-  m_LastWindowPixelSize: {x: 863, y: 546}
+  m_LastWindowPixelSize: {x: 1665.75, y: 803.5}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000
   m_XRRenderMode: 0
   m_RenderTexture: {fileID: 0}
   m_showToolbar: 1
---- !u!114 &21
+--- !u!114 &19
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2569,9 +2257,9 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 0
-    y: 596
-    width: 1250
-    height: 335
+    y: 692.8
+    width: 1332.6
+    height: 310.00006
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0

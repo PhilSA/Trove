@@ -395,7 +395,6 @@ namespace Trove
     {
         private int _iteratedElementIndex;
         private int _prevIteratedElementIndex;
-        private T _iteratedElement;
         
         /// <summary>
         /// Create the iterator
@@ -404,7 +403,6 @@ namespace Trove
         {
             _iteratedElementIndex = linkedListLastIndex;
             _prevIteratedElementIndex = -1;
-            _iteratedElement = default;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -412,14 +410,12 @@ namespace Trove
         {
             if (_iteratedElementIndex >= 0)
             {
-                _iteratedElement = multiLinkedListsBuffer[_iteratedElementIndex];
-
-                element = _iteratedElement;
+                element =  multiLinkedListsBuffer[_iteratedElementIndex];;
                 elementIndex = _iteratedElementIndex;
                 
                 // Move to next index but remember previous (used for removing)
                 _prevIteratedElementIndex = _iteratedElementIndex;
-                _iteratedElementIndex = _iteratedElement.PrevElementIndex;
+                _iteratedElementIndex = element.PrevElementIndex;
                 
                 return true;
             }
@@ -427,6 +423,27 @@ namespace Trove
             element = default;
             elementIndex = -1;
             return false;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe ref T GetNextByRef(ref DynamicBuffer<T> multiLinkedListsBuffer, out bool success, out int elementIndex)
+        {
+            if (_iteratedElementIndex >= 0)
+            {
+                ref T elementRef = ref UnsafeUtility.ArrayElementAsRef<T>(multiLinkedListsBuffer.GetUnsafePtr(), _iteratedElementIndex);
+                elementIndex = _iteratedElementIndex;
+                
+                // Move to next index but remember previous (used for removing)
+                _prevIteratedElementIndex = _iteratedElementIndex;
+                _iteratedElementIndex = elementRef.PrevElementIndex;
+                
+                success = true;
+                return ref elementRef;
+            }
+
+            success = false;
+            elementIndex = -1;
+            return ref UnsafeUtility.AsRef<T>(multiLinkedListsBuffer.GetUnsafePtr());
         }
 
         /// <summary>
@@ -436,7 +453,7 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveCurrentIteratedElementAndUpdateIndexes(
             ref DynamicBuffer<T> multiLinkedListsBuffer, 
-            ref UnsafeList<int> linkedListLastIndexes,
+            ref NativeList<int> linkedListLastIndexes,
             out int firstUpdatedLastIndexIndex)
         {
             firstUpdatedLastIndexIndex = -1;
@@ -447,7 +464,7 @@ namespace Trove
                 return;
             }
 
-            T removedElement = _iteratedElement;
+            T removedElement = multiLinkedListsBuffer[removedElementIndex];
             
             // Remove element
             multiLinkedListsBuffer.RemoveAt(removedElementIndex);

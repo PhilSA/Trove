@@ -63,7 +63,7 @@ public struct TestStatModifier : IStatsModifier<TestStatModifier.Stack>
     public StatHandle StatHandleA;
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddObservedStatsToList(ref UnsafeList<StatHandle> observedStatHandles)
+    public void AddObservedStatsToList(ref NativeList<StatHandle> observedStatHandles)
     {
         switch (ModifierType)
         {

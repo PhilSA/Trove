@@ -13,9 +13,9 @@
   "version": "0.4.0",
   "samples": [
     {
-      "displayName": "User Content",
-      "description": "Customizable code files living in the user's project, used by the attributes system",
-      "path": "Samples~/UserContent"
+      "displayName": "Starter Content",
+      "description": "Starter files for a customizable stats modifier and singleton",
+      "path": "Samples~/StarterContent"
     }
   ]
 }

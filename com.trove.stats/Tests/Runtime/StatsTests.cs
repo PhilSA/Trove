@@ -82,7 +82,7 @@ namespace Trove.Stats.Tests
         public bool MustRemove;
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddObservedStatsToList(ref UnsafeList<StatHandle> observedStatHandles)
+        public void AddObservedStatsToList(ref NativeList<StatHandle> observedStatHandles)
         {
             switch (ModifierType)
             {
@@ -238,19 +238,19 @@ namespace Trove.Stats.Tests
             return success;
         }
 
-        public StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> CreateStatsWorld()
+        public StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> CreateStatsWorld()
         {
             ref SystemState state = ref World.GetOrCreateSystemManaged<EndSimulationEntityCommandBufferSystem>().CheckedStateRef;
-            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = 
-                new StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(ref state);
-            statsWorld.UpdateDataAndLookups(ref state); 
-            return statsWorld;
+            StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = 
+                new StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(ref state, true, true);
+            statsAccessor.Update(ref state); 
+            return statsAccessor;
         }
 
-        public void UpdateStatsWorld(ref StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld)
+        public void UpdateStatsWorld(ref StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor)
         {
             ref SystemState state = ref World.GetOrCreateSystemManaged<EndSimulationEntityCommandBufferSystem>().CheckedStateRef;
-            statsWorld.UpdateDataAndLookups(ref state);
+            statsAccessor.Update(ref state);
         }
 
         public Entity CreateStatsEntity(
@@ -261,28 +261,28 @@ namespace Trove.Stats.Tests
             out StatHandle statHandleB,
             out StatHandle statHandleC)
         {
-            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
             Entity entity = CreateTestEntity(id);
             StatsUtilities.AddStatsComponents<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(entity, EntityManager);
             
-            UpdateStatsWorld(ref statsWorld);
+            UpdateStatsWorld(ref statsAccessor);
             
             bool success = true;
-            success &= statsWorld.TryCreateStat(entity, baseValue, produceChangeEvents, out statHandleA);
-            success &= statsWorld.TryCreateStat(entity, baseValue, produceChangeEvents, out statHandleB);
-            success &= statsWorld.TryCreateStat(entity, baseValue, produceChangeEvents, out statHandleC);
+            success &= statsAccessor.TryCreateStat(entity, baseValue, produceChangeEvents, out statHandleA);
+            success &= statsAccessor.TryCreateStat(entity, baseValue, produceChangeEvents, out statHandleB);
+            success &= statsAccessor.TryCreateStat(entity, baseValue, produceChangeEvents, out statHandleC);
             Assert.IsTrue(success);
             
             return entity;
         }
 
-        private bool GetStatAndModifiersAndObserversCount(StatHandle statHandle, ref StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld, out Stat stat, out int modifiersCount,
+        private bool GetStatAndModifiersAndObserversCount(StatHandle statHandle, ref StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor, out Stat stat, out int modifiersCount,
             out int observersCount)
         {
             bool success = true;
-            success &= StatsUtilities.TryGetStat(statHandle, ref statsWorld._statsLookup, out stat);
-            success &= statsWorld.TryCalculateModifiersCount(statHandle, out modifiersCount);
-            success &= statsWorld.TryCalculateObserversCount(statHandle, out observersCount);
+            success &= StatsUtilities.TryGetStat(statHandle, in statsAccessor._statsLookup, out stat);
+            success &= statsAccessor.TryCalculateModifiersCount(statHandle, out modifiersCount);
+            success &= statsAccessor.TryCalculateObserversCount(statHandle, out observersCount);
             return success;
         }
 
@@ -320,14 +320,15 @@ namespace Trove.Stats.Tests
         public void BasicStatOperations()
         {
             bool success = false;
-            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
+            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             Entity entity1 = CreateStatsEntity(0, 10f, true, out StatHandle statHandle1A, out StatHandle statHandle1B,
                 out StatHandle statHandle1C);
             
-            UpdateStatsWorld(ref statsWorld);
+            UpdateStatsWorld(ref statsAccessor);
             
-            success = GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out Stat stat1A, out int stat1AModifiersCount, out int stat1AObserversCount);
+            success = GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out Stat stat1A, out int stat1AModifiersCount, out int stat1AObserversCount);
             Assert.IsTrue(success);
             
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(10f));
@@ -336,9 +337,9 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1AObserversCount);
             AssertBufferLengths(entity1, 3, 0, 0);
 
-            success = statsWorld.TrySetStatBaseValue(statHandle1A, 2f); 
+            success = statsAccessor.TrySetStatBaseValue(statHandle1A, 2f, ref statsWorldStorage); 
             Assert.IsTrue(success);
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A, out stat1AModifiersCount, out stat1AObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A, out stat1AModifiersCount, out stat1AObserversCount);
             
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(2f));
             Assert.IsTrue(stat1A.Value.IsRoughlyEqual(2f));
@@ -346,9 +347,9 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1AObserversCount);
             AssertBufferLengths(entity1, 3, 0, 0);
 
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A, out stat1AModifiersCount, out stat1AObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A, out stat1AModifiersCount, out stat1AObserversCount);
             
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(3f));
             Assert.IsTrue(stat1A.Value.IsRoughlyEqual(3f));
@@ -356,9 +357,9 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1AObserversCount);
             AssertBufferLengths(entity1, 3, 0, 0);
 
-            success = statsWorld.TryMultiplyStatBaseValue(statHandle1A, 2f); 
+            success = statsAccessor.TryMultiplyStatBaseValue(statHandle1A, 2f, ref statsWorldStorage); 
             Assert.IsTrue(success);
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A, out stat1AModifiersCount, out stat1AObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A, out stat1AModifiersCount, out stat1AObserversCount);
             
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(6f));
             Assert.IsTrue(stat1A.Value.IsRoughlyEqual(6f));
@@ -366,9 +367,9 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1AObserversCount);
             AssertBufferLengths(entity1, 3, 0, 0);
 
-            success = statsWorld.TryMultiplyStatBaseValue(statHandle1A, -2f); 
+            success = statsAccessor.TryMultiplyStatBaseValue(statHandle1A, -2f, ref statsWorldStorage); 
             Assert.IsTrue(success);
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A, out stat1AModifiersCount, out stat1AObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A, out stat1AModifiersCount, out stat1AObserversCount);
             
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(-12f));
             Assert.IsTrue(stat1A.Value.IsRoughlyEqual(-12f));
@@ -376,36 +377,39 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1AObserversCount);
             AssertBufferLengths(entity1, 3, 0, 0);
 
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, -4f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, -4f, ref statsWorldStorage); 
             Assert.IsTrue(success);
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A, out stat1AModifiersCount, out stat1AObserversCount);
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A, out stat1AModifiersCount, out stat1AObserversCount);
             
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(-16f));
             Assert.IsTrue(stat1A.Value.IsRoughlyEqual(-16f));
             Assert.AreEqual(0, stat1AModifiersCount);
             Assert.AreEqual(0, stat1AObserversCount);
             AssertBufferLengths(entity1, 3, 0, 0);
+            
+            statsWorldStorage.Dispose();
         }
 
         [Test]
         public void SameEntityStatModifiers()
         {
             bool success = false;
-            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
+            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             Entity entity1 = CreateStatsEntity(0, 10f, true, out StatHandle statHandle1A, out StatHandle statHandle1B,
                 out StatHandle statHandle1C);
             
-            UpdateStatsWorld(ref statsWorld);
+            UpdateStatsWorld(ref statsAccessor);
 
-            success = statsWorld.TrySetStatBaseValue(statHandle1A, 5f); 
+            success = statsAccessor.TrySetStatBaseValue(statHandle1A, 5f, ref statsWorldStorage); 
             Assert.IsTrue(success);
 
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out Stat stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out Stat stat1A,
                 out int stat1AModifiersCount, out int stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out Stat stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out Stat stat1B,
                 out int stat1BModifiersCount, out int stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out Stat stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out Stat stat1C,
                 out int stat1CModifiersCount, out int stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -422,21 +426,22 @@ namespace Trove.Stats.Tests
             // Add modifiers
             // -------------------------------------------------
             
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1B,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.Add,
                     ValueA = 2f,
                 },
-                out StatModifierHandle modifier1);
+                out StatModifierHandle modifier1, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
             Assert.IsTrue(modifier1.AffectedStatHandle == statHandle1B);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -449,19 +454,20 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1BObserversCount);
             AssertBufferLengths(entity1, 3, 1, 0);
 
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1B,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1A,
                 },
-                out StatModifierHandle modifier2);
+                out StatModifierHandle modifier2, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -474,19 +480,20 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1BObserversCount);
             AssertBufferLengths(entity1, 3, 2, 1);
 
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1B,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1A,
                 },
-                out StatModifierHandle modifier3);
+                out StatModifierHandle modifier3, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -499,21 +506,22 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1BObserversCount);
             AssertBufferLengths(entity1, 3, 3, 2);
 
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1C,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1B,
                 },
-                out StatModifierHandle modifier4);
+                out StatModifierHandle modifier4, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -530,21 +538,22 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 4, 3);
 
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1A,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.Add,
                     ValueA = 4f,
                 },
-                out StatModifierHandle modifier5);
+                out StatModifierHandle modifier5, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -565,14 +574,14 @@ namespace Trove.Stats.Tests
             // Change values
             // -------------------------------------------------
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 2f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 2f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(7f));
@@ -589,14 +598,14 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 5, 3);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1B, 5f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1B, 5f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(7f));
@@ -613,14 +622,14 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 5, 3);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1C, 9f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1C, 9f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(7f));
@@ -641,14 +650,14 @@ namespace Trove.Stats.Tests
             // Remove modifiers and change values
             // -------------------------------------------------
 
-            success = statsWorld.TryRemoveStatModifier(modifier2);
+            success = statsAccessor.TryRemoveStatModifier(modifier2, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(7f));
@@ -665,14 +674,14 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 4, 2);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(8f));
@@ -689,14 +698,14 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 4, 2);
 
-            success = statsWorld.TryRemoveStatModifier(modifier5);
+            success = statsAccessor.TryRemoveStatModifier(modifier5, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(8f));
@@ -713,14 +722,14 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 3, 2);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(9f));
@@ -737,14 +746,14 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 3, 2);
 
-            success = statsWorld.TryRemoveStatModifier(modifier4);
+            success = statsAccessor.TryRemoveStatModifier(modifier4, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(9f));
@@ -761,14 +770,14 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 2, 1);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(10f));
@@ -785,14 +794,14 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 2, 1);
 
-            success = statsWorld.TryRemoveStatModifier(modifier1);
+            success = statsAccessor.TryRemoveStatModifier(modifier1, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(10f));
@@ -809,14 +818,14 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 1, 1);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(11f));
@@ -833,14 +842,14 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 1, 1);
 
-            success = statsWorld.TryRemoveStatModifier(modifier3);
+            success = statsAccessor.TryRemoveStatModifier(modifier3, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(11f));
@@ -857,14 +866,14 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 0, 0);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(12f));
@@ -880,13 +889,16 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
             AssertBufferLengths(entity1, 3, 0, 0);
+            
+            statsWorldStorage.Dispose();
         }
 
         [Test]
         public void CrossEntityStatModifiers()
         {
             bool success = false;
-            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
+            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             Entity entity1 = CreateStatsEntity(0, 10f, true, out StatHandle statHandle1A, out StatHandle statHandle1B,
                 out StatHandle statHandle1C);
@@ -895,28 +907,28 @@ namespace Trove.Stats.Tests
             Entity entity3 = CreateStatsEntity(0, 10f, true, out StatHandle statHandle3A, out StatHandle statHandle3B,
                 out StatHandle statHandle3C);
             
-            UpdateStatsWorld(ref statsWorld);
+            UpdateStatsWorld(ref statsAccessor);
 
-            success = statsWorld.TrySetStatBaseValue(statHandle1A, 5f); 
+            success = statsAccessor.TrySetStatBaseValue(statHandle1A, 5f, ref statsWorldStorage); 
             Assert.IsTrue(success);
 
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out Stat stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out Stat stat1A,
                 out int stat1AModifiersCount, out int stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out Stat stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out Stat stat1B,
                 out int stat1BModifiersCount, out int stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out Stat stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out Stat stat1C,
                 out int stat1CModifiersCount, out int stat1CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out Stat stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out Stat stat2A,
                 out int stat2AModifiersCount, out int stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2B, ref statsWorld, out Stat stat2B,
+            GetStatAndModifiersAndObserversCount(statHandle2B, ref statsAccessor, out Stat stat2B,
                 out int stat2BModifiersCount, out int stat2BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out Stat stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out Stat stat2C,
                 out int stat2CModifiersCount, out int stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out Stat stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out Stat stat3A,
                 out int stat3AModifiersCount, out int stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out Stat stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out Stat stat3B,
                 out int stat3BModifiersCount, out int stat3BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3C, ref statsWorld, out Stat stat3C,
+            GetStatAndModifiersAndObserversCount(statHandle3C, ref statsAccessor, out Stat stat3C,
                 out int stat3CModifiersCount, out int stat3CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -935,21 +947,22 @@ namespace Trove.Stats.Tests
             // Add modifiers
             // -------------------------------------------------
             
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle2A,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.Add,
                     ValueA = 2f,
                 },
-                out StatModifierHandle modifier1);
+                out StatModifierHandle modifier1, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
             Assert.IsTrue(modifier1.AffectedStatHandle == statHandle2A);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -964,19 +977,20 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 1, 0);
             AssertBufferLengths(entity3, 3, 0, 0);
 
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle2A,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1A,
                 },
-                out StatModifierHandle modifier2);
+                out StatModifierHandle modifier2, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -991,19 +1005,20 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 2, 0);
             AssertBufferLengths(entity3, 3, 0, 0);
 
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle2A,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1A,
                 },
-                out StatModifierHandle modifier3);
+                out StatModifierHandle modifier3, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -1018,21 +1033,22 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 3, 0);
             AssertBufferLengths(entity3, 3, 0, 0);
 
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle3A,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle2A,
                 },
-                out StatModifierHandle modifier4);
+                out StatModifierHandle modifier4, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -1051,21 +1067,22 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 3, 1);
             AssertBufferLengths(entity3, 3, 1, 0);
 
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1A,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.Add,
                     ValueA = 4f,
                 },
-                out StatModifierHandle modifier5);
+                out StatModifierHandle modifier5, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -1084,23 +1101,24 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 3, 1);
             AssertBufferLengths(entity3, 3, 1, 0);
 
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle3B,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle3A,
                 },
-                out StatModifierHandle modifier6);
+                out StatModifierHandle modifier6, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -1123,25 +1141,26 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 3, 1);
             AssertBufferLengths(entity3, 3, 2, 1);
 
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle2C,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle3B,
                 },
-                out StatModifierHandle modifier7);
+                out StatModifierHandle modifier7, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(5f));
@@ -1172,18 +1191,18 @@ namespace Trove.Stats.Tests
             // Change values
             // -------------------------------------------------
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 2f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 2f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(7f));
@@ -1210,18 +1229,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 4, 1);
             AssertBufferLengths(entity3, 3, 2, 2);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle2A, 5f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle2A, 5f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(7f));
@@ -1248,26 +1267,26 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 4, 1);
             AssertBufferLengths(entity3, 3, 2, 2);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle3A, 9f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle3A, 9f, ref statsWorldStorage); 
             Assert.IsTrue(success);
 
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2B, ref statsWorld, out stat2B,
+            GetStatAndModifiersAndObserversCount(statHandle2B, ref statsAccessor, out stat2B,
                 out stat2BModifiersCount, out stat2BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3C, ref statsWorld, out stat3C,
+            GetStatAndModifiersAndObserversCount(statHandle3C, ref statsAccessor, out stat3C,
                 out stat3CModifiersCount, out stat3CObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(7f));
@@ -1314,18 +1333,18 @@ namespace Trove.Stats.Tests
             // Remove modifiers and change values
             // -------------------------------------------------
 
-            success = statsWorld.TryRemoveStatModifier(modifier2);
+            success = statsAccessor.TryRemoveStatModifier(modifier2, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(7f));
@@ -1352,18 +1371,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 3, 1);
             AssertBufferLengths(entity3, 3, 2, 2);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(8f));
@@ -1390,18 +1409,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 3, 1);
             AssertBufferLengths(entity3, 3, 2, 2);
 
-            success = statsWorld.TryRemoveStatModifier(modifier5);
+            success = statsAccessor.TryRemoveStatModifier(modifier5, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(8f));
@@ -1428,18 +1447,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 3, 1);
             AssertBufferLengths(entity3, 3, 2, 2);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(9f));
@@ -1466,18 +1485,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 3, 1);
             AssertBufferLengths(entity3, 3, 2, 2);
 
-            success = statsWorld.TryRemoveStatModifier(modifier4);
+            success = statsAccessor.TryRemoveStatModifier(modifier4, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(9f));
@@ -1504,18 +1523,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 3, 0);
             AssertBufferLengths(entity3, 3, 1, 2);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(10f));
@@ -1542,18 +1561,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 3, 0);
             AssertBufferLengths(entity3, 3, 1, 2);
 
-            success = statsWorld.TryRemoveStatModifier(modifier1);
+            success = statsAccessor.TryRemoveStatModifier(modifier1, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(10f));
@@ -1580,18 +1599,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 2, 0);
             AssertBufferLengths(entity3, 3, 1, 2);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(11f));
@@ -1618,18 +1637,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 2, 0);
             AssertBufferLengths(entity3, 3, 1, 2);
 
-            success = statsWorld.TryRemoveStatModifier(modifier3);
+            success = statsAccessor.TryRemoveStatModifier(modifier3, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(11f));
@@ -1656,18 +1675,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 1, 0);
             AssertBufferLengths(entity3, 3, 1, 2);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle1A, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(12f));
@@ -1694,18 +1713,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 1, 0);
             AssertBufferLengths(entity3, 3, 1, 2);
 
-            success = statsWorld.TryRemoveStatModifier(modifier6);
+            success = statsAccessor.TryRemoveStatModifier(modifier6, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(12f));
@@ -1732,18 +1751,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 1, 0);
             AssertBufferLengths(entity3, 3, 0, 1);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle2C, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle2C, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(12f));
@@ -1770,18 +1789,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 1, 0);
             AssertBufferLengths(entity3, 3, 0, 1);
 
-            success = statsWorld.TryRemoveStatModifier(modifier7);
+            success = statsAccessor.TryRemoveStatModifier(modifier7, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(12f));
@@ -1808,18 +1827,18 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 3, 0, 0);
             AssertBufferLengths(entity3, 3, 0, 0);
             
-            success = statsWorld.TryAddStatBaseValue(statHandle2C, 1f); 
+            success = statsAccessor.TryAddStatBaseValue(statHandle2C, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsWorld, out stat2C,
+            GetStatAndModifiersAndObserversCount(statHandle2C, ref statsAccessor, out stat2C,
                 out stat2CModifiersCount, out stat2CObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsWorld, out stat3A,
+            GetStatAndModifiersAndObserversCount(statHandle3A, ref statsAccessor, out stat3A,
                 out stat3AModifiersCount, out stat3AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsWorld, out stat3B,
+            GetStatAndModifiersAndObserversCount(statHandle3B, ref statsAccessor, out stat3B,
                 out stat3BModifiersCount, out stat3BObserversCount);
 
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(12f));
@@ -1845,42 +1864,48 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity1, 3, 0, 0);
             AssertBufferLengths(entity2, 3, 0, 0);
             AssertBufferLengths(entity3, 3, 0, 0);
+            
+            statsWorldStorage.Dispose();
         }
 
         [Test]
         public void InvalidStatOperations()
         {
             bool success = false;
-            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
+            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             // Invalid stats entity cases
             {
                 Entity entity = CreateTestEntity(0);
-                UpdateStatsWorld(ref statsWorld);
+                UpdateStatsWorld(ref statsAccessor);
                 
                 StatHandle invalidEntityStatHandle = new StatHandle(entity, 0);
                 
-                success = statsWorld.TryCreateStat(entity, 10f, false, out _);
+                success = statsAccessor.TryCreateStat(entity, 10f, false, out _);
                 Assert.IsFalse(success);
                 
-                success = statsWorld.TryGetStat(invalidEntityStatHandle, out _, out _);
+                success = statsAccessor.TryGetStat(invalidEntityStatHandle, out _, out _);
                 Assert.IsFalse(success);
                 
-                success = statsWorld.TryAddStatBaseValue(invalidEntityStatHandle, 1f);
+                success = statsAccessor.TryAddStatBaseValue(invalidEntityStatHandle, 1f, ref statsWorldStorage);
                 Assert.IsFalse(success);
                 
-                success = statsWorld.TryAddStatModifier(
+                success = statsAccessor.TryAddStatModifier(
                     invalidEntityStatHandle,
                     new StatsTestsStatModifier
                     {
                         ModifierType = StatsTestsStatModifier.Type.Add,
                         ValueA = 1f,
                     },
-                    out StatModifierHandle modifier1);
+                    out StatModifierHandle modifier1, 
+                    ref statsWorldStorage);
                 Assert.IsFalse(success);
                 
-                success = statsWorld.TryRemoveStatModifier(modifier1);
+                success = statsAccessor.TryRemoveStatModifier(modifier1, ref statsWorldStorage);
                 Assert.IsFalse(success);
+            
+                statsWorldStorage.Dispose();
             }
             
             // Valid stats entity cases
@@ -1888,141 +1913,152 @@ namespace Trove.Stats.Tests
                 Entity entity = CreateStatsEntity(0, 10f, true, out StatHandle statHandleA,
                     out StatHandle statHandleB, out StatHandle statHandleC);
                 
-                UpdateStatsWorld(ref statsWorld);
+                UpdateStatsWorld(ref statsAccessor);
                 
                 // Invalid stats handle
                 {
                     StatHandle statHandleInvalid = statHandleA;
                     statHandleInvalid.Index = 99999;
                     
-                    success = statsWorld.TryGetStat(statHandleInvalid, out _, out _);
+                    success = statsAccessor.TryGetStat(statHandleInvalid, out _, out _);
                     Assert.IsFalse(success);
                     
-                    success = statsWorld.TryAddStatBaseValue(statHandleInvalid, 1f);
+                    success = statsAccessor.TryAddStatBaseValue(statHandleInvalid, 1f, ref statsWorldStorage);
                     Assert.IsFalse(success);
                     
-                    success = statsWorld.TryAddStatModifier(
+                    success = statsAccessor.TryAddStatModifier(
                         statHandleInvalid,
                         new StatsTestsStatModifier
                         {
                             ModifierType = StatsTestsStatModifier.Type.Add,
                             ValueA = 1f,
                         },
-                        out StatModifierHandle modifier2);
+                        out StatModifierHandle modifier2, 
+                        ref statsWorldStorage);
                     Assert.IsFalse(success);
                     
-                    success = statsWorld.TryRemoveStatModifier(modifier2);
+                    success = statsAccessor.TryRemoveStatModifier(modifier2, ref statsWorldStorage);
                     Assert.IsFalse(success);
                 }
             }
+            
+            statsWorldStorage.Dispose();
         }
 
         [Test]
         public void AddRemoveModifierCases()
         {
             bool success = false;
-            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
+            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             Entity entity1 = CreateStatsEntity(0, 10f, true, 
                 out StatHandle statHandle1A, out StatHandle statHandle1B, out StatHandle statHandle1C);
 
-            UpdateStatsWorld(ref statsWorld);
+            UpdateStatsWorld(ref statsAccessor);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out Stat stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out Stat stat1A,
                 out int stat1AModifiersCount, out int stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out Stat stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out Stat stat1B,
                 out int stat1BModifiersCount, out int stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out Stat stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out Stat stat1C,
                 out int stat1CModifiersCount, out int stat1CObserversCount);
             
             // Added modifiers to stats (parenthesis is observed stat):
             // Modifiers buffer: 1-A(C), 2-B(A), 3-A(C), 4-B(A), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
             
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1A,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1C,
                 },
-                out StatModifierHandle modifier1);
+                out StatModifierHandle modifier1, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1B,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1A,
                 },
-                out StatModifierHandle modifier2);
+                out StatModifierHandle modifier2, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1A,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1C,
                 },
-                out StatModifierHandle modifier3);
+                out StatModifierHandle modifier3, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1B,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1A,
                 },
-                out StatModifierHandle modifier4);
+                out StatModifierHandle modifier4, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1A,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1C,
                 },
-                out StatModifierHandle modifier5);
+                out StatModifierHandle modifier5, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1B,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1A,
                 },
-                out StatModifierHandle modifier6);
+                out StatModifierHandle modifier6, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1A,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1C,
                 },
-                out StatModifierHandle modifier7);
+                out StatModifierHandle modifier7, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1B,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1A,
                 },
-                out StatModifierHandle modifier8);
+                out StatModifierHandle modifier8, ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+            GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                 out stat1BModifiersCount, out stat1BObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+            GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                 out stat1CModifiersCount, out stat1CObserversCount);
             
             Assert.AreEqual(4, stat1AModifiersCount);
@@ -2037,16 +2073,16 @@ namespace Trove.Stats.Tests
             {
                 // Modifiers buffer: 1-A(C), 2-B(A), 3-A(C), 4-B(A), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
                 
-                success = statsWorld.TryRemoveStatModifier(modifier4);
+                success = statsAccessor.TryRemoveStatModifier(modifier4, ref statsWorldStorage);
                 Assert.IsTrue(success);
                 
                 // Modifiers buffer: 1-A(C), 2-B(A), 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
                 
-                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                     out stat1AModifiersCount, out stat1AObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                     out stat1BModifiersCount, out stat1BObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                     out stat1CModifiersCount, out stat1CObserversCount);
             
                 Assert.AreEqual(4, stat1AModifiersCount);
@@ -2058,7 +2094,7 @@ namespace Trove.Stats.Tests
                 AssertBufferLengths(entity1, 3, 7, 7);
                 
                 // Try removing it a second time
-                success = statsWorld.TryRemoveStatModifier(modifier4);
+                success = statsAccessor.TryRemoveStatModifier(modifier4, ref statsWorldStorage);
                 Assert.IsFalse(success);
             }
             
@@ -2066,16 +2102,16 @@ namespace Trove.Stats.Tests
             {
                 // Modifiers buffer: 1-A(C), 2-B(A), 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
                 
-                success = statsWorld.TryRemoveStatModifier(modifier2);
+                success = statsAccessor.TryRemoveStatModifier(modifier2, ref statsWorldStorage);
                 Assert.IsTrue(success);
                 
                 // Modifiers buffer: 1-A(C), 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
                 
-                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                     out stat1AModifiersCount, out stat1AObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                     out stat1BModifiersCount, out stat1BObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                     out stat1CModifiersCount, out stat1CObserversCount);
             
                 Assert.AreEqual(4, stat1AModifiersCount);
@@ -2087,7 +2123,7 @@ namespace Trove.Stats.Tests
                 AssertBufferLengths(entity1, 3, 6, 6);
                 
                 // Try removing it a second time
-                success = statsWorld.TryRemoveStatModifier(modifier2);
+                success = statsAccessor.TryRemoveStatModifier(modifier2, ref statsWorldStorage);
                 Assert.IsFalse(success);
             }
             
@@ -2095,16 +2131,16 @@ namespace Trove.Stats.Tests
             {
                 // Modifiers buffer: 1-A(C), 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
                 
-                success = statsWorld.TryRemoveStatModifier(modifier1);
+                success = statsAccessor.TryRemoveStatModifier(modifier1, ref statsWorldStorage);
                 Assert.IsTrue(success);
                 
                 // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
                 
-                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                     out stat1AModifiersCount, out stat1AObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                     out stat1BModifiersCount, out stat1BObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                     out stat1CModifiersCount, out stat1CObserversCount);
             
                 Assert.AreEqual(3, stat1AModifiersCount);
@@ -2116,7 +2152,7 @@ namespace Trove.Stats.Tests
                 AssertBufferLengths(entity1, 3, 5, 5);
                 
                 // Try removing it a second time
-                success = statsWorld.TryRemoveStatModifier(modifier1);
+                success = statsAccessor.TryRemoveStatModifier(modifier1, ref statsWorldStorage);
                 Assert.IsFalse(success);
             }
             
@@ -2124,23 +2160,24 @@ namespace Trove.Stats.Tests
             {
                 // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
                 
-                success = statsWorld.TryAddStatModifier(
+                success = statsAccessor.TryAddStatModifier(
                     statHandle1B,
                     new StatsTestsStatModifier
                     {
                         ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                         StatHandleA = statHandle1A,
                     },
-                    out StatModifierHandle modifier9);
+                    out StatModifierHandle modifier9, 
+                    ref statsWorldStorage);
                 Assert.IsTrue(success);
                 
                 // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A), 9-B(A)
             
-                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                     out stat1AModifiersCount, out stat1AObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                     out stat1BModifiersCount, out stat1BObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                     out stat1CModifiersCount, out stat1CObserversCount);
             
                 Assert.AreEqual(3, stat1AModifiersCount);
@@ -2153,16 +2190,16 @@ namespace Trove.Stats.Tests
                 
                 // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A), 9-B(A)
                 
-                success = statsWorld.TryRemoveStatModifier(modifier9);
+                success = statsAccessor.TryRemoveStatModifier(modifier9, ref statsWorldStorage);
                 Assert.IsTrue(success);
                 
                 // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
             
-                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                     out stat1AModifiersCount, out stat1AObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                     out stat1BModifiersCount, out stat1BObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                     out stat1CModifiersCount, out stat1CObserversCount);
             
                 Assert.AreEqual(3, stat1AModifiersCount);
@@ -2174,7 +2211,7 @@ namespace Trove.Stats.Tests
                 AssertBufferLengths(entity1, 3, 5, 5);
                 
                 // Try removing it a second time
-                success = statsWorld.TryRemoveStatModifier(modifier9);
+                success = statsAccessor.TryRemoveStatModifier(modifier9, ref statsWorldStorage);
                 Assert.IsFalse(success);
             }
             
@@ -2182,16 +2219,16 @@ namespace Trove.Stats.Tests
             {
                 // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A)
                 
-                success = statsWorld.TryRemoveStatModifier(modifier7);
+                success = statsAccessor.TryRemoveStatModifier(modifier7, ref statsWorldStorage);
                 Assert.IsTrue(success);
                 
                 // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 8-B(A)
                 
-                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                     out stat1AModifiersCount, out stat1AObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                     out stat1BModifiersCount, out stat1BObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                     out stat1CModifiersCount, out stat1CObserversCount);
             
                 Assert.AreEqual(2, stat1AModifiersCount);
@@ -2203,7 +2240,7 @@ namespace Trove.Stats.Tests
                 AssertBufferLengths(entity1, 3, 4, 4);
                 
                 // Try removing it a second time
-                success = statsWorld.TryRemoveStatModifier(modifier7);
+                success = statsAccessor.TryRemoveStatModifier(modifier7, ref statsWorldStorage);
                 Assert.IsFalse(success);
             }
             
@@ -2211,16 +2248,16 @@ namespace Trove.Stats.Tests
             {
                 // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 8-B(A)
                 
-                success = statsWorld.TryRemoveStatModifier(modifier8);
+                success = statsAccessor.TryRemoveStatModifier(modifier8, ref statsWorldStorage);
                 Assert.IsTrue(success);
                 
                 // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A)
                 
-                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                     out stat1AModifiersCount, out stat1AObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                     out stat1BModifiersCount, out stat1BObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                     out stat1CModifiersCount, out stat1CObserversCount);
             
                 Assert.AreEqual(2, stat1AModifiersCount);
@@ -2232,7 +2269,7 @@ namespace Trove.Stats.Tests
                 AssertBufferLengths(entity1, 3, 3, 3);
                 
                 // Try removing it a second time
-                success = statsWorld.TryRemoveStatModifier(modifier8);
+                success = statsAccessor.TryRemoveStatModifier(modifier8, ref statsWorldStorage);
                 Assert.IsFalse(success);
             }
             
@@ -2240,16 +2277,16 @@ namespace Trove.Stats.Tests
             {
                 // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A)
                 
-                success = statsWorld.TryRemoveAllStatModifiersOfStat(statHandle1A);
+                success = statsAccessor.TryRemoveAllStatModifiersOfStat(statHandle1A, ref statsWorldStorage);
                 Assert.IsTrue(success);
                 
                 // Modifiers buffer: 6-B(A)
                 
-                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                     out stat1AModifiersCount, out stat1AObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                     out stat1BModifiersCount, out stat1BObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                     out stat1CModifiersCount, out stat1CObserversCount);
             
                 Assert.AreEqual(0, stat1AModifiersCount);
@@ -2262,14 +2299,14 @@ namespace Trove.Stats.Tests
                 
                 // Try a second time
                 
-                success = statsWorld.TryRemoveAllStatModifiersOfStat(statHandle1A);
+                success = statsAccessor.TryRemoveAllStatModifiersOfStat(statHandle1A, ref statsWorldStorage);
                 Assert.IsTrue(success);
                 
-                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                     out stat1AModifiersCount, out stat1AObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                     out stat1BModifiersCount, out stat1BObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                     out stat1CModifiersCount, out stat1CObserversCount);
             
                 Assert.AreEqual(0, stat1AModifiersCount);
@@ -2282,16 +2319,16 @@ namespace Trove.Stats.Tests
                 
                 // Modifiers buffer: 6-B(A)
                 
-                success = statsWorld.TryRemoveAllStatModifiersOfStat(statHandle1C);
+                success = statsAccessor.TryRemoveAllStatModifiersOfStat(statHandle1C, ref statsWorldStorage);
                 Assert.IsTrue(success);
                 
                 // Modifiers buffer: 6-B(A)
                 
-                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                     out stat1AModifiersCount, out stat1AObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                     out stat1BModifiersCount, out stat1BObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                     out stat1CModifiersCount, out stat1CObserversCount);
             
                 Assert.AreEqual(0, stat1AModifiersCount);
@@ -2304,16 +2341,16 @@ namespace Trove.Stats.Tests
                 
                 // Modifiers buffer: 6-B(A)
                 
-                success = statsWorld.TryRemoveAllStatModifiersOfStat(statHandle1B);
+                success = statsAccessor.TryRemoveAllStatModifiersOfStat(statHandle1B, ref statsWorldStorage);
                 Assert.IsTrue(success);
                 
                 // Modifiers buffer: 
                 
-                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                     out stat1AModifiersCount, out stat1AObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                     out stat1BModifiersCount, out stat1BObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                     out stat1CModifiersCount, out stat1CObserversCount);
             
                 Assert.AreEqual(0, stat1AModifiersCount);
@@ -2325,14 +2362,14 @@ namespace Trove.Stats.Tests
                 AssertBufferLengths(entity1, 3, 0, 0);
                 
                 // Try a second time 
-                success = statsWorld.TryRemoveAllStatModifiersOfStat(statHandle1B);
+                success = statsAccessor.TryRemoveAllStatModifiersOfStat(statHandle1B, ref statsWorldStorage);
                 Assert.IsTrue(success);
                 
-                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+                GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                     out stat1AModifiersCount, out stat1AObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsWorld, out stat1B,
+                GetStatAndModifiersAndObserversCount(statHandle1B, ref statsAccessor, out stat1B,
                     out stat1BModifiersCount, out stat1BObserversCount);
-                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsWorld, out stat1C,
+                GetStatAndModifiersAndObserversCount(statHandle1C, ref statsAccessor, out stat1C,
                     out stat1CModifiersCount, out stat1CObserversCount);
             
                 Assert.AreEqual(0, stat1AModifiersCount);
@@ -2343,49 +2380,52 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1CObserversCount);
                 AssertBufferLengths(entity1, 3, 0, 0);
             }
+            
+            statsWorldStorage.Dispose();
         }
 
         [Test]
         public void StatEventsTest()
         {
             bool success = false;
-            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
+            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             Entity entity1 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle1, out StatHandle statHandle2, out StatHandle statHandle3);
 
-            UpdateStatsWorld(ref statsWorld);
+            UpdateStatsWorld(ref statsAccessor);
             
-            statsWorld.SupportStatChangeEvents = true;
-            statsWorld.StatChangeEventsList = new NativeList<StatChangeEvent>(Allocator.Temp);
-            statsWorld.SupportModifierTriggerEvents = true;
-            statsWorld.ModifierTriggerEventsList = new NativeList<StatModifierHandle>(Allocator.Temp);
+            statsAccessor.SupportStatChangeEvents = true;
+            statsAccessor.SupportModifierTriggerEvents = true;
 
             // This modifier does not change stat value. No stat change
             // Triggers mod 1
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.SelfRemoveWhenStatAbove1000,
                     StatHandleA = statHandle2,
                 },
-                out StatModifierHandle modifier1);
+                out StatModifierHandle modifier1, 
+                ref statsWorldStorage);
             
             // Changes stat 2
             // Triggers mod 2 and mod 1
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle2,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle3,
                 },
-                out StatModifierHandle modifier2);
+                out StatModifierHandle modifier2, 
+                ref statsWorldStorage);
             
             // Changes stat 3 and 2
             // Triggers mod 2 and mod 1
-            statsWorld.TryAddStatBaseValue(statHandle3, 1f);
+            statsAccessor.TryAddStatBaseValue(statHandle3, 1f, ref statsWorldStorage);
 
             int stat1ChangeEvents = 0;
             int stat2ChangeEvents = 0;
@@ -2393,9 +2433,9 @@ namespace Trove.Stats.Tests
             int modifier1TriggerEvents = 0;
             int modifier2TriggerEvents = 0;
             
-            for (int i = 0; i < statsWorld.StatChangeEventsList.Length; i++)
+            for (int i = 0; i < statsWorldStorage.StatChangeEventsList.Length; i++)
             {
-                StatChangeEvent changedStat = statsWorld.StatChangeEventsList[i];
+                StatChangeEvent changedStat = statsWorldStorage.StatChangeEventsList[i];
 
                 if (changedStat.StatHandle == statHandle1)
                 {
@@ -2411,9 +2451,9 @@ namespace Trove.Stats.Tests
                 }
             }
             
-            for (int i = 0; i < statsWorld.ModifierTriggerEventsList.Length; i++)
+            for (int i = 0; i < statsWorldStorage.ModifierTriggerEventsList.Length; i++)
             {
-                StatModifierHandle triggeredModifier = statsWorld.ModifierTriggerEventsList[i];
+                StatModifierHandle triggeredModifier = statsWorldStorage.ModifierTriggerEventsList[i];
 
                 if (triggeredModifier == modifier1)
                 {
@@ -2425,50 +2465,51 @@ namespace Trove.Stats.Tests
                 }
             }
             
-            Assert.AreEqual(3, statsWorld.StatChangeEventsList.Length);
-            Assert.AreEqual(5, statsWorld.ModifierTriggerEventsList.Length);
+            Assert.AreEqual(3, statsWorldStorage.StatChangeEventsList.Length);
+            Assert.AreEqual(5, statsWorldStorage.ModifierTriggerEventsList.Length);
             Assert.AreEqual(0, stat1ChangeEvents);
             Assert.AreEqual(2, stat2ChangeEvents);
             Assert.AreEqual(1, stat3ChangeEvents);
             Assert.AreEqual(3, modifier1TriggerEvents);
             Assert.AreEqual(2, modifier2TriggerEvents);
-
-            statsWorld.StatChangeEventsList.Dispose();
-            statsWorld.ModifierTriggerEventsList.Dispose();
+            
+            statsWorldStorage.Dispose();
         }
 
         [Test]
         public void DestroyObservedStat()
         {
             bool success = false;
-            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
+            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             Entity entity1 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle1A, out _, out _);
             Entity entity2 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle2A, out _, out _);
 
-            UpdateStatsWorld(ref statsWorld);
+            UpdateStatsWorld(ref statsAccessor);
 
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out Stat stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out Stat stat1A,
                 out int stat1AModifiersCount, out int stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out Stat stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out Stat stat2A,
                 out int stat2AModifiersCount, out int stat2AObserversCount);
 
             // Make 1A an observer of 2A
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1A,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle2A,
                 },
-                out StatModifierHandle modifier1);
+                out StatModifierHandle modifier1, 
+                ref statsWorldStorage);
             Assert.IsTrue(success);
 
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
             
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(10f));
@@ -2484,11 +2525,11 @@ namespace Trove.Stats.Tests
             
             // Destroy entity2 (so destroy stat 2A)
             EntityManager.DestroyEntity(entity2);
-            UpdateStatsWorld(ref statsWorld);
+            UpdateStatsWorld(ref statsAccessor);
 
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
             
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(10f));
@@ -2506,12 +2547,12 @@ namespace Trove.Stats.Tests
             AssertBufferLengths(entity2, 0, 0, 0);
             
             // Remove modifier
-            success = statsWorld.TryRemoveStatModifier(modifier1);
+            success = statsAccessor.TryRemoveStatModifier(modifier1, ref statsWorldStorage);
             Assert.IsTrue(success);
 
-            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsWorld, out stat1A,
+            GetStatAndModifiersAndObserversCount(statHandle1A, ref statsAccessor, out stat1A,
                 out stat1AModifiersCount, out stat1AObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsWorld, out stat2A,
+            GetStatAndModifiersAndObserversCount(statHandle2A, ref statsAccessor, out stat2A,
                 out stat2AModifiersCount, out stat2AObserversCount);
             
             Assert.IsTrue(stat1A.BaseValue.IsRoughlyEqual(10f));
@@ -2524,6 +2565,8 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat2AObserversCount);
             AssertBufferLengths(entity1, 3, 0, 0);
             AssertBufferLengths(entity2, 0, 0, 0);
+            
+            statsWorldStorage.Dispose();
         }
 
         [Test]
@@ -2548,7 +2591,8 @@ namespace Trove.Stats.Tests
             */
             
             bool success = false;
-            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
+            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
             
             Entity entity1 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle1, out StatHandle statHandle4, out StatHandle statHandle7);
@@ -2557,35 +2601,35 @@ namespace Trove.Stats.Tests
             Entity entity3 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle3, out StatHandle statHandle6, out StatHandle statHandle9);
 
-            UpdateStatsWorld(ref statsWorld);
+            UpdateStatsWorld(ref statsAccessor);
 
-            statsWorld.TrySetStatBaseValue(statHandle1, 1f);
-            statsWorld.TrySetStatBaseValue(statHandle2, 2f);
-            statsWorld.TrySetStatBaseValue(statHandle3, 3f);
-            statsWorld.TrySetStatBaseValue(statHandle4, 4f);
-            statsWorld.TrySetStatBaseValue(statHandle5, 5f);
-            statsWorld.TrySetStatBaseValue(statHandle6, 6f);
-            statsWorld.TrySetStatBaseValue(statHandle7, 7f);
-            statsWorld.TrySetStatBaseValue(statHandle8, 8f);
-            statsWorld.TrySetStatBaseValue(statHandle9, 9f);
+            statsAccessor.TrySetStatBaseValue(statHandle1, 1f, ref statsWorldStorage);
+            statsAccessor.TrySetStatBaseValue(statHandle2, 2f, ref statsWorldStorage);
+            statsAccessor.TrySetStatBaseValue(statHandle3, 3f, ref statsWorldStorage);
+            statsAccessor.TrySetStatBaseValue(statHandle4, 4f, ref statsWorldStorage);
+            statsAccessor.TrySetStatBaseValue(statHandle5, 5f, ref statsWorldStorage);
+            statsAccessor.TrySetStatBaseValue(statHandle6, 6f, ref statsWorldStorage);
+            statsAccessor.TrySetStatBaseValue(statHandle7, 7f, ref statsWorldStorage);
+            statsAccessor.TrySetStatBaseValue(statHandle8, 8f, ref statsWorldStorage);
+            statsAccessor.TrySetStatBaseValue(statHandle9, 9f, ref statsWorldStorage);
 
-            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out Stat stat1,
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsAccessor, out Stat stat1,
                 out int stat1ModifiersCount, out int stat1ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2, ref statsWorld, out Stat stat2,
+            GetStatAndModifiersAndObserversCount(statHandle2, ref statsAccessor, out Stat stat2,
                 out int stat2ModifiersCount, out int stat2ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3, ref statsWorld, out Stat stat3,
+            GetStatAndModifiersAndObserversCount(statHandle3, ref statsAccessor, out Stat stat3,
                 out int stat3ModifiersCount, out int stat3ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle4, ref statsWorld, out Stat stat4,
+            GetStatAndModifiersAndObserversCount(statHandle4, ref statsAccessor, out Stat stat4,
                 out int stat4ModifiersCount, out int stat4ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle5, ref statsWorld, out Stat stat5,
+            GetStatAndModifiersAndObserversCount(statHandle5, ref statsAccessor, out Stat stat5,
                 out int stat5ModifiersCount, out int stat5ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle6, ref statsWorld, out Stat stat6,
+            GetStatAndModifiersAndObserversCount(statHandle6, ref statsAccessor, out Stat stat6,
                 out int stat6ModifiersCount, out int stat6ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle7, ref statsWorld, out Stat stat7,
+            GetStatAndModifiersAndObserversCount(statHandle7, ref statsAccessor, out Stat stat7,
                 out int stat7ModifiersCount, out int stat7ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle8, ref statsWorld, out Stat stat8,
+            GetStatAndModifiersAndObserversCount(statHandle8, ref statsAccessor, out Stat stat8,
                 out int stat8ModifiersCount, out int stat8ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle9, ref statsWorld, out Stat stat9,
+            GetStatAndModifiersAndObserversCount(statHandle9, ref statsAccessor, out Stat stat9,
                 out int stat9ModifiersCount, out int stat9ObserversCount);
             
             Assert.IsTrue(stat1.Value.IsRoughlyEqual(1f));
@@ -2598,39 +2642,43 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat8.Value.IsRoughlyEqual(8f));
             Assert.IsTrue(stat9.Value.IsRoughlyEqual(9f));
             
-            statsWorld.TryAddStatModifier(
+            statsAccessor.TryAddStatModifier(
                 statHandle2,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1,
                 },
-                out StatModifierHandle modifier2_1);
-            statsWorld.TryAddStatModifier(
+                out StatModifierHandle modifier2_1, 
+                ref statsWorldStorage);
+            statsAccessor.TryAddStatModifier(
                 statHandle2,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle3,
                 },
-                out StatModifierHandle modifier2_3);
-            statsWorld.TryAddStatModifier(
+                out StatModifierHandle modifier2_3, 
+                ref statsWorldStorage);
+            statsAccessor.TryAddStatModifier(
                 statHandle3,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1,
                 },
-                out StatModifierHandle modifier3_1);
-            statsWorld.TryAddStatModifier(
+                out StatModifierHandle modifier3_1, 
+                ref statsWorldStorage);
+            statsAccessor.TryAddStatModifier(
                 statHandle4,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle2,
                 },
-                out StatModifierHandle modifier4_2);
-            statsWorld.TryAddStatModifier(
+                out StatModifierHandle modifier4_2, 
+                ref statsWorldStorage);
+            statsAccessor.TryAddStatModifier(
                 statHandle5,
                 new StatsTestsStatModifier
                 {
@@ -2638,16 +2686,18 @@ namespace Trove.Stats.Tests
                     StatHandleA = statHandle2,
                     StatHandleB = statHandle3,
                 },
-                out StatModifierHandle modifier5_23);
-            statsWorld.TryAddStatModifier(
+                out StatModifierHandle modifier5_23, 
+                ref statsWorldStorage);
+            statsAccessor.TryAddStatModifier(
                 statHandle6,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle3,
                 },
-                out StatModifierHandle modifier6_3);
-            statsWorld.TryAddStatModifier(
+                out StatModifierHandle modifier6_3, 
+                ref statsWorldStorage);
+            statsAccessor.TryAddStatModifier(
                 statHandle7,
                 new StatsTestsStatModifier
                 {
@@ -2655,8 +2705,9 @@ namespace Trove.Stats.Tests
                     StatHandleA = statHandle4,
                     StatHandleB = statHandle5,
                 },
-                out StatModifierHandle modifier7_45);
-            statsWorld.TryAddStatModifier(
+                out StatModifierHandle modifier7_45, 
+                ref statsWorldStorage);
+            statsAccessor.TryAddStatModifier(
                 statHandle8,
                 new StatsTestsStatModifier
                 {
@@ -2664,24 +2715,27 @@ namespace Trove.Stats.Tests
                     StatHandleA = statHandle5,
                     StatHandleB = statHandle6,
                 },
-                out StatModifierHandle modifier8_56);
-            statsWorld.TryAddStatModifier(
+                out StatModifierHandle modifier8_56, 
+                ref statsWorldStorage);
+            statsAccessor.TryAddStatModifier(
                 statHandle8,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle7,
                 },
-                out StatModifierHandle modifier8_7);
-            statsWorld.TryAddStatModifier(
+                out StatModifierHandle modifier8_7, 
+                ref statsWorldStorage);
+            statsAccessor.TryAddStatModifier(
                 statHandle9,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle5,
                 },
-                out StatModifierHandle modifier9_5);
-            statsWorld.TryAddStatModifier(
+                out StatModifierHandle modifier9_5, 
+                ref statsWorldStorage);
+            statsAccessor.TryAddStatModifier(
                 statHandle9,
                 new StatsTestsStatModifier
                 {
@@ -2689,25 +2743,26 @@ namespace Trove.Stats.Tests
                     StatHandleA = statHandle7,
                     StatHandleB = statHandle8,
                 },
-                out StatModifierHandle modifier9_78);
+                out StatModifierHandle modifier9_78, 
+                ref statsWorldStorage);
 
-            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out stat1,
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsAccessor, out stat1,
                 out stat1ModifiersCount, out stat1ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2, ref statsWorld, out stat2,
+            GetStatAndModifiersAndObserversCount(statHandle2, ref statsAccessor, out stat2,
                 out stat2ModifiersCount, out stat2ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3, ref statsWorld, out stat3,
+            GetStatAndModifiersAndObserversCount(statHandle3, ref statsAccessor, out stat3,
                 out stat3ModifiersCount, out stat3ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle4, ref statsWorld, out stat4,
+            GetStatAndModifiersAndObserversCount(statHandle4, ref statsAccessor, out stat4,
                 out stat4ModifiersCount, out stat4ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle5, ref statsWorld, out stat5,
+            GetStatAndModifiersAndObserversCount(statHandle5, ref statsAccessor, out stat5,
                 out stat5ModifiersCount, out stat5ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle6, ref statsWorld, out stat6,
+            GetStatAndModifiersAndObserversCount(statHandle6, ref statsAccessor, out stat6,
                 out stat6ModifiersCount, out stat6ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle7, ref statsWorld, out stat7,
+            GetStatAndModifiersAndObserversCount(statHandle7, ref statsAccessor, out stat7,
                 out stat7ModifiersCount, out stat7ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle8, ref statsWorld, out stat8,
+            GetStatAndModifiersAndObserversCount(statHandle8, ref statsAccessor, out stat8,
                 out stat8ModifiersCount, out stat8ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle9, ref statsWorld, out stat9,
+            GetStatAndModifiersAndObserversCount(statHandle9, ref statsAccessor, out stat9,
                 out stat9ModifiersCount, out stat9ObserversCount);
             
             Assert.IsTrue(stat1.BaseValue.IsRoughlyEqual(1f));
@@ -2729,25 +2784,25 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat9.BaseValue.IsRoughlyEqual(9f));
             Assert.IsTrue(stat9.Value.IsRoughlyEqual(127f)); // Add 5 and 7 and 8
             
-            statsWorld.TryAddStatBaseValue(statHandle1, 1f);
+            statsAccessor.TryAddStatBaseValue(statHandle1, 1f, ref statsWorldStorage);
 
-            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out stat1,
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsAccessor, out stat1,
                 out stat1ModifiersCount, out stat1ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2, ref statsWorld, out stat2,
+            GetStatAndModifiersAndObserversCount(statHandle2, ref statsAccessor, out stat2,
                 out stat2ModifiersCount, out stat2ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3, ref statsWorld, out stat3,
+            GetStatAndModifiersAndObserversCount(statHandle3, ref statsAccessor, out stat3,
                 out stat3ModifiersCount, out stat3ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle4, ref statsWorld, out stat4,
+            GetStatAndModifiersAndObserversCount(statHandle4, ref statsAccessor, out stat4,
                 out stat4ModifiersCount, out stat4ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle5, ref statsWorld, out stat5,
+            GetStatAndModifiersAndObserversCount(statHandle5, ref statsAccessor, out stat5,
                 out stat5ModifiersCount, out stat5ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle6, ref statsWorld, out stat6,
+            GetStatAndModifiersAndObserversCount(statHandle6, ref statsAccessor, out stat6,
                 out stat6ModifiersCount, out stat6ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle7, ref statsWorld, out stat7,
+            GetStatAndModifiersAndObserversCount(statHandle7, ref statsAccessor, out stat7,
                 out stat7ModifiersCount, out stat7ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle8, ref statsWorld, out stat8,
+            GetStatAndModifiersAndObserversCount(statHandle8, ref statsAccessor, out stat8,
                 out stat8ModifiersCount, out stat8ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle9, ref statsWorld, out stat9,
+            GetStatAndModifiersAndObserversCount(statHandle9, ref statsAccessor, out stat9,
                 out stat9ModifiersCount, out stat9ObserversCount);
             
             Assert.IsTrue(stat1.BaseValue.IsRoughlyEqual(2f));
@@ -2768,6 +2823,8 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat8.Value.IsRoughlyEqual(77f)); // Add 5 and 6 and 7
             Assert.IsTrue(stat9.BaseValue.IsRoughlyEqual(9f));
             Assert.IsTrue(stat9.Value.IsRoughlyEqual(144f)); // Add 5 and 7 and 8
+            
+            statsWorldStorage.Dispose();
         }
         
         [Test]
@@ -2780,7 +2837,8 @@ namespace Trove.Stats.Tests
             // ( A->B means "A observes B" )
         
             bool success = false;
-            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
+            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
             
             Entity entity1 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle1, out StatHandle statHandle4, out _);
@@ -2789,174 +2847,224 @@ namespace Trove.Stats.Tests
             Entity entity3 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle3, out StatHandle statHandle6, out _);
 
-            UpdateStatsWorld(ref statsWorld);
+            UpdateStatsWorld(ref statsAccessor);
 
-            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out Stat stat1,
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsAccessor, out Stat stat1,
                 out int stat1ModifiersCount, out int stat1ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle2, ref statsWorld, out Stat stat2,
+            GetStatAndModifiersAndObserversCount(statHandle2, ref statsAccessor, out Stat stat2,
                 out int stat2ModifiersCount, out int stat2ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle3, ref statsWorld, out Stat stat3,
+            GetStatAndModifiersAndObserversCount(statHandle3, ref statsAccessor, out Stat stat3,
                 out int stat3ModifiersCount, out int stat3ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle4, ref statsWorld, out Stat stat4,
+            GetStatAndModifiersAndObserversCount(statHandle4, ref statsAccessor, out Stat stat4,
                 out int stat4ModifiersCount, out int stat4ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle5, ref statsWorld, out Stat stat5,
+            GetStatAndModifiersAndObserversCount(statHandle5, ref statsAccessor, out Stat stat5,
                 out int stat5ModifiersCount, out int stat5ObserversCount);
-            GetStatAndModifiersAndObserversCount(statHandle6, ref statsWorld, out Stat stat6,
+            GetStatAndModifiersAndObserversCount(statHandle6, ref statsAccessor, out Stat stat6,
                 out int stat6ModifiersCount, out int stat6ObserversCount);
             
             // This one shouldn't work (self-observing stat)
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1,
                 },
-                out _);
+                out _,
+                ref statsWorldStorage);
             Assert.IsFalse(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out stat1,
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsAccessor, out stat1,
                 out stat1ModifiersCount, out stat1ObserversCount);
             Assert.AreEqual(0, stat1ModifiersCount);
             
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle1,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle2,
                 },
-                out _);
+                out _,
+                ref statsWorldStorage);
             Assert.IsTrue(success);
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle2,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle3,
                 },
-                out _);
+                out _,
+                ref statsWorldStorage);
             Assert.IsTrue(success);
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle3,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle4,
                 },
-                out _);
+                out _,
+                ref statsWorldStorage);
             Assert.IsTrue(success);
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle6,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle3,
                 },
-                out _);
+                out _,
+                ref statsWorldStorage);
             Assert.IsTrue(success);
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle3,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle5,
                 },
-                out _);
+                out _,
+                ref statsWorldStorage);
             Assert.IsTrue(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out stat1,
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsAccessor, out stat1,
                 out stat1ModifiersCount, out stat1ObserversCount);
             Assert.AreEqual(1, stat1ModifiersCount);
             
             // This one shouldn't work
-            success = statsWorld.TryAddStatModifier(
+            success = statsAccessor.TryAddStatModifier(
                 statHandle3,
                 new StatsTestsStatModifier
                 {
                     ModifierType = StatsTestsStatModifier.Type.AddFromStat,
                     StatHandleA = statHandle1,
                 },
-                out _);
+                out _,
+                ref statsWorldStorage);
             Assert.IsFalse(success);
             
-            GetStatAndModifiersAndObserversCount(statHandle1, ref statsWorld, out stat1,
+            GetStatAndModifiersAndObserversCount(statHandle1, ref statsAccessor, out stat1,
                 out stat1ModifiersCount, out stat1ObserversCount);
             Assert.AreEqual(1, stat1ModifiersCount);
+            
+            statsWorldStorage.Dispose();
         }
 
         [Test]
-        public void StatWorldParallelImpossibleTest()
+        public void StatWorldJobExceptionsTest()
         {
             EntityManager.CompleteAllTrackedJobs();
             
-            bool success = false;
-            StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorld = CreateStatsWorld();
+            StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
+            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
             
             Entity entity1 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle1, out StatHandle statHandle2, out _);
             
-            UpdateStatsWorld(ref statsWorld);
+            EntityManager.CompleteAllTrackedJobs();
+            UpdateStatsWorld(ref statsAccessor);
+            
+            JobHandle dep1 = default;
+            JobHandle dep2 = default;
+
+            Assert.DoesNotThrow(() =>
+            {
+                dep1 = new StatsWorldJob
+                {
+                    StatHandle = statHandle1,
+                    StatsAccessor = statsAccessor,
+                    StatsWorldStorage = statsWorldStorage,
+                }.Schedule(default);
+            });
+            
+            dep1.Complete();
+            dep2.Complete();
+            EntityManager.CompleteAllTrackedJobs();
+            UpdateStatsWorld(ref statsAccessor);
 
             // Two single-thread jobs using the same StatsWorld in parallel
             Assert.Throws<InvalidOperationException>(() =>
             {
-                JobHandle dep1 = new StatsWorldJob
+                dep1 = new StatsWorldJob
                 {
                     StatHandle = statHandle1,
-                    StatsWorld = statsWorld,
+                    StatsAccessor = statsAccessor,
+                    StatsWorldStorage = statsWorldStorage,
                 }.Schedule(default);
-                JobHandle dep2 = new StatsWorldJob
+                dep2 = new StatsWorldJob
                 {
                     StatHandle = statHandle1,
-                    StatsWorld = statsWorld,
+                    StatsAccessor = statsAccessor,
+                    StatsWorldStorage = statsWorldStorage,
                 }.Schedule(default);
-                
-                JobHandle dep3 = JobHandle.CombineDependencies(dep1, dep2);
-                dep3.Complete();
             });
+                
+            JobHandle dep3 = JobHandle.CombineDependencies(dep1, dep2);
+            dep3.Complete();
+            dep1.Complete();
+            dep2.Complete();
+            EntityManager.CompleteAllTrackedJobs();
+            UpdateStatsWorld(ref statsAccessor);
 
             // A parallel-for job using a StatsWorld
             Assert.Throws<InvalidOperationException>(() =>
             {
-                JobHandle dep4 = new StatsWorldParallelJob
+                JobHandle dep1 = new StatsWorldParallelJob
                 {
                     StatHandle = statHandle1,
-                    StatsWorld = statsWorld,
+                    StatsAccessor = statsAccessor,
+                    StatsWorldStorage = statsWorldStorage,
                 }.Schedule(10, 1, default);
-                dep4.Complete();
             });
-
-            // A parallel-for job using a [ReadOnly] StatsWorld that writes to something
+            
+            dep1.Complete();
+            dep2.Complete();
+            EntityManager.CompleteAllTrackedJobs();
+            UpdateStatsWorld(ref statsAccessor);
+            
+            // A parallel-for job using a [ReadOnly] StatsWorld (throws inside the job)
             {
-                JobHandle dep4 = new StatsWorldReadOnlyParallelJob
+                dep1 = new StatsWorldReadOnlyParallelJob
                 {
                     StatHandle = statHandle1,
-                    StatsWorld = statsWorld,
-                }.Schedule(10, 1, default);
-                dep4.Complete();
+                    StatsAccessor = statsAccessor,
+                    StatsWorldStorage = statsWorldStorage,
+                }.Schedule(3, 1, default);
+                
+                dep1.Complete();
             }
+            
+            dep1.Complete();
+            dep2.Complete();
+            EntityManager.CompleteAllTrackedJobs();
+            UpdateStatsWorld(ref statsAccessor);
+            
+            statsWorldStorage.Dispose();
         }
 
         private struct StatsWorldJob : IJob
         {
             public StatHandle StatHandle;
-            public StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsWorld;
+            public StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsAccessor;
+            public StatsWorldData<StatsTestsStatModifier.Stack> StatsWorldStorage;
             
             public void Execute()
             {
-                StatsWorld.TryAddStatBaseValue(StatHandle, 1f);
+                StatsAccessor.TryAddStatBaseValue(StatHandle, 1f, ref StatsWorldStorage);
             }
         }
 
         private struct StatsWorldParallelJob : IJobParallelFor
         {
             public StatHandle StatHandle;
-            public StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsWorld;
+            public StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsAccessor;
+            public StatsWorldData<StatsTestsStatModifier.Stack> StatsWorldStorage;
             
             public void Execute(int index)
             {
-                StatsWorld.TryAddStatBaseValue(StatHandle, 1f);
+                StatsAccessor.TryAddStatBaseValue(StatHandle, 1f, ref StatsWorldStorage);
             }
         }
 
@@ -2964,14 +3072,16 @@ namespace Trove.Stats.Tests
         {
             public StatHandle StatHandle;
             [ReadOnly]
-            public StatsWorld<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsWorld;
+            public StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsAccessor;
+            [ReadOnly]
+            public StatsWorldData<StatsTestsStatModifier.Stack> StatsWorldStorage;
             
             public void Execute(int index)
             {
                 bool success = true;
                 try
                 {
-                    StatsWorld.TryAddStatBaseValue(StatHandle, 1f);
+                    StatsAccessor.TryAddStatBaseValue(StatHandle, 1f, ref StatsWorldStorage);
                 }
                 catch (InvalidOperationException e)
                 {

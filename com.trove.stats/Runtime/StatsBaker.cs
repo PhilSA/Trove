@@ -22,5 +22,7 @@ namespace Trove.Stats
         {
             StatsUtilities.CreateStat(Entity, baseValue, produceChangeEvents, ref StatsBuffer, out statHandle);
         }
+        
+        // TODO: support baking modifiers if all involved stats are on same entity?
     }
 }
