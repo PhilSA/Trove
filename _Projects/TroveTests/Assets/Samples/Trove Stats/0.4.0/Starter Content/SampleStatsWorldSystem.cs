@@ -5,17 +5,17 @@ using Unity.Entities;
 
 public struct StatsWorldSingleton : IComponentData
 {
-    public StatsWorldData<SampleStatModifier.Stack> StatsWorldData;
+    public StatsWorldData<SampleStatModifier, SampleStatModifier.Stack> StatsWorldData;
 }
 
 public partial struct SampleStatsWorldSystem : ISystem
 {
-    private StatsWorldData<SampleStatModifier.Stack> _statsWorldData;
+    private StatsWorldData<SampleStatModifier, SampleStatModifier.Stack> _statsWorldData;
     
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        _statsWorldData = new StatsWorldData<SampleStatModifier.Stack>(Allocator.Persistent);
+        _statsWorldData = new StatsWorldData<SampleStatModifier, SampleStatModifier.Stack>(Allocator.Persistent);
         
         // Create the singleton
         Entity singletonEntity = state.EntityManager.CreateEntity();

@@ -16,7 +16,7 @@ namespace Trove.Stats
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
         public StatsAccessor<TStatModifier, TStatModifierStack> StatsAccessor;
-        public StatsWorldData<TStatModifierStack> StatsWorldData;
+        public StatsWorldData<TStatModifier, TStatModifierStack> StatsWorldData;
         public NativeList<StatHandle> StatsToUpdate;
         
         public void Execute()
@@ -40,7 +40,7 @@ namespace Trove.Stats
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
         public StatsAccessor<TStatModifier, TStatModifierStack> StatsAccessor;
-        public StatsWorldData<TStatModifierStack> StatsWorldData;
+        public StatsWorldData<TStatModifier, TStatModifierStack> StatsWorldData;
         public NativeQueue<StatHandle> StatsToUpdate;
         
         public void Execute()
@@ -64,7 +64,7 @@ namespace Trove.Stats
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
         public StatsAccessor<TStatModifier, TStatModifierStack> StatsAccessor;
-        public StatsWorldData<TStatModifierStack> StatsWorldData;
+        public StatsWorldData<TStatModifier, TStatModifierStack> StatsWorldData;
         public NativeStream.Reader StatsToUpdate;
         
         public void Execute()

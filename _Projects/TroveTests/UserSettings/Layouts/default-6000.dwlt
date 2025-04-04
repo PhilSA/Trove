@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 2048
     height: 1060.8
   m_ShowMode: 4
-  m_Title: Project
+  m_Title: Game
   m_RootView: {fileID: 8}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -41,15 +41,16 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 302.40002
+    width: 302.3999
     height: 460.8
   m_MinSize: {x: 202, y: 226}
   m_MaxSize: {x: 4002, y: 4026}
-  m_ActualView: {fileID: 16}
+  m_ActualView: {fileID: 18}
   m_Panes:
-  - {fileID: 16}
+  - {fileID: 18}
+  - {fileID: 14}
   m_Selected: 0
-  m_LastSelected: 0
+  m_LastSelected: 1
 --- !u!114 &3
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -67,14 +68,14 @@ MonoBehaviour:
   - {fileID: 4}
   m_Position:
     serializedVersion: 2
-    x: 1333.6
+    x: 1332.8
     y: 0
-    width: 302.40002
+    width: 302.3999
     height: 1004.80005
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 54
+  controlID: 75
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -93,13 +94,13 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 460.8
-    width: 302.40002
+    width: 302.3999
     height: 544.00006
   m_MinSize: {x: 232, y: 276}
   m_MaxSize: {x: 10002, y: 10026}
-  m_ActualView: {fileID: 14}
+  m_ActualView: {fileID: 16}
   m_Panes:
-  - {fileID: 14}
+  - {fileID: 16}
   m_Selected: 0
   m_LastSelected: 0
 --- !u!114 &5
@@ -127,7 +128,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 24
+  controlID: 119
   draggingID: 0
 --- !u!114 &6
 MonoBehaviour:
@@ -139,22 +140,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 1
   m_Script: {fileID: 12006, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: 
+  m_Name: InspectorWindow
   m_EditorClassIdentifier: 
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 1636
+    x: 1635.2
     y: 0
-    width: 412
+    width: 412.80005
     height: 1004.80005
   m_MinSize: {x: 276, y: 76}
   m_MaxSize: {x: 4001, y: 4026}
-  m_ActualView: {fileID: 15}
+  m_ActualView: {fileID: 17}
   m_Panes:
-  - {fileID: 15}
+  - {fileID: 17}
+  - {fileID: 13}
   m_Selected: 0
-  m_LastSelected: 0
+  m_LastSelected: 1
 --- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -172,13 +174,13 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 668.8
-    width: 1333.6
+    width: 1332.8
     height: 336.00006
   m_MinSize: {x: 101, y: 126}
   m_MaxSize: {x: 4001, y: 4026}
-  m_ActualView: {fileID: 19}
+  m_ActualView: {fileID: 21}
   m_Panes:
-  - {fileID: 19}
+  - {fileID: 21}
   m_Selected: 0
   m_LastSelected: 0
 --- !u!114 &8
@@ -271,7 +273,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1333.6
+    width: 1332.8
     height: 1004.80005
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
@@ -295,18 +297,1278 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1333.6
+    width: 1332.8
     height: 668.8
   m_MinSize: {x: 201, y: 226}
   m_MaxSize: {x: 4001, y: 4026}
-  m_ActualView: {fileID: 17}
+  m_ActualView: {fileID: 19}
   m_Panes:
-  - {fileID: 17}
-  - {fileID: 18}
-  - {fileID: 13}
+  - {fileID: 19}
+  - {fileID: 20}
+  - {fileID: 15}
   m_Selected: 0
-  m_LastSelected: 2
+  m_LastSelected: 1
 --- !u!114 &13
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 13401, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_MinSize: {x: 50, y: 50}
+  m_MaxSize: {x: 4000, y: 4000}
+  m_TitleContent:
+    m_Text: Test Runner
+    m_Image: {fileID: 0}
+    m_Tooltip: Test framework for running Edit mode and Play mode tests in Unity.
+      Part of the com.unity.test-framework package.
+    m_TextWithWhitespace: "Test Runner\u200B"
+  m_Pos:
+    serializedVersion: 2
+    x: 1635.2001
+    y: 79.200005
+    width: 411.80005
+    height: 978.80005
+  m_SerializedDataModeController:
+    m_DataMode: 0
+    m_PreferredDataMode: 0
+    m_SupportedDataModes: 
+    isAutomatic: 1
+  m_ViewDataDictionary: {fileID: 0}
+  m_OverlayCanvas:
+    m_LastAppliedPresetName: Default
+    m_SaveData: []
+    m_ContainerData: []
+    m_OverlaysVisible: 1
+  m_Spl:
+    ID: 7375
+    splitterInitialOffset: 0
+    currentActiveSplitter: -1
+    realSizes:
+    - 681.6
+    - 227.20001
+    relativeSizes:
+    - 0.75
+    - 0.25
+    minSizes:
+    - 32
+    - 32
+    maxSizes:
+    - 0
+    - 0
+    lastTotalSize: 908.8
+    splitSize: 6
+    xOffset: 0
+    m_Version: 1
+    oldRealSizes: 
+    oldMinSizes: 
+    oldMaxSizes: 
+    oldSplitSize: 0
+  m_TestTypeToolbarIndex: 1
+  m_TestListGUIs:
+  - m_Window: {fileID: 13}
+    runProgress:
+      RunGuid: d0ecd550-e0d4-4133-8c46-2b08ee4fc933
+      ExecutionSettings:
+        m_TargetPlatform: 0
+        m_HasTargetPlatform: 0
+        filter:
+          testMode: 0
+          testNames: []
+          groupNames: []
+          categoryNames: []
+          assemblyNames: []
+        filters:
+        - testMode: 2
+          testNames:
+          - Trove.Stats
+          groupNames: []
+          categoryNames: []
+          assemblyNames: []
+        runSynchronously: 0
+        playerHeartbeatTimeout: 600
+        orderedTestNames: []
+        ignoreTests: []
+        featureFlags:
+          fileCleanUpCheck: 0
+          requiresSplashScreen: 0
+          strictDomainReload: 0
+          disableNestedEnumeratorBugfix: 0
+        randomOrderSeed: 0
+      HasFinished: 1
+      Progress: 1
+      CurrentStepName: Unlock Reload Assemblies
+      CurrentStageName: 
+    m_NewResultList:
+    - id: 1000
+      uniqueId: '[TroveTests][suite]'
+      name: TroveTests
+      fullName: TroveTests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 
+      parentUniqueId: 
+    m_ResultText: 
+    m_ResultStacktrace: 
+    m_TestListState:
+      scrollPos: {x: 0, y: 0}
+      m_SelectedIDs: 
+      m_LastClickedID: 0
+      m_ExpandedIDs: 511b1645ffffff7f
+      m_RenameOverlay:
+        m_UserAcceptedRename: 0
+        m_Name: 
+        m_OriginalName: 
+        m_EditFieldRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 0
+          height: 0
+        m_UserData: 0
+        m_IsWaitingForDelay: 0
+        m_IsRenaming: 0
+        m_OriginalEventType: 11
+        m_IsRenamingFilename: 0
+        m_TrimLeadingAndTrailingWhitespace: 0
+        m_ClientGUIView: {fileID: 0}
+      m_SearchString: 
+    m_TestRunnerUIFilter:
+      PassedHidden: 0
+      FailedHidden: 0
+      NotRunHidden: 0
+      m_SearchString: 
+      selectedCategories: []
+      availableCategories:
+      - Uncategorized
+    m_SelectedOption: 0
+  - m_Window: {fileID: 13}
+    runProgress:
+      RunGuid: d0ecd550-e0d4-4133-8c46-2b08ee4fc933
+      ExecutionSettings:
+        m_TargetPlatform: 0
+        m_HasTargetPlatform: 0
+        filter:
+          testMode: 0
+          testNames: []
+          groupNames: []
+          categoryNames: []
+          assemblyNames: []
+        filters:
+        - testMode: 2
+          testNames:
+          - Trove.Stats
+          groupNames: []
+          categoryNames: []
+          assemblyNames: []
+        runSynchronously: 0
+        playerHeartbeatTimeout: 600
+        orderedTestNames: []
+        ignoreTests: []
+        featureFlags:
+          fileCleanUpCheck: 0
+          requiresSplashScreen: 0
+          strictDomainReload: 0
+          disableNestedEnumeratorBugfix: 0
+        randomOrderSeed: 0
+      HasFinished: 1
+      Progress: 1
+      CurrentStepName: Unlock Reload Assemblies
+      CurrentStageName: 
+    m_NewResultList:
+    - id: 1000
+      uniqueId: '[TroveTests][suite]'
+      name: TroveTests
+      fullName: TroveTests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 
+      parentUniqueId: 
+    - id: 1011
+      uniqueId: '[com.trove.common.tests.dll][suite]'
+      name: com.trove.common.tests.dll
+      fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.common.tests.dll
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1000
+      parentUniqueId: '[TroveTests][suite]'
+    - id: 1012
+      uniqueId: 'com.trove.common.tests.dll/[com.trove.common.tests][Trove][suite]'
+      name: Trove
+      fullName: Trove
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1011
+      parentUniqueId: '[com.trove.common.tests.dll][suite]'
+    - id: 1001
+      uniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.BitUtilitiesTests][suite]'
+      name: BitUtilitiesTests
+      fullName: Trove.BitUtilitiesTests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1012
+      parentUniqueId: 'com.trove.common.tests.dll/[com.trove.common.tests][Trove][suite]'
+    - id: 1007
+      uniqueId: 'com.trove.common.tests.dll/Trove/BitUtilitiesTests/[com.trove.common.tests][Trove.BitUtilitiesTests.Test]'
+      name: Test
+      fullName: Trove.BitUtilitiesTests.Test
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1006
+      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.BitUtilitiesTests][suite]'
+    - id: 1003
+      uniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
+      name: ParametricCurveTests
+      fullName: Trove.ParametricCurveTests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1012
+      parentUniqueId: 'com.trove.common.tests.dll/[com.trove.common.tests][Trove][suite]'
+    - id: 1009
+      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Bypass]'
+      name: Bypass
+      fullName: Trove.ParametricCurveTests.Bypass
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
+    - id: 1012
+      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Exponential]'
+      name: Exponential
+      fullName: Trove.ParametricCurveTests.Exponential
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
+    - id: 1011
+      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Linear]'
+      name: Linear
+      fullName: Trove.ParametricCurveTests.Linear
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
+    - id: 1014
+      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Logistic]'
+      name: Logistic
+      fullName: Trove.ParametricCurveTests.Logistic
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
+    - id: 1015
+      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Logit]'
+      name: Logit
+      fullName: Trove.ParametricCurveTests.Logit
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
+    - id: 1013
+      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Sine]'
+      name: Sine
+      fullName: Trove.ParametricCurveTests.Sine
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
+    - id: 1010
+      uniqueId: 'com.trove.common.tests.dll/Trove/ParametricCurveTests/[com.trove.common.tests][Trove.ParametricCurveTests.Step]'
+      name: Step
+      fullName: Trove.ParametricCurveTests.Step
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: 'com.trove.common.tests.dll/Trove/[com.trove.common.tests][Trove.ParametricCurveTests][suite]'
+    - id: 1021
+      uniqueId: '[com.trove.eventsystems.tests.dll][suite]'
+      name: com.trove.eventsystems.tests.dll
+      fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.eventsystems.tests.dll
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1000
+      parentUniqueId: '[TroveTests][suite]'
+    - id: 1022
+      uniqueId: 'com.trove.eventsystems.tests.dll/[Trove][suite]'
+      name: Trove
+      fullName: Trove
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1021
+      parentUniqueId: '[com.trove.eventsystems.tests.dll][suite]'
+    - id: 1023
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/[EventSystems][suite]'
+      name: EventSystems
+      fullName: Trove.EventSystems
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1022
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/[Trove][suite]'
+    - id: 1024
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
+      name: Tests
+      fullName: Trove.EventSystems.Tests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1023
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/[EventSystems][suite]'
+    - id: 1013
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityEventTests][suite]'
+      name: EntityEventTests
+      fullName: Trove.EventSystems.Tests.EntityEventTests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1024
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
+    - id: 1019
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/EntityEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityEventTests.EntityEventTest1]'
+      name: EntityEventTest1
+      fullName: Trove.EventSystems.Tests.EntityEventTests.EntityEventTest1
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1018
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityEventTests][suite]'
+    - id: 1015
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityPolymorphicEventTests][suite]'
+      name: EntityPolymorphicEventTests
+      fullName: Trove.EventSystems.Tests.EntityPolymorphicEventTests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1024
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
+    - id: 1021
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/EntityPolymorphicEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityPolymorphicEventTest1]'
+      name: EntityPolymorphicEventTest1
+      fullName: Trove.EventSystems.Tests.EntityPolymorphicEventTests.EntityPolymorphicEventTest1
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1020
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.EntityPolymorphicEventTests][suite]'
+    - id: 1017
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalEventTests][suite]'
+      name: GlobalEventTests
+      fullName: Trove.EventSystems.Tests.GlobalEventTests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1024
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
+    - id: 1023
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/GlobalEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalEventTests.GlobalEventTest1]'
+      name: GlobalEventTest1
+      fullName: Trove.EventSystems.Tests.GlobalEventTests.GlobalEventTest1
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1022
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalEventTests][suite]'
+    - id: 1019
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests][suite]'
+      name: GlobalPolymorphicEventTests
+      fullName: Trove.EventSystems.Tests.GlobalPolymorphicEventTests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1024
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/[com.trove.eventsystems.tests][Trove.EventSystems.Tests][suite]'
+    - id: 1025
+      uniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/GlobalPolymorphicEventTests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalPolymorphicEventTest1]'
+      name: GlobalPolymorphicEventTest1
+      fullName: Trove.EventSystems.Tests.GlobalPolymorphicEventTests.GlobalPolymorphicEventTest1
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1024
+      parentUniqueId: 'com.trove.eventsystems.tests.dll/Trove/EventSystems/Tests/[com.trove.eventsystems.tests][Trove.EventSystems.Tests.GlobalPolymorphicEventTests][suite]'
+    - id: 1036
+      uniqueId: '[com.trove.stats.tests.dll][suite]'
+      name: com.trove.stats.tests.dll
+      fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.stats.tests.dll
+      resultStatus: 1
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1000
+      parentUniqueId: '[TroveTests][suite]'
+    - id: 1037
+      uniqueId: 'com.trove.stats.tests.dll/[Trove][suite]'
+      name: Trove
+      fullName: Trove
+      resultStatus: 1
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1036
+      parentUniqueId: '[com.trove.stats.tests.dll][suite]'
+    - id: 1038
+      uniqueId: 'com.trove.stats.tests.dll/Trove/[Stats][suite]'
+      name: Stats
+      fullName: Trove.Stats
+      resultStatus: 1
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1037
+      parentUniqueId: 'com.trove.stats.tests.dll/[Trove][suite]'
+    - id: 1039
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/[com.trove.stats.tests][Trove.Stats.Tests][suite]'
+      name: Tests
+      fullName: Trove.Stats.Tests
+      resultStatus: 1
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1038
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/[Stats][suite]'
+    - id: 1025
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+      name: StatsTests
+      fullName: Trove.Stats.Tests.StatsTests
+      resultStatus: 1
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1039
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/[com.trove.stats.tests][Trove.Stats.Tests][suite]'
+    - id: 1035
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.AddRemoveModifierCases]'
+      name: AddRemoveModifierCases
+      fullName: Trove.Stats.Tests.StatsTests.AddRemoveModifierCases
+      resultStatus: 1
+      duration: 0.0840686
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1030
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+    - id: 1031
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.BasicStatOperations]'
+      name: BasicStatOperations
+      fullName: Trove.Stats.Tests.StatsTests.BasicStatOperations
+      resultStatus: 1
+      duration: 0.0033699
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1030
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+    - id: 1038
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.ComplexTree]'
+      name: ComplexTree
+      fullName: Trove.Stats.Tests.StatsTests.ComplexTree
+      resultStatus: 1
+      duration: 0.0120572
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1030
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+    - id: 1033
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.CrossEntityStatModifiers]'
+      name: CrossEntityStatModifiers
+      fullName: Trove.Stats.Tests.StatsTests.CrossEntityStatModifiers
+      resultStatus: 1
+      duration: 0.0245924
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1030
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+    - id: 1037
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.DestroyObservedStat]'
+      name: DestroyObservedStat
+      fullName: Trove.Stats.Tests.StatsTests.DestroyObservedStat
+      resultStatus: 1
+      duration: 0.0029691
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1030
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+    - id: 1039
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.InfiniteObserversLoopPrevention]'
+      name: InfiniteObserversLoopPrevention
+      fullName: Trove.Stats.Tests.StatsTests.InfiniteObserversLoopPrevention
+      resultStatus: 1
+      duration: 0.0049353
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1030
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+    - id: 1034
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.InvalidStatOperations]'
+      name: InvalidStatOperations
+      fullName: Trove.Stats.Tests.StatsTests.InvalidStatOperations
+      resultStatus: 1
+      duration: 0.0042782
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1030
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+    - id: 1032
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.SameEntityStatModifiers]'
+      name: SameEntityStatModifiers
+      fullName: Trove.Stats.Tests.StatsTests.SameEntityStatModifiers
+      resultStatus: 1
+      duration: 0.013903
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1030
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+    - id: 1036
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.StatEventsTest]'
+      name: StatEventsTest
+      fullName: Trove.Stats.Tests.StatsTests.StatEventsTest
+      resultStatus: 1
+      duration: 0.00207
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1030
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+    - id: 1040
+      uniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/StatsTests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests.StatWorldJobExceptionsTest]'
+      name: StatWorldJobExceptionsTest
+      fullName: Trove.Stats.Tests.StatsTests.StatWorldJobExceptionsTest
+      resultStatus: 1
+      duration: 0.0189932
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1030
+      parentUniqueId: 'com.trove.stats.tests.dll/Trove/Stats/Tests/[com.trove.stats.tests][Trove.Stats.Tests.StatsTests][suite]'
+    - id: 1042
+      uniqueId: '[com.trove.tweens.tests.dll][suite]'
+      name: com.trove.tweens.tests.dll
+      fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.tweens.tests.dll
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1000
+      parentUniqueId: '[TroveTests][suite]'
+    - id: 1043
+      uniqueId: 'com.trove.tweens.tests.dll/[Trove][suite]'
+      name: Trove
+      fullName: Trove
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1042
+      parentUniqueId: '[com.trove.tweens.tests.dll][suite]'
+    - id: 1044
+      uniqueId: 'com.trove.tweens.tests.dll/Trove/[Tweens][suite]'
+      name: Tweens
+      fullName: Trove.Tweens
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1043
+      parentUniqueId: 'com.trove.tweens.tests.dll/[Trove][suite]'
+    - id: 1045
+      uniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/[com.trove.tweens.tests][Trove.Tweens.Tests][suite]'
+      name: Tests
+      fullName: Trove.Tweens.Tests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1044
+      parentUniqueId: 'com.trove.tweens.tests.dll/Trove/[Tweens][suite]'
+    - id: 1040
+      uniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/Tests/[com.trove.tweens.tests][Trove.Tweens.Tests.TweenTests][suite]'
+      name: TweenTests
+      fullName: Trove.Tweens.Tests.TweenTests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1045
+      parentUniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/[com.trove.tweens.tests][Trove.Tweens.Tests][suite]'
+    - id: 1046
+      uniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/Tests/TweenTests/[com.trove.tweens.tests][Trove.Tweens.Tests.TweenTests.Test]'
+      name: Test
+      fullName: Trove.Tweens.Tests.TweenTests.Test
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1045
+      parentUniqueId: 'com.trove.tweens.tests.dll/Trove/Tweens/Tests/[com.trove.tweens.tests][Trove.Tweens.Tests.TweenTests][suite]'
+    - id: 1053
+      uniqueId: '[com.trove.utilityai.tests.dll][suite]'
+      name: com.trove.utilityai.tests.dll
+      fullName: C:/Projects/Trove/_Projects/TroveTests/Library/ScriptAssemblies/com.trove.utilityai.tests.dll
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1000
+      parentUniqueId: '[TroveTests][suite]'
+    - id: 1054
+      uniqueId: 'com.trove.utilityai.tests.dll/[Trove][suite]'
+      name: Trove
+      fullName: Trove
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1053
+      parentUniqueId: '[com.trove.utilityai.tests.dll][suite]'
+    - id: 1055
+      uniqueId: 'com.trove.utilityai.tests.dll/Trove/[UtilityAI][suite]'
+      name: UtilityAI
+      fullName: Trove.UtilityAI
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1054
+      parentUniqueId: 'com.trove.utilityai.tests.dll/[Trove][suite]'
+    - id: 1056
+      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/[com.trove.utilityai.tests][Trove.UtilityAI.Tests][suite]'
+      name: Tests
+      fullName: Trove.UtilityAI.Tests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1055
+      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/[UtilityAI][suite]'
+    - id: 1046
+      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
+      name: ReasonerTests
+      fullName: Trove.UtilityAI.Tests.ReasonerTests
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1056
+      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/[com.trove.utilityai.tests][Trove.UtilityAI.Tests][suite]'
+    - id: 1057
+      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.ActionSelectors]'
+      name: ActionSelectors
+      fullName: Trove.UtilityAI.Tests.ReasonerTests.ActionSelectors
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1051
+      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
+    - id: 1054
+      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.ActionVersions]'
+      name: ActionVersions
+      fullName: Trove.UtilityAI.Tests.ReasonerTests.ActionVersions
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1051
+      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
+    - id: 1055
+      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.ActionWithoutConsiderations]'
+      name: ActionWithoutConsiderations
+      fullName: Trove.UtilityAI.Tests.ReasonerTests.ActionWithoutConsiderations
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1051
+      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
+    - id: 1053
+      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.ConsiderationVersions]'
+      name: ConsiderationVersions
+      fullName: Trove.UtilityAI.Tests.ReasonerTests.ConsiderationVersions
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1051
+      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
+    - id: 1052
+      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.FullWorkflow]'
+      name: FullWorkflow
+      fullName: Trove.UtilityAI.Tests.ReasonerTests.FullWorkflow
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1051
+      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
+    - id: 1056
+      uniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/ReasonerTests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests.ScoreCompensation]'
+      name: ScoreCompensation
+      fullName: Trove.UtilityAI.Tests.ReasonerTests.ScoreCompensation
+      resultStatus: 0
+      duration: 0
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1051
+      parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
+    m_ResultText: Stats (10 tests) (0.000s)
+    m_ResultStacktrace: 
+    m_TestListState:
+      scrollPos: {x: 0, y: 0}
+      m_SelectedIDs: a40680c9
+      m_LastClickedID: -914356572
+      m_ExpandedIDs: a40680c9388841d97e55e5e94ed5b90a35631e20511b1645ffffff7f
+      m_RenameOverlay:
+        m_UserAcceptedRename: 0
+        m_Name: 
+        m_OriginalName: 
+        m_EditFieldRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 0
+          height: 0
+        m_UserData: 0
+        m_IsWaitingForDelay: 0
+        m_IsRenaming: 0
+        m_OriginalEventType: 11
+        m_IsRenamingFilename: 0
+        m_TrimLeadingAndTrailingWhitespace: 0
+        m_ClientGUIView: {fileID: 0}
+      m_SearchString: 
+    m_TestRunnerUIFilter:
+      PassedHidden: 0
+      FailedHidden: 0
+      NotRunHidden: 0
+      m_SearchString: 
+      selectedCategories: []
+      availableCategories:
+      - Uncategorized
+    m_SelectedOption: 0
+  - m_Window: {fileID: 0}
+    runProgress:
+      RunGuid: d0ecd550-e0d4-4133-8c46-2b08ee4fc933
+      ExecutionSettings:
+        m_TargetPlatform: 0
+        m_HasTargetPlatform: 0
+        filter:
+          testMode: 0
+          testNames: []
+          groupNames: []
+          categoryNames: []
+          assemblyNames: []
+        filters:
+        - testMode: 2
+          testNames:
+          - Trove.Stats
+          groupNames: []
+          categoryNames: []
+          assemblyNames: []
+        runSynchronously: 0
+        playerHeartbeatTimeout: 600
+        orderedTestNames: []
+        ignoreTests: []
+        featureFlags:
+          fileCleanUpCheck: 0
+          requiresSplashScreen: 0
+          strictDomainReload: 0
+          disableNestedEnumeratorBugfix: 0
+        randomOrderSeed: 0
+      HasFinished: 1
+      Progress: 1
+      CurrentStepName: Unlock Reload Assemblies
+      CurrentStageName: 
+    m_NewResultList: []
+    m_ResultText: 
+    m_ResultStacktrace: 
+    m_TestListState:
+      scrollPos: {x: 0, y: 0}
+      m_SelectedIDs: 
+      m_LastClickedID: 0
+      m_ExpandedIDs: 
+      m_RenameOverlay:
+        m_UserAcceptedRename: 0
+        m_Name: 
+        m_OriginalName: 
+        m_EditFieldRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 0
+          height: 0
+        m_UserData: 0
+        m_IsWaitingForDelay: 0
+        m_IsRenaming: 0
+        m_OriginalEventType: 11
+        m_IsRenamingFilename: 0
+        m_TrimLeadingAndTrailingWhitespace: 0
+        m_ClientGUIView: {fileID: 0}
+      m_SearchString: 
+    m_TestRunnerUIFilter:
+      PassedHidden: 0
+      FailedHidden: 0
+      NotRunHidden: 0
+      m_SearchString: 
+      selectedCategories: []
+      availableCategories: []
+    m_SelectedOption: 0
+--- !u!114 &14
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70ebb861d56146959cda8fcaf772f612, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_MinSize: {x: 200, y: 200}
+  m_MaxSize: {x: 4000, y: 4000}
+  m_TitleContent:
+    m_Text: Entities Hierarchy
+    m_Image: {fileID: 2800000, guid: 6bb0993b66f1e4f4d907a96c0ff2dee0, type: 3}
+    m_Tooltip: 
+    m_TextWithWhitespace: "Entities Hierarchy\u200B"
+  m_Pos:
+    serializedVersion: 2
+    x: 1332.8
+    y: 79.200005
+    width: 300.3999
+    height: 434.8
+  m_SerializedDataModeController:
+    m_DataMode: 1
+    m_PreferredDataMode: 1
+    m_SupportedDataModes: 010000000200000003000000
+    isAutomatic: 1
+  m_ViewDataDictionary: {fileID: 0}
+  m_OverlayCanvas:
+    m_LastAppliedPresetName: Default
+    m_SaveData: []
+    m_ContainerData: []
+    m_OverlaysVisible: 1
+  m_EditorWindowInstanceKey: 0cbfbfb8136342f9bf22ba66865ba6fb
+--- !u!114 &15
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1334,7 +2596,7 @@ MonoBehaviour:
       data:
         m_SortAscending: 0
         m_SortedColumn: -1
---- !u!114 &14
+--- !u!114 &16
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1358,7 +2620,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 1
     y: 484.8
-    width: 300.40002
+    width: 300.3999
     height: 518.00006
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1382,7 +2644,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Packages/com.trove.tweens/Tests/Runtime
+    - Assets/_Projects/_Restaurant/Scripts
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1400,7 +2662,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 3af30000
     m_LastClickedID: 62266
-    m_ExpandedIDs: 0000000076bf000078bf00007abf00007cbf00007ebf000080bf000082bf000084bf000086bf000088bf00008abf00008cbf00008ebf000090bf000092bf000094bf000096bf000098bf00009abf00009cbf00009ebf0000a0bf0000a2bf0000a4bf0000a6bf0000a8bf0000aabf0000
+    m_ExpandedIDs: 00000000e2bf0000e4bf0000e6bf0000e8bf0000eabf0000ecbf0000eebf0000f0bf0000f2bf0000f4bf0000f6bf0000f8bf0000fabf0000fcbf0000febf000000c0000002c0000004c0000006c0000008c000000ac000000cc000000ec0000010c0000012c0000014c0000016c0000018c000001ac000001cc000001ec0000020c0000022c0000024c0000026c0000028c000002ac000002cc000002ec0000030c0000032c00000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1426,10 +2688,10 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 1224}
+    scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 0000000076bf000078bf00007abf00007cbf00007ebf000080bf000082bf000084bf000086bf000088bf00008abf00008cbf00008ebf000090bf000092bf000094bf000096bf000098bf00009abf00009cbf00009ebf0000a0bf0000a2bf0000a4bf0000a6bf0000a8bf0000aabf0000
+    m_ExpandedIDs: 00000000e2bf0000e4bf0000e6bf0000e8bf0000eabf0000ecbf0000eebf0000f0bf0000f2bf0000f4bf0000f6bf0000f8bf0000fabf0000fcbf0000febf000000c0000002c0000004c0000006c0000008c000000ac000000cc000000ec0000010c0000012c0000014c0000016c0000018c000001ac000001cc000001ec0000020c0000022c0000024c0000026c0000028c000002ac000002cc000002ec0000030c0000032c00000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1487,7 +2749,7 @@ MonoBehaviour:
     m_GridSize: 16
   m_SkipHiddenPackages: 0
   m_DirectoriesAreaWidth: 99
---- !u!114 &15
+--- !u!114 &17
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1509,9 +2771,9 @@ MonoBehaviour:
     m_TextWithWhitespace: "Inspector\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 1637
+    x: 1636.2
     y: 24
-    width: 411
+    width: 411.80005
     height: 978.80005
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1537,7 +2799,7 @@ MonoBehaviour:
   m_LockTracker:
     m_IsLocked: 0
   m_PreviewWindow: {fileID: 0}
---- !u!114 &16
+--- !u!114 &18
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1561,7 +2823,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 1
     y: 24
-    width: 300.40002
+    width: 300.3999
     height: 434.8
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1579,7 +2841,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: acbbffffdcc1ffff36c6ffff92c9ffffa8d0ffffdcd2ffff3ad7ffff24fbffff
+      m_ExpandedIDs: 24fbffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1596,7 +2858,7 @@ MonoBehaviour:
         m_OriginalEventType: 11
         m_IsRenamingFilename: 0
         m_TrimLeadingAndTrailingWhitespace: 0
-        m_ClientGUIView: {fileID: 0}
+        m_ClientGUIView: {fileID: 2}
       m_SearchString: 
     m_ExpandedScenes: []
     m_CurrenRootInstanceID: 0
@@ -1604,7 +2866,7 @@ MonoBehaviour:
       m_IsLocked: 0
     m_CurrentSortingName: TransformSorting
   m_WindowGUID: 4c969a2b90040154d917609493e03593
---- !u!114 &17
+--- !u!114 &19
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1628,7 +2890,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 24
-    width: 1332.6
+    width: 1331.8
     height: 642.8
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -2044,9 +3306,9 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: -59.50464, y: 1.4980745, z: -9.960358}
+    m_Target: {x: -60.0912, y: 4.145138, z: -7.489625}
     speed: 2
-    m_Value: {x: -59.50464, y: 1.4980745, z: -9.960358}
+    m_Value: {x: -60.0912, y: 4.145138, z: -7.489625}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -2092,9 +3354,9 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-    m_Target: {x: -0.12499007, y: 0.69678754, z: -0.12528926, w: -0.6951189}
+    m_Target: {x: -0.07573605, y: 0.6526908, z: -0.06582126, w: -0.7509678}
     speed: 2
-    m_Value: {x: -0.12499007, y: 0.69678754, z: -0.12528926, w: -0.6951189}
+    m_Value: {x: -0.075736046, y: 0.6526908, z: -0.06582126, w: -0.75096774}
   m_Size:
     m_Target: 8.90108
     speed: 2
@@ -2119,7 +3381,7 @@ MonoBehaviour:
   m_LastSceneViewRotation: {x: 0, y: 0, z: 0, w: 0}
   m_LastSceneViewOrtho: 0
   m_Viewpoint:
-    m_SceneView: {fileID: 17}
+    m_SceneView: {fileID: 19}
     m_CameraOverscanSettings:
       m_Opacity: 50
       m_Scale: 1
@@ -2132,7 +3394,7 @@ MonoBehaviour:
     name: 
     section: 
   m_ViewIsLockedToObject: 0
---- !u!114 &18
+--- !u!114 &20
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2156,7 +3418,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 79.200005
-    width: 1332.6
+    width: 1331.8
     height: 642.8
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -2175,7 +3437,7 @@ MonoBehaviour:
   m_ShowGizmos: 0
   m_TargetDisplay: 0
   m_ClearColor: {r: 0, g: 0, b: 0, a: 0}
-  m_TargetSize: {x: 1332.6, y: 621.8}
+  m_TargetSize: {x: 1331.8, y: 621.8}
   m_TextureFilterMode: 0
   m_TextureHideFlags: 61
   m_RenderIMGUI: 1
@@ -2190,8 +3452,8 @@ MonoBehaviour:
     m_VRangeLocked: 0
     hZoomLockedByDefault: 0
     vZoomLockedByDefault: 0
-    m_HBaseRangeMin: -533.04
-    m_HBaseRangeMax: 533.04
+    m_HBaseRangeMin: -532.72003
+    m_HBaseRangeMax: 532.72003
     m_VBaseRangeMin: -248.72
     m_VBaseRangeMax: 248.72
     m_HAllowExceedBaseRangeMin: 1
@@ -2211,30 +3473,30 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 1332.6
+      width: 1331.8
       height: 621.8
     m_Scale: {x: 1.25, y: 1.25}
-    m_Translation: {x: 666.3, y: 310.9}
+    m_Translation: {x: 665.9, y: 310.9}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -533.04
+      x: -532.72003
       y: -248.72
-      width: 1066.08
+      width: 1065.4401
       height: 497.44
     m_MinimalGUI: 1
   m_defaultScale: 1
-  m_LastWindowPixelSize: {x: 1665.75, y: 803.5}
+  m_LastWindowPixelSize: {x: 1664.75, y: 803.5}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000
   m_XRRenderMode: 0
   m_RenderTexture: {fileID: 0}
   m_showToolbar: 1
---- !u!114 &19
+--- !u!114 &21
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2258,7 +3520,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 692.8
-    width: 1332.6
+    width: 1331.8
     height: 310.00006
   m_SerializedDataModeController:
     m_DataMode: 0

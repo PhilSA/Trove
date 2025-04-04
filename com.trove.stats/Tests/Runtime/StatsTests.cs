@@ -281,7 +281,7 @@ namespace Trove.Stats.Tests
         {
             bool success = true;
             success &= StatsUtilities.TryGetStat(statHandle, in statsAccessor._statsLookup, out stat);
-            success &= statsAccessor.TryCalculateModifiersCount(statHandle, out modifiersCount);
+            success &= statsAccessor.TryCalculateStatModifiersCount(statHandle, out modifiersCount);
             success &= statsAccessor.TryCalculateObserversCount(statHandle, out observersCount);
             return success;
         }
@@ -321,7 +321,7 @@ namespace Trove.Stats.Tests
         {
             bool success = false;
             StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
-            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
+            StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             Entity entity1 = CreateStatsEntity(0, 10f, true, out StatHandle statHandle1A, out StatHandle statHandle1B,
                 out StatHandle statHandle1C);
@@ -395,7 +395,7 @@ namespace Trove.Stats.Tests
         {
             bool success = false;
             StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
-            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
+            StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             Entity entity1 = CreateStatsEntity(0, 10f, true, out StatHandle statHandle1A, out StatHandle statHandle1B,
                 out StatHandle statHandle1C);
@@ -898,7 +898,7 @@ namespace Trove.Stats.Tests
         {
             bool success = false;
             StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
-            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
+            StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             Entity entity1 = CreateStatsEntity(0, 10f, true, out StatHandle statHandle1A, out StatHandle statHandle1B,
                 out StatHandle statHandle1C);
@@ -1873,7 +1873,7 @@ namespace Trove.Stats.Tests
         {
             bool success = false;
             StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
-            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
+            StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             // Invalid stats entity cases
             {
@@ -1950,7 +1950,7 @@ namespace Trove.Stats.Tests
         {
             bool success = false;
             StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
-            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
+            StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             Entity entity1 = CreateStatsEntity(0, 10f, true, 
                 out StatHandle statHandle1A, out StatHandle statHandle1B, out StatHandle statHandle1C);
@@ -2389,7 +2389,7 @@ namespace Trove.Stats.Tests
         {
             bool success = false;
             StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
-            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
+            StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             Entity entity1 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle1, out StatHandle statHandle2, out StatHandle statHandle3);
@@ -2453,13 +2453,13 @@ namespace Trove.Stats.Tests
             
             for (int i = 0; i < statsWorldStorage.ModifierTriggerEventsList.Length; i++)
             {
-                StatModifierHandle triggeredModifier = statsWorldStorage.ModifierTriggerEventsList[i];
+                StatModifierHandle triggeredModifierHandle = statsWorldStorage.ModifierTriggerEventsList[i].ModifierHandle;
 
-                if (triggeredModifier == modifier1)
+                if (triggeredModifierHandle == modifier1)
                 {
                     modifier1TriggerEvents++;
                 }
-                if (triggeredModifier == modifier2)
+                if (triggeredModifierHandle == modifier2)
                 {
                     modifier2TriggerEvents++;
                 }
@@ -2481,7 +2481,7 @@ namespace Trove.Stats.Tests
         {
             bool success = false;
             StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
-            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
+            StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(Allocator.Persistent);
 
             Entity entity1 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle1A, out _, out _);
@@ -2592,7 +2592,7 @@ namespace Trove.Stats.Tests
             
             bool success = false;
             StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
-            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
+            StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(Allocator.Persistent);
             
             Entity entity1 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle1, out StatHandle statHandle4, out StatHandle statHandle7);
@@ -2838,7 +2838,7 @@ namespace Trove.Stats.Tests
         
             bool success = false;
             StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
-            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
+            StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(Allocator.Persistent);
             
             Entity entity1 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle1, out StatHandle statHandle4, out _);
@@ -2958,7 +2958,7 @@ namespace Trove.Stats.Tests
             EntityManager.CompleteAllTrackedJobs();
             
             StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = CreateStatsWorld();
-            StatsWorldData<StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier.Stack>(Allocator.Persistent);
+            StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsWorldStorage = new StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(Allocator.Persistent);
             
             Entity entity1 = CreateStatsEntity(0, 10f, true,
                 out StatHandle statHandle1, out StatHandle statHandle2, out _);
@@ -3048,7 +3048,7 @@ namespace Trove.Stats.Tests
         {
             public StatHandle StatHandle;
             public StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsAccessor;
-            public StatsWorldData<StatsTestsStatModifier.Stack> StatsWorldStorage;
+            public StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsWorldStorage;
             
             public void Execute()
             {
@@ -3060,7 +3060,7 @@ namespace Trove.Stats.Tests
         {
             public StatHandle StatHandle;
             public StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsAccessor;
-            public StatsWorldData<StatsTestsStatModifier.Stack> StatsWorldStorage;
+            public StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsWorldStorage;
             
             public void Execute(int index)
             {
@@ -3074,7 +3074,7 @@ namespace Trove.Stats.Tests
             [ReadOnly]
             public StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsAccessor;
             [ReadOnly]
-            public StatsWorldData<StatsTestsStatModifier.Stack> StatsWorldStorage;
+            public StatsWorldData<StatsTestsStatModifier, StatsTestsStatModifier.Stack> StatsWorldStorage;
             
             public void Execute(int index)
             {

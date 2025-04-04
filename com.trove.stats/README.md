@@ -16,4 +16,3 @@ As an example, a game could define `Intelligence` and `MagicDefense` stats for p
 * [Example usage scenario](./Documentation~/examplescenario.md)
 * [Usability and performance](./Documentation~/usability-performance.md)
 * [How it works](./Documentation~/how-it-works.md)
-* [Advanced topics](./Documentation~/advanced.md)

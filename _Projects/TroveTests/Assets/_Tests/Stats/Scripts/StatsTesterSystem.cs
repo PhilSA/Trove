@@ -11,7 +11,7 @@ public struct UpdatingStat : IComponentData
 partial struct StatsTesterSystem : ISystem
 {
     private StatsAccessor<TestStatModifier, TestStatModifier.Stack> _statsAccessor;
-    private StatsWorldData<TestStatModifier.Stack> _statsWorldData;
+    private StatsWorldData<TestStatModifier, TestStatModifier.Stack> _statsWorldData;
     
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -19,7 +19,7 @@ partial struct StatsTesterSystem : ISystem
         state.RequireForUpdate<StatsTester>();
         
         _statsAccessor = new StatsAccessor<TestStatModifier, TestStatModifier.Stack>(ref state, false, false);
-        _statsWorldData = new StatsWorldData<TestStatModifier.Stack>(Allocator.Persistent);
+        _statsWorldData = new StatsWorldData<TestStatModifier, TestStatModifier.Stack>(Allocator.Persistent);
     }
     
     [BurstCompile]
@@ -124,7 +124,7 @@ partial struct StatsTesterSystem : ISystem
     {
         public float DeltaTime;
         public StatsAccessor<TestStatModifier, TestStatModifier.Stack> StatsAccessor;
-        public StatsWorldData<TestStatModifier.Stack> StatsWorldData;
+        public StatsWorldData<TestStatModifier, TestStatModifier.Stack> StatsWorldData;
 
         void Execute(ref TestStatOwner statsOwner)
         {

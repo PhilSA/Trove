@@ -14,8 +14,8 @@
   "samples": [
     {
       "displayName": "Starter Content",
-      "description": "Starter files for a customizable stats modifier and singleton",
-      "path": "Samples~/StarterContent"
+      "description": "Starter files for a stats singleton, customizable stats modifier, and stats destruction pipeline",
+      "path": "Samples~/Starter Content"
     }
   ]
 }

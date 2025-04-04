@@ -41,7 +41,7 @@ partial struct StatsStarterContentSystem : ISystem
     {
         public float DeltaTime;
         public StatsAccessor<SampleStatModifier, SampleStatModifier.Stack> StatsAccessor;
-        public StatsWorldData<SampleStatModifier.Stack> StatsWorldData;
+        public StatsWorldData<SampleStatModifier, SampleStatModifier.Stack> StatsWorldData;
         
         public void Execute(Entity entity, in SampleStats stats, ref SampleStatValues statValues)
         {
@@ -51,7 +51,7 @@ partial struct StatsStarterContentSystem : ISystem
 
             StatsAccessor.TrySetStatProduceChangeEvents(stats.Intelligence, true);
 
-            if (StatsAccessor.TryCalculateModifiersCount(stats.Intelligence, out int intelligenceModifiersCount))
+            if (StatsAccessor.TryCalculateStatModifiersCount(stats.Intelligence, out int intelligenceModifiersCount))
             {
                 if (intelligenceModifiersCount <= 0)
                 {

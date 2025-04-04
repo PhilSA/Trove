@@ -76,6 +76,14 @@ namespace Trove.Stats
         public Stat NewValue;
     }
 
+    public struct ModifierTriggerEvent<TStatModifier, TStatModifierStack>
+        where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
+        where TStatModifierStack : unmanaged, IStatsModifierStack
+    {
+        public StatModifierHandle ModifierHandle;
+        public TStatModifier Modifier;
+    }
+
     public struct StatHandle : IEquatable<StatHandle>
     {
         public int Index;
@@ -148,6 +156,8 @@ namespace Trove.Stats
     {
         private byte _isCreated;
         private BufferLookup<Stat> _statsBufferLookup;
+        private DynamicBuffer<Stat> _statsBuffer;
+        private bool _isSingleEntity;
         
         public bool IsCreated => _isCreated != 0;
         
@@ -155,12 +165,26 @@ namespace Trove.Stats
         {
             _isCreated = 1;
             _statsBufferLookup = statsBufferLookup;
+            _statsBuffer = default;
+            _isSingleEntity = false;
+        }
+        
+        internal StatsReader(in DynamicBuffer<Stat> statsBuffer)
+        {
+            _isCreated = 1;
+            _statsBufferLookup = default;
+            _statsBuffer = statsBuffer;
+            _isSingleEntity = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetStat(StatHandle statHandle, out float value, out float baseValue)
         {
-            return StatsUtilities.TryGetStat(statHandle, in _statsBufferLookup, out value, out baseValue);
+            if (!_isSingleEntity)
+            {
+                return StatsUtilities.TryGetStat(statHandle, in _statsBufferLookup, out value, out baseValue);
+            }
+            return StatsUtilities.TryGetStat(statHandle, in _statsBuffer, out value, out baseValue);
         }
     }
 

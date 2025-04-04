@@ -58,13 +58,13 @@ namespace Trove.Stats
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int AsInt(float floatValue)
+        public static int AsInt(this float floatValue)
         {
             return UnsafeUtility.As<float, int>(ref floatValue);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float AsFloat(int intValue)
+        public static float AsFloat(this int intValue)
         {
             return UnsafeUtility.As<int, float>(ref intValue);
         }
@@ -116,7 +116,7 @@ namespace Trove.Stats
             ref Stat statRef,
             ref DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer,
             ref DynamicBuffer<StatObserver> statObserversBuffer,
-            ref StatsWorldData<TStatModifierStack> statsWorldData,
+            ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData,
             bool supportStatChangeEvents,
             bool supportModifierTriggerEvents)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
@@ -145,10 +145,14 @@ namespace Trove.Stats
                     if (addModifierTriggerEvent && supportModifierTriggerEvents &&
                         statsWorldData.ModifierTriggerEventsList.IsCreated)
                     {
-                        statsWorldData.ModifierTriggerEventsList.Add(new StatModifierHandle
+                        statsWorldData.ModifierTriggerEventsList.Add(new ModifierTriggerEvent<TStatModifier, TStatModifierStack>
                         {
-                            ModifierID = modifierRef.ID,
-                            AffectedStatHandle = statHandle,
+                            Modifier = modifierRef.Modifier,
+                            ModifierHandle = new StatModifierHandle
+                            {
+                                ModifierID = modifierRef.ID,
+                                AffectedStatHandle = statHandle,
+                            }
                         });
                     }
 
@@ -256,15 +260,24 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool TryGetStat(StatHandle statHandle, in DynamicBuffer<Stat> statsBuffer, out Stat stat)
+        {
+            if (statHandle.Index < statsBuffer.Length)
+            {
+                stat = statsBuffer[statHandle.Index];
+                return true;
+            }
+
+            stat = default;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool TryGetStat(StatHandle statHandle, in BufferLookup<Stat> statsBufferLookup, out Stat stat)
         {
             if (statsBufferLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> statsBuffer))
             {
-                if (statHandle.Index < statsBuffer.Length)
-                {
-                    stat = statsBuffer[statHandle.Index];
-                    return true;
-                }
+                return TryGetStat(statHandle, statsBuffer, out stat);
             }
 
             stat = default;
@@ -494,6 +507,38 @@ namespace Trove.Stats
         /// Useful for netcode relevancy
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void GetOtherDependantStatsOfEntity(Entity entity, ref BufferLookup<StatObserver> statObserversLookup, ref NativeList<StatHandle> dependentStats)
+        {
+            if (statObserversLookup.TryGetBuffer(entity, out DynamicBuffer<StatObserver> statObserversBuffer))
+            {
+                GetOtherDependantStatsOfEntity(entity, ref statObserversBuffer, ref dependentStats);
+            }
+        }
+        
+        /// <summary>
+        /// Returns all entities that have stats and depend on stats present on the specified entity.
+        /// Excludes the specified entity.
+        /// Useful for netcode relevancy
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void GetOtherDependantStatsOfEntity(Entity entity, ref DynamicBuffer<StatObserver> statObserversBufferOnEntity, ref NativeList<StatHandle> dependentStats)
+        {
+            for (int i = 0; i < statObserversBufferOnEntity.Length; i++)
+            {
+                StatObserver observer = statObserversBufferOnEntity[i];
+                if (observer.ObserverHandle.Entity != entity)
+                {
+                    dependentStats.Add(observer.ObserverHandle);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns all entities that have stats and depend on stats present on the specified entity.
+        /// Excludes the specified entity.
+        /// Useful for netcode relevancy
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void GetOtherDependantStatEntitiesOfEntity(Entity entity, ref BufferLookup<StatObserver> statObserversLookup, ref NativeHashSet<Entity> dependentEntities)
         {
             if (statObserversLookup.TryGetBuffer(entity, out DynamicBuffer<StatObserver> statObserversBuffer))
@@ -517,6 +562,51 @@ namespace Trove.Stats
                 {
                     dependentEntities.Add(observer.ObserverHandle.Entity);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Returns all entities that have stats and depend on stats present on the specified entity.
+        /// Excludes the specified entity.
+        /// Useful for netcode relevancy
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void GetStatEntitiesThatEntityDependsOn<TStatModifier, TStatModifierStack>(Entity entity, 
+            ref BufferLookup<StatModifier<TStatModifier, TStatModifierStack>> statObserversLookup, 
+            ref NativeHashSet<Entity> dependsOnEntities,
+            ref NativeList<StatHandle> tmpObserverStatHandles)
+            where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
+            where TStatModifierStack : unmanaged, IStatsModifierStack
+        {
+            if (statObserversLookup.TryGetBuffer(entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer))
+            {
+                GetStatEntitiesThatEntityDependsOn(entity, ref statModifiersBuffer, ref dependsOnEntities, ref tmpObserverStatHandles);
+            }
+        }
+        
+        /// <summary>
+        /// Returns all entities that have stats and depend on stats present on the specified entity.
+        /// Excludes the specified entity.
+        /// Useful for netcode relevancy
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void GetStatEntitiesThatEntityDependsOn<TStatModifier, TStatModifierStack>(Entity entity, 
+            ref DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBufferOnEntity, 
+            ref NativeHashSet<Entity> dependsOnEntities,
+            ref NativeList<StatHandle> tmpObserverStatHandles)
+            where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
+            where TStatModifierStack : unmanaged, IStatsModifierStack
+        {
+            tmpObserverStatHandles.Clear();
+            for (int i = 0; i < statModifiersBufferOnEntity.Length; i++)
+            {
+                StatModifier<TStatModifier, TStatModifierStack> modifier = statModifiersBufferOnEntity[i];
+                modifier.Modifier.AddObservedStatsToList(ref tmpObserverStatHandles);
+            }
+
+            for (int i = 0; i < tmpObserverStatHandles.Length; i++)
+            {
+                dependsOnEntities.Add(tmpObserverStatHandles[i].Entity);
             }
         }
     }

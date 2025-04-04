@@ -4,13 +4,14 @@ using Unity.Jobs;
 
 namespace Trove.Stats
 {
-    public struct StatsWorldData<TStatModifierStack>
+    public struct StatsWorldData<TStatModifier, TStatModifierStack>
+        where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
         private NativeList<StatChangeEvent> _statChangeEventsList;
         public NativeList<StatChangeEvent> StatChangeEventsList => _statChangeEventsList;
-        private NativeList<StatModifierHandle> _modifierTriggerEventsList;
-        public NativeList<StatModifierHandle> ModifierTriggerEventsList => _modifierTriggerEventsList;
+        private NativeList<ModifierTriggerEvent<TStatModifier, TStatModifierStack>> _modifierTriggerEventsList;
+        public NativeList<ModifierTriggerEvent<TStatModifier, TStatModifierStack>> ModifierTriggerEventsList => _modifierTriggerEventsList;
 
         internal NativeList<StatHandle> _tmpModifierObservedStatsList;
         internal NativeList<StatObserver> _tmpStatObserversList;
@@ -22,7 +23,7 @@ namespace Trove.Stats
         public StatsWorldData(Allocator allocator)
         {
             _statChangeEventsList = new NativeList<StatChangeEvent>(allocator);
-            _modifierTriggerEventsList = new NativeList<StatModifierHandle>(allocator);
+            _modifierTriggerEventsList = new NativeList<ModifierTriggerEvent<TStatModifier, TStatModifierStack>>(allocator);
 
             _tmpModifierObservedStatsList = new NativeList<StatHandle>(Allocator.Persistent);
             _tmpStatObserversList = new NativeList<StatObserver>(Allocator.Persistent);
