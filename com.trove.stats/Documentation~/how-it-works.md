@@ -260,64 +260,17 @@ Removing modifiers this way will automatically and instantly recompute any other
 
 #### Stat events
 
+> Note: You can take a look at the `SampleStatEventsSystem` in the "Starter Content" sample, for an example of how to setting up a system to process stat events.
+
 Two types of stat events are supported:
 * Stat change events occur whenever a stat's value has changed. These events contain the `StatHandle` of the changed stat, the previous values, and the current values.
 * Modifier trigger events occur whenever a stat modifier has been applied or re-applied to a stat. These events contain the `StatModifierHandle` of the triggered modifier, as well as the data of the modifier struct at the moment of triggering the event. 
-
-In order to support these events, you must first ensure that the `StatsAccessor` you've created in your system supports them (there are bool parameters for these):
-```cs
-_statsAccessor = new StatsAccessor<SampleStatModifier, SampleStatModifier.Stack>(ref state, supportStatChangeEvents, supportModifierTriggerEvents);
-```
 
 For stat change events, you must make sure the stat itself supports change events. You can configure this either during stat creation (a bool parameter for the `CreateStat` and `TryCreateStat` methods handles this), or by using `StatsAccessor.TrySetStatProduceChangeEvents`. 
 
 For modifier trigger events, stat modifiers are responsible for setting the value of the `out bool shouldProduceModifierTriggerEvent` parameter in their `Apply` function. 
 
-If both the `StatsAccessor` and the stat/modifier are configured to support events, the events will be created. Events can be accessed through the `StatsWorldData`, which is stored in `StatsWorldSingleton`.
-
-Here is some example code of a system that changes a value on a stat and then acceses events. This example assumes a modifier supporting trigger events was already added to the stat:
-```cs
-public partial struct ExampleStatsEventsSystem : ISystem
-{
-    private StatsAccessor<SampleStatModifier, SampleStatModifier.Stack> _statsAccessor;
-    
-    [BurstCompile]
-    public void OnCreate(ref SystemState state)
-    {
-        state.RequireForUpdate<StatsWorldSingleton>();
-
-        _statsAccessor = new StatsAccessor<SampleStatModifier, SampleStatModifier.Stack>(ref state, true, true);
-    }
-
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        StatsWorldSingleton statsWorldSingleton = SystemAPI.GetSingleton<StatsWorldSingleton>();
-        _statsAccessor.Update(ref state);
-        
-        foreach (var stats in SystemAPI.Query<SampleStats>())
-        {
-            _statsAccessor.TryAddStatBaseValue(stats.StrengthHandle, 5f, ref statsWorldSingleton.StatsWorldData);
-
-            // Iterate stat change events
-            UnityEngine.Debug.Log($"Detected {statsWorldSingleton.StatsWorldData.StatChangeEventsList.Length} stat change events");
-
-            // Clear stat change events
-            statsWorldSingleton.StatsWorldData.StatChangeEventsList.Clear();
-
-            // Iterate modifier trigger events
-            UnityEngine.Debug.Log($"Detected {statsWorldSingleton.StatsWorldData.ModifierTriggerEventsList.Length} modifier trigger events");
-
-            // Clear modifier trigger events
-            statsWorldSingleton.StatsWorldData.ModifierTriggerEventsList.Clear();
-
-        }
-    }
-```
-
-> Note: There is no built-in system in the stats package that clears stats events lists. You must ensure you clear these events lists yourself, or else these lists will just keep growing.
-
-> Note: Even though this example is done on the main thread, stat events can also be accessed and cleared in jobs.
+Events can be accessed through the `StatsWorldData`, which is stored in `StatsWorldSingleton`.
 
 
 #### Destroying stat entities

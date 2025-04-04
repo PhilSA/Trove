@@ -17,20 +17,14 @@ namespace Trove.Stats
         internal BufferLookup<StatModifier<TStatModifier, TStatModifierStack>> _statModifiersLookup;
         internal BufferLookup<StatObserver> _statObserversLookup;
 
-        public bool SupportStatChangeEvents { get; set; }
-        public bool SupportModifierTriggerEvents { get; set; }
-
         private Stat _nullStat;
 
-        public StatsAccessor(ref SystemState state, bool supportStatChangeEvents, bool supportModifierTriggerEvents)
+        public StatsAccessor(ref SystemState state)
         {
             _statsOwnerLookup = state.GetComponentLookup<StatsOwner>(false);
             _statsLookup = state.GetBufferLookup<Stat>(false);
             _statModifiersLookup = state.GetBufferLookup<StatModifier<TStatModifier, TStatModifierStack>>(false);
             _statObserversLookup = state.GetBufferLookup<StatObserver>(false);
-
-            SupportStatChangeEvents = supportStatChangeEvents;
-            SupportModifierTriggerEvents = supportModifierTriggerEvents;
 
             _nullStat = default;
         }
@@ -43,9 +37,6 @@ namespace Trove.Stats
                 _statsLookup = default,
                 _statModifiersLookup = default,
                 _statObserversLookup = default,
-
-                SupportStatChangeEvents = false,
-                SupportModifierTriggerEvents = false,
 
                 _nullStat = default,
             };
@@ -371,8 +362,7 @@ namespace Trove.Stats
                 {
                     if (statRef.LastModifierIndex >= 0)
                     {
-                        bool success = _statModifiersLookup.TryGetBuffer(newStatHandle.Entity,
-                            out statModifiersBuffer);
+                        bool success = _statModifiersLookup.TryGetBuffer(newStatHandle.Entity, out statModifiersBuffer);
                         Assert.IsTrue(success);
                     }
                     if (statRef.LastObserverIndex >= 0)
@@ -387,15 +377,13 @@ namespace Trove.Stats
                         ref statRef,
                         ref statModifiersBuffer,
                         ref statObserversBuffer,
-                        ref statsWorldData,
-                        SupportStatChangeEvents,
-                        SupportModifierTriggerEvents);
+                        ref statsWorldData);
                 }
             }
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void TryUpdateStatSingleEntity(
+        public void TryUpdateStatSingleEntity(
             StatHandle statHandle, 
             ref DynamicBuffer<Stat> statsBuffer,
             ref DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer,
@@ -411,18 +399,20 @@ namespace Trove.Stats
             {
                 StatHandle newStatHandle = statsWorldData._tmpUpdatedStatsList[i];
 
-                ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(newStatHandle, ref statsBuffer, out bool getStatSuccess, ref _nullStat);
-                if (getStatSuccess)
+                if (newStatHandle.Entity == statHandle.Entity)
                 {
-                    StatsUtilities.UpdateSingleStatCommon(
-                        newStatHandle,
-                        ref statsReader,
-                        ref statRef,
-                        ref statModifiersBuffer,
-                        ref statObserversBuffer,
-                        ref statsWorldData,
-                        SupportStatChangeEvents,
-                        SupportModifierTriggerEvents);
+                    ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(newStatHandle, ref statsBuffer,
+                        out bool getStatSuccess, ref _nullStat);
+                    if (getStatSuccess)
+                    {
+                        StatsUtilities.UpdateSingleStatCommon(
+                            newStatHandle,
+                            ref statsReader,
+                            ref statRef,
+                            ref statModifiersBuffer,
+                            ref statObserversBuffer,
+                            ref statsWorldData);
+                    }
                 }
             }
         }
@@ -455,9 +445,7 @@ namespace Trove.Stats
                 ref initialStatRef,
                 ref initialStatModifiersBuffer,
                 ref initialStatObserversBuffer,
-                ref statsWorldData,
-                SupportStatChangeEvents,
-                SupportModifierTriggerEvents);
+                ref statsWorldData);
 
             // Then update following stats
             DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer = default;
@@ -487,9 +475,7 @@ namespace Trove.Stats
                         ref statRef,
                         ref statModifiersBuffer,
                         ref statObserversBuffer,
-                        ref statsWorldData,
-                        SupportStatChangeEvents,
-                        SupportModifierTriggerEvents);
+                        ref statsWorldData);
                 }
             }
         }

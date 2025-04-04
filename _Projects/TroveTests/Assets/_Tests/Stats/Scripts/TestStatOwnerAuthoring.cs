@@ -22,9 +22,9 @@ class TestStatOwnerAuthoring : MonoBehaviour
             StatsUtilities.BakeStatsComponents(this, entity, out StatsBaker<TestStatModifier, TestStatModifier.Stack> statsBaker);
             
             TestStatOwner testStatOwner = new TestStatOwner();
-            statsBaker.CreateStat(authoring.StatA, true, out testStatOwner.StatA);
-            statsBaker.CreateStat(authoring.StatB, true, out testStatOwner.StatB);
-            statsBaker.CreateStat(authoring.StatC, true, out testStatOwner.StatC);
+            statsBaker.CreateStat(authoring.StatA, false, out testStatOwner.StatA);
+            statsBaker.CreateStat(authoring.StatB, false, out testStatOwner.StatB);
+            statsBaker.CreateStat(authoring.StatC, false, out testStatOwner.StatC);
 
             // bool success = false;
             // success = statsBaker.TryAddStatModifier(testStatOwner.StatA, new TestStatModifier

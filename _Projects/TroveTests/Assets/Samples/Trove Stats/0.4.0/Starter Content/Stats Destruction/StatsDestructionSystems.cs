@@ -3,6 +3,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
+using UnityEngine;
 
 internal struct StatsDestructionSingleton : IComponentData
 {
@@ -39,14 +40,16 @@ partial struct StatsPreDestructionSystem : ISystem
     {
         StatsDestructionSingleton statsDestructionSingleton = SystemAPI.GetSingletonRW<StatsDestructionSingleton>().ValueRW;
 
-        state.Dependency = new StatsPreDestruction
+        state.Dependency = new StatsPreDestructionJob
         {
             StatsToUpdate = statsDestructionSingleton.StatsToUpdate,
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public partial struct StatsPreDestruction : IJobEntity
+    [WithAll(typeof(DestroyEntity))]
+    [WithAll(typeof(StatModifier<SampleStatModifier, SampleStatModifier.Stack>))] // needed so we don't try to update stat handles that cannot use the same StatAccessor<T,S> type
+    public partial struct StatsPreDestructionJob : IJobEntity
     {
         public NativeList<StatHandle> StatsToUpdate;
         
@@ -69,24 +72,26 @@ partial struct StatsPostDestructionSystem : ISystem
         state.RequireForUpdate<StatsWorldSingleton>();
         state.RequireForUpdate<StatsDestructionSingleton>();
         
-        _statsAccessor = new StatsAccessor<SampleStatModifier, SampleStatModifier.Stack>(ref state, true, true);
+        _statsAccessor = new StatsAccessor<SampleStatModifier, SampleStatModifier.Stack>(ref state);
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        StatsWorldSingleton statsWorldSingleton = SystemAPI.GetSingleton<StatsWorldSingleton>();
+        StatsWorldSingleton statsWorldSingleton = SystemAPI.GetSingletonRW<StatsWorldSingleton>().ValueRW;
         StatsDestructionSingleton statsDestructionSingleton = SystemAPI.GetSingletonRW<StatsDestructionSingleton>().ValueRW;
         _statsAccessor.Update(ref state);
 
-        state.Dependency = new StatsPostDestruction
+        state.Dependency = new StatsPostDestructionJob
         {
             StatsToUpdate = statsDestructionSingleton.StatsToUpdate,
+            StatsAccessor = _statsAccessor,
+            StatsWorldData = statsWorldSingleton.StatsWorldData,
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public struct StatsPostDestruction : IJob
+    public struct StatsPostDestructionJob : IJob
     {
         public NativeList<StatHandle> StatsToUpdate;
         public StatsAccessor<SampleStatModifier, SampleStatModifier.Stack> StatsAccessor;

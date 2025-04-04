@@ -19,13 +19,13 @@ partial struct StatsStarterContentSystem : ISystem
     {
         state.RequireForUpdate<StatsWorldSingleton>();
 
-        _statsAccessor = new StatsAccessor<SampleStatModifier, SampleStatModifier.Stack>(ref state, true, true);
+        _statsAccessor = new StatsAccessor<SampleStatModifier, SampleStatModifier.Stack>(ref state);
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        StatsWorldSingleton statsWorldSingleton = SystemAPI.GetSingleton<StatsWorldSingleton>();
+        StatsWorldSingleton statsWorldSingleton = SystemAPI.GetSingletonRW<StatsWorldSingleton>().ValueRW;
         _statsAccessor.Update(ref state);
         
         state.Dependency = new StatsStarterContentJob

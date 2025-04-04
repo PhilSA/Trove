@@ -242,7 +242,7 @@ namespace Trove.Stats.Tests
         {
             ref SystemState state = ref World.GetOrCreateSystemManaged<EndSimulationEntityCommandBufferSystem>().CheckedStateRef;
             StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack> statsAccessor = 
-                new StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(ref state, true, true);
+                new StatsAccessor<StatsTestsStatModifier, StatsTestsStatModifier.Stack>(ref state);
             statsAccessor.Update(ref state); 
             return statsAccessor;
         }
@@ -2396,9 +2396,6 @@ namespace Trove.Stats.Tests
 
             UpdateStatsWorld(ref statsAccessor);
             
-            statsAccessor.SupportStatChangeEvents = true;
-            statsAccessor.SupportModifierTriggerEvents = true;
-
             // This modifier does not change stat value. No stat change
             // Triggers mod 1
             success = statsAccessor.TryAddStatModifier(

@@ -18,7 +18,7 @@ partial struct StatsTesterSystem : ISystem
     {
         state.RequireForUpdate<StatsTester>();
         
-        _statsAccessor = new StatsAccessor<TestStatModifier, TestStatModifier.Stack>(ref state, false, false);
+        _statsAccessor = new StatsAccessor<TestStatModifier, TestStatModifier.Stack>(ref state);
         _statsWorldData = new StatsWorldData<TestStatModifier, TestStatModifier.Stack>(Allocator.Persistent);
     }
     

@@ -110,15 +110,13 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static unsafe void UpdateSingleStatCommon<TStatModifier, TStatModifierStack>(
+        internal static void UpdateSingleStatCommon<TStatModifier, TStatModifierStack>(
             StatHandle statHandle,
             ref StatsReader statsReader,
             ref Stat statRef,
             ref DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer,
             ref DynamicBuffer<StatObserver> statObserversBuffer,
-            ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData,
-            bool supportStatChangeEvents,
-            bool supportModifierTriggerEvents)
+            ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
             where TStatModifierStack : unmanaged, IStatsModifierStack
         {
@@ -142,8 +140,7 @@ namespace Trove.Stats
                         out bool addModifierTriggerEvent);
 
                     // Handle modifier trigger events
-                    if (addModifierTriggerEvent && supportModifierTriggerEvents &&
-                        statsWorldData.ModifierTriggerEventsList.IsCreated)
+                    if (addModifierTriggerEvent && statsWorldData.ModifierTriggerEventsList.IsCreated)
                     {
                         statsWorldData.ModifierTriggerEventsList.Add(new ModifierTriggerEvent<TStatModifier, TStatModifierStack>
                         {
@@ -166,7 +163,7 @@ namespace Trove.Stats
             if (initialStat.Value != statRef.Value)
             {
                 // Stat change events
-                if (statRef.ProduceChangeEvents == 1 && supportStatChangeEvents && statsWorldData.StatChangeEventsList.IsCreated)
+                if (statRef.ProduceChangeEvents == 1 && statsWorldData.StatChangeEventsList.IsCreated)
                 {
                     statsWorldData.StatChangeEventsList.Add(new StatChangeEvent
                     {
