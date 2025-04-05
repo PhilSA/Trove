@@ -13,7 +13,7 @@ namespace Trove.EventSystems
         where S : unmanaged, IComponentData, IEntityPolymorphicEventsSingleton // The events singleton
         where B : unmanaged, IBufferElementData, ISingleByteElement // The event buffer element
         where H : unmanaged, IComponentData, IEnableableComponent // The enableable component that signals presence of events on buffer entities
-        where P : unmanaged, IPolymorphicEventTypeManager
+        where P : unmanaged, IPolymorphicObject
     {
         private EntityQuery _singletonRWQuery;
         private EntityQuery _query;
@@ -100,7 +100,7 @@ namespace Trove.EventSystems
     public unsafe struct EventTransferPolymorphicStreamToBufferJob<B, H, P> : IJob
         where B : unmanaged, IBufferElementData, ISingleByteElement // The event buffer element
         where H : unmanaged, IComponentData, IEnableableComponent // The enableable component that signals presence of events on buffer entities
-        where P : unmanaged, IPolymorphicEventTypeManager
+        where P : unmanaged, IPolymorphicObject
     {
         public P PolymorphicTypeManager;
         public NativeStream.Reader EventsStream;

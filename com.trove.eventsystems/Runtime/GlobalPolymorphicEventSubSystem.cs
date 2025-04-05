@@ -10,7 +10,7 @@ namespace Trove.EventSystems
 {
     public unsafe struct GlobalPolymorphicEventSubSystem<S, P>
         where S : unmanaged, IComponentData, IGlobalPolymorphicEventsSingleton // The events singleton
-        where P : unmanaged, IPolymorphicEventTypeManager
+        where P : unmanaged, IPolymorphicObject
     {
         private EntityQuery _singletonRWQuery;
         private NativeReference<UnsafeList<NativeStream>> _eventStreamsReference;
@@ -85,7 +85,7 @@ namespace Trove.EventSystems
 
     [BurstCompile]
     public unsafe struct EventTransferPolymorphicStreamToListJob<P> : IJob
-        where P : unmanaged, IPolymorphicEventTypeManager
+        where P : unmanaged, IPolymorphicObject
     {
         public P PolymorphicTypeManager;
         public NativeStream.Reader EventsStream;

@@ -15,11 +15,6 @@ namespace Trove.EventSystems
         public T BufferElement { get; set; }
     }
 
-    public interface IPolymorphicEventTypeManager
-    {
-        public int GetSizeForTypeId(int typeId);
-    }
-
     public interface ISingleByteElement
     {
         public byte Element { get; set; }

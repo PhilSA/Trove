@@ -41,17 +41,20 @@ namespace PolymorphicStructsSourceGenerators
 
         public string MetaDataName;
         public StructModel TargetStructModel;
+        public bool AllowEntitiesAndBlobs;
         public List<MethodModel> InterfaceMethodModels;
         public List<PropertyModel> InterfacePropertyModels;
 
         public PolyInterfaceModel(
             string metaDataName,
             StructModel targetStructModel,
+            bool allowEntitiesAndBlobs,
             List<MethodModel> interfaceMethodModels,
             List<PropertyModel> interfacePropertyModels)
         {
             MetaDataName = metaDataName;
             TargetStructModel = targetStructModel;
+            AllowEntitiesAndBlobs = allowEntitiesAndBlobs;
             InterfaceMethodModels = interfaceMethodModels;
             InterfacePropertyModels = interfacePropertyModels;
 
@@ -61,7 +64,7 @@ namespace PolymorphicStructsSourceGenerators
 
         public void RecomputeValueHash()
         {
-            string valuesString = $"{MetaDataName}{TargetStructModel.ValueHash}{InterfaceMethodModels.Count}{InterfacePropertyModels.Count}";
+            string valuesString = $"{MetaDataName}{TargetStructModel.ValueHash}{AllowEntitiesAndBlobs}{InterfaceMethodModels.Count}{InterfacePropertyModels.Count}";
             ValueHash = valuesString.GetHashCode();
         }
 
@@ -195,58 +198,33 @@ namespace PolymorphicStructsSourceGenerators
         public const string NamespaceName_PolymorphicStructs = NamespaceName_Trove + ".PolymorphicStructs";
 
         public const string TypeName_Void = "void";
-        public const string TypeName_TypeId = "int";
         public const string TypeName_IPolymorphicObject = "IPolymorphicObject";
-        public const string TypeName_PolymorphicByteArrayAttribute = "PolymorphicByteArrayInterfaceAttribute";
-        public const string TypeName_PolymorphicUnionStructAttribute = "PolymorphicUnionStructInterfaceAttribute";
+        public const string TypeName_PolymorphicStructInterfaceAttribute = "PolymorphicStructInterfaceAttribute";
         public const string TypeName_PolymorphicStructAttribute = "PolymorphicStructAttribute";
-        public const string TypeName_WriteBackStructDataAttribute = "WriteBackStructData";
+        public const string TypeName_WriteBackStructDataAttribute = "WriteBackStructDataAttribute";
+        public const string TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute = "AllowEntitiesAndBlobsInPolymorphicStructAttribute";
         public const string TypeName_UnsafeUtility = "UnsafeUtility";
-        public const string TypeName_ByteArrayUtilities = "ByteArrayUtilities";
-        public const string TypeName_NativeStream_Writer = "NativeStream.Writer";
-        public const string TypeName_UnsafeStream_Writer = "UnsafeStream.Writer";
-        public const string TypeName_NativeStream_Reader = "NativeStream.Reader";
-        public const string TypeName_UnsafeStream_Reader = "UnsafeStream.Reader";
-        public const string TypeName_NativeList_Byte = "NativeList<byte>";
-        public const string TypeName_UnsafeList_Byte = "UnsafeList<byte>";
-        public const string TypeName_DynamicBuffer_Byte = "DynamicBuffer<byte>";
         public const string TypeName_FieldOffset = "FieldOffset";
 
-
-        public const string MetaDataName_PolymorphicByteArrayAttribute = NamespaceName_PolymorphicStructs + "." + TypeName_PolymorphicByteArrayAttribute;
-        public const string MetaDataName_PolymorphicUnionStructAttribute = NamespaceName_PolymorphicStructs + "." + TypeName_PolymorphicUnionStructAttribute;
+        public const string MetaDataName_PolymorphicStructInterfaceAttribute = NamespaceName_PolymorphicStructs + "." + TypeName_PolymorphicStructInterfaceAttribute;
         public const string MetaDataName_PolymorphicStructAttribute = NamespaceName_PolymorphicStructs + "." + TypeName_PolymorphicStructAttribute;
-        public const string MetaDataName_WriteBackStructDataAttribute = NamespaceName_PolymorphicStructs + "." + TypeName_WriteBackStructDataAttribute;
         public const string MetaDataName_Entity = "Unity.Entities.Entity";
         public const string MetaDataName_BlobAssetReference = "Unity.Entities.BlobAssetReference";
         public const string MetaDataName_BlobString = "Unity.Entities.BlobString";
         public const string MetaDataName_BlobArray = "Unity.Entities.BlobArray";
         public const string MetaDataName_BlobPtr = "Unity.Entities.BlobPtr";
 
-        public const string FileName_Errors = "PolymorphicStructErrors";
         public const string FileName_GeneratedSuffixAndFileType = ".generated.cs";
-        public const string FileName_PolymorphicByteArrayAttribute = TypeName_PolymorphicByteArrayAttribute + FileName_GeneratedSuffixAndFileType;
-        public const string FileName_PolymorphiUnionStructAttribute = TypeName_PolymorphicUnionStructAttribute + FileName_GeneratedSuffixAndFileType;
+        public const string FileName_PolymorphiUnionStructAttribute = TypeName_PolymorphicStructInterfaceAttribute + FileName_GeneratedSuffixAndFileType;
         public const string FileName_PolymorphicStructAttribute = TypeName_PolymorphicStructAttribute + FileName_GeneratedSuffixAndFileType;
-        public const string FileName_WriteBackStructData = TypeName_WriteBackStructDataAttribute + FileName_GeneratedSuffixAndFileType;
+        public const string FileName_WriteBackStructDataAttribute = TypeName_WriteBackStructDataAttribute + FileName_GeneratedSuffixAndFileType;
+        public const string FileName_AllowEntitiesAndBlobsInPolymorphicStructAttribute = TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute + FileName_GeneratedSuffixAndFileType;
 
         public const string Decorator_InitializeOnLoadMethod = "[UnityEditor.InitializeOnLoadMethod]";
         public const string Decorator_MethodImpl_AggressiveInlining = "[MethodImpl(MethodImplOptions.AggressiveInlining)]";
         public const string Decorator_StructLayout_Explicit = "[StructLayout(LayoutKind.Explicit)]";
         
-        public const string Name_Method_GetSizeForTypeId = "GetSizeForTypeId";
-        public const string Name_Method_GetTotalWrittenSize = "GetTotalWrittenSize";
-        public const string Name_Method_Write = "Write";
-        public const string Name_Method_Add = "Add";
         public const string Name_Enum_TypeId = "TypeId";
-        public const string Name_StreamWriter = "streamWriter";
-        public const string Name_StreamReader = "streamReader";
-        public const string Name_ByteList = "byteList";
-        public const string Name_ByteBuffer = "byteBuffer";
-        public const string Name_ByteIndex = "byteIndex";
-        public const string Name_DataSize = "dataSize";
-        public const string Name_ByteArrayPtr = "byteArrayPtr";
-        public const string Name_ByteArrayLength = "byteArrayLength";
 
         public const string SizeOf_TypeId = "4";
 
@@ -259,12 +237,8 @@ namespace PolymorphicStructsSourceGenerators
             GenerateAttributes(context);
 
             // Create the values provider for poly interfaces and structs
-            IncrementalValuesProvider<PolyInterfaceModel> polyByteArrayValuesProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
-                MetaDataName_PolymorphicByteArrayAttribute,
-                PolyByteArrayValuesProviderPredicate,
-                PolyByteArrayInterfaceValuesProviderTransform);
             IncrementalValuesProvider<PolyInterfaceModel> polyUnionStructValuesProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
-                MetaDataName_PolymorphicUnionStructAttribute,
+                MetaDataName_PolymorphicStructInterfaceAttribute,
                 PolyUnionStructInterfaceValuesProviderPredicate,
                 PolyUnionStructInterfaceValuesProviderTransform);
             IncrementalValuesProvider<PolyStructModel> polyStructValuesProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -273,16 +247,13 @@ namespace PolymorphicStructsSourceGenerators
                 PolyStructValuesProviderTransform);
 
             // Collect poly structs into an array, and create combined value providers of (PolyInterface, PolyStructsArray)
-            IncrementalValueProvider<ImmutableArray<PolyInterfaceModel>> byteArrayInterfacesValueArrayProvider = polyByteArrayValuesProvider.Collect();
             IncrementalValueProvider<ImmutableArray<PolyInterfaceModel>> unionStructInterfacesValueArrayProvider = polyUnionStructValuesProvider.Collect();
             IncrementalValueProvider<ImmutableArray<PolyStructModel>> polyStructsValueArrayProvider = polyStructValuesProvider.Collect();
 
             // Create the combimed interfaces + structs value providers
-            IncrementalValueProvider<(ImmutableArray<PolyInterfaceModel> Left, ImmutableArray<PolyStructModel> Right)> polyByteArrayAndStructsValuesProvider = byteArrayInterfacesValueArrayProvider.Combine(polyStructsValueArrayProvider);
             IncrementalValueProvider<(ImmutableArray<PolyInterfaceModel> Left, ImmutableArray<PolyStructModel> Right)> polyUnionStructAndStructsValuesProvider = unionStructInterfacesValueArrayProvider.Combine(polyStructsValueArrayProvider);
 
             // For each element matching this pipeline, handle output
-            context.RegisterSourceOutput(polyByteArrayAndStructsValuesProvider, ByteArraySourceOutputter);
             context.RegisterSourceOutput(polyUnionStructAndStructsValuesProvider, UnionStructSourceOutputter);
         }
 
@@ -295,15 +266,7 @@ namespace PolymorphicStructsSourceGenerators
                 writer.WriteInNamespace(NamespaceName_PolymorphicStructs, () =>
                 {
                     writer.WriteLine($"[System.AttributeUsage(System.AttributeTargets.Interface)]");
-                    writer.WriteLine($"internal class {TypeName_PolymorphicByteArrayAttribute} : System.Attribute {{}}");
-                });
-                i.AddSource(FileName_PolymorphicByteArrayAttribute, writer.FileContents);
-
-                writer = new FileWriter();
-                writer.WriteInNamespace(NamespaceName_PolymorphicStructs, () =>
-                {
-                    writer.WriteLine($"[System.AttributeUsage(System.AttributeTargets.Interface)]");
-                    writer.WriteLine($"internal class {TypeName_PolymorphicUnionStructAttribute} : System.Attribute {{}}");
+                    writer.WriteLine($"internal class {TypeName_PolymorphicStructInterfaceAttribute} : System.Attribute {{}}");
                 });
                 i.AddSource(FileName_PolymorphiUnionStructAttribute, writer.FileContents);
 
@@ -321,21 +284,16 @@ namespace PolymorphicStructsSourceGenerators
                     writer.WriteLine($"[System.AttributeUsage(System.AttributeTargets.Method)]");
                     writer.WriteLine($"internal class {TypeName_WriteBackStructDataAttribute}: System.Attribute {{}}");
                 });
-                i.AddSource(FileName_WriteBackStructData, writer.FileContents);
+                i.AddSource(FileName_WriteBackStructDataAttribute, writer.FileContents);
+
+                writer = new FileWriter();
+                writer.WriteInNamespace(NamespaceName_PolymorphicStructs, () =>
+                {
+                    writer.WriteLine($"[System.AttributeUsage(System.AttributeTargets.Interface)]");
+                    writer.WriteLine($"internal class {TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute}: System.Attribute {{}}");
+                });
+                i.AddSource(FileName_AllowEntitiesAndBlobsInPolymorphicStructAttribute, writer.FileContents);
             });
-        }
-
-        private static bool PolyByteArrayValuesProviderPredicate(SyntaxNode syntaxNode, System.Threading.CancellationToken cancellationToken)
-        {
-            return syntaxNode is InterfaceDeclarationSyntax;
-        }
-
-        private static PolyInterfaceModel PolyByteArrayInterfaceValuesProviderTransform(GeneratorAttributeSyntaxContext generatorAttributeSyntaxContext, System.Threading.CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            return CommonInterfaceValuesProviderTransform(generatorAttributeSyntaxContext, "ByteArray", false);
-
         }
 
         private static bool PolyUnionStructInterfaceValuesProviderPredicate(SyntaxNode syntaxNode, System.Threading.CancellationToken cancellationToken)
@@ -347,7 +305,7 @@ namespace PolymorphicStructsSourceGenerators
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            return CommonInterfaceValuesProviderTransform(generatorAttributeSyntaxContext, "UnionStruct", true);
+            return CommonInterfaceValuesProviderTransform(generatorAttributeSyntaxContext, "PStruct");
         }
 
         private static bool PolyStructValuesProviderPredicate(SyntaxNode syntaxNode, System.Threading.CancellationToken cancellationToken)
@@ -376,12 +334,23 @@ namespace PolymorphicStructsSourceGenerators
 
         private static PolyInterfaceModel CommonInterfaceValuesProviderTransform(
             GeneratorAttributeSyntaxContext generatorAttributeSyntaxContext,
-            string targetStructNamePrefix,
-            bool requireTargetStructHasNoFields)
+            string targetStructNamePrefix)
         {
             ITypeSymbol interfaceTypeSymbol = (ITypeSymbol)generatorAttributeSyntaxContext.TargetSymbol;
 
             string interfaceNamespaceMetadataName = SourceGenUtils.GetNamespaceMetaDataName(interfaceTypeSymbol);
+
+            bool allowEntitiesAndBlobs = false;
+            ImmutableArray<AttributeData> interfaceAttributes = interfaceTypeSymbol.GetAttributes();
+            for (int i = 0; i < interfaceAttributes.Length; i++)
+            {
+                AttributeData attribute = interfaceAttributes[i];
+                if (attribute.AttributeClass.Name == TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute)
+                {
+                    allowEntitiesAndBlobs = true;
+                    break;
+                }
+            }
 
             // Target struct
             string targetStructName = $"{targetStructNamePrefix}_{interfaceTypeSymbol.Name}";
@@ -547,7 +516,8 @@ namespace PolymorphicStructsSourceGenerators
 
             return new PolyInterfaceModel(
                 interfaceTypeSymbol.MetadataName, 
-                targetStructModel, 
+                targetStructModel,
+                allowEntitiesAndBlobs,
                 interfaceMethodModels, 
                 interfacePropertyModels);
         }
@@ -557,9 +527,6 @@ namespace PolymorphicStructsSourceGenerators
             CompiledStructsForInterfaceData compiledStructsForInterfaceData = new CompiledStructsForInterfaceData();
             compiledStructsForInterfaceData.PolyInterfaceModel = polyInterfaceModel;
             compiledStructsForInterfaceData.PolyStructModels = new List<PolyStructModel>();
-
-            // TODO: Sanity checks
-            // - no 2 structs with same name (structModel.Name)
 
             // Add poly structs implementing this poly interface to a list
             ImmutableArray<PolyStructModel>.Enumerator polyStructModelsEnumerator = polyStructModels.GetEnumerator();
@@ -578,361 +545,6 @@ namespace PolymorphicStructsSourceGenerators
             }
 
             return compiledStructsForInterfaceData;
-        }
-
-        private static void ByteArraySourceOutputter(SourceProductionContext sourceProductionContext, (ImmutableArray<PolyInterfaceModel> Left, ImmutableArray<PolyStructModel> Right) source)
-        {
-            sourceProductionContext.CancellationToken.ThrowIfCancellationRequested();
-
-            if (EnableDebug)
-            {
-                OutputDebugFile(sourceProductionContext, "Debug_PolymorphicStructsByteArray", new List<string>
-                {
-                    $"Found byte array structs count: {source.Left.Length} and polystructs count {source.Right.Length}",
-                });
-            }
-
-            if (source.Left.Length > 0)
-            {
-                for (int a = 0; a < source.Left.Length; a++)
-                {
-                    LogMessages.Clear();
-
-                    CompiledStructsForInterfaceData compiledCodeData = CreateCompiledStructsForInterfaceData(source.Left[a], source.Right);
-
-                    FilterOutInvalidStructs(PolyInterfaceType.ByteArray, compiledCodeData, LogMessages);
-
-                    PolyInterfaceModel polyInterfaceModel = compiledCodeData.PolyInterfaceModel;
-
-                    FileWriter writer = new FileWriter();
-
-                    // Usings
-                    writer.WriteUsingsAndRemoveDuplicates(GetCommonUsings());
-
-                    writer.WriteLine($"");
-
-                    writer.WriteInNamespace(polyInterfaceModel.TargetStructModel.Namespace, () =>
-                    {
-                        writer.WriteLine($"public unsafe partial struct {polyInterfaceModel.TargetStructModel.Name}");
-                        writer.WriteInScope(() =>
-                        {
-                            // Types enum
-                            GenerateTypeIdEnum(writer, compiledCodeData.PolyStructModels);
-
-                            writer.WriteLine($"");
-
-                            // GetSizeForTypeId 
-                            writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                            writer.WriteLine($"public int {Name_Method_GetSizeForTypeId}({TypeName_TypeId} typeId)");
-                            writer.WriteInScope(() =>
-                            {
-                                writer.WriteLine($"switch (({Name_Enum_TypeId})typeId)");
-                                writer.WriteInScope(() =>
-                                {
-                                    for (int i = 0; i < compiledCodeData.PolyStructModels.Count; i++)
-                                    {
-                                        PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[i];
-
-                                        writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
-                                        writer.WriteInScope(() =>
-                                        {
-                                            writer.WriteLine($"return {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                        });
-                                    }
-                                });
-
-                                writer.WriteLine($"return 0;");
-                            });
-
-                            writer.WriteLine($"");
-
-                            // GetTotalWrittenSize
-                            for (int i = 0; i < compiledCodeData.PolyStructModels.Count; i++)
-                            {
-                                PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[i];
-
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static int {Name_Method_GetTotalWrittenSize}(in {polyStructModel.StructModel.MetaDataName} s)");
-                                writer.WriteInScope(() =>
-                                {
-                                    writer.WriteLine($"return {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                });
-
-                                writer.WriteLine($"");
-                            }
-
-                            // Write
-                            for (int i = 0; i < compiledCodeData.PolyStructModels.Count; i++)
-                            {
-                                PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[i];
-
-                                // To ptr
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static void {Name_Method_Write}(byte* {Name_ByteArrayPtr}, int {Name_ByteIndex}, {polyStructModel.StructModel.MetaDataName} s, out int {Name_DataSize})");
-                                writer.WriteInScope(() =>
-                                {
-                                    writer.WriteLine($"{Name_DataSize} = {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                    writer.WriteLine($"{TypeName_ByteArrayUtilities}.WriteValues({Name_ByteArrayPtr}, {Name_ByteIndex}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
-                                });
-
-                                writer.WriteLine($"");
-
-                                // To NativeStream
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static void {Name_Method_Add}(ref {TypeName_NativeStream_Writer} {Name_StreamWriter}, {polyStructModel.StructModel.MetaDataName} s, out int {Name_DataSize})");
-                                writer.WriteInScope(() =>
-                                {
-                                    writer.WriteLine($"{Name_DataSize} = {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                    writer.WriteLine($"{TypeName_ByteArrayUtilities}.AddValues(ref {Name_StreamWriter}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
-                                });
-
-                                writer.WriteLine($"");
-
-                                // To UnsafeStream
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static void {Name_Method_Add}(ref {TypeName_UnsafeStream_Writer} {Name_StreamWriter}, {polyStructModel.StructModel.MetaDataName} s, out int {Name_DataSize})");
-                                writer.WriteInScope(() =>
-                                {
-                                    writer.WriteLine($"{Name_DataSize} = {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                    writer.WriteLine($"{TypeName_ByteArrayUtilities}.AddValues(ref {Name_StreamWriter}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
-                                });
-
-                                writer.WriteLine($"");
-
-                                // To NativeList<byte>
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static void {Name_Method_Add}(ref {TypeName_NativeList_Byte} {Name_ByteList}, {polyStructModel.StructModel.MetaDataName} s, out int {Name_ByteIndex}, out int {Name_DataSize})");
-                                writer.WriteInScope(() =>
-                                {
-                                    writer.WriteLine($"{Name_ByteIndex} = {Name_ByteList}.Length;");
-                                    writer.WriteLine($"{Name_DataSize} = {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                    writer.WriteLine($"{TypeName_ByteArrayUtilities}.AddValues(ref {Name_ByteList}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
-                                });
-
-                                writer.WriteLine($"");
-
-                                // To UnsafeList<byte>
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static void {Name_Method_Add}(ref {TypeName_UnsafeList_Byte} {Name_ByteList}, {polyStructModel.StructModel.MetaDataName} s, out int {Name_ByteIndex}, out int {Name_DataSize})");
-                                writer.WriteInScope(() =>
-                                {
-                                    writer.WriteLine($"{Name_ByteIndex} = {Name_ByteList}.Length;");
-                                    writer.WriteLine($"{Name_DataSize} = {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                    writer.WriteLine($"{TypeName_ByteArrayUtilities}.AddValues(ref {Name_ByteList}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
-                                });
-
-                                writer.WriteLine($"");
-
-                                // To DynamicBuffer<byte>
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static void {Name_Method_Add}(ref {TypeName_DynamicBuffer_Byte} {Name_ByteBuffer}, {polyStructModel.StructModel.MetaDataName} s, out int {Name_ByteIndex}, out int {Name_DataSize})");
-                                writer.WriteInScope(() =>
-                                {
-                                    writer.WriteLine($"{Name_ByteIndex} = {Name_ByteBuffer}.Length;");
-                                    writer.WriteLine($"{Name_DataSize} = {SizeOf_TypeId} + {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.MetaDataName}>();");
-                                    writer.WriteLine($"{TypeName_ByteArrayUtilities}.AddValues(ref {Name_ByteBuffer}, ({TypeName_TypeId}){Name_Enum_TypeId}.{polyStructModel.StructModel.Name}, s);");
-                                });
-                            }
-
-                            writer.WriteLine($"");
-
-                            // Method executors
-                            for (int i = 0; i < polyInterfaceModel.InterfaceMethodModels.Count; i++)
-                            {
-                                MethodModel methodModel = polyInterfaceModel.InterfaceMethodModels[i];
-
-                                // From Ptr
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static bool {methodModel.Name}{methodModel.MethodGenericTypesDeclaration}(byte* {Name_ByteArrayPtr}, int {Name_ByteArrayLength}, ref int {Name_ByteIndex}, {methodModel.MethodParametersDefinition}){methodModel.MethodGenericTypesConstraint}");
-                                writer.WriteInScope(() =>
-                                {
-
-                                    writer.WriteLine($"int startByteIndex = {Name_ByteIndex};");
-                                    writer.WriteLine($"");
-
-                                    // If can read typeId
-                                    writer.WriteLine($"if ({TypeName_ByteArrayUtilities}.CanReadValue({Name_ByteArrayLength}, {Name_ByteIndex}, {SizeOf_TypeId}))");
-                                    writer.WriteInScope(() =>
-                                    {
-                                        // Read typeId
-                                        writer.WriteLine($"{TypeName_ByteArrayUtilities}.ReadValue({Name_ByteArrayPtr}, ref {Name_ByteIndex}, out {TypeName_TypeId} typeId);");
-
-                                        writer.WriteLine($"");
-
-                                        // Switch over typeId
-                                        writer.WriteLine($"switch (({Name_Enum_TypeId})typeId)");
-                                        writer.WriteInScope(() =>
-                                        {
-                                            for (int t = 0; t < compiledCodeData.PolyStructModels.Count; t++)
-                                            {
-                                                PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[t];
-
-                                                // Case
-                                                writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
-                                                writer.WriteInScope(() =>
-                                                {
-                                                    // If can read struct
-                                                    writer.WriteLine($"if ({TypeName_ByteArrayUtilities}.CanReadValue<{polyStructModel.StructModel.MetaDataName}>({Name_ByteArrayLength}, {Name_ByteIndex}))");
-                                                    writer.WriteInScope(() =>
-                                                    {
-                                                        // Read struct
-                                                        writer.WriteLine($"{TypeName_ByteArrayUtilities}.ReadValue({Name_ByteArrayPtr}, ref {Name_ByteIndex}, out {polyStructModel.StructModel.MetaDataName} __s);");
-
-                                                        // Invoke method on struct
-                                                        writer.WriteLine($"__s.{methodModel.Name}({methodModel.MethodParametersInvoke});");
-
-                                                        // Handle struct writeback
-                                                        if (methodModel.HasWriteBack)
-                                                        {
-                                                            writer.WriteLine($"{TypeName_ByteArrayUtilities}.WriteValue({Name_ByteArrayPtr}, startByteIndex, __s);");
-                                                        }
-
-                                                        writer.WriteLine($"return true;");
-                                                    });
-                                                    writer.WriteLine($"return false;");
-                                                });
-                                            }
-                                        });
-                                    });
-
-                                    writer.WriteLine($"");
-
-                                    writer.WriteLine($"return false;");
-                                });
-
-                                writer.WriteLine($"");
-
-                                // From NativeStream
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static bool {methodModel.Name}{methodModel.MethodGenericTypesDeclaration}(ref {TypeName_NativeStream_Reader} {Name_StreamReader}, {methodModel.MethodParametersDefinition}){methodModel.MethodGenericTypesConstraint}");
-                                writer.WriteInScope(() =>
-                                {
-                                    // If can read typeId and struct
-                                    writer.WriteLine($"if ({Name_StreamReader}.RemainingItemCount > 0)");
-                                    writer.WriteInScope(() =>
-                                    {
-                                        // Read typeId
-                                        writer.WriteLine($"{TypeName_TypeId} typeId = {Name_StreamReader}.Read<{TypeName_TypeId}>();");
-
-                                        writer.WriteLine($"");
-
-                                        // Switch over typeId
-                                        writer.WriteLine($"switch (({Name_Enum_TypeId})typeId)");
-                                        writer.WriteInScope(() =>
-                                        {
-                                            for (int t = 0; t < compiledCodeData.PolyStructModels.Count; t++)
-                                            {
-                                                PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[t];
-
-                                                // Case
-                                                writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
-                                                writer.WriteInScope(() =>
-                                                {
-                                                    // Read struct
-                                                    writer.WriteLine($"{polyStructModel.StructModel.MetaDataName} __s = {Name_StreamReader}.Read<{polyStructModel.StructModel.MetaDataName}>();");
-
-                                                    // Invoke method on struct
-                                                    writer.WriteLine($"__s.{methodModel.Name}({methodModel.MethodParametersInvoke});");
-
-                                                    writer.WriteLine($"return true;");
-                                                });
-                                            }
-                                        });
-                                    });
-
-                                    writer.WriteLine($"");
-
-                                    writer.WriteLine($"return false;");
-                                });
-
-                                writer.WriteLine($"");
-
-                                // From UnsafeStream
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static bool {methodModel.Name}{methodModel.MethodGenericTypesDeclaration}(ref {TypeName_UnsafeStream_Reader} {Name_StreamReader}, {methodModel.MethodParametersDefinition}){methodModel.MethodGenericTypesConstraint}");
-                                writer.WriteInScope(() =>
-                                {
-                                    // If can read typeId and struct
-                                    writer.WriteLine($"if ({Name_StreamReader}.RemainingItemCount > 0)");
-                                    writer.WriteInScope(() =>
-                                    {
-                                        // Read typeId
-                                        writer.WriteLine($"{TypeName_TypeId} typeId = {Name_StreamReader}.Read<{TypeName_TypeId}>();");
-
-                                        writer.WriteLine($"");
-
-                                        // Switch over typeId
-                                        writer.WriteLine($"switch (({Name_Enum_TypeId})typeId)");
-                                        writer.WriteInScope(() =>
-                                        {
-                                            for (int t = 0; t < compiledCodeData.PolyStructModels.Count; t++)
-                                            {
-                                                PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[t];
-
-                                                // Case
-                                                writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
-                                                writer.WriteInScope(() =>
-                                                {
-                                                    // Read struct
-                                                    writer.WriteLine($"{polyStructModel.StructModel.MetaDataName} __s = {Name_StreamReader}.Read<{polyStructModel.StructModel.MetaDataName}>();");
-
-                                                    // Invoke method on struct
-                                                    writer.WriteLine($"__s.{methodModel.Name}({methodModel.MethodParametersInvoke});");
-
-                                                    writer.WriteLine($"return true;");
-                                                });
-                                            }
-                                        });
-                                    });
-
-                                    writer.WriteLine($"");
-
-                                    writer.WriteLine($"return false;");
-                                });
-
-                                writer.WriteLine($"");
-
-                                // From NativeList
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static bool {methodModel.Name}{methodModel.MethodGenericTypesDeclaration}({TypeName_NativeList_Byte} {Name_ByteList}, ref int {Name_ByteIndex}, {methodModel.MethodParametersDefinition}){methodModel.MethodGenericTypesConstraint}");
-                                writer.WriteInScope(() =>
-                                {
-                                    writer.WriteLine($"return {methodModel.Name}({Name_ByteList}.GetUnsafePtr(), {Name_ByteList}.Length, ref {Name_ByteIndex}, {methodModel.MethodParametersInvoke});");
-                                });
-
-                                writer.WriteLine($"");
-
-                                // From UnsafeList
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static bool {methodModel.Name}{methodModel.MethodGenericTypesDeclaration}({TypeName_UnsafeList_Byte} {Name_ByteList}, ref int {Name_ByteIndex}, {methodModel.MethodParametersDefinition}){methodModel.MethodGenericTypesConstraint}");
-                                writer.WriteInScope(() =>
-                                {
-                                    writer.WriteLine($"return {methodModel.Name}({Name_ByteList}.Ptr, {Name_ByteList}.Length, ref {Name_ByteIndex}, {methodModel.MethodParametersInvoke});");
-                                });
-
-                                writer.WriteLine($"");
-
-                                // From DynamicBuffer
-                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                                writer.WriteLine($"public static bool {methodModel.Name}{methodModel.MethodGenericTypesDeclaration}({TypeName_DynamicBuffer_Byte} {Name_ByteBuffer}, ref int {Name_ByteIndex}, {methodModel.MethodParametersDefinition}){methodModel.MethodGenericTypesConstraint}");
-                                writer.WriteInScope(() =>
-                                {
-                                    writer.WriteLine($"return {methodModel.Name}((byte*){Name_ByteBuffer}.GetUnsafePtr(), {Name_ByteBuffer}.Length, ref {Name_ByteIndex}, {methodModel.MethodParametersInvoke});");
-                                });
-
-                                writer.WriteLine($"");
-                            }
-
-                            LogMessages.Clear();
-                            WriteLogMessagesOutputter(writer, LogMessages);
-                        });
-                    });
-                    writer.WriteLine($"");
-
-                    SourceText sourceText = SourceText.From(writer.FileContents, Encoding.UTF8);
-                    sourceProductionContext.AddSource($"{polyInterfaceModel.TargetStructModel.Name}{FileName_GeneratedSuffixAndFileType}", sourceText);
-                }
-            }
         }
 
         private static void UnionStructSourceOutputter(SourceProductionContext sourceProductionContext, (ImmutableArray<PolyInterfaceModel> Left, ImmutableArray<PolyStructModel> Right) source)
@@ -1208,10 +820,12 @@ namespace PolymorphicStructsSourceGenerators
                         bool structIsValid = true;
                         PolyStructModel structModel = compiledData.PolyStructModels[i];
 
-                        SymbolsToProcess.Clear();
-                        SymbolsToProcess.Add(structModel.StructTypeSymbol);
-                        ProcessPreventingStructInvalidFieldOrPropertyTypes(SymbolsToProcess, polyInterfaceType, logMessages, ref structIsValid);
-                        SymbolsToProcess.Clear();
+                        if (!compiledData.PolyInterfaceModel.AllowEntitiesAndBlobs)
+                        {
+                            SymbolsToProcess.Clear();
+                            SymbolsToProcess.Add(structModel.StructTypeSymbol);
+                            ProcessPreventingStructInvalidFieldOrPropertyTypes(SymbolsToProcess, polyInterfaceType, logMessages, ref structIsValid);
+                        }
 
                         if (!structIsValid)
                         {
@@ -1267,52 +881,41 @@ namespace PolymorphicStructsSourceGenerators
             if (fullTypeName == MetaDataName_Entity)
             {
                 isStructValid = false;
-                messages.Add(new LogMessage
-                {
-                    Type = LogMessage.MsgType.Error,
-                    Message = $"PolymorphicStructs error: {MetaDataName_Entity} {(isProperty ? "properties" : "fields")} are not allowed in polymorphic structs implementing a {polyInterfaceType.ToString()} poly struct interface"
-                });
+                messages.Add(GetEntityAndBlobsError(isProperty, MetaDataName_Entity));
             }
 
             if (fullTypeName.Length >= MetaDataName_BlobString.Length && fullTypeName.Substring(0, MetaDataName_BlobString.Length) == MetaDataName_BlobString)
             {
                 isStructValid = false;
-                messages.Add(new LogMessage
-                {
-                    Type = LogMessage.MsgType.Error,
-                    Message = $"PolymorphicStructs error: {MetaDataName_BlobString} {(isProperty ? "properties" : "fields")} are not allowed in polymorphic structs implementing a {polyInterfaceType.ToString()} poly struct interface"
-                });
+                messages.Add(GetEntityAndBlobsError(isProperty, MetaDataName_BlobString));
             }
 
             if (fullTypeName.Length >= MetaDataName_BlobAssetReference.Length && fullTypeName.Substring(0, MetaDataName_BlobAssetReference.Length) == MetaDataName_BlobAssetReference)
             {
                 isStructValid = false;
-                messages.Add(new LogMessage
-                {
-                    Type = LogMessage.MsgType.Error,
-                    Message = $"PolymorphicStructs error: {MetaDataName_BlobAssetReference} {(isProperty ? "properties" : "fields")} are not allowed in polymorphic structs implementing a {polyInterfaceType.ToString()} poly struct interface"
-                });
+                messages.Add(GetEntityAndBlobsError(isProperty, MetaDataName_BlobAssetReference));
             }
 
             if (fullTypeName.Length >= MetaDataName_BlobArray.Length && fullTypeName.Substring(0, MetaDataName_BlobArray.Length) == MetaDataName_BlobArray)
             {
                 isStructValid = false;
-                messages.Add(new LogMessage
-                {
-                    Type = LogMessage.MsgType.Error,
-                    Message = $"PolymorphicStructs error: {MetaDataName_BlobArray} {(isProperty ? "properties" : "fields")} are not allowed in polymorphic structs implementing a {polyInterfaceType.ToString()} poly struct interface"
-                });
+                messages.Add(GetEntityAndBlobsError(isProperty, MetaDataName_BlobArray));
             }
 
             if (fullTypeName.Length >= MetaDataName_BlobPtr.Length && fullTypeName.Substring(0, MetaDataName_BlobPtr.Length) == MetaDataName_BlobPtr)
             {
                 isStructValid = false;
-                messages.Add(new LogMessage
-                {
-                    Type = LogMessage.MsgType.Error,
-                    Message = $"PolymorphicStructs error: {MetaDataName_BlobPtr} {(isProperty ? "properties" : "fields")} are not allowed in polymorphic structs implementing a {polyInterfaceType.ToString()} poly struct interface"
-                });
+                messages.Add(GetEntityAndBlobsError(isProperty, MetaDataName_BlobPtr));
             }
+        }
+        
+        private static LogMessage GetEntityAndBlobsError(bool isProperty, string typeName)
+        {
+            return new LogMessage
+            {
+                Type = LogMessage.MsgType.Error,
+                Message = $"PolymorphicStructs error: {typeName} {(isProperty ? "properties" : "fields")} are not allowed in polymorphic structs by default. Use the [{TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute}] on the polymorphic interface if you wish to disable this restriction and know what you're doing. You may also consult the documentation for suggested workarounds, such as storing these fields in a struct that encompasses the generated polymorphic struct.",
+            };
         }
 
         private static void GenerateTypeIdEnum(FileWriter writer, List<PolyStructModel> polyStructModels)

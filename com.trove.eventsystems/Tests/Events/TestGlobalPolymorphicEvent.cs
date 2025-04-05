@@ -59,7 +59,7 @@ namespace Trove.EventSystems.Tests
     /// If your events need parameters for their execution, you are free to add extra parameters to the "ExecuteNextEvent"
     /// function. Your event execution may also return data via an "out" parameter.
     /// </summary>
-    public unsafe struct TestGlobalPolymorphicEventManager : IPolymorphicEventTypeManager
+    public unsafe struct TestGlobalPolymorphicEventManager : IPolymorphicObject
     {
         // Event types
         public enum TypeId

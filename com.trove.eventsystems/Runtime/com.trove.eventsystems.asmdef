@@ -14,12 +14,6 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.trove.polymorphicstructs",
-            "expression": "",
-            "define": "USE_POLYMORPHICSTRUCTS"
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }
