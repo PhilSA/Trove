@@ -6,11 +6,11 @@ using System.Collections.Generic;
 namespace PolymorphicStructsSourceGenerators
 {
     public static class SourceGenUtils
-    { 
+    {
         public static string GetNamespaceMetaDataName(ISymbol typeSymbol)
         {
             string n = string.Empty;
-            if(typeSymbol.ContainingNamespace != null)
+            if (typeSymbol.ContainingNamespace != null)
             {
                 n = typeSymbol.ContainingNamespace.MetadataName;
             }
