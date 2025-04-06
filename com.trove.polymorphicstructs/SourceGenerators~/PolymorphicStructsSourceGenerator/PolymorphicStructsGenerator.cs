@@ -35,10 +35,10 @@ namespace PolymorphicStructsSourceGenerators
 
         public string Name;
         public string TypeName;
-        public string TypeNameOLD;
         public StructModel TargetStructModel;
         public bool AllowEntitiesAndBlobs;
         public bool IsMergedFieldsStruct;
+        public bool IsGeneric;
         public List<MethodModel> InterfaceMethodModels;
         public List<PropertyModel> InterfacePropertyModels;
 
@@ -49,15 +49,16 @@ namespace PolymorphicStructsSourceGenerators
             StructModel targetStructModel,
             bool allowEntitiesAndBlobs,
             bool isMergedFieldsStruct,
+            bool isGeneric,
             List<MethodModel> interfaceMethodModels,
             List<PropertyModel> interfacePropertyModels)
         {
             Name = name;
             TypeName = typeName;
-            TypeNameOLD = typeNameOLD;
             TargetStructModel = targetStructModel;
             AllowEntitiesAndBlobs = allowEntitiesAndBlobs;
             IsMergedFieldsStruct = isMergedFieldsStruct;
+            IsGeneric = isGeneric;
             InterfaceMethodModels = interfaceMethodModels;
             InterfacePropertyModels = interfacePropertyModels;
 
@@ -599,6 +600,7 @@ namespace PolymorphicStructsSourceGenerators
                 targetStructModel,
                 allowEntitiesAndBlobs,
                 isMergedFieldsStruct,
+                ((INamedTypeSymbol)interfaceTypeSymbol).IsGenericType,
                 interfaceMethodModels,
                 interfacePropertyModels);
         }
@@ -671,6 +673,15 @@ namespace PolymorphicStructsSourceGenerators
 
                     CompiledStructsForInterfaceData compiledCodeData = CreateCompiledStructsForInterfaceData(source.Left[a], source.Right);
 
+                    // Prevent generics
+                    if (compiledCodeData.PolyInterfaceModel.IsGeneric)
+                    {
+                        LogMessages.Add(new LogMessage
+                        {
+                            Type = LogMessage.MsgType.Error,
+                            Message = $"PolymorphicStructs error: generic polymorphic interfaces are not supported. (Interface {compiledCodeData.PolyInterfaceModel.TypeName})",
+                        });
+                    }
                     FilterOutInvalidStructs(compiledCodeData, LogMessages);
 
                     PolyInterfaceModel polyInterfaceModel = compiledCodeData.PolyInterfaceModel;
@@ -1260,6 +1271,16 @@ namespace PolymorphicStructsSourceGenerators
                     SymbolsToProcess.Clear();
                     SymbolsToProcess.Add(structModel.StructTypeSymbol);
                     ProcessPreventingStructInvalidFieldOrPropertyTypes(SymbolsToProcess, logMessages, ref structIsValid);
+                }
+
+                // Prevent generics
+                if(((INamedTypeSymbol)structModel.StructTypeSymbol).IsGenericType)
+                {
+                    logMessages.Add(new LogMessage
+                    {
+                        Type = LogMessage.MsgType.Error,
+                        Message = $"PolymorphicStructs error: generic polymorphic structs are not supported. (Struct {structModel.StructModel.TypeName})",
+                    });
                 }
 
                 if (!structIsValid)

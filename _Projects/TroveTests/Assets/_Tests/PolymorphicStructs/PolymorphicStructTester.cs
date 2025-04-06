@@ -98,11 +98,11 @@ public struct MyIITestMergedFieldsPolyStruct2B : ITestMergedFieldsPolyInterface2
 //     public BlobAssetReference<Collider> E;
 // }
 
-
+ 
 [PolymorphicStructInterface]
 public interface IMyOutOfNamespacePolyInterface
 {
-    public void DoSomething(int a);
+    public float DoSomething(int a);
 }
 
 [PolymorphicStruct]
@@ -110,8 +110,9 @@ public struct MyOutOfNamespaceStructA : IMyOutOfNamespacePolyInterface
 {
     public int Value;
 
-    public void DoSomething(int a)
+    public float DoSomething(int a)
     {
+        return default;
     }
 }
 
