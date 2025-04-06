@@ -132,6 +132,8 @@ partial struct #SCRIPTNAME#System : ISystem
     public void OnUpdate(ref SystemState state)
     {
         _subSystem.OnUpdate(ref state);
+
+        // TODO: you could choose to execute events here after the event subsystem update, if you want (see Example#SCRIPTNAME#ReaderSystem for how to read/execute events)
     }
 }
 

@@ -201,6 +201,7 @@ namespace PolymorphicStructsSourceGenerators
         public const string TypeName_PolymorphicStructInterfaceAttribute = "PolymorphicStructInterfaceAttribute";
         public const string TypeName_PolymorphicStructAttribute = "PolymorphicStructAttribute";
         public const string TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute = "AllowEntitiesAndBlobsInPolymorphicStructAttribute";
+        public const string TypeName_IsMergedFieldsPolymorphicStruct = "IsMergedFieldsPolymorphicStruct";
         public const string TypeName_UnsafeUtility = "UnsafeUtility";
         public const string TypeName_FieldOffset = "FieldOffset";
 
@@ -213,9 +214,6 @@ namespace PolymorphicStructsSourceGenerators
         public const string FullTypeName_BlobPtr = "Unity.Entities.BlobPtr";
 
         public const string FileName_GeneratedSuffixAndFileType = ".generated.cs";
-        public const string FileName_PolymorphicStructInterfaceAttribute = TypeName_PolymorphicStructInterfaceAttribute + FileName_GeneratedSuffixAndFileType;
-        public const string FileName_PolymorphicStructAttribute = TypeName_PolymorphicStructAttribute + FileName_GeneratedSuffixAndFileType;
-        public const string FileName_AllowEntitiesAndBlobsInPolymorphicStructAttribute = TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute + FileName_GeneratedSuffixAndFileType;
 
         public const string Decorator_InitializeOnLoadMethod = "[UnityEditor.InitializeOnLoadMethod]";
         public const string Decorator_MethodImpl_AggressiveInlining = "[MethodImpl(MethodImplOptions.AggressiveInlining)]";
@@ -266,7 +264,7 @@ namespace PolymorphicStructsSourceGenerators
                     writer.WriteLine($"[System.AttributeUsage(System.AttributeTargets.Interface)]");
                     writer.WriteLine($"internal class {TypeName_PolymorphicStructInterfaceAttribute} : System.Attribute {{}}");
                 });
-                i.AddSource(FileName_PolymorphicStructInterfaceAttribute, writer.FileContents);
+                i.AddSource(TypeName_PolymorphicStructInterfaceAttribute + FileName_GeneratedSuffixAndFileType, writer.FileContents);
 
                 writer = new FileWriter();
                 writer.WriteInNamespace(NamespaceName_PolymorphicStructs, () =>
@@ -274,7 +272,7 @@ namespace PolymorphicStructsSourceGenerators
                     writer.WriteLine($"[System.AttributeUsage(System.AttributeTargets.Struct)]");
                     writer.WriteLine($"internal class {TypeName_PolymorphicStructAttribute}: System.Attribute {{}}");
                 });
-                i.AddSource(FileName_PolymorphicStructAttribute, writer.FileContents);
+                i.AddSource(TypeName_PolymorphicStructAttribute + FileName_GeneratedSuffixAndFileType, writer.FileContents);
 
                 writer = new FileWriter();
                 writer.WriteInNamespace(NamespaceName_PolymorphicStructs, () =>
@@ -282,7 +280,15 @@ namespace PolymorphicStructsSourceGenerators
                     writer.WriteLine($"[System.AttributeUsage(System.AttributeTargets.Interface)]");
                     writer.WriteLine($"internal class {TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute}: System.Attribute {{}}");
                 });
-                i.AddSource(FileName_AllowEntitiesAndBlobsInPolymorphicStructAttribute, writer.FileContents);
+                i.AddSource(TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute + FileName_GeneratedSuffixAndFileType, writer.FileContents);
+
+                writer = new FileWriter();
+                writer.WriteInNamespace(NamespaceName_PolymorphicStructs, () =>
+                {
+                    writer.WriteLine($"[System.AttributeUsage(System.AttributeTargets.Interface)]");
+                    writer.WriteLine($"internal class {TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute}: System.Attribute {{}}");
+                });
+                i.AddSource(TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute + FileName_GeneratedSuffixAndFileType, writer.FileContents);
             });
         }
 
