@@ -7,8 +7,8 @@ using Unity.Jobs;
 
 // Register generic job types
 [assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<TestEntityEventBufferElement, HasTestEntityEvents>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferQueueToBufferJob<TestEntityEvent, TestEntityEventBufferElement, HasTestEntityEvents>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferStreamToBufferJob<TestEntityEvent, TestEntityEventBufferElement, HasTestEntityEvents>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferQueueToBufferJob<TestIEventForEntityEvent, TestEntityEventBufferElement, HasTestEntityEvents>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferStreamToBufferJob<TestIEventForEntityEvent, TestEntityEventBufferElement, HasTestEntityEvents>))]
 
 namespace Trove.EventSystems.Tests
 {
@@ -17,9 +17,9 @@ namespace Trove.EventSystems.Tests
     /// It is automatically created by the event system for this event type.
     /// Event writers access the event manager in this singleton in order to get queues/streams to write events in.
     /// </summary>
-    public struct TestEntityEventsSingleton : IComponentData, IEntityEventsSingleton<TestEntityEvent>
+    public struct TestEntityEventsSingleton : IComponentData, IEntityEventsSingleton<TestIEventForEntityEvent>
     {
-        public QueueEventsManager<TestEntityEvent> QueueEventsManager { get; set; }
+        public QueueEventsManager<TestIEventForEntityEvent> QueueEventsManager { get; set; }
         public StreamEventsManager StreamEventsManager { get; set; }
     }
 
@@ -28,10 +28,10 @@ namespace Trove.EventSystems.Tests
     /// It contains an "AffectedEntity" field to determine on which Entity the event will be transfered.
     /// "BufferElement" represents what actually gets added to the entity's dynamic buffer.
     /// </summary>
-    public struct TestEntityEvent : IEntityBufferEvent<TestEntityEventBufferElement>
+    public struct TestIEventForEntityEvent : IEventForEntity<TestEntityEventBufferElement>
     {
         public Entity AffectedEntity { get; set; }
-        public TestEntityEventBufferElement BufferElement { get; set; }
+        public TestEntityEventBufferElement Event { get; set; }
     }
 
     /// <summary>
@@ -58,13 +58,13 @@ namespace Trove.EventSystems.Tests
     /// </summary>
     partial struct TestEntityEventSystem : ISystem
     {
-        private EntityEventSubSystem<TestEntityEventsSingleton, TestEntityEvent, TestEntityEventBufferElement, HasTestEntityEvents> _subSystem;
+        private EntityEventSubSystem<TestEntityEventsSingleton, TestIEventForEntityEvent, TestEntityEventBufferElement, HasTestEntityEvents> _subSystem;
 
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
             _subSystem =
-                new EntityEventSubSystem<TestEntityEventsSingleton, TestEntityEvent, TestEntityEventBufferElement, HasTestEntityEvents>(
+                new EntityEventSubSystem<TestEntityEventsSingleton, TestIEventForEntityEvent, TestEntityEventBufferElement, HasTestEntityEvents>(
                     ref state, 32, 32);
         }
 

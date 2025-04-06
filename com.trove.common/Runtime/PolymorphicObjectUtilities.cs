@@ -21,7 +21,7 @@ namespace Trove
         
         #region UnsafeList
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void AddObject<T>(in T polymorphicObject, ref UnsafeList<byte> list, out int byteIndex,
+        public static unsafe void AddObject<T>(T polymorphicObject, ref UnsafeList<byte> list, out int byteIndex,
             out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
@@ -51,7 +51,7 @@ namespace Trove
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void InsertObject<T>(in T polymorphicObject, ref UnsafeList<byte> list, int byteIndex,
+        public static unsafe void InsertObject<T>(T polymorphicObject, ref UnsafeList<byte> list, int byteIndex,
             out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
@@ -123,7 +123,7 @@ namespace Trove
 
         #region NativeList
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void AddObject<T>(in T polymorphicObject, ref NativeList<byte> list, out int byteIndex,
+        public static unsafe void AddObject<T>(T polymorphicObject, ref NativeList<byte> list, out int byteIndex,
             out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
@@ -153,7 +153,7 @@ namespace Trove
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void InsertObject<T>(in T polymorphicObject, ref NativeList<byte> list, int byteIndex,
+        public static unsafe void InsertObject<T>(T polymorphicObject, ref NativeList<byte> list, int byteIndex,
             out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
@@ -225,7 +225,7 @@ namespace Trove
 
         #region DynamicBuffer
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void AddObject<T>(in T polymorphicObject, ref DynamicBuffer<byte> list, out int byteIndex,
+        public static unsafe void AddObject<T>(T polymorphicObject, ref DynamicBuffer<byte> list, out int byteIndex,
             out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
@@ -255,7 +255,7 @@ namespace Trove
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void InsertObject<T>(in T polymorphicObject, ref DynamicBuffer<byte> list, int byteIndex,
+        public static unsafe void InsertObject<T>(T polymorphicObject, ref DynamicBuffer<byte> list, int byteIndex,
             out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
@@ -327,7 +327,7 @@ namespace Trove
 
         #region NativeStream
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void AddObject<T>(in T polymorphicObject, ref NativeStream.Writer stream, out int writeSize, float growFactor = 1.5f)
+        public static unsafe void AddObject<T>(T polymorphicObject, ref NativeStream.Writer stream, out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
             writeSize = polymorphicObject.GetDataBytesSize();

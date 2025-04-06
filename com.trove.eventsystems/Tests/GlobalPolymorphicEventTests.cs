@@ -118,7 +118,7 @@ namespace Trove.EventSystems.Tests
             World.EntityManager.CompleteAllTrackedJobs();
 
             EventTestUtilities.TryGetSingleton(World.EntityManager, out TestGlobalPolymorphicEventsSingleton globalEventsSingleton);
-            Assert.AreEqual(0, globalEventsSingleton.EventsList.Length);
+            Assert.AreEqual(0, globalEventsSingleton.ReadEventsList.Length);
 
             World.Unmanaged.GetExistingSystemState<GlobalPolymorphicEventTests_MainThreadStreamWriterSystem>().Enabled = true;
             World.Unmanaged.GetExistingSystemState<GlobalPolymorphicEventTests_SingleJobStreamWriterSystem>().Enabled = true;
@@ -153,7 +153,7 @@ namespace Trove.EventSystems.Tests
                 {
                     Val = GlobalPolymorphicEventTests.MainThreadStreamEventKeyA,
                 };
-                PolymorphicObjectUtilities.AddObject(in eA, ref eventsStream, out int writeSize);
+                PolymorphicObjectUtilities.AddObject(eA, ref eventsStream, out int writeSize);
 
                 PStruct_ITestGlobalPolymorphicEvent eB = new TestGlobalPolymorphicEventB
                 {
@@ -161,7 +161,7 @@ namespace Trove.EventSystems.Tests
                     Val2 = GlobalPolymorphicEventTests.MainThreadStreamEventKeyB,
                     Val3 = GlobalPolymorphicEventTests.MainThreadStreamEventKeyB,
                 };
-                PolymorphicObjectUtilities.AddObject(in eB, ref eventsStream, out writeSize);
+                PolymorphicObjectUtilities.AddObject(eB, ref eventsStream, out writeSize);
             }
             eventsStream.EndForEachIndex();
         }
@@ -202,7 +202,7 @@ namespace Trove.EventSystems.Tests
                     {
                         Val = GlobalPolymorphicEventTests.SingleJobStreamEventKeyA,
                     };
-                    PolymorphicObjectUtilities.AddObject(in eA, ref EventsStream, out _);
+                    PolymorphicObjectUtilities.AddObject(eA, ref EventsStream, out _);
 
                     PStruct_ITestGlobalPolymorphicEvent eB = new TestGlobalPolymorphicEventB
                     {
@@ -210,7 +210,7 @@ namespace Trove.EventSystems.Tests
                         Val2 = GlobalPolymorphicEventTests.SingleJobStreamEventKeyB,
                         Val3 = GlobalPolymorphicEventTests.SingleJobStreamEventKeyB,
                     };
-                    PolymorphicObjectUtilities.AddObject(in eB, ref EventsStream, out _);
+                    PolymorphicObjectUtilities.AddObject(eB, ref EventsStream, out _);
                 }
                 EventsStream.EndForEachIndex();
             }
@@ -252,7 +252,7 @@ namespace Trove.EventSystems.Tests
                     {
                         Val = GlobalPolymorphicEventTests.ParallelJobStreamEventKeyA,
                     };
-                    PolymorphicObjectUtilities.AddObject(in eA, ref EventsStream, out _);
+                    PolymorphicObjectUtilities.AddObject(eA, ref EventsStream, out _);
 
                     PStruct_ITestGlobalPolymorphicEvent eB = new TestGlobalPolymorphicEventB
                     {
@@ -260,7 +260,7 @@ namespace Trove.EventSystems.Tests
                         Val2 = GlobalPolymorphicEventTests.ParallelJobStreamEventKeyB,
                         Val3 = GlobalPolymorphicEventTests.ParallelJobStreamEventKeyB,
                     };
-                    PolymorphicObjectUtilities.AddObject(in eB, ref EventsStream, out _);
+                    PolymorphicObjectUtilities.AddObject(eB, ref EventsStream, out _);
                 }
                 EventsStream.EndForEachIndex();
             }
@@ -291,8 +291,8 @@ namespace Trove.EventSystems.Tests
 
             counterSingleton.EventsCounter.Clear();
             int readIndex = 0;
-            NativeList<byte> eventsList = singleton.EventsList;
-            while (readIndex < singleton.EventsList.Length)
+            NativeList<byte> eventsList = singleton.ReadEventsList;
+            while (readIndex < singleton.ReadEventsList.Length)
             {
                 PolymorphicObjectUtilities.GetObject(ref eventsList, readIndex, out PStruct_ITestGlobalPolymorphicEvent e, out int readSize);
                 readIndex += readSize;
@@ -326,7 +326,7 @@ namespace Trove.EventSystems.Tests
             state.Dependency = new ReadJob
             {
                 EventsCounter = counterSingleton.EventsCounter,
-                EventsList = singleton.EventsList,
+                EventsList = singleton.ReadEventsList,
             }.Schedule(state.Dependency);
         }
 
@@ -381,7 +381,7 @@ namespace Trove.EventSystems.Tests
                 EventsCounter1 = counterSingleton.EventsCounter1,
                 EventsCounter2 = counterSingleton.EventsCounter2,
                 EventsCounter3 = counterSingleton.EventsCounter3,
-                EventsList = singleton.EventsList,
+                EventsList = singleton.ReadEventsList,
             }.Schedule(GlobalPolymorphicEventTests.ParallelCount, 1, state.Dependency);
         }
 

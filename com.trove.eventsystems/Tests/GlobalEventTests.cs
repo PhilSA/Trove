@@ -120,7 +120,7 @@ namespace Trove.EventSystems.Tests
             World.EntityManager.CompleteAllTrackedJobs();
 
             EventTestUtilities.TryGetSingleton(World.EntityManager, out TestGlobalEventsSingleton globalEventsSingleton);
-            Assert.AreEqual(0, globalEventsSingleton.EventsList.Length);
+            Assert.AreEqual(0, globalEventsSingleton.ReadEventsList.Length);
 
             World.Unmanaged.GetExistingSystemState<GlobalEventTests_MainThreadQueueWriterSystem>().Enabled = true;
             World.Unmanaged.GetExistingSystemState<GlobalEventTests_MainThreadStreamWriterSystem>().Enabled = true;
@@ -369,9 +369,9 @@ namespace Trove.EventSystems.Tests
             Singleton counterSingleton = SystemAPI.GetSingleton<Singleton>();
 
             counterSingleton.EventsCounter.Clear();
-            for (int i = 0; i < singleton.EventsList.Length; i++)
+            for (int i = 0; i < singleton.ReadEventsList.Length; i++)
             {
-                TestGlobalEvent e = singleton.EventsList[i];
+                TestGlobalEvent e = singleton.ReadEventsList[i];
                 EventTestUtilities.AddEventToCounter(ref counterSingleton.EventsCounter, e.Val);
             }
         }
@@ -402,7 +402,7 @@ namespace Trove.EventSystems.Tests
             state.Dependency = new ReadJob
             {
                 EventsCounter = counterSingleton.EventsCounter,
-                EventsList = singleton.EventsList,
+                EventsList = singleton.ReadEventsList,
             }.Schedule(state.Dependency);
         }
 
@@ -455,7 +455,7 @@ namespace Trove.EventSystems.Tests
                 EventsCounter1 = counterSingleton.EventsCounter1,
                 EventsCounter2 = counterSingleton.EventsCounter2,
                 EventsCounter3 = counterSingleton.EventsCounter3,
-                EventsList = singleton.EventsList,
+                EventsList = singleton.ReadEventsList,
             }.Schedule(GlobalEventTests.ParallelCount, 1, state.Dependency);
         }
 

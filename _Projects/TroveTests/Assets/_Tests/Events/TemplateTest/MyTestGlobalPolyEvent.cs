@@ -1,17 +1,19 @@
 
 using System.Runtime.CompilerServices;
+using Trove;
 using Trove.EventSystems;
+using Trove.EventSystems.Tests;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Trove.PolymorphicStructs;
+using UnityEngine;
 
 // See all TODO comments for things you are expected to modify.
 
 // Register generic job types
-[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToListJob<PStruct_IMyTestGlobalPolyEvent>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToListJob<PStruct_IBOINK>))]
 
 /// <summary>
 /// This is the singleton containing a manager for this event type.
@@ -19,23 +21,23 @@ using Trove.PolymorphicStructs;
 /// Event writers access the event manager in this singleton in order to get streams to write events in.
 /// Event readers access the event manager in this singleton in order to get a list of events to read.
 /// </summary>
-public struct MyTestGlobalPolyEventsSingleton : IComponentData, IGlobalPolymorphicEventsSingleton
+public struct BOINKsSingleton : IComponentData, IGlobalPolymorphicEventsSingleton
 {
     public StreamEventsManager StreamEventsManager { get; set; }
-    public NativeList<byte> EventsList { get; set; }
+    public NativeList<byte> ReadEventsList { get; set; }
 }
 
 /// <summary>
 /// Polymorphic interface used for generating our event polymorphic struct. 
 ///
-/// This will generate a new polymorphic struct named PStruct_IMyTestGlobalPolyEvent that can act as any event type implementing
+/// This will generate a new polymorphic struct named PStruct_IBOINK that can act as any event type implementing
 /// this interface and using the [PolymorphicStruct] attribute.
 ///
 /// You can add parameters and return types to the Execute function, or even add new functions. "Execute()" is only
 /// a suggestion.
 /// </summary>
 [PolymorphicStructInterface]
-public interface IMyTestGlobalPolyEvent
+public interface IBOINK
 {
     public void Execute();
 }
@@ -44,7 +46,7 @@ public interface IMyTestGlobalPolyEvent
 /// This is an example polymorphic event type. You can create more of these containing different data.
 /// </summary>
 [PolymorphicStruct]
-public struct MyTestGlobalPolyEventA : IMyTestGlobalPolyEvent
+public struct BOINKA : IBOINK
 {
     // TODO: Define event data
     public int Val;
@@ -52,6 +54,7 @@ public struct MyTestGlobalPolyEventA : IMyTestGlobalPolyEvent
     public void Execute()
     {
         // TODO: implement event execution
+        // Debug.Log($"Executing BOINKA with value: {Val}");
     }
 }
 
@@ -59,7 +62,7 @@ public struct MyTestGlobalPolyEventA : IMyTestGlobalPolyEvent
 /// This is an example polymorphic event type. You can create more of these containing different data.
 /// </summary>
 [PolymorphicStruct]
-public struct MyTestGlobalPolyEventB : IMyTestGlobalPolyEvent
+public struct BOINKB : IBOINK
 {
     // TODO: Define event data
     public int Val1;
@@ -69,6 +72,7 @@ public struct MyTestGlobalPolyEventB : IMyTestGlobalPolyEvent
     public void Execute()
     {
         // TODO: implement event execution
+        // Debug.Log($"Executing BOINKB with values: {Val1} {Val2} {Val3}");
     }
 }
 
@@ -80,15 +84,15 @@ public struct MyTestGlobalPolyEventB : IMyTestGlobalPolyEvent
 /// until this system updates.
 /// All event writer systems should update before this system, and all event reader systems should update after this system.
 /// </summary>
-partial struct MyTestGlobalPolyEventSystem : ISystem
+partial struct BOINKSystem : ISystem
 {
-    private GlobalPolymorphicEventSubSystem<MyTestGlobalPolyEventsSingleton, PStruct_IMyTestGlobalPolyEvent> _subSystem;
+    private GlobalPolymorphicEventSubSystem<BOINKsSingleton, PStruct_IBOINK> _subSystem;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _subSystem =
-            new GlobalPolymorphicEventSubSystem<MyTestGlobalPolyEventsSingleton, PStruct_IMyTestGlobalPolyEvent>(
+            new GlobalPolymorphicEventSubSystem<BOINKsSingleton, PStruct_IBOINK>(
                 ref state, 32, 1000); // TODO: tweak initial capacities
     }
 
@@ -102,5 +106,103 @@ partial struct MyTestGlobalPolyEventSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         _subSystem.OnUpdate(ref state);
+    }
+}
+
+/// <summary>
+/// Example of an events writer system
+/// </summary>
+[UpdateBefore(typeof(BOINKSystem))]
+partial struct BOINKWriterSystem : ISystem
+{
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<BOINKsSingleton>();
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        // Get the events singleton for this event type
+        BOINKsSingleton eventsSingleton = SystemAPI.GetSingletonRW<BOINKsSingleton>().ValueRW;
+        
+        // Schedule a job with an events stream gotten from the "StreamEventsWriter" in the singleton.
+        // Convert the stream to writer.
+        state.Dependency = new BOINKWriterJob
+        {
+            EventsStream  = eventsSingleton.StreamEventsManager.CreateEventStream(1).AsWriter(),
+        }.Schedule(state.Dependency);
+    }
+
+    [BurstCompile]
+    public struct BOINKWriterJob : IJob
+    {
+        public NativeStream.Writer EventsStream;
+        
+        public void Execute()
+        {
+            // When writing to a stream, we must begin/end foreach index
+            EventsStream.BeginForEachIndex(0);
+            
+            // Important: when writing polymorphic events to a stream, you MUST use "PolymorphicObjectUtilities.AddObject"
+            // Write an example event A
+            PolymorphicObjectUtilities.AddObject((PStruct_IBOINK)new BOINKA { Val = 1 }, ref EventsStream, out int writeSize);
+            // Write an example event B
+            PolymorphicObjectUtilities.AddObject((PStruct_IBOINK)new BOINKB { Val1 = 3, Val2 = 5, Val3 = 11 }, ref EventsStream, out writeSize);
+            
+            EventsStream.EndForEachIndex();
+        }
+    }
+}
+
+/// <summary>
+/// Example of an events reader system
+/// </summary>
+[UpdateAfter(typeof(BOINKSystem))]
+partial struct BOINKReaderSystem : ISystem
+{
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<BOINKsSingleton>();
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        // Get the events singleton for this event type
+        BOINKsSingleton eventsSingleton = SystemAPI.GetSingletonRW<BOINKsSingleton>().ValueRW;
+        
+        // Schedule a job with the ReadEventsList gotten from the singleton.
+        // Note: for polymorphic events, the read list is always just a list of bytes.
+        state.Dependency = new BOINKReaderJob
+        {
+            ReadEventsList  = eventsSingleton.ReadEventsList,
+        }.Schedule(state.Dependency);
+    }
+
+    [BurstCompile]
+    public struct BOINKReaderJob : IJob
+    {
+        [ReadOnly]
+        public NativeList<byte> ReadEventsList;
+        
+        public void Execute()
+        {
+            // Read and ecexute all events from the bytes list
+            int readIndex = 0;
+            while (readIndex < ReadEventsList.Length)
+            {
+                // Important: when reading polymorphic events from a bytes list, you MUST use "PolymorphicObjectUtilities.GetObject"
+                // Get the polymorphic object at the read index, as our event polymorphic struct type
+                PolymorphicObjectUtilities.GetObject(ref ReadEventsList, readIndex, out PStruct_IBOINK e, out int readSize);
+                // Increment read index by read size
+                readIndex += readSize;
+                
+                // Execute the event (execution logic is implemented in the event struct itself)
+                e.Execute();
+            }
+        }
     }
 }

@@ -17,7 +17,7 @@ namespace Trove.EventSystems
     {
         public QueueEventsManager<E> QueueEventsManager { get; set; }
         public StreamEventsManager StreamEventsManager { get; set; }
-        public NativeList<E> EventsList { get; set; }
+        public NativeList<E> ReadEventsList { get; set; }
     }
     
     public interface IEntityPolymorphicEventsSingleton
@@ -28,7 +28,7 @@ namespace Trove.EventSystems
     public interface IGlobalPolymorphicEventsSingleton
     {
         public StreamEventsManager StreamEventsManager { get; set; }
-        public NativeList<byte> EventsList { get; set; }
+        public NativeList<byte> ReadEventsList { get; set; }
     }
     
     public unsafe struct QueueEventsManager<E> where E : unmanaged
@@ -131,6 +131,111 @@ namespace Trove.EventSystems
             }
 
             return newDep;
+        }
+    }
+
+    public struct GlobalEventStreamWriter<E> where E : unmanaged
+    {
+        private NativeStream.Writer StreamWriter;
+
+        internal GlobalEventStreamWriter(NativeStream stream)
+        {
+            StreamWriter = stream.AsWriter();
+        }
+
+        public void BeginForEachIndex(int index)
+        {
+            StreamWriter.BeginForEachIndex(index);
+        }
+
+        public void EndForEachIndex(int index)
+        {
+            StreamWriter.EndForEachIndex();
+        }
+
+        public void Write(E evnt) 
+        {
+            StreamWriter.Write(evnt);
+        }
+    }
+
+    public struct EntityEventStreamWriter<E, B> 
+        where E : unmanaged, IEventForEntity<B> // The event struct
+        where B : unmanaged, IBufferElementData // The event buffer element
+    {
+        private NativeStream.Writer StreamWriter;
+
+        internal EntityEventStreamWriter(NativeStream stream)
+        {
+            StreamWriter = stream.AsWriter();
+        }
+
+        public void BeginForEachIndex(int index)
+        {
+            StreamWriter.BeginForEachIndex(index);
+        }
+
+        public void EndForEachIndex(int index)
+        {
+            StreamWriter.EndForEachIndex();
+        }
+
+        public void Write(E evntForEntity) 
+        {
+            StreamWriter.Write(evntForEntity);
+        }
+    }
+
+    public struct GlobalPolymorphicEventStreamWriter<E> where E : unmanaged, IPolymorphicObject
+    {
+        private NativeStream.Writer StreamWriter;
+
+        internal GlobalPolymorphicEventStreamWriter(NativeStream stream)
+        {
+            StreamWriter = stream.AsWriter();
+        }
+
+        public void BeginForEachIndex(int index)
+        {
+            StreamWriter.BeginForEachIndex(index);
+        }
+
+        public void EndForEachIndex(int index)
+        {
+            StreamWriter.EndForEachIndex();
+        }
+
+        public void Write(E evnt) 
+        {
+            PolymorphicObjectUtilities.AddObject(evnt, ref StreamWriter, out _);
+        }
+    }
+
+    public struct EntityPolymorphicEventStreamWriter<E, P> 
+        where E : unmanaged, IPolymorphicEventForEntity<P>
+        where P : unmanaged, IPolymorphicObject
+    {
+        private NativeStream.Writer StreamWriter;
+
+        internal EntityPolymorphicEventStreamWriter(NativeStream stream)
+        {
+            StreamWriter = stream.AsWriter();
+        }
+
+        public void BeginForEachIndex(int index)
+        {
+            StreamWriter.BeginForEachIndex(index);
+        }
+
+        public void EndForEachIndex(int index)
+        {
+            StreamWriter.EndForEachIndex();
+        }
+
+        public void Write(E evntForEntity) 
+        {
+            StreamWriter.Write(evntForEntity.AffectedEntity);
+            PolymorphicObjectUtilities.AddObject(evntForEntity.Event, ref StreamWriter, out _);
         }
     }
 }

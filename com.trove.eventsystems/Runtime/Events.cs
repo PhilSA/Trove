@@ -9,10 +9,10 @@ using Unity.Burst.Intrinsics;
 
 namespace Trove.EventSystems
 {
-    public interface IEntityBufferEvent<T> where T : unmanaged, IBufferElementData
+    public interface IEventForEntity<T> where T : unmanaged, IBufferElementData
     {
         public Entity AffectedEntity { get; set; }
-        public T BufferElement { get; set; }
+        public T Event { get; set; }
     }
     
     public interface IPolymorphicEventForEntity<T> where T : unmanaged, IPolymorphicObject

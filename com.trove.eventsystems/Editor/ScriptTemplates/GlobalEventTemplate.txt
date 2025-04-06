@@ -4,6 +4,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
+using UnityEngine;
 
 // See all TODO comments for things you are expected to modify.
 
@@ -62,5 +63,86 @@ partial struct #SCRIPTNAME#System : ISystem
     public void OnUpdate(ref SystemState state)
     {
         _subSystem.OnUpdate(ref state);
+    }
+}
+
+/// <summary>
+/// Example of an events writer system
+/// </summary>
+[UpdateBefore(typeof(#SCRIPTNAME#System))]
+partial struct #SCRIPTNAME#WriterSystem : ISystem
+{
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<#SCRIPTNAME#sSingleton>();
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        // Get the events singleton for this event type
+        #SCRIPTNAME#sSingleton eventsSingleton = SystemAPI.GetSingletonRW<#SCRIPTNAME#sSingleton>().ValueRW;
+        
+        // Schedule a job with an events queue gotten from the "QueueEventsManager" in the singleton.
+        // Note: for parallel writing, you can get a StreamEventsManager.CreateEventStream() from the singleton instead.
+        state.Dependency = new #SCRIPTNAME#WriterJob
+        {
+            EventsQueue  = eventsSingleton.QueueEventsManager.CreateEventQueue(),
+        }.Schedule(state.Dependency);
+    }
+
+    [BurstCompile]
+    public struct #SCRIPTNAME#WriterJob : IJob
+    {
+        public NativeQueue<#SCRIPTNAME#> EventsQueue;
+        
+        public void Execute()
+        {
+            // Write an example event
+            EventsQueue.Enqueue(new #SCRIPTNAME# { Val = 1 });
+        }
+    }
+}
+
+/// <summary>
+/// Example of an events reader system
+/// </summary>
+[UpdateAfter(typeof(#SCRIPTNAME#System))]
+partial struct #SCRIPTNAME#ReaderSystem : ISystem
+{
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<#SCRIPTNAME#sSingleton>();
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        // Get the events singleton for this event type
+        #SCRIPTNAME#sSingleton eventsSingleton = SystemAPI.GetSingletonRW<#SCRIPTNAME#sSingleton>().ValueRW;
+        
+        // Schedule a job with the EventsList gotten from the singleton
+        state.Dependency = new #SCRIPTNAME#ReaderJob
+        {
+            EventsList  = eventsSingleton.EventsList,
+        }.Schedule(state.Dependency);
+    }
+
+    [BurstCompile]
+    public struct #SCRIPTNAME#ReaderJob : IJob
+    {
+        [ReadOnly]
+        public NativeList<#SCRIPTNAME#> EventsList;
+        
+        public void Execute()
+        {
+            // Read events
+            for (int i = 0; i < EventsList.Length; i++)
+            {
+                // Debug.Log($"Read #SCRIPTNAME# with value: {EventsList[i].Val}");
+            }
+        }
     }
 }

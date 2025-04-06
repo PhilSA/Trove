@@ -39,7 +39,7 @@ namespace Trove.EventSystems
             singleton.StreamEventsManager = new StreamEventsManager(
                 _eventStreamsReference,
                 ref state);
-            singleton.EventsList = _eventList;
+            singleton.ReadEventsList = _eventList;
             state.EntityManager.AddComponentData(singletonEntity, singleton);
         }
 
@@ -87,7 +87,7 @@ namespace Trove.EventSystems
 
             state.Dependency = new EventClearListJob<E>
             {
-                EventList = singletonRW.ValueRW.EventsList,
+                EventList = singletonRW.ValueRW.ReadEventsList,
             }.Schedule(state.Dependency);
 
             UnsafeList<NativeQueue<E>> eventQueues = singletonRW.ValueRW.QueueEventsManager.InternalGetEventQueues();
@@ -96,7 +96,7 @@ namespace Trove.EventSystems
                 state.Dependency = new EventTransferQueueToListJob<E>
                 {
                     EventsQueue = eventQueues[i],
-                    EventList = singletonRW.ValueRW.EventsList,
+                    EventList = singletonRW.ValueRW.ReadEventsList,
                 }.Schedule(state.Dependency);
             }
 
@@ -106,7 +106,7 @@ namespace Trove.EventSystems
                 state.Dependency = new EventTransferStreamToListJob<E>
                 {
                     EventsStream = eventStreams[i].AsReader(),
-                    EventList = singletonRW.ValueRW.EventsList,
+                    EventList = singletonRW.ValueRW.ReadEventsList,
                 }.Schedule(state.Dependency);
             }
 

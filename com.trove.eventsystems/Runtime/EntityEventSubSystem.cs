@@ -10,7 +10,7 @@ namespace Trove.EventSystems
 {
     public unsafe struct EntityEventSubSystem<S, E, B, H>
         where S : unmanaged, IComponentData, IEntityEventsSingleton<E> // The events singleton
-        where E : unmanaged, IEntityBufferEvent<B> // The event struct
+        where E : unmanaged, IEventForEntity<B> // The event struct
         where B : unmanaged, IBufferElementData // The event buffer element
         where H : unmanaged, IComponentData, IEnableableComponent // The enableable component that signals presence of events on buffer entities
     {
@@ -132,7 +132,7 @@ namespace Trove.EventSystems
 
     [BurstCompile]
     public struct EventTransferQueueToBufferJob<E, B, H> : IJob
-        where E : unmanaged, IEntityBufferEvent<B> // The event struct
+        where E : unmanaged, IEventForEntity<B> // The event struct
         where B : unmanaged, IBufferElementData // The event buffer element
         where H : unmanaged, IComponentData, IEnableableComponent // The enableable component that signals presence of events on buffer entities
     {
@@ -146,7 +146,7 @@ namespace Trove.EventSystems
             {
                 if (EventBufferLookup.TryGetBuffer(e.AffectedEntity, out DynamicBuffer<B> eventBuffer))
                 {
-                    eventBuffer.Add(e.BufferElement);
+                    eventBuffer.Add(e.Event);
                     HasEventsLookup.SetComponentEnabled(e.AffectedEntity, true);
                 }
             }
@@ -155,7 +155,7 @@ namespace Trove.EventSystems
 
     [BurstCompile]
     public struct EventTransferStreamToBufferJob<E, B, H> : IJob
-        where E : unmanaged, IEntityBufferEvent<B> // The event struct
+        where E : unmanaged, IEventForEntity<B> // The event struct
         where B : unmanaged, IBufferElementData // The event buffer element
         where H : unmanaged, IComponentData, IEnableableComponent // The enableable component that signals presence of events on buffer entities
     {
@@ -173,7 +173,7 @@ namespace Trove.EventSystems
                     E e = EventsStream.Read<E>();
                     if (EventBufferLookup.TryGetBuffer(e.AffectedEntity, out DynamicBuffer<B> eventBuffer))
                     {
-                        eventBuffer.Add(e.BufferElement);
+                        eventBuffer.Add(e.Event);
                         HasEventsLookup.SetComponentEnabled(e.AffectedEntity, true);
                     }
                 }

@@ -23,7 +23,7 @@ namespace Trove.EventSystems.Tests
     {
         public QueueEventsManager<TestGlobalEvent> QueueEventsManager { get; set; }
         public StreamEventsManager StreamEventsManager { get; set; }
-        public NativeList<TestGlobalEvent> EventsList { get; set; }
+        public NativeList<TestGlobalEvent> ReadEventsList { get; set; }
     }
 
     /// <summary>

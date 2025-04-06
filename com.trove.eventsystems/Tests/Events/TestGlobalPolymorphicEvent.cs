@@ -25,7 +25,7 @@ namespace Trove.EventSystems.Tests
 	public struct TestGlobalPolymorphicEventsSingleton : IComponentData, IGlobalPolymorphicEventsSingleton
 	{
 		public StreamEventsManager StreamEventsManager { get; set; }
-		public NativeList<byte> EventsList { get; set; }
+		public NativeList<byte> ReadEventsList { get; set; }
 	}
 
 	[PolymorphicStructInterface]

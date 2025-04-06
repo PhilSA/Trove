@@ -19,15 +19,17 @@ Import the package in your project. Make sure unsafe code is allowed in the .asm
 
 Right-click in the Project window and select "Create > Trove > EventSystems > ..." in order to create a new event system based on a template. See [Event System Types](#event-system-types) for a description of the various types of event systems.
 
-When creating a new event type from templates this way, it is recommended to name it after the event type itself. For example, you can create a new event from the templates and call it "MyEvent". This will automatically take care of naming all the various components, systems, etc... appropriately. You are free to rename the file to something else after its initial creating.
+When creating a new events file from templates this way, it is recommended to name it after the event type itself. For example, you can create a new event from the templates and call it "MyEvent", or "DamageEvent". This will automatically take care of naming all the various components, systems, etc... appropriately. You are free to rename the file to something else after its initial creating.
 
 Once you have your new event from template, read the comments in the file and look at all the `TODO`s in order to understand how it works.
 
 
 ### Using the events system
 
+> Note: each of the event templates include example event writer and reader systems.
+
 Event writer systems should:
-* Update before the event system of the desired event type.
+* Update before the event system of the desired event type (They can update after, but then the event will be processed the next frame).
 * Get the events singleton for the desired event type, and get the events manager from the singleton.
 * Get either queue or a stream in which to write events. This can be done with `myEventsSingleton.QueueEventsManager.CreateEventQueue()` or `myEventsSingleton.StreamEventsManager.CreateEventStream()`.
 * Write events to the queue or stream.

@@ -9,9 +9,9 @@ using UnityEngine;
 
 namespace Trove.EventSystems
 {
-    public unsafe struct GlobalPolymorphicEventSubSystem<S, P>
+    public unsafe struct GlobalPolymorphicEventSubSystem<S, E>
         where S : unmanaged, IComponentData, IGlobalPolymorphicEventsSingleton // The events singleton
-        where P : unmanaged, IPolymorphicObject
+        where E : unmanaged, IPolymorphicObject
     {
         private EntityQuery _singletonRWQuery;
         private NativeReference<UnsafeList<NativeStream>> _eventStreamsReference;
@@ -33,7 +33,7 @@ namespace Trove.EventSystems
             singleton.StreamEventsManager = new StreamEventsManager(
                 _eventStreamsReference,
                 ref state);
-            singleton.EventsList = _eventList;
+            singleton.ReadEventsList = _eventList;
             state.EntityManager.AddComponentData(singletonEntity, singleton);
         }
 
@@ -66,16 +66,16 @@ namespace Trove.EventSystems
 
             state.Dependency = new EventClearListJob<byte>
             {
-                EventList = singletonRW.ValueRW.EventsList,
+                EventList = singletonRW.ValueRW.ReadEventsList,
             }.Schedule(state.Dependency);
 
             UnsafeList<NativeStream> eventStreams = singletonRW.ValueRW.StreamEventsManager.InternalGetEventStreams();
             for (int i = 0; i < eventStreams.Length; i++)
             {
-                state.Dependency = new EventTransferPolymorphicStreamToListJob<P>
+                state.Dependency = new EventTransferPolymorphicStreamToListJob<E>
                 {
                     EventsStream = eventStreams[i].AsReader(),
-                    EventList = singletonRW.ValueRW.EventsList,
+                    EventList = singletonRW.ValueRW.ReadEventsList,
                 }.Schedule(state.Dependency);
             }
 
@@ -98,7 +98,7 @@ namespace Trove.EventSystems
                 while (EventsStream.RemainingItemCount > 0)
                 {
                     PolymorphicObjectUtilities.GetNextObject(ref EventsStream, out P polymorphicObject, out int readSize);
-                    PolymorphicObjectUtilities.AddObject(in polymorphicObject, ref EventList, out int addedByteIndex, out int writeSize);
+                    PolymorphicObjectUtilities.AddObject(polymorphicObject, ref EventList, out int addedByteIndex, out int writeSize);
                 }
                 EventsStream.EndForEachIndex();
             }
