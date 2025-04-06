@@ -8,12 +8,11 @@
         "Unity.Burst",
         "Unity.Mathematics",
         "com.trove.polymorphicstructs",
-        "Unity.Entities",
         "com.trove.common"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": true,
     "precompiledReferences": [
         "nunit.framework.dll"
