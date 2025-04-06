@@ -54,6 +54,7 @@ public struct MyIITestMergedFieldsPolyStruct1B : ITestMergedFieldsPolyInterface1
 [PolymorphicStructInterface]
 public interface ITestMergedFieldsPolyInterface2
 {
+    public Entity SomeProp { get; set; }
     public void DoSomething(int a);
 }
 
@@ -64,6 +65,8 @@ public struct MyIITestMergedFieldsPolyStruct2A : ITestMergedFieldsPolyInterface2
     public float3 ValueB;
     public float3 ValueC;
 
+    public Entity SomeProp { get; set; }
+    
     public void DoSomething(int a)
     {
     }
@@ -77,6 +80,8 @@ public struct MyIITestMergedFieldsPolyStruct2B : ITestMergedFieldsPolyInterface2
     public int ValueB;
     public float3 ValueC;
 
+    public Entity SomeProp { get; set; }
+    
     public void DoSomething(int a)
     {
     }

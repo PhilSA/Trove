@@ -683,7 +683,9 @@ namespace PolymorphicStructsSourceGenerators
                                 // Iterate struct fields & properties
                                 foreach (ISymbol memberSymbol in polyStructModel.StructTypeSymbol.GetMembers())
                                 {
-                                    if (memberSymbol.Kind == SymbolKind.Field && memberSymbol is IFieldSymbol fieldSymbol)
+                                    if (memberSymbol.Kind == SymbolKind.Field && 
+                                        memberSymbol is IFieldSymbol fieldSymbol &&
+                                        !fieldSymbol.IsImplicitlyDeclared)
                                     {
                                         SpecificFieldModel specificFieldModel = new SpecificFieldModel
                                         {
@@ -712,7 +714,7 @@ namespace PolymorphicStructsSourceGenerators
                                             MergedFieldModel mergedFieldModel = entry.Key;
 
                                             // If found a match
-                                            if (mergedFieldModel.TypeCounter == fieldTypeCounter && 
+                                            if (mergedFieldModel.TypeCounter == fieldTypeCounter &&
                                                 mergedFieldModel.FieldTypeName == specificFieldModel.FieldTypeName)
                                             {
                                                 foundMatchingMergedField = true;
@@ -722,7 +724,7 @@ namespace PolymorphicStructsSourceGenerators
                                         }
 
                                         // If we did not find a matching merged field, create a new one
-                                        if(!foundMatchingMergedField)
+                                        if (!foundMatchingMergedField)
                                         {
                                             matchingMergedFieldModel = new MergedFieldModel
                                             {
@@ -735,7 +737,7 @@ namespace PolymorphicStructsSourceGenerators
                                         // Add specific field to matching merged field maps
                                         {
                                             Dictionary<string, SpecificFieldModel> structNameToFieldModelMap = MergedFieldsData.MergedFieldToSpecificFieldsMap[matchingMergedFieldModel];
-                                            
+
                                             // Add map entries for this struct + field
                                             structNameToFieldModelMap.Add(specificFieldModel.StructName, specificFieldModel);
                                             MergedFieldsData.MergedFieldToSpecificFieldsMap[matchingMergedFieldModel] = structNameToFieldModelMap;
@@ -745,6 +747,26 @@ namespace PolymorphicStructsSourceGenerators
 
                                     if (memberSymbol.Kind == SymbolKind.Property && memberSymbol is IPropertySymbol propertySymbol)
                                     {
+                                        // Only allow properties that are part of the poly interface
+                                        bool foundMatchingPropertyInInterface = false;
+                                        for (int p = 0; p < polyInterfaceModel.InterfacePropertyModels.Count; p++)
+                                        {
+                                            PropertyModel propertyModel = polyInterfaceModel.InterfacePropertyModels[p];
+                                            if (propertySymbol.Name == propertyModel.Name)
+                                            {
+                                                foundMatchingPropertyInInterface = true;
+                                                break;
+                                            }
+                                        }
+
+                                        if(!foundMatchingPropertyInInterface)
+                                        {
+                                            LogMessages.Add(new LogMessage
+                                            {
+                                                Type = LogMessage.MsgType.Error,
+                                                Message = $"PolymorphicStructs error: for MergedFields polymorphic structs, properties are only supported if they are part of the polymorphic interface. Property {polyStructModel.StructModel.TypeName}.{propertySymbol.Name} will not work as expected.",
+                                            });
+                                        }
                                     }
                                 }
                             }
@@ -833,12 +855,18 @@ namespace PolymorphicStructsSourceGenerators
                                                     {
                                                         if (polyInterfaceModel.IsMergedFieldsStruct)
                                                         {
-                                                            // TODO: Merged fields properties
-                                                            writer.WriteLine($"return default;");
+                                                            // Merged fields
+                                                            // cast merged struct to specific
+                                                            writer.WriteLine($"{polyStructModel.StructModel.TypeName} specificStruct = this;");
+                                                            // invoke property on specific
+                                                            writer.WriteLine($"{propertyModel.TypeName} result = specificStruct.{propertyModel.Name};");
+                                                            // cast back to merged
+                                                            writer.WriteLine($"this = specificStruct;");
+                                                            writer.WriteLine($"return result;");
                                                         }
                                                         else
                                                         {
-                                                            // Union struct properties
+                                                            // Union struct
                                                             writer.WriteLine($"return Field_{polyStructModel.StructModel.Name}.{propertyModel.Name};");
                                                         }
                                                     });
@@ -866,11 +894,17 @@ namespace PolymorphicStructsSourceGenerators
                                                     {
                                                         if (polyInterfaceModel.IsMergedFieldsStruct)
                                                         {
-                                                            // TODO: Merged fields properties
+                                                            // Merged fields
+                                                            // cast merged struct to specific
+                                                            writer.WriteLine($"{polyStructModel.StructModel.TypeName} specificStruct = this;");
+                                                            // invoke property on specific
+                                                            writer.WriteLine($"specificStruct.{propertyModel.Name} = value;");
+                                                            // cast back to merged
+                                                            writer.WriteLine($"this = specificStruct;");
                                                         }
                                                         else
                                                         {
-                                                            // Union struct properties
+                                                            // Union struct
                                                             writer.WriteLine($"Field_{polyStructModel.StructModel.Name}.{propertyModel.Name} = value;");
                                                         }
                                                         writer.WriteLine($"break;");
@@ -895,20 +929,46 @@ namespace PolymorphicStructsSourceGenerators
                                 writer.WriteLine($"public static implicit operator {polyInterfaceModel.TargetStructModel.TypeName} ({polyStructModel.StructModel.TypeName} s)");
                                 writer.WriteInScope(() =>
                                 {
-                                    writer.WriteLine($"return new {polyInterfaceModel.TargetStructModel.TypeName}");
-                                    writer.WriteInScope(() =>
+                                    if (polyInterfaceModel.IsMergedFieldsStruct)
                                     {
-                                        if (polyInterfaceModel.IsMergedFieldsStruct)
+                                        // Merged fields
+                                        writer.WriteLine($"{polyInterfaceModel.TargetStructModel.TypeName} newPolyStruct = default;");
+
+                                        // set properties that can store a value
+                                        for (int p = 0; p < polyInterfaceModel.InterfacePropertyModels.Count; p++)
                                         {
-                                            // TODO: Merged fields
+                                            PropertyModel propertyModel = polyInterfaceModel.InterfacePropertyModels[p];
+                                            if (propertyModel.HasSet && propertyModel.HasGet)
+                                            {
+                                                writer.WriteLine($"newPolyStruct.{propertyModel.Name} = s.{propertyModel.Name};");
+                                            }
                                         }
-                                        else
+
+                                        // set fields
+                                        writer.WriteLine($"newPolyStruct.CurrentTypeId = {Name_Enum_TypeId}.{polyStructModel.StructModel.Name};");
+                                        foreach (KeyValuePair<SpecificFieldModel, MergedFieldModel> entry in MergedFieldsData.SpecificFieldToMergedFieldMap)
+                                        {
+                                            SpecificFieldModel specificFieldModel = entry.Key;
+
+                                            // If field of this struct
+                                            if (entry.Key.StructName == polyStructModel.StructModel.Name)
+                                            {
+                                                MergedFieldModel mergedFieldModel = entry.Value;
+                                                writer.WriteLine($"newPolyStruct.{MergedFieldsData.GetMergedFieldName(mergedFieldModel)} = s.{specificFieldModel.FieldName};");
+                                            }
+                                        }
+                                        writer.WriteLine($"return newPolyStruct;");
+                                    }
+                                    else
+                                    {
+                                        writer.WriteLine($"return new {polyInterfaceModel.TargetStructModel.TypeName}");
+                                        writer.WriteInScope(() =>
                                         {
                                             // Union struct
                                             writer.WriteLine($"CurrentTypeId = {Name_Enum_TypeId}.{polyStructModel.StructModel.Name},");
                                             writer.WriteLine($"Field_{polyStructModel.StructModel.Name} = s,");
-                                        }
-                                    }, ";");
+                                        }, ";");
+                                    }
                                 });
 
                                 writer.WriteLine($"");
@@ -920,20 +980,31 @@ namespace PolymorphicStructsSourceGenerators
                                     if (polyInterfaceModel.IsMergedFieldsStruct)
                                     {
                                         // Merged fields
-                                        writer.WriteLine($"return new {polyStructModel.StructModel.TypeName}");
-                                        writer.WriteInScope(() =>
-                                        {
-                                            foreach (KeyValuePair<MergedFieldModel, Dictionary<string, SpecificFieldModel>> entry in MergedFieldsData.MergedFieldToSpecificFieldsMap)
-                                            {
-                                                MergedFieldModel mergedFieldModel = entry.Key;
-                                                Dictionary<string, SpecificFieldModel> specificFieldMap = entry.Value;
+                                        writer.WriteLine($"{polyStructModel.StructModel.TypeName} newStruct = default;");
 
-                                                if(specificFieldMap.TryGetValue(polyStructModel.StructModel.Name, out SpecificFieldModel specificFieldModel))
-                                                {
-                                                    writer.WriteLine($"{specificFieldModel.FieldName} = s.{MergedFieldsData.GetMergedFieldName(mergedFieldModel)},");
-                                                }
+                                        // set properties that can store a value
+                                        for (int p = 0; p < polyInterfaceModel.InterfacePropertyModels.Count; p++)
+                                        {
+                                            PropertyModel propertyModel = polyInterfaceModel.InterfacePropertyModels[p];
+                                            if (propertyModel.HasSet && propertyModel.HasGet)
+                                            {
+                                                writer.WriteLine($"newStruct.{propertyModel.Name} = s.{propertyModel.Name};");
                                             }
-                                        }, ";");
+                                        }
+
+                                        // set fields
+                                        foreach (KeyValuePair<MergedFieldModel, Dictionary<string, SpecificFieldModel>> entry in MergedFieldsData.MergedFieldToSpecificFieldsMap)
+                                        {
+                                            MergedFieldModel mergedFieldModel = entry.Key;
+                                            Dictionary<string, SpecificFieldModel> specificFieldMap = entry.Value;
+
+                                            if(specificFieldMap.TryGetValue(polyStructModel.StructModel.Name, out SpecificFieldModel specificFieldModel))
+                                            {
+                                                writer.WriteLine($"newStruct.{specificFieldModel.FieldName} = s.{MergedFieldsData.GetMergedFieldName(mergedFieldModel)};");
+                                            }
+                                        }
+
+                                        writer.WriteLine($"return newStruct;");
                                     }
                                     else
                                     {
