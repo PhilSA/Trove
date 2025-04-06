@@ -12,7 +12,7 @@ using Unity.Entities;
 using Unity.Jobs;
 
 // Register generic job types
-[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToListJob<PolyTestGlobalPolymorphicEvent>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferPolyByteArrayStreamToListJob<PolyTestGlobalPolymorphicEvent>))]
 
 namespace Trove.EventSystems.Tests
 {
@@ -22,9 +22,9 @@ namespace Trove.EventSystems.Tests
 	/// Event writers access the event manager in this singleton in order to get streams to write events in.
 	/// Event readers access the event manager in this singleton in order to get a list of events to read.
 	/// </summary>
-	public struct TestGlobalPolymorphicEventsSingleton : IComponentData, IGlobalPolymorphicEventsSingleton<PolyTestGlobalPolymorphicEvent>
+	public struct TestIGlobalPolyByteArrayEventsSingleton : IComponentData, IGlobalPolyByteArrayEventsSingleton<PolyTestGlobalPolymorphicEvent>
 	{
-		public GlobalPolymorphicStreamEventsManager<PolyTestGlobalPolymorphicEvent> StreamEventsManager { get; set; }
+		public GlobalPolyByteArrayStreamEventsManager<PolyTestGlobalPolymorphicEvent> StreamEventsManager { get; set; }
 		public NativeList<byte> ReadEventsList { get; set; }
 	}
 
@@ -74,14 +74,14 @@ namespace Trove.EventSystems.Tests
 	/// </summary>
 	partial struct TestGlobalPolymorphicEventSystem : ISystem
 	{
-		private GlobalPolymorphicEventSubSystem<TestGlobalPolymorphicEventsSingleton, PolyTestGlobalPolymorphicEvent>
+		private GlobalPolyByteArrayEventSubSystem<TestIGlobalPolyByteArrayEventsSingleton, PolyTestGlobalPolymorphicEvent>
 			_subSystem;
 
 		[BurstCompile]
 		public void OnCreate(ref SystemState state)
 		{
 			_subSystem =
-				new GlobalPolymorphicEventSubSystem<TestGlobalPolymorphicEventsSingleton,
+				new GlobalPolyByteArrayEventSubSystem<TestIGlobalPolyByteArrayEventsSingleton,
 					PolyTestGlobalPolymorphicEvent>(
 					ref state, 32, 1000);
 		}

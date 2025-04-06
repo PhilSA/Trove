@@ -9,11 +9,11 @@ using Trove;
 
 namespace Trove.EventSystems
 {
-    public unsafe struct EntityPolymorphicEventSubSystem<S, B, H, E, P>
-        where S : unmanaged, IComponentData, IEntityPolymorphicEventsSingleton<E, P> // The events singleton
+    public unsafe struct EntityPolyByteArrayEventSubSystem<S, B, H, E, P>
+        where S : unmanaged, IComponentData, IEntityPolyByteArrayEventsSingleton<E, P> // The events singleton
         where B : unmanaged, IBufferElementData // The event buffer element
         where H : unmanaged, IComponentData, IEnableableComponent // The enableable component that signals presence of events on buffer entities
-        where E : unmanaged, IPolymorphicEventForEntity<P> // The event struct
+        where E : unmanaged, IPolyByteArrayEventForEntity<P> // The event struct
         where P : unmanaged, IPolymorphicObject
     {
         private EntityQuery _singletonRWQuery;
@@ -24,11 +24,11 @@ namespace Trove.EventSystems
         private ComponentLookup<H> _hasEventsLookup;
         private NativeReference<UnsafeList<NativeStream>> _eventStreamsReference;
 
-        public EntityPolymorphicEventSubSystem(ref SystemState state, int initialStreamsCapacity)
+        public EntityPolyByteArrayEventSubSystem(ref SystemState state, int initialStreamsCapacity)
         {
             if (UnsafeUtility.SizeOf<B>() != 1)
             {
-                throw new System.Exception("EntityPolymorphicEventSubSystem generic parameter \"B\" must have a size of exactly 1 byte.");
+                throw new System.Exception("EntityPolyByteArrayEventSubSystem generic parameter \"B\" must have a size of exactly 1 byte.");
             }
 
             state.RequireForUpdate<S>();
@@ -42,7 +42,7 @@ namespace Trove.EventSystems
             // Create the event singleton
             Entity singletonEntity = state.EntityManager.CreateEntity();
             S singleton = default(S);
-            singleton.StreamEventsManager = new EntityPolymorphicStreamEventsManager<E, P>(
+            singleton.StreamEventsManager = new EntityPolyByteArrayStreamEventsManager<E, P>(
                 _eventStreamsReference,
                 ref state);
             state.EntityManager.AddComponentData(singletonEntity, singleton);
@@ -89,7 +89,7 @@ namespace Trove.EventSystems
             UnsafeList<NativeStream> eventStreams = singletonRW.ValueRW.StreamEventsManager.InternalGetEventStreams();
             for (int i = 0; i < eventStreams.Length; i++)
             {
-                state.Dependency = new EventTransferPolymorphicStreamToBufferJob<B, H, E, P>
+                state.Dependency = new EventTransferPolyByteArrayStreamToBufferJob<B, H, E, P>
                 {
                     EventsStream = eventStreams[i].AsReader(),
                     EventBufferLookup = _eventBufferLookup,
@@ -102,10 +102,10 @@ namespace Trove.EventSystems
     }
 
     [BurstCompile]
-    public unsafe struct EventTransferPolymorphicStreamToBufferJob<B, H, E, P> : IJob
+    public unsafe struct EventTransferPolyByteArrayStreamToBufferJob<B, H, E, P> : IJob
         where B : unmanaged, IBufferElementData // The event buffer element
         where H : unmanaged, IComponentData, IEnableableComponent // The enableable component that signals presence of events on buffer entities
-        where E : unmanaged, IPolymorphicEventForEntity<P> // The event struct
+        where E : unmanaged, IPolyByteArrayEventForEntity<P> // The event struct
         where P : unmanaged, IPolymorphicObject
     {
         public NativeStream.Reader EventsStream;

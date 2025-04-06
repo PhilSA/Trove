@@ -22,17 +22,17 @@ namespace Trove.EventSystems
         public NativeList<E> ReadEventsList { get; set; }
     }
     
-    public interface IEntityPolymorphicEventsSingleton<E, P> 
-        where E : unmanaged, IPolymorphicEventForEntity<P>
+    public interface IEntityPolyByteArrayEventsSingleton<E, P> 
+        where E : unmanaged, IPolyByteArrayEventForEntity<P>
         where P : unmanaged, IPolymorphicObject
     {
-        public EntityPolymorphicStreamEventsManager<E, P> StreamEventsManager { get; set; }
+        public EntityPolyByteArrayStreamEventsManager<E, P> StreamEventsManager { get; set; }
     }
     
-    public interface IGlobalPolymorphicEventsSingleton<E> 
+    public interface IGlobalPolyByteArrayEventsSingleton<E> 
         where E : unmanaged, IPolymorphicObject
     {
-        public GlobalPolymorphicStreamEventsManager<E> StreamEventsManager { get; set; }
+        public GlobalPolyByteArrayStreamEventsManager<E> StreamEventsManager { get; set; }
         public NativeList<byte> ReadEventsList { get; set; }
     }
     
@@ -240,7 +240,7 @@ namespace Trove.EventSystems
         }
     }
 
-    public unsafe struct GlobalPolymorphicStreamEventsManager<E> 
+    public unsafe struct GlobalPolyByteArrayStreamEventsManager<E> 
         where E : unmanaged, IPolymorphicObject
     {
         public struct Writer
@@ -274,7 +274,7 @@ namespace Trove.EventSystems
 
         public bool IsCreated => _eventStreamsReference.IsCreated;
 
-        public GlobalPolymorphicStreamEventsManager(
+        public GlobalPolyByteArrayStreamEventsManager(
             NativeReference<UnsafeList<NativeStream>> eventStreamsReference,
             ref SystemState state)
         {
@@ -316,8 +316,8 @@ namespace Trove.EventSystems
         }
     }
 
-    public unsafe struct EntityPolymorphicStreamEventsManager<E, P> 
-        where E : unmanaged, IPolymorphicEventForEntity<P>
+    public unsafe struct EntityPolyByteArrayStreamEventsManager<E, P> 
+        where E : unmanaged, IPolyByteArrayEventForEntity<P>
         where P : unmanaged, IPolymorphicObject
     {
         public struct Writer
@@ -352,7 +352,7 @@ namespace Trove.EventSystems
 
         public bool IsCreated => _eventStreamsReference.IsCreated;
 
-        public EntityPolymorphicStreamEventsManager(
+        public EntityPolyByteArrayStreamEventsManager(
             NativeReference<UnsafeList<NativeStream>> eventStreamsReference,
             ref SystemState state)
         {

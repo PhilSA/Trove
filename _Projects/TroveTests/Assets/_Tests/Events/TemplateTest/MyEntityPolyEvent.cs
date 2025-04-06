@@ -4,7 +4,6 @@ using Trove;
 using Trove.EventSystems;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Trove.PolymorphicStructs;
@@ -13,16 +12,16 @@ using Trove.PolymorphicStructs;
 
 // Register generic job types
 [assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<MyEntityPolyEventBufferElement, HasMyEntityPolyEvents>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToBufferJob<MyEntityPolyEventBufferElement, HasMyEntityPolyEvents, MyEntityPolyEventForEntity, PolyMyEntityPolyEvent>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferPolyByteArrayStreamToBufferJob<MyEntityPolyEventBufferElement, HasMyEntityPolyEvents, MyEntityPolyEventForEntity, PolyMyEntityPolyEvent>))]
 
 /// <summary>
 /// This is the singleton containing a manager for this event type.
 /// It is automatically created by the event system for this event type.
 /// Event writers access the event manager in this singleton in order to get streams to write events in.
 /// </summary>
-public struct MyEntityPolyEventsSingleton : IComponentData, IEntityPolymorphicEventsSingleton<MyEntityPolyEventForEntity, PolyMyEntityPolyEvent>
+public struct MyEntityPolyEventsSingleton : IComponentData, IEntityPolyByteArrayEventsSingleton<MyEntityPolyEventForEntity, PolyMyEntityPolyEvent>
 {
-    public EntityPolymorphicStreamEventsManager<MyEntityPolyEventForEntity, PolyMyEntityPolyEvent> StreamEventsManager { get; set; }
+    public EntityPolyByteArrayStreamEventsManager<MyEntityPolyEventForEntity, PolyMyEntityPolyEvent> StreamEventsManager { get; set; }
 }
 
 /// <summary>
@@ -30,7 +29,7 @@ public struct MyEntityPolyEventsSingleton : IComponentData, IEntityPolymorphicEv
 /// It contains an "AffectedEntity" field to determine on which Entity the event will be transfered.
 /// "Event" represents what actually gets serialized to the entity's dynamic buffer.
 /// </summary>
-public struct MyEntityPolyEventForEntity : IPolymorphicEventForEntity<PolyMyEntityPolyEvent>
+public struct MyEntityPolyEventForEntity : IPolyByteArrayEventForEntity<PolyMyEntityPolyEvent>
 {
     public Entity AffectedEntity { get; set; }
     public PolyMyEntityPolyEvent Event { get; set; }
@@ -109,16 +108,17 @@ public struct HasMyEntityPolyEvents : IComponentData, IEnableableComponent
 /// It also clears all event buffers before adding to them, meaning events from the previous frame are still valid
 /// until this system updates.
 /// All event writer systems should update before this system, and all event reader systems should update after this system.
+/// TODO: You can change the update order of this system.
 /// </summary>
 partial struct MyEntityPolyEventSystem : ISystem
 {
-    private EntityPolymorphicEventSubSystem<MyEntityPolyEventsSingleton, MyEntityPolyEventBufferElement, HasMyEntityPolyEvents, MyEntityPolyEventForEntity, PolyMyEntityPolyEvent> _subSystem;
+    private EntityPolyByteArrayEventSubSystem<MyEntityPolyEventsSingleton, MyEntityPolyEventBufferElement, HasMyEntityPolyEvents, MyEntityPolyEventForEntity, PolyMyEntityPolyEvent> _subSystem;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _subSystem =
-            new EntityPolymorphicEventSubSystem<MyEntityPolyEventsSingleton, MyEntityPolyEventBufferElement, HasMyEntityPolyEvents, MyEntityPolyEventForEntity, PolyMyEntityPolyEvent>(
+            new EntityPolyByteArrayEventSubSystem<MyEntityPolyEventsSingleton, MyEntityPolyEventBufferElement, HasMyEntityPolyEvents, MyEntityPolyEventForEntity, PolyMyEntityPolyEvent>(
                 ref state, 32); // TODO: tweak initial capacities
     }
 
@@ -136,7 +136,8 @@ partial struct MyEntityPolyEventSystem : ISystem
 }
 
 /// <summary>
-/// Example of an events writer system
+/// Example of an events writer system.
+/// TODO: Delete or change or move elsewhere.
 /// </summary>
 [UpdateBefore(typeof(MyEntityPolyEventSystem))]
 partial struct ExampleMyEntityPolyEventWriterSystem : ISystem
@@ -153,8 +154,7 @@ partial struct ExampleMyEntityPolyEventWriterSystem : ISystem
         // Get the events singleton for this event type
         MyEntityPolyEventsSingleton eventsSingleton = SystemAPI.GetSingletonRW<MyEntityPolyEventsSingleton>().ValueRW;
         
-        // Schedule a job with an events queue gotten from the "QueueEventsManager" in the singleton.
-        // Note: for parallel writing, you can get a StreamEventsManager.CreateEventStream() from the singleton instead.
+        // Schedule a job writing to an events stream.
         state.Dependency = new MyEntityPolyEventWriterJob
         {
             EventsStream  = eventsSingleton.StreamEventsManager.CreateWriter(1),
@@ -164,7 +164,7 @@ partial struct ExampleMyEntityPolyEventWriterSystem : ISystem
     [BurstCompile]
     public struct MyEntityPolyEventWriterJob : IJob
     {
-        public EntityPolymorphicStreamEventsManager<MyEntityPolyEventForEntity, PolyMyEntityPolyEvent>.Writer EventsStream;
+        public EntityPolyByteArrayStreamEventsManager<MyEntityPolyEventForEntity, PolyMyEntityPolyEvent>.Writer EventsStream;
         
         public void Execute()
         {
@@ -190,7 +190,8 @@ partial struct ExampleMyEntityPolyEventWriterSystem : ISystem
 }
 
 /// <summary>
-/// Example of an events reader system
+/// Example of an events reader system.
+/// TODO: Delete or change or move elsewhere.
 /// </summary>
 [UpdateAfter(typeof(MyEntityPolyEventSystem))]
 partial struct ExampleMyEntityPolyEventReaderSystem : ISystem

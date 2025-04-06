@@ -6,7 +6,7 @@ This package provides an all-purpose, high-performance, high-versatility event s
 - Allows parallel writing of events in burst jobs.
 - Allows executing events in parallel burst jobs, single burst jobs, burst main thread, or non-burst main thread. This is fully controlled by the user.
 - Allows multiple event writers and multiple event readers.
-- Allows polymorphic ordered events When combine with Trove Polymorphic Structs.
+- Allows polymorphic ordered events when combined with Trove Polymorphic Structs.
 
 
 ## Quick Start
@@ -40,7 +40,7 @@ Event reader systems for a ["Global"](#global-vs-entity-events) event type shoul
 * Get the events singleton for the desired event type, and get the events manager from the singleton.
 * Get the events list with `myEventsSingleton.ReadEventsList`.
 * Read events in the list.
-    * If the event type is polymorphic, this is done with a special events iterator for the `byte` event list:
+    * If the event type is "PolyByteArray", this is done with a special events iterator for the `byte` event list:
         ```cs
         // Get the iterator that can read through the polymorphic structs of the list
         PolymorphicObjectNativeListIterator<PolyMyEvent> iterator = 
@@ -57,7 +57,7 @@ Event reader systems for an ["Entity"](#global-vs-entity-events) event type shou
 * Update after the event system of the desired event type.
 * Iterate entities that have both the enabled `Has[EventName]` component and the `DynamicBuffer<[EventName]>` for the desired event type.
 * Read events from the buffer of events on the entity.
-    * If the event type is polymorphic, this is done by reinterpreting the buffer to `byte`s and iterating it with this special events iterator:
+    * If the event type is "PolyByteArray", this is done by reinterpreting the buffer to `byte`s and iterating it with this special events iterator:
         ```cs
         DynamicBuffer<byte> eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
 
@@ -93,8 +93,8 @@ Moreover, they can also be a convenient way to communicate between systems and b
 You can create event systems of different kinds using the "Create > Trove > EventSystems" menu:
 * Global Events
 * Entity Events
-* Global Polymorphic Events (only available when Trove Polymorphic Structs package is present)
-* Entity Polymorphic Events (only available when Trove Polymorphic Structs package is present)
+* Global PolyByteArray Events (only available when Trove Polymorphic Structs package is present)
+* Entity PolyByteArray Events (only available when Trove Polymorphic Structs package is present)
 
 "Global" events are events that end up in a globally-accessible `NativeList` in a singleton component.
 
@@ -102,7 +102,7 @@ You can create event systems of different kinds using the "Create > Trove > Even
 * Archetype-dependent event handling.
 * Fast access to components on target entities upon event execution (accessed through chunk iteration instead of component lookup).
 
-"Polymorphic" events are events that can be serialized and deserialized to byte arrays. This allows storing events of different types in the same buffer. They can be interesting when:
+"PolyByteArray" events are events that can be serialized and deserialized to byte arrays. This allows storing events of different types in the same buffer. They can be interesting when:
 * You need ordering across different event types.
 * You have many event types and you don't want to pay the performance overhead of:
     * each event type having schedule jobs that poll for potential events. If events of all types don't happen most of the time, a single events job will usually have much less overhead.
@@ -125,6 +125,6 @@ See additional details in the [Polymorphic events](#polymorphic-events) section.
 
 There are two main ways to handle polymorphic events in this system.
 
-The first and most recommended way is to create an event polymorphic struct using the Trove Polymorphic Structs package, and then simply use the generated polymorphic struct as your event struct in a regular event system. This means you would use the regular "Global Events" or "Entity Events" templates for this, and not the "Global Polymorphic Events" or "Entity Polymorphic Events".
+The first and most recommended way is to create an event polymorphic struct using the Trove Polymorphic Structs package, and then simply use the generated polymorphic struct as your event struct in a regular event system. This means you would use the regular "Global Event" or "Entity Event" templates for this, and not the "Global PolyByteArray Event" or "Entity PolyByteArray Event".
 
-The second way is theoretically more efficient, but comes with more pitfalls and limitations, so it should mainly be considered for events that are extremely performance-critical AND that can vary in size greatly. In this approach, you'd create an event type from either the "Global Polymorphic Events" or "Entity Polymorphic Events" template. These templates come with a pre-made polymorphic struct that you can customize. The advantage of this approach is that it will serialize/deserialize events to byte arrays, meaning there will be no potential waste of space if you have event types that vary greatly in size. This can improve performance. This approach only supports writing events to streams (not queues), and events must be read from byte arrays using a special iterator type, so it is less easy to use. The serialized event bytes data is also not suitable for sending over netcode or saving to disk, because of the possibility of different platforms interpreting the types with different sizes. So these events should only ever exist in a temporary non-netcoded runtime context.
+The second way is theoretically more efficient, but comes with more pitfalls and limitations, so it should mainly be considered for events that are extremely performance-critical AND that can vary in size greatly. In this approach, you'd create an event type from either the "Global PolyByteArray Event" or "Entity PolyByteArray Event" template. These templates come with a pre-made polymorphic struct that you can customize. The advantage of this approach is that it will serialize/deserialize events to byte arrays, meaning there will be no potential waste of space if you have event types that vary greatly in size. This can improve performance. This approach only supports writing events to streams (not queues), and events must be read from byte arrays using a special iterator type, so it is less easy to use. The serialized event bytes data is also not suitable for sending over netcode or saving to disk, because of the possibility of different platforms interpreting the types with different sizes. So these events should only ever exist in a temporary non-netcoded runtime context.

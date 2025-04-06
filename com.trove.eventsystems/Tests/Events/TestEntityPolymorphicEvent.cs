@@ -12,7 +12,7 @@ using Unity.Jobs;
 
 // Register generic job types
 [assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<TestEntityPolymorphicEventBufferElement, HasTestEntityPolymorphicEvents>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToBufferJob<TestEntityPolymorphicEventBufferElement, HasTestEntityPolymorphicEvents, TestEntityPolymorphicEventForEntity, PolyTestEntityPolymorphicEvent>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferPolyByteArrayStreamToBufferJob<TestEntityPolymorphicEventBufferElement, HasTestEntityPolymorphicEvents, TestEntityIPolyByteArrayEventForEntity, PolyTestEntityPolymorphicEvent>))]
 
 namespace Trove.EventSystems.Tests
 {
@@ -21,9 +21,9 @@ namespace Trove.EventSystems.Tests
     /// It is automatically created by the event system for this event type.
     /// Event writers access the event manager in this singleton in order to get streams to write events in.
     /// </summary>
-    public struct TestEntityPolymorphicEventsSingleton : IComponentData, IEntityPolymorphicEventsSingleton<TestEntityPolymorphicEventForEntity, PolyTestEntityPolymorphicEvent>
+    public struct TestIEntityPolyByteArrayEventsSingleton : IComponentData, IEntityPolyByteArrayEventsSingleton<TestEntityIPolyByteArrayEventForEntity, PolyTestEntityPolymorphicEvent>
     {
-        public EntityPolymorphicStreamEventsManager<TestEntityPolymorphicEventForEntity, PolyTestEntityPolymorphicEvent> StreamEventsManager { get; set; }
+        public EntityPolyByteArrayStreamEventsManager<TestEntityIPolyByteArrayEventForEntity, PolyTestEntityPolymorphicEvent> StreamEventsManager { get; set; }
     }
 
     /// <summary>
@@ -31,7 +31,7 @@ namespace Trove.EventSystems.Tests
     /// It contains an "AffectedEntity" field to determine on which Entity the event will be transfered.
     /// "BufferElement" represents what actually gets added to the entity's dynamic buffer.
     /// </summary>
-    public struct TestEntityPolymorphicEventForEntity : IPolymorphicEventForEntity<PolyTestEntityPolymorphicEvent>
+    public struct TestEntityIPolyByteArrayEventForEntity : IPolyByteArrayEventForEntity<PolyTestEntityPolymorphicEvent>
     {
 	    public Entity AffectedEntity { get; set; }
 	    public PolyTestEntityPolymorphicEvent Event { get; set; }
@@ -287,13 +287,13 @@ namespace Trove.EventSystems.Tests
     /// </summary>
     partial struct TestEntityPolymorphicEventSystem : ISystem
     {
-        private EntityPolymorphicEventSubSystem<TestEntityPolymorphicEventsSingleton, TestEntityPolymorphicEventBufferElement, HasTestEntityPolymorphicEvents, TestEntityPolymorphicEventForEntity, PolyTestEntityPolymorphicEvent> _subSystem;
+        private EntityPolyByteArrayEventSubSystem<TestIEntityPolyByteArrayEventsSingleton, TestEntityPolymorphicEventBufferElement, HasTestEntityPolymorphicEvents, TestEntityIPolyByteArrayEventForEntity, PolyTestEntityPolymorphicEvent> _subSystem;
 
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
             _subSystem =
-                new EntityPolymorphicEventSubSystem<TestEntityPolymorphicEventsSingleton, TestEntityPolymorphicEventBufferElement, HasTestEntityPolymorphicEvents, TestEntityPolymorphicEventForEntity, PolyTestEntityPolymorphicEvent>(
+                new EntityPolyByteArrayEventSubSystem<TestIEntityPolyByteArrayEventsSingleton, TestEntityPolymorphicEventBufferElement, HasTestEntityPolymorphicEvents, TestEntityIPolyByteArrayEventForEntity, PolyTestEntityPolymorphicEvent>(
                     ref state, 32); 
         }
 

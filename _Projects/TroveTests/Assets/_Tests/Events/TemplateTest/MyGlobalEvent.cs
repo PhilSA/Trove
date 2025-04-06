@@ -40,6 +40,7 @@ public struct MyGlobalEvent
 /// It also clears the events list before adding to it, meaning events from the previous frame are still valid
 /// until this system updates.
 /// All event writer systems should update before this system, and all event reader systems should update after this system.
+/// TODO: You can change the update order of this system.
 /// </summary>
 partial struct MyGlobalEventSystem : ISystem
 {
@@ -67,7 +68,8 @@ partial struct MyGlobalEventSystem : ISystem
 }
 
 /// <summary>
-/// Example of an events writer system
+/// Example of an events writer system.
+/// TODO: Delete or change or move elsewhere.
 /// </summary>
 [UpdateBefore(typeof(MyGlobalEventSystem))]
 partial struct ExampleMyGlobalEventWriterSystem : ISystem
@@ -128,7 +130,8 @@ partial struct ExampleMyGlobalEventWriterSystem : ISystem
 }
 
 /// <summary>
-/// Example of an events reader system
+/// Example of an events reader system.
+/// TODO: Delete or change or move elsewhere.
 /// </summary>
 [UpdateAfter(typeof(MyGlobalEventSystem))]
 partial struct ExampleMyGlobalEventReaderSystem : ISystem

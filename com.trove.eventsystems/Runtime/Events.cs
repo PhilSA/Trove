@@ -15,7 +15,7 @@ namespace Trove.EventSystems
         public T Event { get; set; }
     }
     
-    public interface IPolymorphicEventForEntity<T> where T : unmanaged, IPolymorphicObject
+    public interface IPolyByteArrayEventForEntity<T> where T : unmanaged, IPolymorphicObject
     {
         public Entity AffectedEntity { get; set; }
         public T Event { get; set; }

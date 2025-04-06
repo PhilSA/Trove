@@ -4,7 +4,6 @@ using Trove;
 using Trove.EventSystems;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Trove.PolymorphicStructs;
@@ -12,28 +11,18 @@ using Trove.PolymorphicStructs;
 // See all TODO comments for things you are expected to modify.
 
 // Register generic job types
-[assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<#SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToBufferJob<#SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s, #SCRIPTNAME#ForEntity, Poly#SCRIPTNAME#>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferPolyByteArrayStreamToListJob<Poly#SCRIPTNAME#>))]
 
 /// <summary>
 /// This is the singleton containing a manager for this event type.
 /// It is automatically created by the event system for this event type.
 /// Event writers access the event manager in this singleton in order to get streams to write events in.
+/// Event readers access the event manager in this singleton in order to get a list of events to read.
 /// </summary>
-public struct #SCRIPTNAME#sSingleton : IComponentData, IEntityPolymorphicEventsSingleton<#SCRIPTNAME#ForEntity, Poly#SCRIPTNAME#>
+public struct #SCRIPTNAME#sSingleton : IComponentData, IGlobalPolyByteArrayEventsSingleton<Poly#SCRIPTNAME#>
 {
-    public EntityPolymorphicStreamEventsManager<#SCRIPTNAME#ForEntity, Poly#SCRIPTNAME#> StreamEventsManager { get; set; }
-}
-
-/// <summary>
-/// This is the event struct that is written by event writers.
-/// It contains an "AffectedEntity" field to determine on which Entity the event will be transfered.
-/// "Event" represents what actually gets serialized to the entity's dynamic buffer.
-/// </summary>
-public struct #SCRIPTNAME#ForEntity : IPolymorphicEventForEntity<Poly#SCRIPTNAME#>
-{
-    public Entity AffectedEntity { get; set; }
-    public Poly#SCRIPTNAME# Event { get; set; }
+    public GlobalPolyByteArrayStreamEventsManager<Poly#SCRIPTNAME#> StreamEventsManager { get; set; }
+    public NativeList<byte> ReadEventsList { get; set; }
 }
 
 /// <summary>
@@ -63,6 +52,7 @@ public struct #SCRIPTNAME#A : I#SCRIPTNAME#
     public void Execute()
     {
         // TODO: implement event execution
+        // Debug.Log($"Executing #SCRIPTNAME#A with value: {Val}");
     }
 }
 
@@ -80,47 +70,29 @@ public struct #SCRIPTNAME#B : I#SCRIPTNAME#
     public void Execute()
     {
         // TODO: implement event execution
+        // Debug.Log($"Executing #SCRIPTNAME#B with values: {Val1} {Val2} {Val3}");
     }
 }
 
 // TODO: Define more polymorphic event structs
 
 /// <summary>
-/// This is a DynamicBuffer of bytes that acts as a generic pool of memory on entities, where to store polymorphic events.
-/// You must ensure this buffer is added to entities that can receive this type of event.
-/// IMPORTANT: You must not add any more data to this struct. It needs to remain a single byte.
-/// </summary>
-[InternalBufferCapacity(0)] // TODO: adjust internal capacity
-public struct #SCRIPTNAME#BufferElement : IBufferElementData
-{
-    public byte Element;
-}
-
-/// <summary>
-/// This is an enableable component that flags entities that currently have events to process.
-/// You must ensure this component is added to entities that can receive this type of event.
-/// </summary>
-public struct Has#SCRIPTNAME#s : IComponentData, IEnableableComponent
-{ }
-
-
-/// <summary>
-/// This is the event system that transfers events from the streams to their destination entity buffers.
-/// It also clears all event buffers before adding to them, meaning events from the previous frame are still valid
+/// This is the event system that transfers events from the streams to the global events list.
+/// It also clears the events list before adding to it, meaning events from the previous frame are still valid
 /// until this system updates.
 /// All event writer systems should update before this system, and all event reader systems should update after this system.
 /// TODO: You can change the update order of this system.
 /// </summary>
 partial struct #SCRIPTNAME#System : ISystem
 {
-    private EntityPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, #SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s, #SCRIPTNAME#ForEntity, Poly#SCRIPTNAME#> _subSystem;
+    private GlobalPolyByteArrayEventSubSystem<#SCRIPTNAME#sSingleton, Poly#SCRIPTNAME#> _subSystem;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _subSystem =
-            new EntityPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, #SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s, #SCRIPTNAME#ForEntity, Poly#SCRIPTNAME#>(
-                ref state, 32); // TODO: tweak initial capacities
+            new GlobalPolyByteArrayEventSubSystem<#SCRIPTNAME#sSingleton, Poly#SCRIPTNAME#>(
+                ref state, 32, 1000); // TODO: tweak initial capacities
     }
 
     [BurstCompile]
@@ -155,8 +127,7 @@ partial struct Example#SCRIPTNAME#WriterSystem : ISystem
         // Get the events singleton for this event type
         #SCRIPTNAME#sSingleton eventsSingleton = SystemAPI.GetSingletonRW<#SCRIPTNAME#sSingleton>().ValueRW;
         
-        // Schedule a job with an events queue gotten from the "QueueEventsManager" in the singleton.
-        // Note: for parallel writing, you can get a StreamEventsManager.CreateEventStream() from the singleton instead.
+        // Schedule a job writing to an events stream.
         state.Dependency = new #SCRIPTNAME#WriterJob
         {
             EventsStream  = eventsSingleton.StreamEventsManager.CreateWriter(1),
@@ -166,7 +137,7 @@ partial struct Example#SCRIPTNAME#WriterSystem : ISystem
     [BurstCompile]
     public struct #SCRIPTNAME#WriterJob : IJob
     {
-        public EntityPolymorphicStreamEventsManager<#SCRIPTNAME#ForEntity, Poly#SCRIPTNAME#>.Writer EventsStream;
+        public GlobalPolyByteArrayStreamEventsManager<Poly#SCRIPTNAME#>.Writer EventsStream;
         
         public void Execute()
         {
@@ -174,17 +145,9 @@ partial struct Example#SCRIPTNAME#WriterSystem : ISystem
             EventsStream.BeginForEachIndex(0);
             
             // Write an example event A
-            EventsStream.Write(new #SCRIPTNAME#ForEntity
-            {
-                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<#SCRIPTNAME#> to target
-                Event = new #SCRIPTNAME#A { Val = 1 },
-            });
+            EventsStream.Write(new #SCRIPTNAME#A { Val = 1 });
             // Write an example event B
-            EventsStream.Write(new #SCRIPTNAME#ForEntity
-            {
-                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<#SCRIPTNAME#> to target
-                Event = new #SCRIPTNAME#B { Val1 = 3, Val2 = 5, Val3 = 11 },
-            });
+            EventsStream.Write(new #SCRIPTNAME#B { Val1 = 3, Val2 = 5, Val3 = 11 });
             
             EventsStream.EndForEachIndex();
         }
@@ -199,25 +162,35 @@ partial struct Example#SCRIPTNAME#WriterSystem : ISystem
 partial struct Example#SCRIPTNAME#ReaderSystem : ISystem
 {
     [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<#SCRIPTNAME#sSingleton>();
+    }
+
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // Schedule a job iterating entities with a DynamicBuffer<#SCRIPTNAME#> to read events
+        // Get the events singleton for this event type
+        #SCRIPTNAME#sSingleton eventsSingleton = SystemAPI.GetSingletonRW<#SCRIPTNAME#sSingleton>().ValueRW;
+        
+        // Schedule a job with the ReadEventsList gotten from the singleton.
         state.Dependency = new #SCRIPTNAME#ReaderJob
         {
+            ReadEventsList  = eventsSingleton.ReadEventsList,
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    [WithAll(typeof(Has#SCRIPTNAME#s))] // This ensures we only iterate entities that have received events
-    public partial struct #SCRIPTNAME#ReaderJob : IJobEntity
+    public struct #SCRIPTNAME#ReaderJob : IJob
     {
-        public void Execute(DynamicBuffer<#SCRIPTNAME#BufferElement> eventsBuffer)
+        [ReadOnly]
+        public NativeList<byte> ReadEventsList;
+        
+        public void Execute()
         {
-            DynamicBuffer<byte> eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
-            
             // Get the iterator that can read through the polymorphic structs of the list
-            PolymorphicObjectDynamicBufferIterator<Poly#SCRIPTNAME#> iterator = 
-                PolymorphicObjectUtilities.GetIterator<Poly#SCRIPTNAME#>(eventsBytesBuffer);
+            PolymorphicObjectNativeListIterator<Poly#SCRIPTNAME#> iterator = 
+                PolymorphicObjectUtilities.GetIterator<Poly#SCRIPTNAME#>(ReadEventsList);
             while (iterator.GetNext(out Poly#SCRIPTNAME# e, out _, out _))
             {
                 // Execute the event (execution logic is implemented in the event struct itself)

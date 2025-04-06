@@ -2,18 +2,16 @@
 using System.Runtime.CompilerServices;
 using Trove;
 using Trove.EventSystems;
-using Trove.EventSystems.Tests;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Trove.PolymorphicStructs;
-using UnityEngine;
 
 // See all TODO comments for things you are expected to modify.
 
 // Register generic job types
-[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToListJob<PolyMyGlobalPolyEvent>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferPolyByteArrayStreamToListJob<PolyMyGlobalPolyEvent>))]
 
 /// <summary>
 /// This is the singleton containing a manager for this event type.
@@ -21,9 +19,9 @@ using UnityEngine;
 /// Event writers access the event manager in this singleton in order to get streams to write events in.
 /// Event readers access the event manager in this singleton in order to get a list of events to read.
 /// </summary>
-public struct MyGlobalPolyEventsSingleton : IComponentData, IGlobalPolymorphicEventsSingleton<PolyMyGlobalPolyEvent>
+public struct MyGlobalPolyEventsSingleton : IComponentData, IGlobalPolyByteArrayEventsSingleton<PolyMyGlobalPolyEvent>
 {
-    public GlobalPolymorphicStreamEventsManager<PolyMyGlobalPolyEvent> StreamEventsManager { get; set; }
+    public GlobalPolyByteArrayStreamEventsManager<PolyMyGlobalPolyEvent> StreamEventsManager { get; set; }
     public NativeList<byte> ReadEventsList { get; set; }
 }
 
@@ -83,16 +81,17 @@ public struct MyGlobalPolyEventB : IMyGlobalPolyEvent
 /// It also clears the events list before adding to it, meaning events from the previous frame are still valid
 /// until this system updates.
 /// All event writer systems should update before this system, and all event reader systems should update after this system.
+/// TODO: You can change the update order of this system.
 /// </summary>
 partial struct MyGlobalPolyEventSystem : ISystem
 {
-    private GlobalPolymorphicEventSubSystem<MyGlobalPolyEventsSingleton, PolyMyGlobalPolyEvent> _subSystem;
+    private GlobalPolyByteArrayEventSubSystem<MyGlobalPolyEventsSingleton, PolyMyGlobalPolyEvent> _subSystem;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _subSystem =
-            new GlobalPolymorphicEventSubSystem<MyGlobalPolyEventsSingleton, PolyMyGlobalPolyEvent>(
+            new GlobalPolyByteArrayEventSubSystem<MyGlobalPolyEventsSingleton, PolyMyGlobalPolyEvent>(
                 ref state, 32, 1000); // TODO: tweak initial capacities
     }
 
@@ -110,7 +109,8 @@ partial struct MyGlobalPolyEventSystem : ISystem
 }
 
 /// <summary>
-/// Example of an events writer system
+/// Example of an events writer system.
+/// TODO: Delete or change or move elsewhere.
 /// </summary>
 [UpdateBefore(typeof(MyGlobalPolyEventSystem))]
 partial struct ExampleMyGlobalPolyEventWriterSystem : ISystem
@@ -137,7 +137,7 @@ partial struct ExampleMyGlobalPolyEventWriterSystem : ISystem
     [BurstCompile]
     public struct MyGlobalPolyEventWriterJob : IJob
     {
-        public GlobalPolymorphicStreamEventsManager<PolyMyGlobalPolyEvent>.Writer EventsStream;
+        public GlobalPolyByteArrayStreamEventsManager<PolyMyGlobalPolyEvent>.Writer EventsStream;
         
         public void Execute()
         {
@@ -155,7 +155,8 @@ partial struct ExampleMyGlobalPolyEventWriterSystem : ISystem
 }
 
 /// <summary>
-/// Example of an events reader system
+/// Example of an events reader system.
+/// TODO: Delete or change or move elsewhere.
 /// </summary>
 [UpdateAfter(typeof(MyGlobalPolyEventSystem))]
 partial struct ExampleMyGlobalPolyEventReaderSystem : ISystem
@@ -173,7 +174,6 @@ partial struct ExampleMyGlobalPolyEventReaderSystem : ISystem
         MyGlobalPolyEventsSingleton eventsSingleton = SystemAPI.GetSingletonRW<MyGlobalPolyEventsSingleton>().ValueRW;
         
         // Schedule a job with the ReadEventsList gotten from the singleton.
-        // Note: for polymorphic events, the read list is always just a list of bytes.
         state.Dependency = new MyGlobalPolyEventReaderJob
         {
             ReadEventsList  = eventsSingleton.ReadEventsList,

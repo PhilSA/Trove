@@ -58,6 +58,7 @@ public struct HasMyEntityEvents : IComponentData, IEnableableComponent
 /// It also clears all event buffers before adding to them, meaning events from the previous frame are still valid
 /// until this system updates.
 /// All event writer systems should update before this system, and all event reader systems should update after this system.
+/// TODO: You can change the update order of this system.
 /// </summary>
 partial struct MyEntityEventSystem : ISystem
 {
@@ -85,7 +86,8 @@ partial struct MyEntityEventSystem : ISystem
 }
 
 /// <summary>
-/// Example of an events writer system
+/// Example of an events writer system.
+/// TODO: Delete or change or move elsewhere.
 /// </summary>
 [UpdateBefore(typeof(MyEntityEventSystem))]
 partial struct ExampleMyEntityEventWriterSystem : ISystem
@@ -155,6 +157,7 @@ partial struct ExampleMyEntityEventWriterSystem : ISystem
 
 /// <summary>
 /// Example of an events reader system
+/// TODO: Delete or change or move elsewhere.
 /// </summary>
 [UpdateAfter(typeof(MyEntityEventSystem))]
 partial struct ExampleMyEntityEventReaderSystem : ISystem

@@ -137,21 +137,21 @@ namespace Trove.EventSystems.Tests
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<TestEntityPolymorphicEventsSingleton>();
+            state.RequireForUpdate<TestIEntityPolyByteArrayEventsSingleton>();
             state.RequireForUpdate<EntityEventTestSingleton>();
         }
 
         public void OnUpdate(ref SystemState state)
         {
-            TestEntityPolymorphicEventsSingleton singleton = SystemAPI.GetSingletonRW<TestEntityPolymorphicEventsSingleton>().ValueRW;
+            TestIEntityPolyByteArrayEventsSingleton singleton = SystemAPI.GetSingletonRW<TestIEntityPolyByteArrayEventsSingleton>().ValueRW;
             EntityEventTestSingleton testSingleton = SystemAPI.GetSingleton<EntityEventTestSingleton>();
-            EntityPolymorphicStreamEventsManager<TestEntityPolymorphicEventForEntity, PolyTestEntityPolymorphicEvent>.Writer eventsStream = singleton.StreamEventsManager.CreateWriter(1);
+            EntityPolyByteArrayStreamEventsManager<TestEntityIPolyByteArrayEventForEntity, PolyTestEntityPolymorphicEvent>.Writer eventsStream = singleton.StreamEventsManager.CreateWriter(1);
 
             eventsStream.BeginForEachIndex(0);
 
             for (int i = 0; i < EntityPolymorphicEventTests.EventsPerSystemOrThreadForR1; i++)
             {
-                eventsStream.Write(new TestEntityPolymorphicEventForEntity
+                eventsStream.Write(new TestEntityIPolyByteArrayEventForEntity
                 {
                     AffectedEntity = testSingleton.ReceiverEntity1,
                     Event = new TestEntityPolymorphicEventA
@@ -159,7 +159,7 @@ namespace Trove.EventSystems.Tests
                         Val = EntityPolymorphicEventTests.MainThreadStreamEventKeyA,
                     },
                 });
-                eventsStream.Write(new TestEntityPolymorphicEventForEntity
+                eventsStream.Write(new TestEntityIPolyByteArrayEventForEntity
                 {
                     AffectedEntity = testSingleton.ReceiverEntity1,
                     Event =  new TestEntityPolymorphicEventB
@@ -173,7 +173,7 @@ namespace Trove.EventSystems.Tests
 
             for (int i = 0; i < EntityPolymorphicEventTests.EventsPerSystemOrThreadForR2; i++)
             {
-                eventsStream.Write(new TestEntityPolymorphicEventForEntity
+                eventsStream.Write(new TestEntityIPolyByteArrayEventForEntity
                 {
                     AffectedEntity = testSingleton.ReceiverEntity2,
                     Event = new TestEntityPolymorphicEventA
@@ -181,7 +181,7 @@ namespace Trove.EventSystems.Tests
                         Val = EntityPolymorphicEventTests.MainThreadStreamEventKeyA,
                     },
                 });
-                eventsStream.Write(new TestEntityPolymorphicEventForEntity
+                eventsStream.Write(new TestEntityIPolyByteArrayEventForEntity
                 {
                     AffectedEntity = testSingleton.ReceiverEntity2,
                     Event =  new TestEntityPolymorphicEventB
@@ -204,14 +204,14 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<TestEntityPolymorphicEventsSingleton>();
+            state.RequireForUpdate<TestIEntityPolyByteArrayEventsSingleton>();
             state.RequireForUpdate<EntityEventTestSingleton>();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            TestEntityPolymorphicEventsSingleton singleton = SystemAPI.GetSingletonRW<TestEntityPolymorphicEventsSingleton>().ValueRW;
+            TestIEntityPolyByteArrayEventsSingleton singleton = SystemAPI.GetSingletonRW<TestIEntityPolyByteArrayEventsSingleton>().ValueRW;
             EntityEventTestSingleton testSingleton = SystemAPI.GetSingleton<EntityEventTestSingleton>();
 
             state.Dependency = new WriteJob
@@ -224,7 +224,7 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public struct WriteJob : IJob
         {
-            public EntityPolymorphicStreamEventsManager<TestEntityPolymorphicEventForEntity, PolyTestEntityPolymorphicEvent>.Writer EventsStream;
+            public EntityPolyByteArrayStreamEventsManager<TestEntityIPolyByteArrayEventForEntity, PolyTestEntityPolymorphicEvent>.Writer EventsStream;
             public EntityEventTestSingleton TestSingleton;
 
             public void Execute()
@@ -233,7 +233,7 @@ namespace Trove.EventSystems.Tests
 
                 for (int i = 0; i < EntityPolymorphicEventTests.EventsPerSystemOrThreadForR1; i++)
                 {
-                    EventsStream.Write(new TestEntityPolymorphicEventForEntity
+                    EventsStream.Write(new TestEntityIPolyByteArrayEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity1,
                         Event = new TestEntityPolymorphicEventA
@@ -241,7 +241,7 @@ namespace Trove.EventSystems.Tests
                             Val = EntityPolymorphicEventTests.SingleJobStreamEventKeyA,
                         },
                     });
-                    EventsStream.Write(new TestEntityPolymorphicEventForEntity
+                    EventsStream.Write(new TestEntityIPolyByteArrayEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity1,
                         Event =  new TestEntityPolymorphicEventB
@@ -255,7 +255,7 @@ namespace Trove.EventSystems.Tests
 
                 for (int i = 0; i < EntityPolymorphicEventTests.EventsPerSystemOrThreadForR2; i++)
                 {
-                    EventsStream.Write(new TestEntityPolymorphicEventForEntity
+                    EventsStream.Write(new TestEntityIPolyByteArrayEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity2,
                         Event = new TestEntityPolymorphicEventA
@@ -263,7 +263,7 @@ namespace Trove.EventSystems.Tests
                             Val = EntityPolymorphicEventTests.SingleJobStreamEventKeyA,
                         },
                     });
-                    EventsStream.Write(new TestEntityPolymorphicEventForEntity
+                    EventsStream.Write(new TestEntityIPolyByteArrayEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity2,
                         Event =  new TestEntityPolymorphicEventB
@@ -287,14 +287,14 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<TestEntityPolymorphicEventsSingleton>();
+            state.RequireForUpdate<TestIEntityPolyByteArrayEventsSingleton>();
             state.RequireForUpdate<EntityEventTestSingleton>();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            TestEntityPolymorphicEventsSingleton singleton = SystemAPI.GetSingletonRW<TestEntityPolymorphicEventsSingleton>().ValueRW;
+            TestIEntityPolyByteArrayEventsSingleton singleton = SystemAPI.GetSingletonRW<TestIEntityPolyByteArrayEventsSingleton>().ValueRW;
             EntityEventTestSingleton testSingleton = SystemAPI.GetSingleton<EntityEventTestSingleton>();
 
             state.Dependency = new WriteJob
@@ -307,7 +307,7 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public struct WriteJob : IJobParallelFor
         {
-            public EntityPolymorphicStreamEventsManager<TestEntityPolymorphicEventForEntity, PolyTestEntityPolymorphicEvent>.Writer EventsStream;
+            public EntityPolyByteArrayStreamEventsManager<TestEntityIPolyByteArrayEventForEntity, PolyTestEntityPolymorphicEvent>.Writer EventsStream;
             public EntityEventTestSingleton TestSingleton;
 
             public void Execute(int index)
@@ -316,7 +316,7 @@ namespace Trove.EventSystems.Tests
 
                 for (int i = 0; i < EntityPolymorphicEventTests.EventsPerSystemOrThreadForR1; i++)
                 {
-                    EventsStream.Write(new TestEntityPolymorphicEventForEntity
+                    EventsStream.Write(new TestEntityIPolyByteArrayEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity1,
                         Event = new TestEntityPolymorphicEventA
@@ -324,7 +324,7 @@ namespace Trove.EventSystems.Tests
                             Val = EntityPolymorphicEventTests.ParallelJobStreamEventKeyA,
                         },
                     });
-                    EventsStream.Write(new TestEntityPolymorphicEventForEntity
+                    EventsStream.Write(new TestEntityIPolyByteArrayEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity1,
                         Event =  new TestEntityPolymorphicEventB
@@ -338,7 +338,7 @@ namespace Trove.EventSystems.Tests
 
                 for (int i = 0; i < EntityPolymorphicEventTests.EventsPerSystemOrThreadForR2; i++)
                 {
-                    EventsStream.Write(new TestEntityPolymorphicEventForEntity
+                    EventsStream.Write(new TestEntityIPolyByteArrayEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity2,
                         Event = new TestEntityPolymorphicEventA
@@ -346,7 +346,7 @@ namespace Trove.EventSystems.Tests
                             Val = EntityPolymorphicEventTests.ParallelJobStreamEventKeyA,
                         },
                     });
-                    EventsStream.Write(new TestEntityPolymorphicEventForEntity
+                    EventsStream.Write(new TestEntityIPolyByteArrayEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity2,
                         Event =  new TestEntityPolymorphicEventB
@@ -370,7 +370,7 @@ namespace Trove.EventSystems.Tests
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<TestEntityPolymorphicEventsSingleton>();
+            state.RequireForUpdate<TestIEntityPolyByteArrayEventsSingleton>();
             state.RequireForUpdate<EntityEventTestSingleton>();
         }
 
@@ -395,7 +395,7 @@ namespace Trove.EventSystems.Tests
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<TestEntityPolymorphicEventsSingleton>();
+            state.RequireForUpdate<TestIEntityPolyByteArrayEventsSingleton>();
             state.RequireForUpdate<EntityEventTestSingleton>();
         }
 
@@ -429,7 +429,7 @@ namespace Trove.EventSystems.Tests
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<TestEntityPolymorphicEventsSingleton>();
+            state.RequireForUpdate<TestIEntityPolyByteArrayEventsSingleton>();
             state.RequireForUpdate<EntityEventTestSingleton>();
         }
 

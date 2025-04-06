@@ -117,7 +117,7 @@ namespace Trove.EventSystems.Tests
             World.Update();
             World.EntityManager.CompleteAllTrackedJobs();
 
-            EventTestUtilities.TryGetSingleton(World.EntityManager, out TestGlobalPolymorphicEventsSingleton globalEventsSingleton);
+            EventTestUtilities.TryGetSingleton(World.EntityManager, out TestIGlobalPolyByteArrayEventsSingleton globalEventsSingleton);
             Assert.AreEqual(0, globalEventsSingleton.ReadEventsList.Length);
 
             World.Unmanaged.GetExistingSystemState<GlobalPolymorphicEventTests_MainThreadStreamWriterSystem>().Enabled = true;
@@ -138,13 +138,13 @@ namespace Trove.EventSystems.Tests
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<TestGlobalPolymorphicEventsSingleton>();
+            state.RequireForUpdate<TestIGlobalPolyByteArrayEventsSingleton>();
         }
 
         public void OnUpdate(ref SystemState state)
         {
-            TestGlobalPolymorphicEventsSingleton singleton = SystemAPI.GetSingleton<TestGlobalPolymorphicEventsSingleton>();
-            GlobalPolymorphicStreamEventsManager<PolyTestGlobalPolymorphicEvent>.Writer eventsStream = singleton.StreamEventsManager.CreateWriter(1);
+            TestIGlobalPolyByteArrayEventsSingleton singleton = SystemAPI.GetSingleton<TestIGlobalPolyByteArrayEventsSingleton>();
+            GlobalPolyByteArrayStreamEventsManager<PolyTestGlobalPolymorphicEvent>.Writer eventsStream = singleton.StreamEventsManager.CreateWriter(1);
 
             eventsStream.BeginForEachIndex(0);
             for (int i = 0; i < GlobalPolymorphicEventTests.EventsPerSystemOrThread; i++)
@@ -171,13 +171,13 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<TestGlobalPolymorphicEventsSingleton>();
+            state.RequireForUpdate<TestIGlobalPolyByteArrayEventsSingleton>();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            TestGlobalPolymorphicEventsSingleton singleton = SystemAPI.GetSingleton<TestGlobalPolymorphicEventsSingleton>();
+            TestIGlobalPolyByteArrayEventsSingleton singleton = SystemAPI.GetSingleton<TestIGlobalPolyByteArrayEventsSingleton>();
 
             state.Dependency = new WriteJob
             {
@@ -188,7 +188,7 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public struct WriteJob : IJob
         {
-            public GlobalPolymorphicStreamEventsManager<PolyTestGlobalPolymorphicEvent>.Writer EventsStream;
+            public GlobalPolyByteArrayStreamEventsManager<PolyTestGlobalPolymorphicEvent>.Writer EventsStream;
 
             public void Execute()
             {
@@ -218,13 +218,13 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<TestGlobalPolymorphicEventsSingleton>();
+            state.RequireForUpdate<TestIGlobalPolyByteArrayEventsSingleton>();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            TestGlobalPolymorphicEventsSingleton singleton = SystemAPI.GetSingleton<TestGlobalPolymorphicEventsSingleton>();
+            TestIGlobalPolyByteArrayEventsSingleton singleton = SystemAPI.GetSingleton<TestIGlobalPolyByteArrayEventsSingleton>();
 
             state.Dependency = new WriteJob
             {
@@ -235,7 +235,7 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public struct WriteJob : IJobParallelFor
         {
-            public GlobalPolymorphicStreamEventsManager<PolyTestGlobalPolymorphicEvent>.Writer EventsStream;
+            public GlobalPolyByteArrayStreamEventsManager<PolyTestGlobalPolymorphicEvent>.Writer EventsStream;
 
             public void Execute(int index)
             {
@@ -270,14 +270,14 @@ namespace Trove.EventSystems.Tests
 
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<TestGlobalPolymorphicEventsSingleton>();
+            state.RequireForUpdate<TestIGlobalPolyByteArrayEventsSingleton>();
             state.RequireForUpdate<Singleton>();
         }
 
         public unsafe void OnUpdate(ref SystemState state)
         {
-            SystemAPI.QueryBuilder().WithAll<TestGlobalPolymorphicEventsSingleton>().Build().CompleteDependency();
-            TestGlobalPolymorphicEventsSingleton singleton = SystemAPI.GetSingleton<TestGlobalPolymorphicEventsSingleton>();
+            SystemAPI.QueryBuilder().WithAll<TestIGlobalPolyByteArrayEventsSingleton>().Build().CompleteDependency();
+            TestIGlobalPolyByteArrayEventsSingleton singleton = SystemAPI.GetSingleton<TestIGlobalPolyByteArrayEventsSingleton>();
             Singleton counterSingleton = SystemAPI.GetSingleton<Singleton>();
 
             counterSingleton.EventsCounter.Clear();
@@ -303,14 +303,14 @@ namespace Trove.EventSystems.Tests
 
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<TestGlobalPolymorphicEventsSingleton>();
+            state.RequireForUpdate<TestIGlobalPolyByteArrayEventsSingleton>();
             state.RequireForUpdate<Singleton>();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            TestGlobalPolymorphicEventsSingleton singleton = SystemAPI.GetSingleton<TestGlobalPolymorphicEventsSingleton>();
+            TestIGlobalPolyByteArrayEventsSingleton singleton = SystemAPI.GetSingleton<TestIGlobalPolyByteArrayEventsSingleton>();
             Singleton counterSingleton = SystemAPI.GetSingleton<Singleton>();
 
             counterSingleton.EventsCounter.Clear();
@@ -353,14 +353,14 @@ namespace Trove.EventSystems.Tests
 
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<TestGlobalPolymorphicEventsSingleton>();
+            state.RequireForUpdate<TestIGlobalPolyByteArrayEventsSingleton>();
             state.RequireForUpdate<Singleton>();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            TestGlobalPolymorphicEventsSingleton singleton = SystemAPI.GetSingleton<TestGlobalPolymorphicEventsSingleton>();
+            TestIGlobalPolyByteArrayEventsSingleton singleton = SystemAPI.GetSingleton<TestIGlobalPolyByteArrayEventsSingleton>();
             Singleton counterSingleton = SystemAPI.GetSingleton<Singleton>();
 
             counterSingleton.EventsCounter1.Clear();

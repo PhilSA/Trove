@@ -20,16 +20,16 @@ namespace Trove.EventSystems
         }
 
 #if HAS_TROVE_POLYMORPHICSTRUCTS
-        [MenuItem("Assets/Create/Trove/EventSystems/Global Polymorphic Event", priority = 3)]
-        static void NewGlobalPolymorphicEvent()
+        [MenuItem("Assets/Create/Trove/EventSystems/Global PolyByteArray Event", priority = 3)]
+        static void NewGlobalPolyByteArrayEvent()
         {
-            ProjectWindowUtil.CreateScriptAssetFromTemplateFile($"{ScriptTemplatePath}GlobalPolymorphicEventTemplate.txt", "NewEvent.cs");
+            ProjectWindowUtil.CreateScriptAssetFromTemplateFile($"{ScriptTemplatePath}GlobalPolyByteArrayEventTemplate.txt", "NewEvent.cs");
         }
 
-        [MenuItem("Assets/Create/Trove/EventSystems/Entity Polymorphic Event", priority = 4)]
-        static void NewEntityPolymorphicEvent()
+        [MenuItem("Assets/Create/Trove/EventSystems/Entity PolyByteArray Event", priority = 4)]
+        static void NewEntityPolyByteArrayEvent()
         {
-            ProjectWindowUtil.CreateScriptAssetFromTemplateFile($"{ScriptTemplatePath}EntityPolymorphicEventTemplate.txt", "NewEvent.cs");
+            ProjectWindowUtil.CreateScriptAssetFromTemplateFile($"{ScriptTemplatePath}EntityPolyByteArrayEventTemplate.txt", "NewEvent.cs");
         }
 #endif
     }
