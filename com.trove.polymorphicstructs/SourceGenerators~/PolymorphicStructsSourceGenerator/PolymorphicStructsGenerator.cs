@@ -38,6 +38,7 @@ namespace PolymorphicStructsSourceGenerators
         public string TypeNameOLD;
         public StructModel TargetStructModel;
         public bool AllowEntitiesAndBlobs;
+        public bool IsMergedFieldsStruct;
         public List<MethodModel> InterfaceMethodModels;
         public List<PropertyModel> InterfacePropertyModels;
 
@@ -47,6 +48,7 @@ namespace PolymorphicStructsSourceGenerators
             string typeNameOLD,
             StructModel targetStructModel,
             bool allowEntitiesAndBlobs,
+            bool isMergedFieldsStruct,
             List<MethodModel> interfaceMethodModels,
             List<PropertyModel> interfacePropertyModels)
         {
@@ -55,8 +57,15 @@ namespace PolymorphicStructsSourceGenerators
             TypeNameOLD = typeNameOLD;
             TargetStructModel = targetStructModel;
             AllowEntitiesAndBlobs = allowEntitiesAndBlobs;
+            IsMergedFieldsStruct = isMergedFieldsStruct;
             InterfaceMethodModels = interfaceMethodModels;
             InterfacePropertyModels = interfacePropertyModels;
+
+            // Ok to allow entities and blobs in merged fields structs
+            if(IsMergedFieldsStruct)
+            {
+                AllowEntitiesAndBlobs = true;
+            }
 
             ValueHash = 0;
             RecomputeValueHash();
@@ -64,7 +73,7 @@ namespace PolymorphicStructsSourceGenerators
 
         public void RecomputeValueHash()
         {
-            string valuesString = $"{Name}{TypeName}{TargetStructModel.ValueHash}{AllowEntitiesAndBlobs}{InterfaceMethodModels.Count}{InterfacePropertyModels.Count}";
+            string valuesString = $"{Name}{TypeName}{TargetStructModel.ValueHash}{AllowEntitiesAndBlobs}{IsMergedFieldsStruct}{InterfaceMethodModels.Count}{InterfacePropertyModels.Count}";
             ValueHash = valuesString.GetHashCode();
         }
 
@@ -188,6 +197,83 @@ namespace PolymorphicStructsSourceGenerators
         }
     }
 
+    public struct MergedFieldModel
+    {
+        public string FieldTypeName;
+        public int TypeCounter;
+
+        public override bool Equals(object obj)
+        {
+            return obj is MergedFieldModel model &&
+                   FieldTypeName == model.FieldTypeName &&
+                   TypeCounter == model.TypeCounter;
+        }
+
+        public override int GetHashCode()
+        {
+            int hashCode = 2091989527;
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(FieldTypeName);
+            hashCode = hashCode * -1521134295 + TypeCounter.GetHashCode();
+            return hashCode;
+        }
+    }
+
+    public struct SpecificFieldModel
+    {
+        public string StructName;
+        public string FieldTypeName;
+        public string FieldName;
+
+        public override bool Equals(object obj)
+        {
+            return obj is SpecificFieldModel model &&
+                   StructName == model.StructName &&
+                   FieldTypeName == model.FieldTypeName &&
+                   FieldName == model.FieldName;
+        }
+
+        public override int GetHashCode()
+        {
+            int hashCode = -112254477;
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(StructName);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(FieldTypeName);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(FieldName);
+            return hashCode;
+        }
+    }
+
+    public class MergedFieldsData
+    {
+        public List<MergedFieldModel> MergedFieldModels;
+        public Dictionary<MergedFieldModel, Dictionary<string, SpecificFieldModel>> MergedFieldToSpecificFieldsMap;
+        public Dictionary<SpecificFieldModel, MergedFieldModel> SpecificFieldToMergedFieldMap;
+        public Dictionary<MergedFieldModel, int> MergedFieldToMergedFieldIdMap;
+        public Dictionary<string, int> StructFieldTypeCounter;
+
+        public MergedFieldsData()
+        {
+            MergedFieldModels = new List<MergedFieldModel>();
+            MergedFieldToSpecificFieldsMap = new Dictionary<MergedFieldModel, Dictionary<string, SpecificFieldModel>>();
+            SpecificFieldToMergedFieldMap = new Dictionary<SpecificFieldModel, MergedFieldModel>();
+            MergedFieldToMergedFieldIdMap = new Dictionary<MergedFieldModel, int>();
+            StructFieldTypeCounter = new Dictionary<string, int>();
+        }
+
+        public void Clear()
+        {
+            MergedFieldModels.Clear();
+            MergedFieldToSpecificFieldsMap.Clear();
+            SpecificFieldToMergedFieldMap.Clear();
+            MergedFieldToMergedFieldIdMap.Clear();
+            StructFieldTypeCounter.Clear();
+        }
+
+        public string GetMergedFieldName(MergedFieldModel mergedFieldModel)
+        {
+            return $"Field{MergedFieldToMergedFieldIdMap[mergedFieldModel].ToString()}";
+        }
+    }
+
     [Generator]
     public class PolymorphicStructsGenerator : IIncrementalGenerator
     {
@@ -201,7 +287,7 @@ namespace PolymorphicStructsSourceGenerators
         public const string TypeName_PolymorphicStructInterfaceAttribute = "PolymorphicStructInterfaceAttribute";
         public const string TypeName_PolymorphicStructAttribute = "PolymorphicStructAttribute";
         public const string TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute = "AllowEntitiesAndBlobsInPolymorphicStructAttribute";
-        public const string TypeName_IsMergedFieldsPolymorphicStruct = "IsMergedFieldsPolymorphicStruct";
+        public const string TypeName_IsMergedFieldsPolymorphicStructAttribute = "IsMergedFieldsPolymorphicStructAttribute";
         public const string TypeName_UnsafeUtility = "UnsafeUtility";
         public const string TypeName_FieldOffset = "FieldOffset";
 
@@ -218,7 +304,7 @@ namespace PolymorphicStructsSourceGenerators
         public const string Decorator_InitializeOnLoadMethod = "[UnityEditor.InitializeOnLoadMethod]";
         public const string Decorator_MethodImpl_AggressiveInlining = "[MethodImpl(MethodImplOptions.AggressiveInlining)]";
         public const string Decorator_StructLayout_Explicit = "[StructLayout(LayoutKind.Explicit)]";
-        
+
         public const string Name_Enum_TypeId = "TypeId";
 
         public const string SizeOf_TypeId = "4";
@@ -226,6 +312,7 @@ namespace PolymorphicStructsSourceGenerators
         public static List<LogMessage> LogMessages = new List<LogMessage>();
         public static List<ISymbol> InterfaceMembers = new List<ISymbol>();
         public static List<ITypeSymbol> SymbolsToProcess = new List<ITypeSymbol>();
+        public static MergedFieldsData MergedFieldsData = new MergedFieldsData();
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
@@ -286,9 +373,9 @@ namespace PolymorphicStructsSourceGenerators
                 writer.WriteInNamespace(NamespaceName_PolymorphicStructs, () =>
                 {
                     writer.WriteLine($"[System.AttributeUsage(System.AttributeTargets.Interface)]");
-                    writer.WriteLine($"internal class {TypeName_IsMergedFieldsPolymorphicStruct}: System.Attribute {{}}");
+                    writer.WriteLine($"internal class {TypeName_IsMergedFieldsPolymorphicStructAttribute}: System.Attribute {{}}");
                 });
-                i.AddSource(TypeName_IsMergedFieldsPolymorphicStruct + FileName_GeneratedSuffixAndFileType, writer.FileContents);
+                i.AddSource(TypeName_IsMergedFieldsPolymorphicStructAttribute + FileName_GeneratedSuffixAndFileType, writer.FileContents);
             });
         }
 
@@ -318,6 +405,7 @@ namespace PolymorphicStructsSourceGenerators
 
             // Check attributes
             bool allowEntitiesAndBlobs = false;
+            bool isMergedFieldsStruct = false;
             ImmutableArray<AttributeData> interfaceAttributes = interfaceTypeSymbol.GetAttributes();
             for (int i = 0; i < interfaceAttributes.Length; i++)
             {
@@ -327,7 +415,12 @@ namespace PolymorphicStructsSourceGenerators
                 if (attribute.AttributeClass.Name == TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute)
                 {
                     allowEntitiesAndBlobs = true;
-                    break;
+                }
+
+                // IsMergedFieldsPolymorphicStruct attribute
+                if (attribute.AttributeClass.Name == TypeName_IsMergedFieldsPolymorphicStructAttribute)
+                {
+                    isMergedFieldsStruct = true;
                 }
             }
 
@@ -491,6 +584,7 @@ namespace PolymorphicStructsSourceGenerators
                 SourceGenUtils.GetFullTypeName(interfaceTypeSymbol),
                 targetStructModel,
                 allowEntitiesAndBlobs,
+                isMergedFieldsStruct,
                 interfaceMethodModels,
                 interfacePropertyModels);
         }
@@ -559,6 +653,7 @@ namespace PolymorphicStructsSourceGenerators
                 for (int a = 0; a < source.Left.Length; a++)
                 {
                     LogMessages.Clear();
+                    MergedFieldsData.Clear();
 
                     CompiledStructsForInterfaceData compiledCodeData = CreateCompiledStructsForInterfaceData(source.Left[a], source.Right);
 
@@ -575,8 +670,99 @@ namespace PolymorphicStructsSourceGenerators
 
                     writer.WriteInNamespace(polyInterfaceModel.TargetStructModel.NamespaceName, () =>
                     {
-                        writer.WriteLine($"{Decorator_StructLayout_Explicit}");
-                        writer.WriteLine($"public unsafe partial struct {polyInterfaceModel.TargetStructModel.Name} : {TypeName_IPolymorphicObject}");
+                        string structImplementsString = string.Empty;
+                        if (polyInterfaceModel.IsMergedFieldsStruct)
+                        {
+                            // Compile merged fields data for each struct
+                            for (int i = 0; i < compiledCodeData.PolyStructModels.Count; i++)
+                            {
+                                PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[i];
+
+                                MergedFieldsData.StructFieldTypeCounter.Clear();
+
+                                // Iterate struct fields & properties
+                                foreach (ISymbol memberSymbol in polyStructModel.StructTypeSymbol.GetMembers())
+                                {
+                                    if (memberSymbol.Kind == SymbolKind.Field && memberSymbol is IFieldSymbol fieldSymbol)
+                                    {
+                                        SpecificFieldModel specificFieldModel = new SpecificFieldModel
+                                        {
+                                            FieldName = fieldSymbol.Name,
+                                            FieldTypeName = SourceGenUtils.GetFullTypeName(fieldSymbol.Type),
+                                            StructName = polyStructModel.StructModel.Name,
+                                        };
+
+                                        // Update field type counter in this struct
+                                        int fieldTypeCounter = 1;
+                                        if (MergedFieldsData.StructFieldTypeCounter.TryGetValue(specificFieldModel.FieldTypeName, out fieldTypeCounter))
+                                        {
+                                            fieldTypeCounter++;
+                                            MergedFieldsData.StructFieldTypeCounter[specificFieldModel.FieldTypeName] = fieldTypeCounter;
+                                        }
+                                        else
+                                        {
+                                            MergedFieldsData.StructFieldTypeCounter.Add(specificFieldModel.FieldTypeName, fieldTypeCounter);
+                                        }
+
+                                        // Check if a merged field of this type exists already
+                                        bool foundMatchingMergedField = false;
+                                        MergedFieldModel matchingMergedFieldModel = default;
+                                        foreach (KeyValuePair<MergedFieldModel, Dictionary<string, SpecificFieldModel>> entry in MergedFieldsData.MergedFieldToSpecificFieldsMap)
+                                        {
+                                            MergedFieldModel mergedFieldModel = entry.Key;
+
+                                            // If found a match
+                                            if (mergedFieldModel.TypeCounter == fieldTypeCounter && 
+                                                mergedFieldModel.FieldTypeName == specificFieldModel.FieldTypeName)
+                                            {
+                                                foundMatchingMergedField = true;
+                                                matchingMergedFieldModel = mergedFieldModel;
+                                                break;
+                                            }
+                                        }
+
+                                        // If we did not find a matching merged field, create a new one
+                                        if(!foundMatchingMergedField)
+                                        {
+                                            matchingMergedFieldModel = new MergedFieldModel
+                                            {
+                                                FieldTypeName = specificFieldModel.FieldTypeName,
+                                                TypeCounter = fieldTypeCounter,
+                                            };
+                                            MergedFieldsData.MergedFieldToSpecificFieldsMap.Add(matchingMergedFieldModel, new Dictionary<string, SpecificFieldModel>());
+                                        }
+
+                                        // Add specific field to matching merged field maps
+                                        {
+                                            Dictionary<string, SpecificFieldModel> structNameToFieldModelMap = MergedFieldsData.MergedFieldToSpecificFieldsMap[matchingMergedFieldModel];
+                                            
+                                            // Add map entries for this struct + field
+                                            structNameToFieldModelMap.Add(specificFieldModel.StructName, specificFieldModel);
+                                            MergedFieldsData.MergedFieldToSpecificFieldsMap[matchingMergedFieldModel] = structNameToFieldModelMap;
+                                            MergedFieldsData.SpecificFieldToMergedFieldMap.Add(specificFieldModel, matchingMergedFieldModel);
+                                        }
+                                    }
+
+                                    if (memberSymbol.Kind == SymbolKind.Property && memberSymbol is IPropertySymbol propertySymbol)
+                                    {
+                                    }
+                                }
+                            }
+
+                            // Create merged fields Ids after all merged fields added
+                            int mergedFieldIdCounter = 0;
+                            foreach (KeyValuePair<MergedFieldModel, Dictionary<string, SpecificFieldModel>> entry in MergedFieldsData.MergedFieldToSpecificFieldsMap)
+                            {
+                                MergedFieldsData.MergedFieldToMergedFieldIdMap.Add(entry.Key, mergedFieldIdCounter);
+                                mergedFieldIdCounter++;
+                            }
+                        }
+                        else
+                        {
+                            structImplementsString = $" : {TypeName_IPolymorphicObject}";
+                            writer.WriteLine($"{Decorator_StructLayout_Explicit}");
+                        }
+                        writer.WriteLine($"public unsafe partial struct {polyInterfaceModel.TargetStructModel.Name}{structImplementsString}");
                         writer.WriteInScope(() =>
                         {
                             // Types enum
@@ -592,15 +778,31 @@ namespace PolymorphicStructsSourceGenerators
 
                             writer.WriteLine($"");
 
-                            writer.WriteLine($"[{TypeName_FieldOffset}(0)]");
+                            if (!polyInterfaceModel.IsMergedFieldsStruct)
+                            {
+                                writer.WriteLine($"[{TypeName_FieldOffset}(0)]");
+                            }
                             writer.WriteLine($"public {Name_Enum_TypeId} CurrentTypeId;");
 
-                            // Union fields
-                            for (int i = 0; i < compiledCodeData.PolyStructModels.Count; i++)
+                            // Fields
+                            if (polyInterfaceModel.IsMergedFieldsStruct)
                             {
-                                PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[i];
-                                writer.WriteLine($"[{TypeName_FieldOffset}({SizeOf_TypeId})]");
-                                writer.WriteLine($"public {polyStructModel.StructModel.TypeName} Field_{polyStructModel.StructModel.Name};");
+                                // Merged fields
+                                foreach (KeyValuePair<MergedFieldModel, Dictionary<string, SpecificFieldModel>> entry in MergedFieldsData.MergedFieldToSpecificFieldsMap)
+                                {
+                                    MergedFieldModel mergedFieldModel = entry.Key;
+                                    writer.WriteLine($"public {mergedFieldModel.FieldTypeName} {MergedFieldsData.GetMergedFieldName(mergedFieldModel)};");
+                                }
+                            }
+                            else
+                            {
+                                // Union fields
+                                for (int i = 0; i < compiledCodeData.PolyStructModels.Count; i++)
+                                {
+                                    PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[i];
+                                    writer.WriteLine($"[{TypeName_FieldOffset}({SizeOf_TypeId})]");
+                                    writer.WriteLine($"public {polyStructModel.StructModel.TypeName} Field_{polyStructModel.StructModel.Name};");
+                                }
                             }
 
                             writer.WriteLine($"");
@@ -629,7 +831,15 @@ namespace PolymorphicStructsSourceGenerators
                                                     writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
                                                     writer.WriteInScope(() =>
                                                     {
-                                                        writer.WriteLine($"return Field_{polyStructModel.StructModel.Name}.{propertyModel.Name};");
+                                                        if (polyInterfaceModel.IsMergedFieldsStruct)
+                                                        {
+                                                            // TODO: Merged fields properties
+                                                        }
+                                                        else
+                                                        {
+                                                            // Union struct properties
+                                                            writer.WriteLine($"return Field_{polyStructModel.StructModel.Name}.{propertyModel.Name};");
+                                                        }
                                                     });
                                                 }
                                             });
@@ -653,7 +863,15 @@ namespace PolymorphicStructsSourceGenerators
                                                     writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
                                                     writer.WriteInScope(() =>
                                                     {
-                                                        writer.WriteLine($"Field_{polyStructModel.StructModel.Name}.{propertyModel.Name} = value;");
+                                                        if (polyInterfaceModel.IsMergedFieldsStruct)
+                                                        {
+                                                            // TODO: Merged fields properties
+                                                        }
+                                                        else
+                                                        {
+                                                            // Union struct properties
+                                                            writer.WriteLine($"Field_{polyStructModel.StructModel.Name}.{propertyModel.Name} = value;");
+                                                        }
                                                         writer.WriteLine($"break;");
                                                     });
                                                 }
@@ -679,8 +897,16 @@ namespace PolymorphicStructsSourceGenerators
                                     writer.WriteLine($"return new {polyInterfaceModel.TargetStructModel.TypeName}");
                                     writer.WriteInScope(() =>
                                     {
-                                        writer.WriteLine($"CurrentTypeId = {Name_Enum_TypeId}.{polyStructModel.StructModel.Name},");
-                                        writer.WriteLine($"Field_{polyStructModel.StructModel.Name} = s,");
+                                        if (polyInterfaceModel.IsMergedFieldsStruct)
+                                        {
+                                            // TODO: Merged fields
+                                        }
+                                        else
+                                        {
+                                            // Union struct
+                                            writer.WriteLine($"CurrentTypeId = {Name_Enum_TypeId}.{polyStructModel.StructModel.Name},");
+                                            writer.WriteLine($"Field_{polyStructModel.StructModel.Name} = s,");
+                                        }
                                     }, ";");
                                 });
 
@@ -690,7 +916,15 @@ namespace PolymorphicStructsSourceGenerators
                                 writer.WriteLine($"public static implicit operator {polyStructModel.StructModel.TypeName} ({polyInterfaceModel.TargetStructModel.TypeName} s)");
                                 writer.WriteInScope(() =>
                                 {
-                                    writer.WriteLine($"return s.Field_{polyStructModel.StructModel.Name};");
+                                    if (polyInterfaceModel.IsMergedFieldsStruct)
+                                    {
+                                        // TODO: Merged fields
+                                    }
+                                    else
+                                    {
+                                        // Union struct
+                                        writer.WriteLine($"return s.Field_{polyStructModel.StructModel.Name};");
+                                    }
                                 });
 
                                 writer.WriteLine($"");
@@ -699,6 +933,7 @@ namespace PolymorphicStructsSourceGenerators
                             writer.WriteLine($"");
 
                             // IPolymorphicObject interface
+                            if (!polyInterfaceModel.IsMergedFieldsStruct)
                             {
                                 writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
                                 writer.WriteLine($"public int GetTypeId()");
@@ -784,38 +1019,39 @@ namespace PolymorphicStructsSourceGenerators
                                     writer.WriteLine($"");
                                     writer.WriteLine($"writeSize = 0;");
                                 });
-                            }
 
-                            writer.WriteLine($"");
 
-                            writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
-                            writer.WriteLine($"public void SetDataFrom(int typeId, byte* srcPtr, out int readSize)");
-                            writer.WriteInScope(() =>
-                            {
-                                writer.WriteLine($"CurrentTypeId = ({Name_Enum_TypeId})typeId;");
                                 writer.WriteLine($"");
 
-                                // Switch over typeId
-                                writer.WriteLine($"switch (CurrentTypeId)");
+                                writer.WriteLine($"{Decorator_MethodImpl_AggressiveInlining}");
+                                writer.WriteLine($"public void SetDataFrom(int typeId, byte* srcPtr, out int readSize)");
                                 writer.WriteInScope(() =>
                                 {
-                                    for (int t = 0; t < compiledCodeData.PolyStructModels.Count; t++)
-                                    {
-                                        PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[t];
+                                    writer.WriteLine($"CurrentTypeId = ({Name_Enum_TypeId})typeId;");
+                                    writer.WriteLine($"");
 
-                                        // Case
-                                        writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
-                                        writer.WriteInScope(() =>
+                                    // Switch over typeId
+                                    writer.WriteLine($"switch (CurrentTypeId)");
+                                    writer.WriteInScope(() =>
+                                    {
+                                        for (int t = 0; t < compiledCodeData.PolyStructModels.Count; t++)
                                         {
-                                            writer.WriteLine($"readSize = {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.TypeName}>();");
-                                            writer.WriteLine($" Field_{polyStructModel.StructModel.Name} = *({polyStructModel.StructModel.TypeName}*)srcPtr;");
-                                            writer.WriteLine($"return;");
-                                        });
-                                    }
+                                            PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[t];
+
+                                            // Case
+                                            writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
+                                            writer.WriteInScope(() =>
+                                            {
+                                                writer.WriteLine($"readSize = {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.TypeName}>();");
+                                                writer.WriteLine($" Field_{polyStructModel.StructModel.Name} = *({polyStructModel.StructModel.TypeName}*)srcPtr;");
+                                                writer.WriteLine($"return;");
+                                            });
+                                        }
+                                    });
+                                    writer.WriteLine($"");
+                                    writer.WriteLine($"readSize = 0;");
                                 });
-                                writer.WriteLine($"");
-                                writer.WriteLine($"readSize = 0;");
-                            });
+                            }
 
                             writer.WriteLine($"");
 
@@ -842,15 +1078,23 @@ namespace PolymorphicStructsSourceGenerators
                                             writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
                                             writer.WriteInScope(() =>
                                             {
-                                                // Invoke method on struct
-                                                if (methodModel.HasNonVoidReturnType)
+                                                if (polyInterfaceModel.IsMergedFieldsStruct)
                                                 {
-                                                    writer.WriteLine($"return Field_{polyStructModel.StructModel.Name}.{methodModel.Name}({methodModel.MethodParametersInvoke});");
+                                                    // TODO: Merged fields properties
                                                 }
                                                 else
                                                 {
-                                                    writer.WriteLine($"Field_{polyStructModel.StructModel.Name}.{methodModel.Name}({methodModel.MethodParametersInvoke});");
-                                                    writer.WriteLine($"break;");
+                                                    // Union struct properties
+                                                    // Invoke method on struct
+                                                    if (methodModel.HasNonVoidReturnType)
+                                                    {
+                                                        writer.WriteLine($"return Field_{polyStructModel.StructModel.Name}.{methodModel.Name}({methodModel.MethodParametersInvoke});");
+                                                    }
+                                                    else
+                                                    {
+                                                        writer.WriteLine($"Field_{polyStructModel.StructModel.Name}.{methodModel.Name}({methodModel.MethodParametersInvoke});");
+                                                        writer.WriteLine($"break;");
+                                                    }
                                                 }
                                             });
                                         }
