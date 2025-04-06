@@ -286,9 +286,9 @@ namespace PolymorphicStructsSourceGenerators
                 writer.WriteInNamespace(NamespaceName_PolymorphicStructs, () =>
                 {
                     writer.WriteLine($"[System.AttributeUsage(System.AttributeTargets.Interface)]");
-                    writer.WriteLine($"internal class {TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute}: System.Attribute {{}}");
+                    writer.WriteLine($"internal class {TypeName_IsMergedFieldsPolymorphicStruct}: System.Attribute {{}}");
                 });
-                i.AddSource(TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute + FileName_GeneratedSuffixAndFileType, writer.FileContents);
+                i.AddSource(TypeName_IsMergedFieldsPolymorphicStruct + FileName_GeneratedSuffixAndFileType, writer.FileContents);
             });
         }
 
