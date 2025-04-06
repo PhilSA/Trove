@@ -214,17 +214,13 @@ partial struct JOINKReaderSystem : ISystem
     {
         public void Execute(DynamicBuffer<JOINKBufferElement> eventsBuffer)
         {
-            // Read and ecexute all events from the bytes buffer
-            int readIndex = 0;
             DynamicBuffer<byte> eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
-            while (readIndex < eventsBuffer.Length)
+            
+            // Get the iterator that can read through the polymorphic structs of the list
+            PolymorphicObjectDynamicBufferIterator<PStruct_IJOINK> iterator = 
+                PolymorphicObjectUtilities.GetIterator<PStruct_IJOINK>(eventsBytesBuffer);
+            while (iterator.GetNext(out PStruct_IJOINK e, out _, out _))
             {
-                // Important: when reading polymorphic events from a bytes list, you MUST use "PolymorphicObjectUtilities.GetObject"
-                // Get the polymorphic object at the read index, as our event polymorphic struct type
-                PolymorphicObjectUtilities.GetObject(ref eventsBytesBuffer, readIndex, out PStruct_IJOINK e, out int readSize);
-                // Increment read index by read size
-                readIndex += readSize;
-                
                 // Execute the event (execution logic is implemented in the event struct itself)
                 e.Execute();
             }

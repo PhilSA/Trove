@@ -281,12 +281,12 @@ namespace Trove.EventSystems.Tests
             Singleton counterSingleton = SystemAPI.GetSingleton<Singleton>();
 
             counterSingleton.EventsCounter.Clear();
-            int readIndex = 0;
+            
             NativeList<byte> eventsList = singleton.ReadEventsList;
-            while (readIndex < singleton.ReadEventsList.Length)
+            PolymorphicObjectNativeListIterator<PStruct_ITestGlobalPolymorphicEvent> iterator = 
+                PolymorphicObjectUtilities.GetIterator<PStruct_ITestGlobalPolymorphicEvent>(eventsList);
+            while (iterator.GetNext(out PStruct_ITestGlobalPolymorphicEvent e, out _, out _))
             {
-                PolymorphicObjectUtilities.GetObject(ref eventsList, readIndex, out PStruct_ITestGlobalPolymorphicEvent e, out int readSize);
-                readIndex += readSize;
                 e.Execute(ref counterSingleton.EventsCounter);
             }
         }
@@ -330,11 +330,10 @@ namespace Trove.EventSystems.Tests
 
             public void Execute()
             {
-                int readIndex = 0;
-                while (readIndex < EventsList.Length)
+                PolymorphicObjectNativeListIterator<PStruct_ITestGlobalPolymorphicEvent> iterator = 
+                    PolymorphicObjectUtilities.GetIterator<PStruct_ITestGlobalPolymorphicEvent>(EventsList);
+                while (iterator.GetNext(out PStruct_ITestGlobalPolymorphicEvent e, out _, out _))
                 {
-                    PolymorphicObjectUtilities.GetObject(ref EventsList, readIndex, out PStruct_ITestGlobalPolymorphicEvent e, out int readSize);
-                    readIndex += readSize;
                     e.Execute(ref EventsCounter);
                 }
             }
@@ -404,11 +403,10 @@ namespace Trove.EventSystems.Tests
                         break;
                 }
 
-                int readIndex = 0;
-                while (readIndex < EventsList.Length)
+                PolymorphicObjectNativeListIterator<PStruct_ITestGlobalPolymorphicEvent> iterator = 
+                    PolymorphicObjectUtilities.GetIterator<PStruct_ITestGlobalPolymorphicEvent>(EventsList);
+                while (iterator.GetNext(out PStruct_ITestGlobalPolymorphicEvent e, out _, out _))
                 {
-                    PolymorphicObjectUtilities.GetObject(ref EventsList, readIndex, out PStruct_ITestGlobalPolymorphicEvent e, out int readSize);
-                    readIndex += readSize;
                     e.Execute(ref targetCounter);
                 }
             }

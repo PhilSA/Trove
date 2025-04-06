@@ -378,12 +378,11 @@ namespace Trove.EventSystems.Tests
         {
             foreach(var (eventReceiver, eventsBuffer, entity) in SystemAPI.Query<RefRW<EntityEventReceiver>, DynamicBuffer<TestEntityPolymorphicEventBufferElement>>().WithEntityAccess())
             {
-                int readIndex = 0;
                 var eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
-                while (readIndex < eventsBuffer.Length)
+                PolymorphicObjectDynamicBufferIterator<PStruct_ITestEntityPolymorphicEvent> iterator = 
+                    PolymorphicObjectUtilities.GetIterator<PStruct_ITestEntityPolymorphicEvent>(eventsBytesBuffer);
+                while (iterator.GetNext(out PStruct_ITestEntityPolymorphicEvent e, out _, out _))
                 {
-                    PolymorphicObjectUtilities.GetObject(ref eventsBytesBuffer, readIndex, out PStruct_ITestEntityPolymorphicEvent e, out int readSize);
-                    readIndex += readSize;
                     e.Execute(ref eventReceiver.ValueRW, 1);
                 }
             }
@@ -413,12 +412,11 @@ namespace Trove.EventSystems.Tests
         {
             public unsafe void Execute(Entity entity, ref EntityEventReceiver eventReceiver, in DynamicBuffer<TestEntityPolymorphicEventBufferElement> eventsBuffer)
             {
-                int readIndex = 0;
                 var eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
-                while (readIndex < eventsBuffer.Length)
+                PolymorphicObjectDynamicBufferIterator<PStruct_ITestEntityPolymorphicEvent> iterator = 
+                    PolymorphicObjectUtilities.GetIterator<PStruct_ITestEntityPolymorphicEvent>(eventsBytesBuffer);
+                while (iterator.GetNext(out PStruct_ITestEntityPolymorphicEvent e, out _, out _))
                 {
-                    PolymorphicObjectUtilities.GetObject(ref eventsBytesBuffer, readIndex, out PStruct_ITestEntityPolymorphicEvent e, out int readSize);
-                    readIndex += readSize;
                     e.Execute(ref eventReceiver, 2);
                 }
             }
@@ -448,12 +446,11 @@ namespace Trove.EventSystems.Tests
         {
             public unsafe void Execute(Entity entity, ref EntityEventReceiver eventReceiver, in DynamicBuffer<TestEntityPolymorphicEventBufferElement> eventsBuffer)
             {
-                int readIndex = 0;
                 var eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
-                while (readIndex < eventsBuffer.Length)
+                PolymorphicObjectDynamicBufferIterator<PStruct_ITestEntityPolymorphicEvent> iterator = 
+                    PolymorphicObjectUtilities.GetIterator<PStruct_ITestEntityPolymorphicEvent>(eventsBytesBuffer);
+                while (iterator.GetNext(out PStruct_ITestEntityPolymorphicEvent e, out _, out _))
                 {
-                    PolymorphicObjectUtilities.GetObject(ref eventsBytesBuffer, readIndex, out PStruct_ITestEntityPolymorphicEvent e, out int readSize);
-                    readIndex += readSize;
                     e.Execute(ref eventReceiver, 3);
                 }
             }

@@ -15,11 +15,113 @@ namespace Trove
         public void SetDataFrom(int typeId, byte* srcPtr, out int readSize);
     }
 
+    public struct PolymorphicObjectUnsafeListIterator<T> where T : unmanaged, IPolymorphicObject
+    {
+        private UnsafeList<byte> _list;
+        private int _readIndex;
+        
+        public PolymorphicObjectUnsafeListIterator(UnsafeList<byte> list)
+        {
+            _list = list;
+            _readIndex = 0;
+        }
+
+        public bool GetNext(out T result, out int startIndex, out int size)
+        {
+            startIndex = _readIndex;
+            if (_readIndex < _list.Length)
+            {
+                PolymorphicObjectUtilities.GetObject(ref _list, _readIndex, out result, out size);
+                _readIndex += size;
+                return true;
+            }
+
+            result = default;
+            size = 0;
+            return false;
+        }
+    }
+
+    public struct PolymorphicObjectNativeListIterator<T> where T : unmanaged, IPolymorphicObject
+    {
+        private NativeList<byte> _list;
+        private int _readIndex;
+        
+        public PolymorphicObjectNativeListIterator(NativeList<byte> list)
+        {
+            _list = list;
+            _readIndex = 0;
+        }
+
+        public bool GetNext(out T result, out int startIndex, out int size)
+        {
+            startIndex = _readIndex;
+            if (_readIndex < _list.Length)
+            {
+                PolymorphicObjectUtilities.GetObject(ref _list, _readIndex, out result, out size);
+                _readIndex += size;
+                return true;
+            }
+
+            result = default;
+            size = 0;
+            return false;
+        }
+    }
+
+    public struct PolymorphicObjectDynamicBufferIterator<T> where T : unmanaged, IPolymorphicObject
+    {
+        private DynamicBuffer<byte> _list;
+        private int _readIndex;
+        
+        public PolymorphicObjectDynamicBufferIterator(DynamicBuffer<byte> list)
+        {
+            _list = list;
+            _readIndex = 0;
+        }
+
+        public bool GetNext(out T result, out int startIndex, out int size)
+        {
+            startIndex = _readIndex;
+            if (_readIndex < _list.Length)
+            {
+                PolymorphicObjectUtilities.GetObject(ref _list, _readIndex, out result, out size);
+                _readIndex += size;
+                return true;
+            }
+
+            result = default;
+            size = 0;
+            return false;
+        }
+    }
+
+    public struct PolymorphicObjectNativeStreamIterator<T> where T : unmanaged, IPolymorphicObject
+    {
+        private NativeStream.Reader _stream;
+        
+        public PolymorphicObjectNativeStreamIterator(NativeStream stream)
+        {
+            _stream = stream.AsReader();
+        }
+
+        public bool GetNext(out T result, out int size)
+        {
+            return PolymorphicObjectUtilities.GetNextObject(ref _stream, out result, out size);
+        }
+    }
+
     public static class PolymorphicObjectUtilities
     {
         public const int SizeOf_TypeId = 4;
         
         #region UnsafeList
+        public static PolymorphicObjectUnsafeListIterator<T> GetIterator<T>(UnsafeList<byte> list)
+            where T : unmanaged, IPolymorphicObject
+        {
+            return new PolymorphicObjectUnsafeListIterator<T>(list);
+        }
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void AddObject<T>(T polymorphicObject, ref UnsafeList<byte> list, out int byteIndex,
             out int writeSize, float growFactor = 1.5f)
@@ -122,6 +224,12 @@ namespace Trove
         #endregion
 
         #region NativeList
+        public static PolymorphicObjectNativeListIterator<T> GetIterator<T>(NativeList<byte> list)
+            where T : unmanaged, IPolymorphicObject
+        {
+            return new PolymorphicObjectNativeListIterator<T>(list);
+        }
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void AddObject<T>(T polymorphicObject, ref NativeList<byte> list, out int byteIndex,
             out int writeSize, float growFactor = 1.5f)
@@ -224,6 +332,12 @@ namespace Trove
         #endregion
 
         #region DynamicBuffer
+        public static PolymorphicObjectDynamicBufferIterator<T> GetIterator<T>(DynamicBuffer<byte> list)
+            where T : unmanaged, IPolymorphicObject
+        {
+            return new PolymorphicObjectDynamicBufferIterator<T>(list);
+        }
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void AddObject<T>(T polymorphicObject, ref DynamicBuffer<byte> list, out int byteIndex,
             out int writeSize, float growFactor = 1.5f)
@@ -326,6 +440,12 @@ namespace Trove
         #endregion
 
         #region NativeStream
+        public static PolymorphicObjectNativeStreamIterator<T> GetIterator<T>(NativeStream stream)
+            where T : unmanaged, IPolymorphicObject
+        {
+            return new PolymorphicObjectNativeStreamIterator<T>(stream);
+        }
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void AddObject<T>(T polymorphicObject, ref NativeStream.Writer stream, out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject

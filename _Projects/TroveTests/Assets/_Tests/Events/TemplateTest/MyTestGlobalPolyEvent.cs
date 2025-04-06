@@ -188,16 +188,11 @@ partial struct BOINKReaderSystem : ISystem
         
         public void Execute()
         {
-            // Read and ecexute all events from the bytes list
-            int readIndex = 0;
-            while (readIndex < ReadEventsList.Length)
+            // Get the iterator that can read through the polymorphic structs of the list
+            PolymorphicObjectNativeListIterator<PStruct_IBOINK> iterator = 
+                PolymorphicObjectUtilities.GetIterator<PStruct_IBOINK>(ReadEventsList);
+            while (iterator.GetNext(out PStruct_IBOINK e, out _, out _))
             {
-                // Important: when reading polymorphic events from a bytes list, you MUST use "PolymorphicObjectUtilities.GetObject"
-                // Get the polymorphic object at the read index, as our event polymorphic struct type
-                PolymorphicObjectUtilities.GetObject(ref ReadEventsList, readIndex, out PStruct_IBOINK e, out int readSize);
-                // Increment read index by read size
-                readIndex += readSize;
-                
                 // Execute the event (execution logic is implemented in the event struct itself)
                 e.Execute();
             }
