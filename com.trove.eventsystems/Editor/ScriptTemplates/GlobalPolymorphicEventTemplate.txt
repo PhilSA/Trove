@@ -1,12 +1,14 @@
 
 using System.Runtime.CompilerServices;
+using Trove;
 using Trove.EventSystems;
+using Trove.EventSystems.Tests;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Trove.PolymorphicStructs;
+using UnityEngine;
 
 // See all TODO comments for things you are expected to modify.
 
@@ -19,10 +21,10 @@ using Trove.PolymorphicStructs;
 /// Event writers access the event manager in this singleton in order to get streams to write events in.
 /// Event readers access the event manager in this singleton in order to get a list of events to read.
 /// </summary>
-public struct #SCRIPTNAME#sSingleton : IComponentData, IGlobalPolymorphicEventsSingleton
+public struct #SCRIPTNAME#sSingleton : IComponentData, IGlobalPolymorphicEventsSingleton<PStruct_I#SCRIPTNAME#>
 {
-    public StreamEventsManager StreamEventsManager { get; set; }
-    public NativeList<byte> EventsList { get; set; }
+    public GlobalPolymorphicStreamEventsManager<PStruct_I#SCRIPTNAME#> StreamEventsManager { get; set; }
+    public NativeList<byte> ReadEventsList { get; set; }
 }
 
 /// <summary>
@@ -52,6 +54,7 @@ public struct #SCRIPTNAME#A : I#SCRIPTNAME#
     public void Execute()
     {
         // TODO: implement event execution
+        // Debug.Log($"Executing #SCRIPTNAME#A with value: {Val}");
     }
 }
 
@@ -69,6 +72,7 @@ public struct #SCRIPTNAME#B : I#SCRIPTNAME#
     public void Execute()
     {
         // TODO: implement event execution
+        // Debug.Log($"Executing #SCRIPTNAME#B with values: {Val1} {Val2} {Val3}");
     }
 }
 
@@ -102,5 +106,96 @@ partial struct #SCRIPTNAME#System : ISystem
     public void OnUpdate(ref SystemState state)
     {
         _subSystem.OnUpdate(ref state);
+    }
+}
+
+/// <summary>
+/// Example of an events writer system
+/// </summary>
+[UpdateBefore(typeof(#SCRIPTNAME#System))]
+partial struct #SCRIPTNAME#WriterSystem : ISystem
+{
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<#SCRIPTNAME#sSingleton>();
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        // Get the events singleton for this event type
+        #SCRIPTNAME#sSingleton eventsSingleton = SystemAPI.GetSingletonRW<#SCRIPTNAME#sSingleton>().ValueRW;
+        
+        // Schedule a job writing to an events stream.
+        state.Dependency = new #SCRIPTNAME#WriterJob
+        {
+            EventsStream  = eventsSingleton.StreamEventsManager.CreateWriter(1),
+        }.Schedule(state.Dependency);
+    }
+
+    [BurstCompile]
+    public struct #SCRIPTNAME#WriterJob : IJob
+    {
+        public GlobalPolymorphicStreamEventsManager<PStruct_I#SCRIPTNAME#>.Writer EventsStream;
+        
+        public void Execute()
+        {
+            // When writing to a stream, we must begin/end foreach index
+            EventsStream.BeginForEachIndex(0);
+            
+            // Write an example event A
+            EventsStream.Write(new #SCRIPTNAME#A { Val = 1 });
+            // Write an example event B
+            EventsStream.Write(new #SCRIPTNAME#B { Val1 = 3, Val2 = 5, Val3 = 11 });
+            
+            EventsStream.EndForEachIndex();
+        }
+    }
+}
+
+/// <summary>
+/// Example of an events reader system
+/// </summary>
+[UpdateAfter(typeof(#SCRIPTNAME#System))]
+partial struct #SCRIPTNAME#ReaderSystem : ISystem
+{
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<#SCRIPTNAME#sSingleton>();
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        // Get the events singleton for this event type
+        #SCRIPTNAME#sSingleton eventsSingleton = SystemAPI.GetSingletonRW<#SCRIPTNAME#sSingleton>().ValueRW;
+        
+        // Schedule a job with the ReadEventsList gotten from the singleton.
+        // Note: for polymorphic events, the read list is always just a list of bytes.
+        state.Dependency = new #SCRIPTNAME#ReaderJob
+        {
+            ReadEventsList  = eventsSingleton.ReadEventsList,
+        }.Schedule(state.Dependency);
+    }
+
+    [BurstCompile]
+    public struct #SCRIPTNAME#ReaderJob : IJob
+    {
+        [ReadOnly]
+        public NativeList<byte> ReadEventsList;
+        
+        public void Execute()
+        {
+            // Get the iterator that can read through the polymorphic structs of the list
+            PolymorphicObjectNativeListIterator<PStruct_I#SCRIPTNAME#> iterator = 
+                PolymorphicObjectUtilities.GetIterator<PStruct_I#SCRIPTNAME#>(ReadEventsList);
+            while (iterator.GetNext(out PStruct_I#SCRIPTNAME# e, out _, out _))
+            {
+                // Execute the event (execution logic is implemented in the event struct itself)
+                e.Execute();
+            }
+        }
     }
 }

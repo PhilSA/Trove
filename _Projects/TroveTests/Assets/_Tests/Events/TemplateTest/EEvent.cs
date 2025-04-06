@@ -9,19 +9,19 @@ using Unity.Jobs;
 // See all TODO comments for things you are expected to modify.
 
 // Register generic job types
-[assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<XOINK, HasXOINKs>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferQueueToBufferJob<XOINKForEntity, XOINK, HasXOINKs>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferStreamToBufferJob<XOINKForEntity, XOINK, HasXOINKs>))]
+[assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<EEvent, HasEEvents>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferQueueToBufferJob<EEventForEntity, EEvent, HasEEvents>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferStreamToBufferJob<EEventForEntity, EEvent, HasEEvents>))]
 
 /// <summary>
 /// This is the singleton containing a manager for this event type.
 /// It is automatically created by the event system for this event type.
 /// Event writers access the event manager in this singleton in order to get queues/streams to write events in.
 /// </summary>
-public struct XOINKsSingleton : IComponentData, IEntityEventsSingleton<XOINKForEntity, XOINK>
+public struct EEventsSingleton : IComponentData, IEntityEventsSingleton<EEventForEntity, EEvent>
 {
-    public QueueEventsManager<XOINKForEntity> QueueEventsManager { get; set; }
-    public EntityStreamEventsManager<XOINKForEntity, XOINK> StreamEventsManager { get; set; }
+    public QueueEventsManager<EEventForEntity> QueueEventsManager { get; set; }
+    public EntityStreamEventsManager<EEventForEntity, EEvent> StreamEventsManager { get; set; }
 }
 
 /// <summary>
@@ -29,10 +29,10 @@ public struct XOINKsSingleton : IComponentData, IEntityEventsSingleton<XOINKForE
 /// It contains an "AffectedEntity" field to determine on which Entity the event will be transfered.
 /// "Event" represents what actually gets added to the entity's dynamic buffer.
 /// </summary>
-public struct XOINKForEntity : IEventForEntity<XOINK>
+public struct EEventForEntity : IEventForEntity<EEvent>
 {
     public Entity AffectedEntity { get; set; }
-    public XOINK Event { get; set; }
+    public EEvent Event { get; set; }
 }
 
 /// <summary>
@@ -40,7 +40,7 @@ public struct XOINKForEntity : IEventForEntity<XOINK>
 /// You must ensure this buffer is added to entities that can receive this type of event.
 /// </summary>
 [InternalBufferCapacity(0)] // TODO: adjust internal capacity
-public struct XOINK : IBufferElementData
+public struct EEvent : IBufferElementData
 {
     // TODO: Define event data
     public int Val;
@@ -50,7 +50,7 @@ public struct XOINK : IBufferElementData
 /// This is an enableable component that flags entities that currently have events to process.
 /// You must ensure this component is added to entities that can receive this type of event.
 /// </summary>
-public struct HasXOINKs : IComponentData, IEnableableComponent
+public struct HasEEvents : IComponentData, IEnableableComponent
 { }
 
 /// <summary>
@@ -59,15 +59,15 @@ public struct HasXOINKs : IComponentData, IEnableableComponent
 /// until this system updates.
 /// All event writer systems should update before this system, and all event reader systems should update after this system.
 /// </summary>
-partial struct XOINKSystem : ISystem
+partial struct EEventSystem : ISystem
 {
-    private EntityEventSubSystem<XOINKsSingleton, XOINKForEntity, XOINK, HasXOINKs> _subSystem;
+    private EntityEventSubSystem<EEventsSingleton, EEventForEntity, EEvent, HasEEvents> _subSystem;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _subSystem =
-            new EntityEventSubSystem<XOINKsSingleton, XOINKForEntity, XOINK, HasXOINKs>(
+            new EntityEventSubSystem<EEventsSingleton, EEventForEntity, EEvent, HasEEvents>(
                 ref state, 32, 32); // TODO: tweak initial capacities
     }
 
@@ -87,54 +87,54 @@ partial struct XOINKSystem : ISystem
 /// <summary>
 /// Example of an events writer system
 /// </summary>
-[UpdateBefore(typeof(XOINKSystem))]
-partial struct XOINKWriterSystem : ISystem
+[UpdateBefore(typeof(EEventSystem))]
+partial struct EEventWriterSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<XOINKsSingleton>();
+        state.RequireForUpdate<EEventsSingleton>();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         // Get the events singleton for this event type
-        XOINKsSingleton eventsSingleton = SystemAPI.GetSingletonRW<XOINKsSingleton>().ValueRW;
+        EEventsSingleton eventsSingleton = SystemAPI.GetSingletonRW<EEventsSingleton>().ValueRW;
         
         // Schedule a job writing to an events queue.
-        state.Dependency = new XOINKQueueWriterJob
+        state.Dependency = new EEventQueueWriterJob
         {
             EventsQueue  = eventsSingleton.QueueEventsManager.CreateEventQueue(),
         }.Schedule(state.Dependency);
         
         // Schedule a job writing to an events stream.
-        state.Dependency = new XOINKStreamWriterJob
+        state.Dependency = new EEventStreamWriterJob
         {
             EventsStream  = eventsSingleton.StreamEventsManager.CreateWriter(1),
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public struct XOINKQueueWriterJob : IJob
+    public struct EEventQueueWriterJob : IJob
     {
-        public NativeQueue<XOINKForEntity> EventsQueue;
+        public NativeQueue<EEventForEntity> EventsQueue;
         
         public void Execute()
         {
             // Write an example event
-            EventsQueue.Enqueue(new XOINKForEntity
+            EventsQueue.Enqueue(new EEventForEntity
             {
-                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<XOINK> to target
-                Event = new XOINK { Val = 1 },
+                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<EEvent> to target
+                Event = new EEvent { Val = 1 },
             });
         }
     }
 
     [BurstCompile]
-    public struct XOINKStreamWriterJob : IJob
+    public struct EEventStreamWriterJob : IJob
     {
-        public EntityStreamEventsManager<XOINKForEntity, XOINK>.Writer EventsStream;
+        public EntityStreamEventsManager<EEventForEntity, EEvent>.Writer EventsStream;
         
         public void Execute()
         {
@@ -142,10 +142,10 @@ partial struct XOINKWriterSystem : ISystem
             EventsStream.BeginForEachIndex(0);
             
             // Write an example event
-            EventsStream.Write(new XOINKForEntity
+            EventsStream.Write(new EEventForEntity
             {
-                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<XOINK> to target
-                Event = new XOINK { Val = 1 },
+                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<EEvent> to target
+                Event = new EEvent { Val = 1 },
             });
 
             EventsStream.EndForEachIndex();
@@ -156,27 +156,27 @@ partial struct XOINKWriterSystem : ISystem
 /// <summary>
 /// Example of an events reader system
 /// </summary>
-[UpdateAfter(typeof(XOINKSystem))]
-partial struct XOINKReaderSystem : ISystem
+[UpdateAfter(typeof(EEventSystem))]
+partial struct EEventReaderSystem : ISystem
 {
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // Schedule a job iterating entities with a DynamicBuffer<XOINK> to read events
-        state.Dependency = new XOINKReaderJob
+        // Schedule a job iterating entities with a DynamicBuffer<EEvent> to read events
+        state.Dependency = new EEventReaderJob
         {
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public partial struct XOINKReaderJob : IJobEntity
+    public partial struct EEventReaderJob : IJobEntity
     {
-        public void Execute(DynamicBuffer<XOINK> eventsBuffer)
+        public void Execute(DynamicBuffer<EEvent> eventsBuffer)
         {
             // Read events
             for (int i = 0; i < eventsBuffer.Length; i++)
             {
-                // Debug.Log($"Read XOINK with value: {eventsBuffer[i].Val}");
+                // Debug.Log($"Read EEvent with value: {eventsBuffer[i].Val}");
             }
         }
     }

@@ -9,9 +9,9 @@ using UnityEngine;
 // See all TODO comments for things you are expected to modify.
 
 // Register generic job types
-[assembly: RegisterGenericJobType(typeof(EventClearListJob<ZOINK>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferQueueToListJob<ZOINK>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferStreamToListJob<ZOINK>))]
+[assembly: RegisterGenericJobType(typeof(EventClearListJob<GEvent>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferQueueToListJob<GEvent>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferStreamToListJob<GEvent>))]
 
 /// <summary>
 /// This is the singleton containing a manager for this event type.
@@ -19,17 +19,17 @@ using UnityEngine;
 /// Event writers access the event manager in this singleton in order to get queues/streams to write events in.
 /// Event readers access the event manager in this singleton in order to get a list of events to read.
 /// </summary>
-public struct ZOINKsSingleton : IComponentData, IGlobalEventsSingleton<ZOINK>
+public struct GEventsSingleton : IComponentData, IGlobalEventsSingleton<GEvent>
 {
-    public QueueEventsManager<ZOINK> QueueEventsManager { get; set; }
-    public GlobalStreamEventsManager<ZOINK> StreamEventsManager { get; set; }
-    public NativeList<ZOINK> ReadEventsList { get; set; }
+    public QueueEventsManager<GEvent> QueueEventsManager { get; set; }
+    public GlobalStreamEventsManager<GEvent> StreamEventsManager { get; set; }
+    public NativeList<GEvent> ReadEventsList { get; set; }
 }
 
 /// <summary>
 /// This is the event struct
 /// </summary>
-public struct ZOINK
+public struct GEvent
 {
     // TODO: Define event data
     public int Val;
@@ -41,15 +41,15 @@ public struct ZOINK
 /// until this system updates.
 /// All event writer systems should update before this system, and all event reader systems should update after this system.
 /// </summary>
-partial struct ZOINKSystem : ISystem
+partial struct GEventSystem : ISystem
 {
-    private GlobalEventSubSystem<ZOINKsSingleton, ZOINK> _subSystem;
+    private GlobalEventSubSystem<GEventsSingleton, GEvent> _subSystem;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _subSystem =
-            new GlobalEventSubSystem<ZOINKsSingleton, ZOINK>(
+            new GlobalEventSubSystem<GEventsSingleton, GEvent>(
                 ref state, 32, 32, 1000); // TODO: tweak initial capacities
     }
 
@@ -69,50 +69,50 @@ partial struct ZOINKSystem : ISystem
 /// <summary>
 /// Example of an events writer system
 /// </summary>
-[UpdateBefore(typeof(ZOINKSystem))]
-partial struct ZOINKWriterSystem : ISystem
+[UpdateBefore(typeof(GEventSystem))]
+partial struct GEventWriterSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<ZOINKsSingleton>();
+        state.RequireForUpdate<GEventsSingleton>();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         // Get the events singleton for this event type
-        ZOINKsSingleton eventsSingleton = SystemAPI.GetSingletonRW<ZOINKsSingleton>().ValueRW;
+        GEventsSingleton eventsSingleton = SystemAPI.GetSingletonRW<GEventsSingleton>().ValueRW;
         
         // Schedule a job writing to an events queue.
-        state.Dependency = new ZOINKQueueWriterJob
+        state.Dependency = new GEventQueueWriterJob
         {
             EventsQueue  = eventsSingleton.QueueEventsManager.CreateEventQueue(),
         }.Schedule(state.Dependency);
         
         // Schedule a job writing to an events stream.
-        state.Dependency = new ZOINKStreamWriterJob
+        state.Dependency = new GEventStreamWriterJob
         {
             EventsStream  = eventsSingleton.StreamEventsManager.CreateWriter(1),
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public struct ZOINKQueueWriterJob : IJob
+    public struct GEventQueueWriterJob : IJob
     {
-        public NativeQueue<ZOINK> EventsQueue;
+        public NativeQueue<GEvent> EventsQueue;
         
         public void Execute()
         {
             // Write an example event
-            EventsQueue.Enqueue(new ZOINK { Val = 1 });
+            EventsQueue.Enqueue(new GEvent { Val = 1 });
         }
     }
 
     [BurstCompile]
-    public struct ZOINKStreamWriterJob : IJob
+    public struct GEventStreamWriterJob : IJob
     {
-        public GlobalStreamEventsManager<ZOINK>.Writer EventsStream;
+        public GlobalStreamEventsManager<GEvent>.Writer EventsStream;
         
         public void Execute()
         {
@@ -120,7 +120,7 @@ partial struct ZOINKWriterSystem : ISystem
             EventsStream.BeginForEachIndex(0);
             
             // Write an example event
-            EventsStream.Write(new ZOINK { Val = 1 });
+            EventsStream.Write(new GEvent { Val = 1 });
 
             EventsStream.EndForEachIndex();
         }
@@ -130,40 +130,40 @@ partial struct ZOINKWriterSystem : ISystem
 /// <summary>
 /// Example of an events reader system
 /// </summary>
-[UpdateAfter(typeof(ZOINKSystem))]
-partial struct ZOINKReaderSystem : ISystem
+[UpdateAfter(typeof(GEventSystem))]
+partial struct GEventReaderSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<ZOINKsSingleton>();
+        state.RequireForUpdate<GEventsSingleton>();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         // Get the events singleton for this event type
-        ZOINKsSingleton eventsSingleton = SystemAPI.GetSingletonRW<ZOINKsSingleton>().ValueRW;
+        GEventsSingleton eventsSingleton = SystemAPI.GetSingletonRW<GEventsSingleton>().ValueRW;
         
         // Schedule a job with the ReadEventsList gotten from the singleton
-        state.Dependency = new ZOINKReaderJob
+        state.Dependency = new GEventReaderJob
         {
             ReadEventsList  = eventsSingleton.ReadEventsList,
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public struct ZOINKReaderJob : IJob
+    public struct GEventReaderJob : IJob
     {
         [ReadOnly]
-        public NativeList<ZOINK> ReadEventsList;
+        public NativeList<GEvent> ReadEventsList;
         
         public void Execute()
         {
             // Read events
             for (int i = 0; i < ReadEventsList.Length; i++)
             {
-                // Debug.Log($"Read ZOINK with value: {ReadEventsList[i].Val}");
+                // Debug.Log($"Read GEvent with value: {ReadEventsList[i].Val}");
             }
         }
     }

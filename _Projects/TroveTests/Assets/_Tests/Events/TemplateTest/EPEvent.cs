@@ -12,17 +12,17 @@ using Trove.PolymorphicStructs;
 // See all TODO comments for things you are expected to modify.
 
 // Register generic job types
-[assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<JOINKBufferElement, HasJOINKs>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToBufferJob<JOINKBufferElement, HasJOINKs, JOINKForEntity, PStruct_IJOINK>))]
+[assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<EPEventBufferElement, HasEPEvents>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToBufferJob<EPEventBufferElement, HasEPEvents, EPEventForEntity, PStruct_IEPEvent>))]
 
 /// <summary>
 /// This is the singleton containing a manager for this event type.
 /// It is automatically created by the event system for this event type.
 /// Event writers access the event manager in this singleton in order to get streams to write events in.
 /// </summary>
-public struct JOINKsSingleton : IComponentData, IEntityPolymorphicEventsSingleton<JOINKForEntity, PStruct_IJOINK>
+public struct EPEventsSingleton : IComponentData, IEntityPolymorphicEventsSingleton<EPEventForEntity, PStruct_IEPEvent>
 {
-    public EntityPolymorphicStreamEventsManager<JOINKForEntity, PStruct_IJOINK> StreamEventsManager { get; set; }
+    public EntityPolymorphicStreamEventsManager<EPEventForEntity, PStruct_IEPEvent> StreamEventsManager { get; set; }
 }
 
 /// <summary>
@@ -30,10 +30,10 @@ public struct JOINKsSingleton : IComponentData, IEntityPolymorphicEventsSingleto
 /// It contains an "AffectedEntity" field to determine on which Entity the event will be transfered.
 /// "Event" represents what actually gets serialized to the entity's dynamic buffer.
 /// </summary>
-public struct JOINKForEntity : IPolymorphicEventForEntity<PStruct_IJOINK>
+public struct EPEventForEntity : IPolymorphicEventForEntity<PStruct_IEPEvent>
 {
     public Entity AffectedEntity { get; set; }
-    public PStruct_IJOINK Event { get; set; }
+    public PStruct_IEPEvent Event { get; set; }
 
     public void WriteToStream(ref NativeStream.Writer stream)
     {
@@ -44,14 +44,14 @@ public struct JOINKForEntity : IPolymorphicEventForEntity<PStruct_IJOINK>
 /// <summary>
 /// Polymorphic interface used for generating our event polymorphic struct. 
 ///
-/// This will generate a new polymorphic struct named PStruct_IJOINK that can act as any event type implementing
+/// This will generate a new polymorphic struct named PStruct_IEPEvent that can act as any event type implementing
 /// this interface and using the [PolymorphicStruct] attribute.
 ///
 /// You can add parameters and return types to the Execute function, or even add new functions. "Execute()" is only
 /// a suggestion.
 /// </summary>
 [PolymorphicStructInterface]
-public interface IJOINK
+public interface IEPEvent
 {
     public void Execute();
 }
@@ -60,7 +60,7 @@ public interface IJOINK
 /// This is an example polymorphic event type. You can create more of these containing different data.
 /// </summary>
 [PolymorphicStruct]
-public struct JOINKA : IJOINK
+public struct EPEventA : IEPEvent
 {
     // TODO: Define event data
     public int Val;
@@ -75,7 +75,7 @@ public struct JOINKA : IJOINK
 /// This is an example polymorphic event type. You can create more of these containing different data.
 /// </summary>
 [PolymorphicStruct]
-public struct JOINKB : IJOINK
+public struct EPEventB : IEPEvent
 {
     // TODO: Define event data
     public int Val1;
@@ -96,7 +96,7 @@ public struct JOINKB : IJOINK
 /// IMPORTANT: You must not add any more data to this struct. It needs to remain a single byte.
 /// </summary>
 [InternalBufferCapacity(0)] // TODO: adjust internal capacity
-public struct JOINKBufferElement : IBufferElementData
+public struct EPEventBufferElement : IBufferElementData
 {
     public byte Element;
 }
@@ -105,7 +105,7 @@ public struct JOINKBufferElement : IBufferElementData
 /// This is an enableable component that flags entities that currently have events to process.
 /// You must ensure this component is added to entities that can receive this type of event.
 /// </summary>
-public struct HasJOINKs : IComponentData, IEnableableComponent
+public struct HasEPEvents : IComponentData, IEnableableComponent
 { }
 
 
@@ -115,15 +115,15 @@ public struct HasJOINKs : IComponentData, IEnableableComponent
 /// until this system updates.
 /// All event writer systems should update before this system, and all event reader systems should update after this system.
 /// </summary>
-partial struct JOINKSystem : ISystem
+partial struct EPEventSystem : ISystem
 {
-    private EntityPolymorphicEventSubSystem<JOINKsSingleton, JOINKBufferElement, HasJOINKs, JOINKForEntity, PStruct_IJOINK> _subSystem;
+    private EntityPolymorphicEventSubSystem<EPEventsSingleton, EPEventBufferElement, HasEPEvents, EPEventForEntity, PStruct_IEPEvent> _subSystem;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _subSystem =
-            new EntityPolymorphicEventSubSystem<JOINKsSingleton, JOINKBufferElement, HasJOINKs, JOINKForEntity, PStruct_IJOINK>(
+            new EntityPolymorphicEventSubSystem<EPEventsSingleton, EPEventBufferElement, HasEPEvents, EPEventForEntity, PStruct_IEPEvent>(
                 ref state, 32); // TODO: tweak initial capacities
     }
 
@@ -143,33 +143,33 @@ partial struct JOINKSystem : ISystem
 /// <summary>
 /// Example of an events writer system
 /// </summary>
-[UpdateBefore(typeof(JOINKSystem))]
-partial struct JOINKWriterSystem : ISystem
+[UpdateBefore(typeof(EPEventSystem))]
+partial struct EPEventWriterSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<JOINKsSingleton>();
+        state.RequireForUpdate<EPEventsSingleton>();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         // Get the events singleton for this event type
-        JOINKsSingleton eventsSingleton = SystemAPI.GetSingletonRW<JOINKsSingleton>().ValueRW;
+        EPEventsSingleton eventsSingleton = SystemAPI.GetSingletonRW<EPEventsSingleton>().ValueRW;
         
         // Schedule a job with an events queue gotten from the "QueueEventsManager" in the singleton.
         // Note: for parallel writing, you can get a StreamEventsManager.CreateEventStream() from the singleton instead.
-        state.Dependency = new JOINKWriterJob
+        state.Dependency = new EPEventWriterJob
         {
             EventsStream  = eventsSingleton.StreamEventsManager.CreateWriter(1),
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public struct JOINKWriterJob : IJob
+    public struct EPEventWriterJob : IJob
     {
-        public EntityPolymorphicStreamEventsManager<JOINKForEntity, PStruct_IJOINK>.Writer EventsStream;
+        public EntityPolymorphicStreamEventsManager<EPEventForEntity, PStruct_IEPEvent>.Writer EventsStream;
         
         public void Execute()
         {
@@ -177,16 +177,16 @@ partial struct JOINKWriterSystem : ISystem
             EventsStream.BeginForEachIndex(0);
             
             // Write an example event A
-            EventsStream.Write(new JOINKForEntity
+            EventsStream.Write(new EPEventForEntity
             {
-                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<JOINK> to target
-                Event = new JOINKA { Val = 1 },
+                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<EPEvent> to target
+                Event = new EPEventA { Val = 1 },
             });
             // Write an example event B
-            EventsStream.Write(new JOINKForEntity
+            EventsStream.Write(new EPEventForEntity
             {
-                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<JOINK> to target
-                Event = new JOINKB { Val1 = 3, Val2 = 5, Val3 = 11 },
+                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<EPEvent> to target
+                Event = new EPEventB { Val1 = 3, Val2 = 5, Val3 = 11 },
             });
             
             EventsStream.EndForEachIndex();
@@ -197,29 +197,29 @@ partial struct JOINKWriterSystem : ISystem
 /// <summary>
 /// Example of an events reader system
 /// </summary>
-[UpdateAfter(typeof(JOINKSystem))]
-partial struct JOINKReaderSystem : ISystem
+[UpdateAfter(typeof(EPEventSystem))]
+partial struct EPEventReaderSystem : ISystem
 {
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // Schedule a job iterating entities with a DynamicBuffer<JOINK> to read events
-        state.Dependency = new JOINKReaderJob
+        // Schedule a job iterating entities with a DynamicBuffer<EPEvent> to read events
+        state.Dependency = new EPEventReaderJob
         {
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public partial struct JOINKReaderJob : IJobEntity
+    public partial struct EPEventReaderJob : IJobEntity
     {
-        public void Execute(DynamicBuffer<JOINKBufferElement> eventsBuffer)
+        public void Execute(DynamicBuffer<EPEventBufferElement> eventsBuffer)
         {
             DynamicBuffer<byte> eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
             
             // Get the iterator that can read through the polymorphic structs of the list
-            PolymorphicObjectDynamicBufferIterator<PStruct_IJOINK> iterator = 
-                PolymorphicObjectUtilities.GetIterator<PStruct_IJOINK>(eventsBytesBuffer);
-            while (iterator.GetNext(out PStruct_IJOINK e, out _, out _))
+            PolymorphicObjectDynamicBufferIterator<PStruct_IEPEvent> iterator = 
+                PolymorphicObjectUtilities.GetIterator<PStruct_IEPEvent>(eventsBytesBuffer);
+            while (iterator.GetNext(out PStruct_IEPEvent e, out _, out _))
             {
                 // Execute the event (execution logic is implemented in the event struct itself)
                 e.Execute();

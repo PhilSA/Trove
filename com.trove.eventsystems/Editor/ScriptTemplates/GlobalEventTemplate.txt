@@ -22,8 +22,8 @@ using UnityEngine;
 public struct #SCRIPTNAME#sSingleton : IComponentData, IGlobalEventsSingleton<#SCRIPTNAME#>
 {
     public QueueEventsManager<#SCRIPTNAME#> QueueEventsManager { get; set; }
-    public StreamEventsManager StreamEventsManager { get; set; }
-    public NativeList<#SCRIPTNAME#> EventsList { get; set; }
+    public GlobalStreamEventsManager<#SCRIPTNAME#> StreamEventsManager { get; set; }
+    public NativeList<#SCRIPTNAME#> ReadEventsList { get; set; }
 }
 
 /// <summary>
@@ -84,16 +84,21 @@ partial struct #SCRIPTNAME#WriterSystem : ISystem
         // Get the events singleton for this event type
         #SCRIPTNAME#sSingleton eventsSingleton = SystemAPI.GetSingletonRW<#SCRIPTNAME#sSingleton>().ValueRW;
         
-        // Schedule a job with an events queue gotten from the "QueueEventsManager" in the singleton.
-        // Note: for parallel writing, you can get a StreamEventsManager.CreateEventStream() from the singleton instead.
-        state.Dependency = new #SCRIPTNAME#WriterJob
+        // Schedule a job writing to an events queue.
+        state.Dependency = new #SCRIPTNAME#QueueWriterJob
         {
             EventsQueue  = eventsSingleton.QueueEventsManager.CreateEventQueue(),
+        }.Schedule(state.Dependency);
+        
+        // Schedule a job writing to an events stream.
+        state.Dependency = new #SCRIPTNAME#StreamWriterJob
+        {
+            EventsStream  = eventsSingleton.StreamEventsManager.CreateWriter(1),
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public struct #SCRIPTNAME#WriterJob : IJob
+    public struct #SCRIPTNAME#QueueWriterJob : IJob
     {
         public NativeQueue<#SCRIPTNAME#> EventsQueue;
         
@@ -101,6 +106,23 @@ partial struct #SCRIPTNAME#WriterSystem : ISystem
         {
             // Write an example event
             EventsQueue.Enqueue(new #SCRIPTNAME# { Val = 1 });
+        }
+    }
+
+    [BurstCompile]
+    public struct #SCRIPTNAME#StreamWriterJob : IJob
+    {
+        public GlobalStreamEventsManager<#SCRIPTNAME#>.Writer EventsStream;
+        
+        public void Execute()
+        {
+            // When writing to a stream, we must begin/end foreach index
+            EventsStream.BeginForEachIndex(0);
+            
+            // Write an example event
+            EventsStream.Write(new #SCRIPTNAME# { Val = 1 });
+
+            EventsStream.EndForEachIndex();
         }
     }
 }
@@ -123,10 +145,10 @@ partial struct #SCRIPTNAME#ReaderSystem : ISystem
         // Get the events singleton for this event type
         #SCRIPTNAME#sSingleton eventsSingleton = SystemAPI.GetSingletonRW<#SCRIPTNAME#sSingleton>().ValueRW;
         
-        // Schedule a job with the EventsList gotten from the singleton
+        // Schedule a job with the ReadEventsList gotten from the singleton
         state.Dependency = new #SCRIPTNAME#ReaderJob
         {
-            EventsList  = eventsSingleton.EventsList,
+            ReadEventsList  = eventsSingleton.ReadEventsList,
         }.Schedule(state.Dependency);
     }
 
@@ -134,14 +156,14 @@ partial struct #SCRIPTNAME#ReaderSystem : ISystem
     public struct #SCRIPTNAME#ReaderJob : IJob
     {
         [ReadOnly]
-        public NativeList<#SCRIPTNAME#> EventsList;
+        public NativeList<#SCRIPTNAME#> ReadEventsList;
         
         public void Execute()
         {
             // Read events
-            for (int i = 0; i < EventsList.Length; i++)
+            for (int i = 0; i < ReadEventsList.Length; i++)
             {
-                // Debug.Log($"Read #SCRIPTNAME# with value: {EventsList[i].Val}");
+                // Debug.Log($"Read #SCRIPTNAME# with value: {ReadEventsList[i].Val}");
             }
         }
     }
