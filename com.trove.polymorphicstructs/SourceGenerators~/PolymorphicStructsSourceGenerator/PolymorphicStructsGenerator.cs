@@ -834,6 +834,7 @@ namespace PolymorphicStructsSourceGenerators
                                                         if (polyInterfaceModel.IsMergedFieldsStruct)
                                                         {
                                                             // TODO: Merged fields properties
+                                                            writer.WriteLine($"return default;");
                                                         }
                                                         else
                                                         {
@@ -890,7 +891,7 @@ namespace PolymorphicStructsSourceGenerators
                             {
                                 PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[i];
 
-                                // Cast struct to union struct
+                                // Cast struct to poly struct
                                 writer.WriteLine($"public static implicit operator {polyInterfaceModel.TargetStructModel.TypeName} ({polyStructModel.StructModel.TypeName} s)");
                                 writer.WriteInScope(() =>
                                 {
@@ -912,13 +913,27 @@ namespace PolymorphicStructsSourceGenerators
 
                                 writer.WriteLine($"");
 
-                                // Cast union struct to struct
+                                // Cast poly struct to struct
                                 writer.WriteLine($"public static implicit operator {polyStructModel.StructModel.TypeName} ({polyInterfaceModel.TargetStructModel.TypeName} s)");
                                 writer.WriteInScope(() =>
                                 {
                                     if (polyInterfaceModel.IsMergedFieldsStruct)
                                     {
-                                        // TODO: Merged fields
+                                        // Merged fields
+                                        writer.WriteLine($"return new {polyStructModel.StructModel.TypeName}");
+                                        writer.WriteInScope(() =>
+                                        {
+                                            foreach (KeyValuePair<MergedFieldModel, Dictionary<string, SpecificFieldModel>> entry in MergedFieldsData.MergedFieldToSpecificFieldsMap)
+                                            {
+                                                MergedFieldModel mergedFieldModel = entry.Key;
+                                                Dictionary<string, SpecificFieldModel> specificFieldMap = entry.Value;
+
+                                                if(specificFieldMap.TryGetValue(polyStructModel.StructModel.Name, out SpecificFieldModel specificFieldModel))
+                                                {
+                                                    writer.WriteLine($"{specificFieldModel.FieldName} = s.{MergedFieldsData.GetMergedFieldName(mergedFieldModel)},");
+                                                }
+                                            }
+                                        }, ";");
                                     }
                                     else
                                     {
@@ -1080,12 +1095,31 @@ namespace PolymorphicStructsSourceGenerators
                                             {
                                                 if (polyInterfaceModel.IsMergedFieldsStruct)
                                                 {
-                                                    // TODO: Merged fields properties
+                                                    // Merged fields
+                                                    if (methodModel.HasNonVoidReturnType)
+                                                    {
+                                                        // cast merged struct to specific
+                                                        writer.WriteLine($"{polyStructModel.StructModel.TypeName} specificStruct = this;");
+                                                        // invoke method on specific
+                                                        writer.WriteLine($"{methodModel.ReturnTypeName} result = specificStruct.{methodModel.Name}({methodModel.MethodParametersInvoke});");
+                                                        // cast back to merged
+                                                        writer.WriteLine($"this = specificStruct;");
+                                                        writer.WriteLine($"return result;");
+                                                    }
+                                                    else
+                                                    {
+                                                        // cast merged struct to specific
+                                                        writer.WriteLine($"{polyStructModel.StructModel.TypeName} specificStruct = this;");
+                                                        // invoke method on specific
+                                                        writer.WriteLine($"specificStruct.{methodModel.Name}({methodModel.MethodParametersInvoke});");
+                                                        // cast back to merged
+                                                        writer.WriteLine($"this = specificStruct;");
+                                                        writer.WriteLine($"break;");
+                                                    }
                                                 }
                                                 else
                                                 {
-                                                    // Union struct properties
-                                                    // Invoke method on struct
+                                                    // Union struct
                                                     if (methodModel.HasNonVoidReturnType)
                                                     {
                                                         writer.WriteLine($"return Field_{polyStructModel.StructModel.Name}.{methodModel.Name}({methodModel.MethodParametersInvoke});");

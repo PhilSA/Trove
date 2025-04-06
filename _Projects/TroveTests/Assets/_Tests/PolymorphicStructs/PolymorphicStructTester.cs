@@ -10,8 +10,74 @@ using Trove.EventSystems.Tests;
 public struct GeneratedViewer
 {
     private PolyMyOutOfNamespacePolyInterface ASDsad;
+    private PolyTestMergedFieldsPolyInterface1 asfafas1;
+    private PolyTestMergedFieldsPolyInterface2 asfafas2;
     
     public void Test()
+    {
+    }
+}
+
+[IsMergedFieldsPolymorphicStruct]
+[PolymorphicStructInterface]
+public interface ITestMergedFieldsPolyInterface1
+{
+    public void DoSomething(int a);
+}
+
+[PolymorphicStruct]
+public struct MyIITestMergedFieldsPolyStruct1A : ITestMergedFieldsPolyInterface1
+{
+    public int ValueA;
+    public float3 ValueB;
+    public float3 ValueC;
+
+    public void DoSomething(int a)
+    {
+    }
+}
+
+[PolymorphicStruct]
+public struct MyIITestMergedFieldsPolyStruct1B : ITestMergedFieldsPolyInterface1
+{
+    public Entity EntityA;
+    public int ValueA;
+    public int ValueB;
+    public float3 ValueC;
+
+    public void DoSomething(int a)
+    {
+    }
+}
+
+[IsMergedFieldsPolymorphicStruct]
+[PolymorphicStructInterface]
+public interface ITestMergedFieldsPolyInterface2
+{
+    public void DoSomething(int a);
+}
+
+[PolymorphicStruct]
+public struct MyIITestMergedFieldsPolyStruct2A : ITestMergedFieldsPolyInterface2
+{
+    public int ValueA;
+    public float3 ValueB;
+    public float3 ValueC;
+
+    public void DoSomething(int a)
+    {
+    }
+}
+
+[PolymorphicStruct]
+public struct MyIITestMergedFieldsPolyStruct2B : ITestMergedFieldsPolyInterface2
+{
+    public Entity EntityA;
+    public int ValueA;
+    public int ValueB;
+    public float3 ValueC;
+
+    public void DoSomething(int a)
     {
     }
 }
