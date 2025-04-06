@@ -9,10 +9,11 @@ using Trove;
 
 namespace Trove.EventSystems
 {
-    public unsafe struct EntityPolymorphicEventSubSystem<S, B, H, P>
+    public unsafe struct EntityPolymorphicEventSubSystem<S, B, H, E, P>
         where S : unmanaged, IComponentData, IEntityPolymorphicEventsSingleton // The events singleton
-        where B : unmanaged, IBufferElementData, ISingleByteElement // The event buffer element
+        where B : unmanaged, IBufferElementData // The event buffer element
         where H : unmanaged, IComponentData, IEnableableComponent // The enableable component that signals presence of events on buffer entities
+        where E : unmanaged, IPolymorphicEventForEntity<P> // The event struct
         where P : unmanaged, IPolymorphicObject
     {
         private EntityQuery _singletonRWQuery;
@@ -25,6 +26,11 @@ namespace Trove.EventSystems
 
         public EntityPolymorphicEventSubSystem(ref SystemState state, int initialStreamsCapacity)
         {
+            if (UnsafeUtility.SizeOf<B>() != 1)
+            {
+                throw new System.Exception("EntityPolymorphicEventSubSystem generic parameter \"B\" must have a size of exactly 1 byte.");
+            }
+
             state.RequireForUpdate<S>();
             _singletonRWQuery = new EntityQueryBuilder(Allocator.Temp).WithAllRW<S>().Build(ref state);
             _query = new EntityQueryBuilder(Allocator.Temp).WithAll<B, H>().Build(ref state);
@@ -83,9 +89,8 @@ namespace Trove.EventSystems
             UnsafeList<NativeStream> eventStreams = singletonRW.ValueRW.StreamEventsManager.InternalGetEventStreams();
             for (int i = 0; i < eventStreams.Length; i++)
             {
-                state.Dependency = new EventTransferPolymorphicStreamToBufferJob<B, H, P>
+                state.Dependency = new EventTransferPolymorphicStreamToBufferJob<B, H, E, P>
                 {
-                    PolymorphicTypeManager = default(P),
                     EventsStream = eventStreams[i].AsReader(),
                     EventBufferLookup = _eventBufferLookup,
                     HasEventsLookup = _hasEventsLookup,
@@ -97,12 +102,12 @@ namespace Trove.EventSystems
     }
 
     [BurstCompile]
-    public unsafe struct EventTransferPolymorphicStreamToBufferJob<B, H, P> : IJob
-        where B : unmanaged, IBufferElementData, ISingleByteElement // The event buffer element
+    public unsafe struct EventTransferPolymorphicStreamToBufferJob<B, H, E, P> : IJob
+        where B : unmanaged, IBufferElementData // The event buffer element
         where H : unmanaged, IComponentData, IEnableableComponent // The enableable component that signals presence of events on buffer entities
+        where E : unmanaged, IPolymorphicEventForEntity<P> // The event struct
         where P : unmanaged, IPolymorphicObject
     {
-        public P PolymorphicTypeManager;
         public NativeStream.Reader EventsStream;
         public BufferLookup<B> EventBufferLookup;
         public ComponentLookup<H> HasEventsLookup;
@@ -112,33 +117,20 @@ namespace Trove.EventSystems
             for (int i = 0; i < EventsStream.ForEachCount; i++)
             {
                 EventsStream.BeginForEachIndex(i);
-                while (EventsStream.RemainingItemCount > 2)
+                while (EventsStream.RemainingItemCount > 0)
                 {
                     // Read from stream
-                    Entity affectedEntity = EventsStream.Read<Entity>();
-                    int typeId = EventsStream.Read<int>();
-                    int eventDataSize = PolymorphicTypeManager.GetSizeForTypeId(typeId);
-                    byte* eventData = EventsStream.ReadUnsafePtr(eventDataSize);
-
-                    if (EventBufferLookup.TryGetBuffer(affectedEntity, out DynamicBuffer<B> eventBuffer))
+                    E e = EventsStream.Read<E>();
+                    //PolymorphicObjectUtilities.GetNextObject(ref EventsStream, out P polymorphicObject, out int readSize);
+                    
+                    if (EventBufferLookup.TryGetBuffer(e.AffectedEntity, out DynamicBuffer<B> eventBuffer))
                     {
-                        int writeIndex = eventBuffer.Length;
-
-                        // Buffer resize
-                        int newListSize = eventBuffer.Length + UnsafeUtility.SizeOf<int>() + eventDataSize;
-                        if (newListSize > eventBuffer.Capacity)
-                        {
-                            eventBuffer.EnsureCapacity(newListSize * 2);
-                        }
-                        eventBuffer.ResizeUninitialized(newListSize);
-
-                        // Write to buffer
-                        byte* bufferPtr = (byte*)eventBuffer.GetUnsafePtr();
-                        ByteArrayUtilities.WriteValue<int>(bufferPtr, ref writeIndex, typeId);
-                        ByteArrayUtilities.WriteValue(bufferPtr, ref writeIndex, eventData, eventDataSize);
+                        DynamicBuffer<byte> bytesBuffer = eventBuffer.Reinterpret<byte>();
+                        PolymorphicObjectUtilities.AddObject(e.Event, ref bytesBuffer,
+                            out int addedByteIndex, out int writeSize);
 
                         // Mark as having events
-                        HasEventsLookup.SetComponentEnabled(affectedEntity, true);
+                        HasEventsLookup.SetComponentEnabled(e.AffectedEntity, true);
                     }
                 }
 

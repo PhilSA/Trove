@@ -14,10 +14,11 @@ namespace Trove.EventSystems
         public Entity AffectedEntity { get; set; }
         public T BufferElement { get; set; }
     }
-
-    public interface ISingleByteElement
+    
+    public interface IPolymorphicEventForEntity<T> where T : unmanaged, IPolymorphicObject
     {
-        public byte Element { get; set; }
+        public Entity AffectedEntity { get; set; }
+        public T Event { get; set; }
     }
     
     [BurstCompile]

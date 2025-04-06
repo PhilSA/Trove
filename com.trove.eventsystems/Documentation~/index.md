@@ -17,7 +17,7 @@ Import the package in your project. Make sure unsafe code is allowed in the .asm
 
 ### Creating a new event type
 
-Then, right-click in the Project window and select "Create > Trove > EventSystems > ..." in order to create a new event system based on a template. See [Event System Types](#event-system-types) for a description of the various types of event systems.
+Right-click in the Project window and select "Create > Trove > EventSystems > ..." in order to create a new event system based on a template. See [Event System Types](#event-system-types) for a description of the various types of event systems.
 
 When creating a new event type from templates this way, it is recommended to name it after the event type itself. For example, you can create a new event from the templates and call it "MyEvent". This will automatically take care of naming all the various components, systems, etc... appropriately. You are free to rename the file to something else after its initial creating.
 

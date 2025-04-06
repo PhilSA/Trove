@@ -11,7 +11,7 @@ using Trove.PolymorphicStructs;
 // See all TODO comments for things you are expected to modify.
 
 // Register generic job types
-[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToListJob<PStruct_I#SCRIPTNAME#>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToListJob<PStruct_IMyTestGlobalPolyEvent>))]
 
 /// <summary>
 /// This is the singleton containing a manager for this event type.
@@ -19,7 +19,7 @@ using Trove.PolymorphicStructs;
 /// Event writers access the event manager in this singleton in order to get streams to write events in.
 /// Event readers access the event manager in this singleton in order to get a list of events to read.
 /// </summary>
-public struct #SCRIPTNAME#sSingleton : IComponentData, IGlobalPolymorphicEventsSingleton
+public struct MyTestGlobalPolyEventsSingleton : IComponentData, IGlobalPolymorphicEventsSingleton
 {
     public StreamEventsManager StreamEventsManager { get; set; }
     public NativeList<byte> EventsList { get; set; }
@@ -28,14 +28,14 @@ public struct #SCRIPTNAME#sSingleton : IComponentData, IGlobalPolymorphicEventsS
 /// <summary>
 /// Polymorphic interface used for generating our event polymorphic struct. 
 ///
-/// This will generate a new polymorphic struct named PStruct_I#SCRIPTNAME# that can act as any event type implementing
+/// This will generate a new polymorphic struct named PStruct_IMyTestGlobalPolyEvent that can act as any event type implementing
 /// this interface and using the [PolymorphicStruct] attribute.
 ///
 /// You can add parameters and return types to the Execute function, or even add new functions. "Execute()" is only
 /// a suggestion.
 /// </summary>
 [PolymorphicStructInterface]
-public interface I#SCRIPTNAME#
+public interface IMyTestGlobalPolyEvent
 {
     public void Execute();
 }
@@ -44,7 +44,7 @@ public interface I#SCRIPTNAME#
 /// This is an example polymorphic event type. You can create more of these containing different data.
 /// </summary>
 [PolymorphicStruct]
-public struct #SCRIPTNAME#A : I#SCRIPTNAME#
+public struct MyTestGlobalPolyEventA : IMyTestGlobalPolyEvent
 {
     // TODO: Define event data
     public int Val;
@@ -59,7 +59,7 @@ public struct #SCRIPTNAME#A : I#SCRIPTNAME#
 /// This is an example polymorphic event type. You can create more of these containing different data.
 /// </summary>
 [PolymorphicStruct]
-public struct #SCRIPTNAME#B : I#SCRIPTNAME#
+public struct MyTestGlobalPolyEventB : IMyTestGlobalPolyEvent
 {
     // TODO: Define event data
     public int Val1;
@@ -80,15 +80,15 @@ public struct #SCRIPTNAME#B : I#SCRIPTNAME#
 /// until this system updates.
 /// All event writer systems should update before this system, and all event reader systems should update after this system.
 /// </summary>
-partial struct #SCRIPTNAME#System : ISystem
+partial struct MyTestGlobalPolyEventSystem : ISystem
 {
-    private GlobalPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, PStruct_I#SCRIPTNAME#> _subSystem;
+    private GlobalPolymorphicEventSubSystem<MyTestGlobalPolyEventsSingleton, PStruct_IMyTestGlobalPolyEvent> _subSystem;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _subSystem =
-            new GlobalPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, PStruct_I#SCRIPTNAME#>(
+            new GlobalPolymorphicEventSubSystem<MyTestGlobalPolyEventsSingleton, PStruct_IMyTestGlobalPolyEvent>(
                 ref state, 32, 1000); // TODO: tweak initial capacities
     }
 

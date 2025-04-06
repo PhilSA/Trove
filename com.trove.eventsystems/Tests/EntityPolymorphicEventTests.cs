@@ -1,4 +1,4 @@
-
+#if HAS_TROVE_POLYMORPHICSTRUCTS
 using Unity.Entities;
 using NUnit.Framework;
 using Unity.Burst;
@@ -151,29 +151,45 @@ namespace Trove.EventSystems.Tests
 
             for (int i = 0; i < EntityPolymorphicEventTests.EventsPerSystemOrThreadForR1; i++)
             {
-                TestEntityPolymorphicEventManager.Write(ref eventsStream, testSingleton.ReceiverEntity1, new TestEntityPolymorphicEventA
+                eventsStream.Write(new TestIPolymorphicEventForEntityPolymorphicEvent
                 {
-                    Val = EntityPolymorphicEventTests.MainThreadStreamEventKeyA,
+                    AffectedEntity = testSingleton.ReceiverEntity1,
+                    Event = new TestEntityPolymorphicEventA
+                    {
+                        Val = EntityPolymorphicEventTests.MainThreadStreamEventKeyA,
+                    },
                 });
-                TestEntityPolymorphicEventManager.Write(ref eventsStream, testSingleton.ReceiverEntity1, new TestEntityPolymorphicEventB
+                eventsStream.Write(new TestIPolymorphicEventForEntityPolymorphicEvent
                 {
-                    Val1 = EntityPolymorphicEventTests.MainThreadStreamEventKeyB,
-                    Val2 = EntityPolymorphicEventTests.MainThreadStreamEventKeyB,
-                    Val3 = EntityPolymorphicEventTests.MainThreadStreamEventKeyB,
+                    AffectedEntity = testSingleton.ReceiverEntity1,
+                    Event =  new TestEntityPolymorphicEventB
+                    {
+                        Val1 = EntityPolymorphicEventTests.MainThreadStreamEventKeyB,
+                        Val2 = EntityPolymorphicEventTests.MainThreadStreamEventKeyB,
+                        Val3 = EntityPolymorphicEventTests.MainThreadStreamEventKeyB,
+                    },
                 });
             }
 
             for (int i = 0; i < EntityPolymorphicEventTests.EventsPerSystemOrThreadForR2; i++)
             {
-                TestEntityPolymorphicEventManager.Write(ref eventsStream, testSingleton.ReceiverEntity2, new TestEntityPolymorphicEventA
+                eventsStream.Write(new TestIPolymorphicEventForEntityPolymorphicEvent
                 {
-                    Val = EntityPolymorphicEventTests.MainThreadStreamEventKeyA,
+                    AffectedEntity = testSingleton.ReceiverEntity2,
+                    Event = new TestEntityPolymorphicEventA
+                    {
+                        Val = EntityPolymorphicEventTests.MainThreadStreamEventKeyA,
+                    },
                 });
-                TestEntityPolymorphicEventManager.Write(ref eventsStream, testSingleton.ReceiverEntity2, new TestEntityPolymorphicEventB
+                eventsStream.Write(new TestIPolymorphicEventForEntityPolymorphicEvent
                 {
-                    Val1 = EntityPolymorphicEventTests.MainThreadStreamEventKeyB,
-                    Val2 = EntityPolymorphicEventTests.MainThreadStreamEventKeyB,
-                    Val3 = EntityPolymorphicEventTests.MainThreadStreamEventKeyB,
+                    AffectedEntity = testSingleton.ReceiverEntity2,
+                    Event =  new TestEntityPolymorphicEventB
+                    {
+                        Val1 = EntityPolymorphicEventTests.MainThreadStreamEventKeyB,
+                        Val2 = EntityPolymorphicEventTests.MainThreadStreamEventKeyB,
+                        Val3 = EntityPolymorphicEventTests.MainThreadStreamEventKeyB,
+                    },
                 });
             }
 
@@ -217,29 +233,45 @@ namespace Trove.EventSystems.Tests
 
                 for (int i = 0; i < EntityPolymorphicEventTests.EventsPerSystemOrThreadForR1; i++)
                 {
-                    TestEntityPolymorphicEventManager.Write(ref EventsStream, TestSingleton.ReceiverEntity1, new TestEntityPolymorphicEventA
+                    EventsStream.Write(new TestIPolymorphicEventForEntityPolymorphicEvent
                     {
-                        Val = EntityPolymorphicEventTests.SingleJobStreamEventKeyA,
+                        AffectedEntity = TestSingleton.ReceiverEntity1,
+                        Event = new TestEntityPolymorphicEventA
+                        {
+                            Val = EntityPolymorphicEventTests.SingleJobStreamEventKeyA,
+                        },
                     });
-                    TestEntityPolymorphicEventManager.Write(ref EventsStream, TestSingleton.ReceiverEntity1, new TestEntityPolymorphicEventB
+                    EventsStream.Write(new TestIPolymorphicEventForEntityPolymorphicEvent
                     {
-                        Val1 = EntityPolymorphicEventTests.SingleJobStreamEventKeyB,
-                        Val2 = EntityPolymorphicEventTests.SingleJobStreamEventKeyB,
-                        Val3 = EntityPolymorphicEventTests.SingleJobStreamEventKeyB,
+                        AffectedEntity = TestSingleton.ReceiverEntity1,
+                        Event =  new TestEntityPolymorphicEventB
+                        {
+                            Val1 = EntityPolymorphicEventTests.SingleJobStreamEventKeyB,
+                            Val2 = EntityPolymorphicEventTests.SingleJobStreamEventKeyB,
+                            Val3 = EntityPolymorphicEventTests.SingleJobStreamEventKeyB,
+                        },
                     });
                 }
 
                 for (int i = 0; i < EntityPolymorphicEventTests.EventsPerSystemOrThreadForR2; i++)
                 {
-                    TestEntityPolymorphicEventManager.Write(ref EventsStream, TestSingleton.ReceiverEntity2, new TestEntityPolymorphicEventA
+                    EventsStream.Write(new TestIPolymorphicEventForEntityPolymorphicEvent
                     {
-                        Val = EntityPolymorphicEventTests.SingleJobStreamEventKeyA,
+                        AffectedEntity = TestSingleton.ReceiverEntity2,
+                        Event = new TestEntityPolymorphicEventA
+                        {
+                            Val = EntityPolymorphicEventTests.SingleJobStreamEventKeyA,
+                        },
                     });
-                    TestEntityPolymorphicEventManager.Write(ref EventsStream, TestSingleton.ReceiverEntity2, new TestEntityPolymorphicEventB
+                    EventsStream.Write(new TestIPolymorphicEventForEntityPolymorphicEvent
                     {
-                        Val1 = EntityPolymorphicEventTests.SingleJobStreamEventKeyB,
-                        Val2 = EntityPolymorphicEventTests.SingleJobStreamEventKeyB,
-                        Val3 = EntityPolymorphicEventTests.SingleJobStreamEventKeyB,
+                        AffectedEntity = TestSingleton.ReceiverEntity2,
+                        Event =  new TestEntityPolymorphicEventB
+                        {
+                            Val1 = EntityPolymorphicEventTests.SingleJobStreamEventKeyB,
+                            Val2 = EntityPolymorphicEventTests.SingleJobStreamEventKeyB,
+                            Val3 = EntityPolymorphicEventTests.SingleJobStreamEventKeyB,
+                        },
                     });
                 }
 
@@ -284,29 +316,45 @@ namespace Trove.EventSystems.Tests
 
                 for (int i = 0; i < EntityPolymorphicEventTests.EventsPerSystemOrThreadForR1; i++)
                 {
-                    TestEntityPolymorphicEventManager.Write(ref EventsStream, TestSingleton.ReceiverEntity1, new TestEntityPolymorphicEventA
+                    EventsStream.Write(new TestIPolymorphicEventForEntityPolymorphicEvent
                     {
-                        Val = EntityPolymorphicEventTests.ParallelJobStreamEventKeyA,
+                        AffectedEntity = TestSingleton.ReceiverEntity1,
+                        Event = new TestEntityPolymorphicEventA
+                        {
+                            Val = EntityPolymorphicEventTests.ParallelJobStreamEventKeyA,
+                        },
                     });
-                    TestEntityPolymorphicEventManager.Write(ref EventsStream, TestSingleton.ReceiverEntity1, new TestEntityPolymorphicEventB
+                    EventsStream.Write(new TestIPolymorphicEventForEntityPolymorphicEvent
                     {
-                        Val1 = EntityPolymorphicEventTests.ParallelJobStreamEventKeyB,
-                        Val2 = EntityPolymorphicEventTests.ParallelJobStreamEventKeyB,
-                        Val3 = EntityPolymorphicEventTests.ParallelJobStreamEventKeyB,
+                        AffectedEntity = TestSingleton.ReceiverEntity1,
+                        Event =  new TestEntityPolymorphicEventB
+                        {
+                            Val1 = EntityPolymorphicEventTests.ParallelJobStreamEventKeyB,
+                            Val2 = EntityPolymorphicEventTests.ParallelJobStreamEventKeyB,
+                            Val3 = EntityPolymorphicEventTests.ParallelJobStreamEventKeyB,
+                        },
                     });
                 }
 
                 for (int i = 0; i < EntityPolymorphicEventTests.EventsPerSystemOrThreadForR2; i++)
                 {
-                    TestEntityPolymorphicEventManager.Write(ref EventsStream, TestSingleton.ReceiverEntity2, new TestEntityPolymorphicEventA
+                    EventsStream.Write(new TestIPolymorphicEventForEntityPolymorphicEvent
                     {
-                        Val = EntityPolymorphicEventTests.ParallelJobStreamEventKeyA,
+                        AffectedEntity = TestSingleton.ReceiverEntity2,
+                        Event = new TestEntityPolymorphicEventA
+                        {
+                            Val = EntityPolymorphicEventTests.ParallelJobStreamEventKeyA,
+                        },
                     });
-                    TestEntityPolymorphicEventManager.Write(ref EventsStream, TestSingleton.ReceiverEntity2, new TestEntityPolymorphicEventB
+                    EventsStream.Write(new TestIPolymorphicEventForEntityPolymorphicEvent
                     {
-                        Val1 = EntityPolymorphicEventTests.ParallelJobStreamEventKeyB,
-                        Val2 = EntityPolymorphicEventTests.ParallelJobStreamEventKeyB,
-                        Val3 = EntityPolymorphicEventTests.ParallelJobStreamEventKeyB,
+                        AffectedEntity = TestSingleton.ReceiverEntity2,
+                        Event =  new TestEntityPolymorphicEventB
+                        {
+                            Val1 = EntityPolymorphicEventTests.ParallelJobStreamEventKeyB,
+                            Val2 = EntityPolymorphicEventTests.ParallelJobStreamEventKeyB,
+                            Val3 = EntityPolymorphicEventTests.ParallelJobStreamEventKeyB,
+                        },
                     });
                 }
 
@@ -331,9 +379,13 @@ namespace Trove.EventSystems.Tests
             foreach(var (eventReceiver, eventsBuffer, entity) in SystemAPI.Query<RefRW<EntityEventReceiver>, DynamicBuffer<TestEntityPolymorphicEventBufferElement>>().WithEntityAccess())
             {
                 int readIndex = 0;
-                byte* bufferPtr = (byte*)eventsBuffer.GetUnsafeReadOnlyPtr();
-                while (TestEntityPolymorphicEventManager.ExecuteNextEvent(bufferPtr, eventsBuffer.Length, ref readIndex, ref eventReceiver.ValueRW, 1))
-                { }
+                var eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
+                while (readIndex < eventsBuffer.Length)
+                {
+                    PolymorphicObjectUtilities.GetObject(ref eventsBytesBuffer, readIndex, out PStruct_ITestEntityPolymorphicEvent e, out int readSize);
+                    readIndex += readSize;
+                    e.Execute(ref eventReceiver.ValueRW, 1);
+                }
             }
         }
     }
@@ -362,9 +414,13 @@ namespace Trove.EventSystems.Tests
             public unsafe void Execute(Entity entity, ref EntityEventReceiver eventReceiver, in DynamicBuffer<TestEntityPolymorphicEventBufferElement> eventsBuffer)
             {
                 int readIndex = 0;
-                byte* bufferPtr = (byte*)eventsBuffer.GetUnsafeReadOnlyPtr();
-                while (TestEntityPolymorphicEventManager.ExecuteNextEvent(bufferPtr, eventsBuffer.Length, ref readIndex, ref eventReceiver, 2))
-                { }
+                var eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
+                while (readIndex < eventsBuffer.Length)
+                {
+                    PolymorphicObjectUtilities.GetObject(ref eventsBytesBuffer, readIndex, out PStruct_ITestEntityPolymorphicEvent e, out int readSize);
+                    readIndex += readSize;
+                    e.Execute(ref eventReceiver, 2);
+                }
             }
         }
     }
@@ -393,11 +449,16 @@ namespace Trove.EventSystems.Tests
             public unsafe void Execute(Entity entity, ref EntityEventReceiver eventReceiver, in DynamicBuffer<TestEntityPolymorphicEventBufferElement> eventsBuffer)
             {
                 int readIndex = 0;
-                byte* bufferPtr = (byte*)eventsBuffer.GetUnsafeReadOnlyPtr();
-                while (TestEntityPolymorphicEventManager.ExecuteNextEvent(bufferPtr, eventsBuffer.Length, ref readIndex, ref eventReceiver, 3))
-                { }
+                var eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
+                while (readIndex < eventsBuffer.Length)
+                {
+                    PolymorphicObjectUtilities.GetObject(ref eventsBytesBuffer, readIndex, out PStruct_ITestEntityPolymorphicEvent e, out int readSize);
+                    readIndex += readSize;
+                    e.Execute(ref eventReceiver, 3);
+                }
             }
         }
     }
     #endregion
 }
+#endif

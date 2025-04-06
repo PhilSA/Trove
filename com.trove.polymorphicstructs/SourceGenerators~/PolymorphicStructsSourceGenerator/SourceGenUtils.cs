@@ -1,20 +1,28 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
 using System.Collections.Generic;
 
 namespace PolymorphicStructsSourceGenerators
 {
     public static class SourceGenUtils
     {
-        public static string GetNamespaceMetaDataName(ISymbol typeSymbol)
+        public static string GetFullNamespaceTypeName(ITypeSymbol symbol)
         {
-            string n = string.Empty;
-            if (typeSymbol.ContainingNamespace != null)
+            if (symbol.ContainingNamespace != null && !symbol.ContainingNamespace.IsGlobalNamespace)
             {
-                n = typeSymbol.ContainingNamespace.MetadataName;
+
+                string namespaceName = symbol.ContainingNamespace.ToDisplayString();
+                return namespaceName;
             }
-            return n;
+            return string.Empty;
+        }
+
+        public static string GetFullTypeName(ITypeSymbol symbol)
+        {
+            string typeName = symbol.ToDisplayString();
+            return typeName;
         }
 
         public static string RefKindToString(RefKind refKind)

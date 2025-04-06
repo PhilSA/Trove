@@ -4,18 +4,66 @@ using Unity.Mathematics;
 using UnityEngine;
 using Trove;
 using NUnit.Framework;
+using Unity.Collections;
 using Unity.Entities;
 
-public interface TestPolyInterface
+
+public interface TestPolyInterface1
 {
-    public void DoSomething(int a);
-    public void DoSomethingA(int a);
+    public void DoSomething1A(int a);
+    //public NativeHashMap<int, bool> DoSomething1B(int a, ref);
 }
 
-public struct MyStrudctA
+public struct TestPolyStruct1
 {
     public int Value;
 }
+
+namespace PStructTestsA
+{
+    public interface TestPolyInterface2
+    {
+        public void DoSomething2A(int a);
+    }
+    
+    public struct TestPolyStruct2
+    {
+        public int Value;
+    }
+}
+
+namespace PStructTestsB
+{
+    public interface TestPolyInterface3
+    {
+        public void DoSomething3A(int a);
+    }
+    
+    public struct TestPolyStruct3
+    {
+        public int Value;
+    }
+    
+    namespace PStructTestsC
+    {
+        public interface TestPolyInterface4
+        {
+            public void DoSomething4A(int a);
+        }
+        
+        public struct TestPolyStruct4
+        {
+            public int Value;
+        }
+    }
+}
+
+namespace Trove.PolymorphicStructs.Tests
+{
+    
+}
+
+
 
 
 

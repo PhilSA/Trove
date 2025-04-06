@@ -11,15 +11,15 @@ using Trove.PolymorphicStructs;
 // See all TODO comments for things you are expected to modify.
 
 // Register generic job types
-[assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<#SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToBufferJob<#SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s, #SCRIPTNAME#ForEntity, PStruct_I#SCRIPTNAME#>))]
+[assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<MyTestEntityPolyEventBufferElement, HasMyTestEntityPolyEvents>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToBufferJob<MyTestEntityPolyEventBufferElement, HasMyTestEntityPolyEvents, MyTestEntityPolyEventForEntity, PStruct_IMyTestEntityPolyEvent>))]
 
 /// <summary>
 /// This is the singleton containing a manager for this event type.
 /// It is automatically created by the event system for this event type.
 /// Event writers access the event manager in this singleton in order to get streams to write events in.
 /// </summary>
-public struct #SCRIPTNAME#sSingleton : IComponentData, IEntityPolymorphicEventsSingleton
+public struct MyTestEntityPolyEventsSingleton : IComponentData, IEntityPolymorphicEventsSingleton
 {
     public StreamEventsManager StreamEventsManager { get; set; }
 }
@@ -29,23 +29,23 @@ public struct #SCRIPTNAME#sSingleton : IComponentData, IEntityPolymorphicEventsS
 /// It contains an "AffectedEntity" field to determine on which Entity the event will be transfered.
 /// "Event" represents what actually gets serialized to the entity's dynamic buffer.
 /// </summary>
-public struct #SCRIPTNAME#ForEntity : IPolymorphicEventForEntity<PStruct_I#SCRIPTNAME#>
+public struct MyTestEntityPolyEventForEntity : IPolymorphicEventForEntity<PStruct_IMyTestEntityPolyEvent>
 {
     public Entity AffectedEntity { get; set; }
-    public PStruct_I#SCRIPTNAME# Event { get; set; }
+    public PStruct_IMyTestEntityPolyEvent Event { get; set; }
 }
 
 /// <summary>
 /// Polymorphic interface used for generating our event polymorphic struct. 
 ///
-/// This will generate a new polymorphic struct named PStruct_I#SCRIPTNAME# that can act as any event type implementing
+/// This will generate a new polymorphic struct named PStruct_IMyTestEntityPolyEvent that can act as any event type implementing
 /// this interface and using the [PolymorphicStruct] attribute.
 ///
 /// You can add parameters and return types to the Execute function, or even add new functions. "Execute()" is only
 /// a suggestion.
 /// </summary>
 [PolymorphicStructInterface]
-public interface I#SCRIPTNAME#
+public interface IMyTestEntityPolyEvent
 {
     public void Execute();
 }
@@ -54,7 +54,7 @@ public interface I#SCRIPTNAME#
 /// This is an example polymorphic event type. You can create more of these containing different data.
 /// </summary>
 [PolymorphicStruct]
-public struct #SCRIPTNAME#A : I#SCRIPTNAME#
+public struct MyTestEntityPolyEventA : IMyTestEntityPolyEvent
 {
     // TODO: Define event data
     public int Val;
@@ -69,7 +69,7 @@ public struct #SCRIPTNAME#A : I#SCRIPTNAME#
 /// This is an example polymorphic event type. You can create more of these containing different data.
 /// </summary>
 [PolymorphicStruct]
-public struct #SCRIPTNAME#B : I#SCRIPTNAME#
+public struct MyTestEntityPolyEventB : IMyTestEntityPolyEvent
 {
     // TODO: Define event data
     public int Val1;
@@ -90,7 +90,7 @@ public struct #SCRIPTNAME#B : I#SCRIPTNAME#
 /// IMPORTANT: You must not add any more data to this struct. It needs to remain a single byte.
 /// </summary>
 [InternalBufferCapacity(0)] // TODO: adjust internal capacity
-public struct #SCRIPTNAME#BufferElement : IBufferElementData
+public struct MyTestEntityPolyEventBufferElement : IBufferElementData
 {
     public byte Element;
 }
@@ -99,7 +99,7 @@ public struct #SCRIPTNAME#BufferElement : IBufferElementData
 /// This is an enableable component that flags entities that currently have events to process.
 /// You must ensure this component is added to entities that can receive this type of event.
 /// </summary>
-public struct Has#SCRIPTNAME#s : IComponentData, IEnableableComponent
+public struct HasMyTestEntityPolyEvents : IComponentData, IEnableableComponent
 { }
 
 
@@ -109,15 +109,15 @@ public struct Has#SCRIPTNAME#s : IComponentData, IEnableableComponent
 /// until this system updates.
 /// All event writer systems should update before this system, and all event reader systems should update after this system.
 /// </summary>
-partial struct #SCRIPTNAME#System : ISystem
+partial struct MyTestEntityPolyEventSystem : ISystem
 {
-    private EntityPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, #SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s, #SCRIPTNAME#ForEntity, PStruct_I#SCRIPTNAME#> _subSystem;
+    private EntityPolymorphicEventSubSystem<MyTestEntityPolyEventsSingleton, MyTestEntityPolyEventBufferElement, HasMyTestEntityPolyEvents, MyTestEntityPolyEventForEntity, PStruct_IMyTestEntityPolyEvent> _subSystem;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _subSystem =
-            new EntityPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, #SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s, #SCRIPTNAME#ForEntity, PStruct_I#SCRIPTNAME#>(
+            new EntityPolymorphicEventSubSystem<MyTestEntityPolyEventsSingleton, MyTestEntityPolyEventBufferElement, HasMyTestEntityPolyEvents, MyTestEntityPolyEventForEntity, PStruct_IMyTestEntityPolyEvent>(
                 ref state, 32); // TODO: tweak initial capacities
     }
 

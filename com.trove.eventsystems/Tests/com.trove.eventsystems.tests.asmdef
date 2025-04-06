@@ -9,7 +9,8 @@
         "Unity.Collections",
         "Unity.Burst",
         "Unity.Mathematics",
-        "com.trove.common"
+        "com.trove.common",
+        "com.trove.polymorphicstructs"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -22,6 +23,12 @@
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.trove.polymorphicstructs",
+            "expression": "",
+            "define": "HAS_TROVE_POLYMORPHICSTRUCTS"
+        }
+    ],
     "noEngineReferences": false
 }

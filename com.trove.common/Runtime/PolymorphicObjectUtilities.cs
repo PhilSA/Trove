@@ -8,19 +8,24 @@ namespace Trove
 {
     public unsafe interface IPolymorphicObject
     {
-        public int GetBytesSize();
-        public void WriteTo(byte* dstPtr, out int writeSize);
+        public int GetTypeId();
+        public int GetDataBytesSize();
+        public int GetDataBytesSizeFor(int typeId);
+        public void WriteDataTo(byte* dstPtr, out int writeSize);
+        public void SetDataFrom(int typeId, byte* srcPtr, out int readSize);
     }
 
     public static class PolymorphicObjectUtilities
     {
+        public const int SizeOf_TypeId = 4;
+        
         #region UnsafeList
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void AddObject<T>(ref T polymorphicObject, ref UnsafeList<byte> list, out int byteIndex,
+        public static unsafe void AddObject<T>(in T polymorphicObject, ref UnsafeList<byte> list, out int byteIndex,
             out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
-            writeSize = polymorphicObject.GetBytesSize();
+            writeSize = SizeOf_TypeId + polymorphicObject.GetDataBytesSize();
             
             // Check set capacity
             int initialLength = list.Length;
@@ -34,18 +39,23 @@ namespace Trove
             
             list.Resize(newLength, NativeArrayOptions.UninitializedMemory);
 
-            // Write
+            // Write typeId
             byteIndex = initialLength;
             byte* dstPtr = list.Ptr + (long)byteIndex;
-            polymorphicObject.WriteTo(dstPtr, out writeSize);
+            *(int*)dstPtr = polymorphicObject.GetTypeId();
+            
+            // Write data
+            byteIndex += SizeOf_TypeId;
+            dstPtr = list.Ptr + (long)byteIndex;
+            polymorphicObject.WriteDataTo(dstPtr, out _);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void InsertObject<T>(ref T polymorphicObject, ref UnsafeList<byte> list, int byteIndex,
+        public static unsafe void InsertObject<T>(in T polymorphicObject, ref UnsafeList<byte> list, int byteIndex,
             out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
-            writeSize = polymorphicObject.GetBytesSize();
+            writeSize = SizeOf_TypeId + polymorphicObject.GetDataBytesSize();
             
             // Check set capacity
             int initialLength = list.Length;
@@ -65,8 +75,14 @@ namespace Trove
             byte* dstPtr = list.Ptr + (long)moveByteIndex;
             UnsafeUtility.MemMove(dstPtr, srcPtr, initialLength - byteIndex);
 
-            // Write
-            polymorphicObject.WriteTo(srcPtr, out writeSize);
+            // Write typeId
+            dstPtr = list.Ptr + (long)byteIndex;
+            *(int*)dstPtr = polymorphicObject.GetTypeId();
+            
+            // Write data
+            byteIndex += SizeOf_TypeId;
+            dstPtr = list.Ptr + (long)byteIndex;
+            polymorphicObject.WriteDataTo(dstPtr, out _);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -76,7 +92,7 @@ namespace Trove
         {
             byte* srcPtr = list.Ptr + (long)byteIndex;
             polymorphicObject = *(T*)srcPtr;
-            readSize = polymorphicObject.GetBytesSize();
+            readSize = SizeOf_TypeId + polymorphicObject.GetDataBytesSize();
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -107,11 +123,11 @@ namespace Trove
 
         #region NativeList
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void AddObject<T>(ref T polymorphicObject, ref NativeList<byte> list, out int byteIndex,
+        public static unsafe void AddObject<T>(in T polymorphicObject, ref NativeList<byte> list, out int byteIndex,
             out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
-            writeSize = polymorphicObject.GetBytesSize();
+            writeSize = SizeOf_TypeId + polymorphicObject.GetDataBytesSize();
             
             // Check set capacity
             int initialLength = list.Length;
@@ -125,18 +141,23 @@ namespace Trove
             
             list.Resize(newLength, NativeArrayOptions.UninitializedMemory);
 
-            // Write
+            // Write typeId
             byteIndex = initialLength;
             byte* dstPtr = list.GetUnsafePtr() + (long)byteIndex;
-            polymorphicObject.WriteTo(dstPtr, out writeSize);
+            *(int*)dstPtr = polymorphicObject.GetTypeId();
+            
+            // Write data
+            byteIndex += SizeOf_TypeId;
+            dstPtr = list.GetUnsafePtr() + (long)byteIndex;
+            polymorphicObject.WriteDataTo(dstPtr, out _);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void InsertObject<T>(ref T polymorphicObject, ref NativeList<byte> list, int byteIndex,
+        public static unsafe void InsertObject<T>(in T polymorphicObject, ref NativeList<byte> list, int byteIndex,
             out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
-            writeSize = polymorphicObject.GetBytesSize();
+            writeSize = SizeOf_TypeId + polymorphicObject.GetDataBytesSize();
             
             // Check set capacity
             int initialLength = list.Length;
@@ -156,8 +177,14 @@ namespace Trove
             byte* dstPtr = list.GetUnsafePtr() + (long)moveByteIndex;
             UnsafeUtility.MemMove(dstPtr, srcPtr, initialLength - byteIndex);
 
-            // Write
-            polymorphicObject.WriteTo(srcPtr, out writeSize);
+            // Write typeId
+            dstPtr = list.GetUnsafePtr() + (long)byteIndex;
+            *(int*)dstPtr = polymorphicObject.GetTypeId();
+            
+            // Write data
+            byteIndex += SizeOf_TypeId;
+            dstPtr = list.GetUnsafePtr() + (long)byteIndex;
+            polymorphicObject.WriteDataTo(dstPtr, out _);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -167,7 +194,7 @@ namespace Trove
         {
             byte* srcPtr = list.GetUnsafeReadOnlyPtr() + (long)byteIndex;
             polymorphicObject = *(T*)srcPtr;
-            readSize = polymorphicObject.GetBytesSize();
+            readSize = SizeOf_TypeId + polymorphicObject.GetDataBytesSize();
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -198,11 +225,11 @@ namespace Trove
 
         #region DynamicBuffer
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void AddObject<T>(ref T polymorphicObject, ref DynamicBuffer<byte> list, out int byteIndex,
+        public static unsafe void AddObject<T>(in T polymorphicObject, ref DynamicBuffer<byte> list, out int byteIndex,
             out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
-            writeSize = polymorphicObject.GetBytesSize();
+            writeSize = SizeOf_TypeId + polymorphicObject.GetDataBytesSize();
             
             // Check set capacity
             int initialLength = list.Length;
@@ -216,18 +243,23 @@ namespace Trove
             
             list.Resize(newLength, NativeArrayOptions.UninitializedMemory);
 
-            // Write
+            // Write typeId
             byteIndex = initialLength;
             byte* dstPtr = (byte*)list.GetUnsafePtr() + (long)byteIndex;
-            polymorphicObject.WriteTo(dstPtr, out writeSize);
+            *(int*)dstPtr = polymorphicObject.GetTypeId();
+            
+            // Write data
+            byteIndex += SizeOf_TypeId;
+            dstPtr = (byte*)list.GetUnsafePtr() + (long)byteIndex;
+            polymorphicObject.WriteDataTo(dstPtr, out _);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void InsertObject<T>(ref T polymorphicObject, ref DynamicBuffer<byte> list, int byteIndex,
+        public static unsafe void InsertObject<T>(in T polymorphicObject, ref DynamicBuffer<byte> list, int byteIndex,
             out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
-            writeSize = polymorphicObject.GetBytesSize();
+            writeSize = SizeOf_TypeId + polymorphicObject.GetDataBytesSize();
             
             // Check set capacity
             int initialLength = list.Length;
@@ -247,8 +279,14 @@ namespace Trove
             byte* dstPtr = (byte*)list.GetUnsafePtr() + (long)moveByteIndex;
             UnsafeUtility.MemMove(dstPtr, srcPtr, initialLength - byteIndex);
 
-            // Write
-            polymorphicObject.WriteTo(srcPtr, out writeSize);
+            // Write typeId
+            dstPtr = (byte*)list.GetUnsafePtr() + (long)byteIndex;
+            *(int*)dstPtr = polymorphicObject.GetTypeId();
+            
+            // Write data
+            byteIndex += SizeOf_TypeId;
+            dstPtr = (byte*)list.GetUnsafePtr() + (long)byteIndex;
+            polymorphicObject.WriteDataTo(dstPtr, out _);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -258,7 +296,7 @@ namespace Trove
         {
             byte* srcPtr = (byte*)list.GetUnsafeReadOnlyPtr() + (long)byteIndex;
             polymorphicObject = *(T*)srcPtr;
-            readSize = polymorphicObject.GetBytesSize();
+            readSize = SizeOf_TypeId + polymorphicObject.GetDataBytesSize();
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -289,31 +327,43 @@ namespace Trove
 
         #region NativeStream
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void AddObject<T>(ref T polymorphicObject, ref NativeStream.Writer stream, float growFactor = 1.5f)
+        public static unsafe void AddObject<T>(in T polymorphicObject, ref NativeStream.Writer stream, out int writeSize, float growFactor = 1.5f)
             where T : unmanaged, IPolymorphicObject
         {
-            int writeSize = polymorphicObject.GetBytesSize();
+            writeSize = polymorphicObject.GetDataBytesSize();
             
-            // Write
+            // Write TypeId
+            stream.Write(polymorphicObject.GetTypeId());
+            
+            // Write data
             byte* dstPtr = stream.Allocate(writeSize);
-            polymorphicObject.WriteTo(dstPtr, out writeSize);
+            polymorphicObject.WriteDataTo(dstPtr, out _);
+            
+            writeSize += SizeOf_TypeId;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe bool GetNextObject<T>(ref NativeStream.Reader stream, out T polymorphicObject)
+        public static unsafe bool GetNextObject<T>(ref NativeStream.Reader stream, out T polymorphicObject, out int readSize)
             where T : unmanaged, IPolymorphicObject
         {
             polymorphicObject = default;
-            int readSize = polymorphicObject.GetBytesSize();
             
-            // Check read
-            if (stream.RemainingItemCount > 0)
+            // Check read for 2 items
+            if (stream.RemainingItemCount > 1)
             {
-                byte* srcPtr = stream.ReadUnsafePtr(readSize);
-                polymorphicObject = *(T*)srcPtr;
+                // Read typeId
+                int typeId = stream.Read<int>();
+                int dataBytesSize = polymorphicObject.GetDataBytesSizeFor(typeId);
+                
+                // Read data
+                byte* srcPtr = stream.ReadUnsafePtr(dataBytesSize);
+                polymorphicObject.SetDataFrom(typeId, srcPtr, out int dataReadSize);
+                
+                readSize = SizeOf_TypeId + dataReadSize;
                 return true;
             }
-            
+
+            readSize = 0;
             return false;
         }
         #endregion

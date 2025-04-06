@@ -5,6 +5,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
+using UnityEngine;
 
 namespace Trove.EventSystems
 {
@@ -73,7 +74,6 @@ namespace Trove.EventSystems
             {
                 state.Dependency = new EventTransferPolymorphicStreamToListJob<P>
                 {
-                    PolymorphicTypeManager = default(P),
                     EventsStream = eventStreams[i].AsReader(),
                     EventList = singletonRW.ValueRW.EventsList,
                 }.Schedule(state.Dependency);
@@ -87,37 +87,18 @@ namespace Trove.EventSystems
     public unsafe struct EventTransferPolymorphicStreamToListJob<P> : IJob
         where P : unmanaged, IPolymorphicObject
     {
-        public P PolymorphicTypeManager;
         public NativeStream.Reader EventsStream;
         public NativeList<byte> EventList;
 
         public void Execute()
         {
-            int writeIndex = EventList.Length;
-            byte* listPtr = EventList.GetUnsafePtr();
-
             for (int i = 0; i < EventsStream.ForEachCount; i++)
             {
                 EventsStream.BeginForEachIndex(i);
-                while (EventsStream.RemainingItemCount > 1)
+                while (EventsStream.RemainingItemCount > 0)
                 {
-                    // Read from stream
-                    int typeId = EventsStream.Read<int>();
-                    int eventDataSize = PolymorphicTypeManager.GetSizeForTypeId(typeId);
-                    byte* eventData = EventsStream.ReadUnsafePtr(eventDataSize);
-
-                    // List resize
-                    int newListSize = EventList.Length + UnsafeUtility.SizeOf<int>() + eventDataSize;
-                    if (newListSize > EventList.Capacity)
-                    {
-                        EventList.SetCapacity(newListSize * 2);
-                        listPtr = EventList.GetUnsafePtr();
-                    }
-                    EventList.ResizeUninitialized(newListSize);
-
-                    // Write to list
-                    ByteArrayUtilities.WriteValue(listPtr, ref writeIndex, typeId);
-                    ByteArrayUtilities.WriteValue(listPtr, ref writeIndex, eventData, eventDataSize);
+                    PolymorphicObjectUtilities.GetNextObject(ref EventsStream, out P polymorphicObject, out int readSize);
+                    PolymorphicObjectUtilities.AddObject(in polymorphicObject, ref EventList, out int addedByteIndex, out int writeSize);
                 }
                 EventsStream.EndForEachIndex();
             }

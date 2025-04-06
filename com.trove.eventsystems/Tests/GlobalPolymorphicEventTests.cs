@@ -1,4 +1,4 @@
-
+#if HAS_TROVE_POLYMORPHICSTRUCTS
 using Unity.Entities;
 using NUnit.Framework;
 using Unity.Burst;
@@ -149,16 +149,19 @@ namespace Trove.EventSystems.Tests
             eventsStream.BeginForEachIndex(0);
             for (int i = 0; i < GlobalPolymorphicEventTests.EventsPerSystemOrThread; i++)
             {
-                TestGlobalPolymorphicEventManager.Write(ref eventsStream, new TestGlobalPolymorphicEventA
+                PStruct_ITestGlobalPolymorphicEvent eA = new TestGlobalPolymorphicEventA
                 {
                     Val = GlobalPolymorphicEventTests.MainThreadStreamEventKeyA,
-                });
-                TestGlobalPolymorphicEventManager.Write(ref eventsStream, new TestGlobalPolymorphicEventB
+                };
+                PolymorphicObjectUtilities.AddObject(in eA, ref eventsStream, out int writeSize);
+
+                PStruct_ITestGlobalPolymorphicEvent eB = new TestGlobalPolymorphicEventB
                 {
                     Val1 = GlobalPolymorphicEventTests.MainThreadStreamEventKeyB,
                     Val2 = GlobalPolymorphicEventTests.MainThreadStreamEventKeyB,
                     Val3 = GlobalPolymorphicEventTests.MainThreadStreamEventKeyB,
-                });
+                };
+                PolymorphicObjectUtilities.AddObject(in eB, ref eventsStream, out writeSize);
             }
             eventsStream.EndForEachIndex();
         }
@@ -195,16 +198,19 @@ namespace Trove.EventSystems.Tests
                 EventsStream.BeginForEachIndex(0);
                 for (int i = 0; i < GlobalPolymorphicEventTests.EventsPerSystemOrThread; i++)
                 {
-                    TestGlobalPolymorphicEventManager.Write(ref EventsStream, new TestGlobalPolymorphicEventA
+                    PStruct_ITestGlobalPolymorphicEvent eA = new TestGlobalPolymorphicEventA
                     {
                         Val = GlobalPolymorphicEventTests.SingleJobStreamEventKeyA,
-                    });
-                    TestGlobalPolymorphicEventManager.Write(ref EventsStream, new TestGlobalPolymorphicEventB
+                    };
+                    PolymorphicObjectUtilities.AddObject(in eA, ref EventsStream, out _);
+
+                    PStruct_ITestGlobalPolymorphicEvent eB = new TestGlobalPolymorphicEventB
                     {
                         Val1 = GlobalPolymorphicEventTests.SingleJobStreamEventKeyB,
                         Val2 = GlobalPolymorphicEventTests.SingleJobStreamEventKeyB,
                         Val3 = GlobalPolymorphicEventTests.SingleJobStreamEventKeyB,
-                    });
+                    };
+                    PolymorphicObjectUtilities.AddObject(in eB, ref EventsStream, out _);
                 }
                 EventsStream.EndForEachIndex();
             }
@@ -242,16 +248,19 @@ namespace Trove.EventSystems.Tests
                 EventsStream.BeginForEachIndex(index);
                 for (int i = 0; i < GlobalPolymorphicEventTests.EventsPerSystemOrThread; i++)
                 {
-                    TestGlobalPolymorphicEventManager.Write(ref EventsStream, new TestGlobalPolymorphicEventA
+                    PStruct_ITestGlobalPolymorphicEvent eA = new TestGlobalPolymorphicEventA
                     {
                         Val = GlobalPolymorphicEventTests.ParallelJobStreamEventKeyA,
-                    });
-                    TestGlobalPolymorphicEventManager.Write(ref EventsStream, new TestGlobalPolymorphicEventB
+                    };
+                    PolymorphicObjectUtilities.AddObject(in eA, ref EventsStream, out _);
+
+                    PStruct_ITestGlobalPolymorphicEvent eB = new TestGlobalPolymorphicEventB
                     {
                         Val1 = GlobalPolymorphicEventTests.ParallelJobStreamEventKeyB,
                         Val2 = GlobalPolymorphicEventTests.ParallelJobStreamEventKeyB,
                         Val3 = GlobalPolymorphicEventTests.ParallelJobStreamEventKeyB,
-                    });
+                    };
+                    PolymorphicObjectUtilities.AddObject(in eB, ref EventsStream, out _);
                 }
                 EventsStream.EndForEachIndex();
             }
@@ -282,9 +291,13 @@ namespace Trove.EventSystems.Tests
 
             counterSingleton.EventsCounter.Clear();
             int readIndex = 0;
-            byte* listPtr = singleton.EventsList.GetUnsafeReadOnlyPtr();
-            while (TestGlobalPolymorphicEventManager.ExecuteNextEvent(listPtr, singleton.EventsList.Length, ref readIndex, ref counterSingleton.EventsCounter))
-            { }
+            NativeList<byte> eventsList = singleton.EventsList;
+            while (readIndex < singleton.EventsList.Length)
+            {
+                PolymorphicObjectUtilities.GetObject(ref eventsList, readIndex, out PStruct_ITestGlobalPolymorphicEvent e, out int readSize);
+                readIndex += readSize;
+                e.Execute(ref counterSingleton.EventsCounter);
+            }
         }
     }
 
@@ -327,9 +340,12 @@ namespace Trove.EventSystems.Tests
             public void Execute()
             {
                 int readIndex = 0;
-                byte* listPtr = EventsList.GetUnsafeReadOnlyPtr();
-                while (TestGlobalPolymorphicEventManager.ExecuteNextEvent(listPtr, EventsList.Length, ref readIndex, ref EventsCounter))
-                { }
+                while (readIndex < EventsList.Length)
+                {
+                    PolymorphicObjectUtilities.GetObject(ref EventsList, readIndex, out PStruct_ITestGlobalPolymorphicEvent e, out int readSize);
+                    readIndex += readSize;
+                    e.Execute(ref EventsCounter);
+                }
             }
         }
     }
@@ -398,11 +414,15 @@ namespace Trove.EventSystems.Tests
                 }
 
                 int readIndex = 0;
-                byte* listPtr = EventsList.GetUnsafeReadOnlyPtr();
-                while (TestGlobalPolymorphicEventManager.ExecuteNextEvent(listPtr, EventsList.Length, ref readIndex, ref targetCounter))
-                { }
+                while (readIndex < EventsList.Length)
+                {
+                    PolymorphicObjectUtilities.GetObject(ref EventsList, readIndex, out PStruct_ITestGlobalPolymorphicEvent e, out int readSize);
+                    readIndex += readSize;
+                    e.Execute(ref targetCounter);
+                }
             }
         }
     }
     #endregion
 }
+#endif
