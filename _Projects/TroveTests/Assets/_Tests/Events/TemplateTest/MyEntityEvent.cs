@@ -9,19 +9,19 @@ using Unity.Jobs;
 // See all TODO comments for things you are expected to modify.
 
 // Register generic job types
-[assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<EEvent, HasEEvents>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferQueueToBufferJob<EEventForEntity, EEvent, HasEEvents>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferStreamToBufferJob<EEventForEntity, EEvent, HasEEvents>))]
+[assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<MyEntityEvent, HasMyEntityEvents>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferQueueToBufferJob<MyEntityEventForEntity, MyEntityEvent, HasMyEntityEvents>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferStreamToBufferJob<MyEntityEventForEntity, MyEntityEvent, HasMyEntityEvents>))]
 
 /// <summary>
 /// This is the singleton containing a manager for this event type.
 /// It is automatically created by the event system for this event type.
 /// Event writers access the event manager in this singleton in order to get queues/streams to write events in.
 /// </summary>
-public struct EEventsSingleton : IComponentData, IEntityEventsSingleton<EEventForEntity, EEvent>
+public struct MyEntityEventsSingleton : IComponentData, IEntityEventsSingleton<MyEntityEventForEntity, MyEntityEvent>
 {
-    public QueueEventsManager<EEventForEntity> QueueEventsManager { get; set; }
-    public EntityStreamEventsManager<EEventForEntity, EEvent> StreamEventsManager { get; set; }
+    public QueueEventsManager<MyEntityEventForEntity> QueueEventsManager { get; set; }
+    public EntityStreamEventsManager<MyEntityEventForEntity, MyEntityEvent> StreamEventsManager { get; set; }
 }
 
 /// <summary>
@@ -29,10 +29,10 @@ public struct EEventsSingleton : IComponentData, IEntityEventsSingleton<EEventFo
 /// It contains an "AffectedEntity" field to determine on which Entity the event will be transfered.
 /// "Event" represents what actually gets added to the entity's dynamic buffer.
 /// </summary>
-public struct EEventForEntity : IEventForEntity<EEvent>
+public struct MyEntityEventForEntity : IEventForEntity<MyEntityEvent>
 {
     public Entity AffectedEntity { get; set; }
-    public EEvent Event { get; set; }
+    public MyEntityEvent Event { get; set; }
 }
 
 /// <summary>
@@ -40,7 +40,7 @@ public struct EEventForEntity : IEventForEntity<EEvent>
 /// You must ensure this buffer is added to entities that can receive this type of event.
 /// </summary>
 [InternalBufferCapacity(0)] // TODO: adjust internal capacity
-public struct EEvent : IBufferElementData
+public struct MyEntityEvent : IBufferElementData
 {
     // TODO: Define event data
     public int Val;
@@ -50,7 +50,7 @@ public struct EEvent : IBufferElementData
 /// This is an enableable component that flags entities that currently have events to process.
 /// You must ensure this component is added to entities that can receive this type of event.
 /// </summary>
-public struct HasEEvents : IComponentData, IEnableableComponent
+public struct HasMyEntityEvents : IComponentData, IEnableableComponent
 { }
 
 /// <summary>
@@ -59,15 +59,15 @@ public struct HasEEvents : IComponentData, IEnableableComponent
 /// until this system updates.
 /// All event writer systems should update before this system, and all event reader systems should update after this system.
 /// </summary>
-partial struct EEventSystem : ISystem
+partial struct MyEntityEventSystem : ISystem
 {
-    private EntityEventSubSystem<EEventsSingleton, EEventForEntity, EEvent, HasEEvents> _subSystem;
+    private EntityEventSubSystem<MyEntityEventsSingleton, MyEntityEventForEntity, MyEntityEvent, HasMyEntityEvents> _subSystem;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _subSystem =
-            new EntityEventSubSystem<EEventsSingleton, EEventForEntity, EEvent, HasEEvents>(
+            new EntityEventSubSystem<MyEntityEventsSingleton, MyEntityEventForEntity, MyEntityEvent, HasMyEntityEvents>(
                 ref state, 32, 32); // TODO: tweak initial capacities
     }
 
@@ -87,54 +87,54 @@ partial struct EEventSystem : ISystem
 /// <summary>
 /// Example of an events writer system
 /// </summary>
-[UpdateBefore(typeof(EEventSystem))]
-partial struct EEventWriterSystem : ISystem
+[UpdateBefore(typeof(MyEntityEventSystem))]
+partial struct ExampleMyEntityEventWriterSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<EEventsSingleton>();
+        state.RequireForUpdate<MyEntityEventsSingleton>();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         // Get the events singleton for this event type
-        EEventsSingleton eventsSingleton = SystemAPI.GetSingletonRW<EEventsSingleton>().ValueRW;
+        MyEntityEventsSingleton eventsSingleton = SystemAPI.GetSingletonRW<MyEntityEventsSingleton>().ValueRW;
         
         // Schedule a job writing to an events queue.
-        state.Dependency = new EEventQueueWriterJob
+        state.Dependency = new MyEntityEventQueueWriterJob
         {
-            EventsQueue  = eventsSingleton.QueueEventsManager.CreateEventQueue(),
+            EventsQueue  = eventsSingleton.QueueEventsManager.CreateWriter(),
         }.Schedule(state.Dependency);
         
         // Schedule a job writing to an events stream.
-        state.Dependency = new EEventStreamWriterJob
+        state.Dependency = new MyEntityEventStreamWriterJob
         {
             EventsStream  = eventsSingleton.StreamEventsManager.CreateWriter(1),
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public struct EEventQueueWriterJob : IJob
+    public struct MyEntityEventQueueWriterJob : IJob
     {
-        public NativeQueue<EEventForEntity> EventsQueue;
+        public NativeQueue<MyEntityEventForEntity> EventsQueue;
         
         public void Execute()
         {
             // Write an example event
-            EventsQueue.Enqueue(new EEventForEntity
+            EventsQueue.Enqueue(new MyEntityEventForEntity
             {
-                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<EEvent> to target
-                Event = new EEvent { Val = 1 },
+                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<MyEntityEvent> to target
+                Event = new MyEntityEvent { Val = 1 },
             });
         }
     }
 
     [BurstCompile]
-    public struct EEventStreamWriterJob : IJob
+    public struct MyEntityEventStreamWriterJob : IJob
     {
-        public EntityStreamEventsManager<EEventForEntity, EEvent>.Writer EventsStream;
+        public EntityStreamEventsManager<MyEntityEventForEntity, MyEntityEvent>.Writer EventsStream;
         
         public void Execute()
         {
@@ -142,10 +142,10 @@ partial struct EEventWriterSystem : ISystem
             EventsStream.BeginForEachIndex(0);
             
             // Write an example event
-            EventsStream.Write(new EEventForEntity
+            EventsStream.Write(new MyEntityEventForEntity
             {
-                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<EEvent> to target
-                Event = new EEvent { Val = 1 },
+                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<MyEntityEvent> to target
+                Event = new MyEntityEvent { Val = 1 },
             });
 
             EventsStream.EndForEachIndex();
@@ -156,27 +156,28 @@ partial struct EEventWriterSystem : ISystem
 /// <summary>
 /// Example of an events reader system
 /// </summary>
-[UpdateAfter(typeof(EEventSystem))]
-partial struct EEventReaderSystem : ISystem
+[UpdateAfter(typeof(MyEntityEventSystem))]
+partial struct ExampleMyEntityEventReaderSystem : ISystem
 {
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // Schedule a job iterating entities with a DynamicBuffer<EEvent> to read events
-        state.Dependency = new EEventReaderJob
+        // Schedule a job iterating entities with a DynamicBuffer<MyEntityEvent> to read events
+        state.Dependency = new MyEntityEventReaderJob
         {
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public partial struct EEventReaderJob : IJobEntity
+    [WithAll(typeof(HasMyEntityEvents))] // This ensures we only iterate entities that have received events
+    public partial struct MyEntityEventReaderJob : IJobEntity
     {
-        public void Execute(DynamicBuffer<EEvent> eventsBuffer)
+        public void Execute(DynamicBuffer<MyEntityEvent> eventsBuffer)
         {
             // Read events
             for (int i = 0; i < eventsBuffer.Length; i++)
             {
-                // Debug.Log($"Read EEvent with value: {eventsBuffer[i].Val}");
+                // Debug.Log($"Read MyEntityEvent with value: {eventsBuffer[i].Val}");
             }
         }
     }

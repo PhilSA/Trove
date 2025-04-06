@@ -149,7 +149,7 @@ namespace Trove.EventSystems.Tests
         public void OnUpdate(ref SystemState state)
         {
             TestGlobalEventsSingleton singleton = SystemAPI.GetSingleton<TestGlobalEventsSingleton>();
-            NativeQueue<TestGlobalEvent> eventsQueue = singleton.QueueEventsManager.CreateEventQueue();
+            NativeQueue<TestGlobalEvent> eventsQueue = singleton.QueueEventsManager.CreateWriter();
 
             for (int i = 0; i < GlobalEventTests.EventsPerSystemOrThread; i++)
             {
@@ -203,7 +203,7 @@ namespace Trove.EventSystems.Tests
 
             state.Dependency = new WriteJob
             {
-                EventsQueue = singleton.QueueEventsManager.CreateEventQueue(),
+                EventsQueue = singleton.QueueEventsManager.CreateWriter(),
             }.Schedule(state.Dependency);
         }
 
@@ -283,7 +283,7 @@ namespace Trove.EventSystems.Tests
 
             state.Dependency = new WriteJob
             {
-                EventsQueue = singleton.QueueEventsManager.CreateEventQueue().AsParallelWriter(),
+                EventsQueue = singleton.QueueEventsManager.CreateWriter().AsParallelWriter(),
             }.Schedule(GlobalEventTests.ParallelCount, 1, state.Dependency);
         }
 

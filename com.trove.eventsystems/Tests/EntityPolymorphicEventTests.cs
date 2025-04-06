@@ -145,7 +145,7 @@ namespace Trove.EventSystems.Tests
         {
             TestEntityPolymorphicEventsSingleton singleton = SystemAPI.GetSingletonRW<TestEntityPolymorphicEventsSingleton>().ValueRW;
             EntityEventTestSingleton testSingleton = SystemAPI.GetSingleton<EntityEventTestSingleton>();
-            EntityPolymorphicStreamEventsManager<TestEntityPolymorphicEventForEntity, PStruct_ITestEntityPolymorphicEvent>.Writer eventsStream = singleton.StreamEventsManager.CreateWriter(1);
+            EntityPolymorphicStreamEventsManager<TestEntityPolymorphicEventForEntity, PolyTestEntityPolymorphicEvent>.Writer eventsStream = singleton.StreamEventsManager.CreateWriter(1);
 
             eventsStream.BeginForEachIndex(0);
 
@@ -224,7 +224,7 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public struct WriteJob : IJob
         {
-            public EntityPolymorphicStreamEventsManager<TestEntityPolymorphicEventForEntity, PStruct_ITestEntityPolymorphicEvent>.Writer EventsStream;
+            public EntityPolymorphicStreamEventsManager<TestEntityPolymorphicEventForEntity, PolyTestEntityPolymorphicEvent>.Writer EventsStream;
             public EntityEventTestSingleton TestSingleton;
 
             public void Execute()
@@ -307,7 +307,7 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public struct WriteJob : IJobParallelFor
         {
-            public EntityPolymorphicStreamEventsManager<TestEntityPolymorphicEventForEntity, PStruct_ITestEntityPolymorphicEvent>.Writer EventsStream;
+            public EntityPolymorphicStreamEventsManager<TestEntityPolymorphicEventForEntity, PolyTestEntityPolymorphicEvent>.Writer EventsStream;
             public EntityEventTestSingleton TestSingleton;
 
             public void Execute(int index)
@@ -379,9 +379,9 @@ namespace Trove.EventSystems.Tests
             foreach(var (eventReceiver, eventsBuffer, entity) in SystemAPI.Query<RefRW<EntityEventReceiver>, DynamicBuffer<TestEntityPolymorphicEventBufferElement>>().WithEntityAccess())
             {
                 var eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
-                PolymorphicObjectDynamicBufferIterator<PStruct_ITestEntityPolymorphicEvent> iterator = 
-                    PolymorphicObjectUtilities.GetIterator<PStruct_ITestEntityPolymorphicEvent>(eventsBytesBuffer);
-                while (iterator.GetNext(out PStruct_ITestEntityPolymorphicEvent e, out _, out _))
+                PolymorphicObjectDynamicBufferIterator<PolyTestEntityPolymorphicEvent> iterator = 
+                    PolymorphicObjectUtilities.GetIterator<PolyTestEntityPolymorphicEvent>(eventsBytesBuffer);
+                while (iterator.GetNext(out PolyTestEntityPolymorphicEvent e, out _, out _))
                 {
                     e.Execute(ref eventReceiver.ValueRW, 1);
                 }
@@ -413,9 +413,9 @@ namespace Trove.EventSystems.Tests
             public unsafe void Execute(Entity entity, ref EntityEventReceiver eventReceiver, in DynamicBuffer<TestEntityPolymorphicEventBufferElement> eventsBuffer)
             {
                 var eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
-                PolymorphicObjectDynamicBufferIterator<PStruct_ITestEntityPolymorphicEvent> iterator = 
-                    PolymorphicObjectUtilities.GetIterator<PStruct_ITestEntityPolymorphicEvent>(eventsBytesBuffer);
-                while (iterator.GetNext(out PStruct_ITestEntityPolymorphicEvent e, out _, out _))
+                PolymorphicObjectDynamicBufferIterator<PolyTestEntityPolymorphicEvent> iterator = 
+                    PolymorphicObjectUtilities.GetIterator<PolyTestEntityPolymorphicEvent>(eventsBytesBuffer);
+                while (iterator.GetNext(out PolyTestEntityPolymorphicEvent e, out _, out _))
                 {
                     e.Execute(ref eventReceiver, 2);
                 }
@@ -447,9 +447,9 @@ namespace Trove.EventSystems.Tests
             public unsafe void Execute(Entity entity, ref EntityEventReceiver eventReceiver, in DynamicBuffer<TestEntityPolymorphicEventBufferElement> eventsBuffer)
             {
                 var eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
-                PolymorphicObjectDynamicBufferIterator<PStruct_ITestEntityPolymorphicEvent> iterator = 
-                    PolymorphicObjectUtilities.GetIterator<PStruct_ITestEntityPolymorphicEvent>(eventsBytesBuffer);
-                while (iterator.GetNext(out PStruct_ITestEntityPolymorphicEvent e, out _, out _))
+                PolymorphicObjectDynamicBufferIterator<PolyTestEntityPolymorphicEvent> iterator = 
+                    PolymorphicObjectUtilities.GetIterator<PolyTestEntityPolymorphicEvent>(eventsBytesBuffer);
+                while (iterator.GetNext(out PolyTestEntityPolymorphicEvent e, out _, out _))
                 {
                     e.Execute(ref eventReceiver, 3);
                 }

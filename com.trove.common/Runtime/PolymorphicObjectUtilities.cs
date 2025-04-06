@@ -14,7 +14,7 @@ namespace Trove
         public void WriteDataTo(byte* dstPtr, out int writeSize);
         public void SetDataFrom(int typeId, byte* srcPtr, out int readSize);
     }
-
+    
     public struct PolymorphicObjectUnsafeListIterator<T> where T : unmanaged, IPolymorphicObject
     {
         private UnsafeList<byte> _list;

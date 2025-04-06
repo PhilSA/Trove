@@ -88,7 +88,7 @@ partial struct #SCRIPTNAME#System : ISystem
 /// Example of an events writer system
 /// </summary>
 [UpdateBefore(typeof(#SCRIPTNAME#System))]
-partial struct #SCRIPTNAME#WriterSystem : ISystem
+partial struct Example#SCRIPTNAME#WriterSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -105,7 +105,7 @@ partial struct #SCRIPTNAME#WriterSystem : ISystem
         // Schedule a job writing to an events queue.
         state.Dependency = new #SCRIPTNAME#QueueWriterJob
         {
-            EventsQueue  = eventsSingleton.QueueEventsManager.CreateEventQueue(),
+            EventsQueue  = eventsSingleton.QueueEventsManager.CreateWriter(),
         }.Schedule(state.Dependency);
         
         // Schedule a job writing to an events stream.
@@ -157,7 +157,7 @@ partial struct #SCRIPTNAME#WriterSystem : ISystem
 /// Example of an events reader system
 /// </summary>
 [UpdateAfter(typeof(#SCRIPTNAME#System))]
-partial struct #SCRIPTNAME#ReaderSystem : ISystem
+partial struct Example#SCRIPTNAME#ReaderSystem : ISystem
 {
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
@@ -169,6 +169,7 @@ partial struct #SCRIPTNAME#ReaderSystem : ISystem
     }
 
     [BurstCompile]
+    [WithAll(typeof(Has#SCRIPTNAME#s))] // This ensures we only iterate entities that have received events
     public partial struct #SCRIPTNAME#ReaderJob : IJobEntity
     {
         public void Execute(DynamicBuffer<#SCRIPTNAME#> eventsBuffer)

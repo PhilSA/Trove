@@ -297,8 +297,15 @@ namespace PolymorphicStructsSourceGenerators
 
             ITypeSymbol interfaceTypeSymbol = (ITypeSymbol)generatorAttributeSyntaxContext.TargetSymbol;
 
+            string targetStructName = interfaceTypeSymbol.Name;
+            if(targetStructName.StartsWith("I"))
+            {
+                targetStructName = targetStructName.Substring(1);
+            }
+            targetStructName = $"Poly{targetStructName}";
+
+
             // Create the data of the "target struct"; the poly struct that will be generated
-            string targetStructName = $"PStruct_{interfaceTypeSymbol.Name}";
             string interfaceNamespaceName = SourceGenUtils.GetFullNamespaceTypeName(interfaceTypeSymbol);
             string targetStructTypeName = string.IsNullOrEmpty(interfaceNamespaceName) ? targetStructName : $"{interfaceNamespaceName}.{targetStructName}";
             StructModel targetStructModel = new StructModel(targetStructName, targetStructTypeName, interfaceNamespaceName);

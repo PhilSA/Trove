@@ -144,7 +144,7 @@ namespace Trove.EventSystems.Tests
         public void OnUpdate(ref SystemState state)
         {
             TestGlobalPolymorphicEventsSingleton singleton = SystemAPI.GetSingleton<TestGlobalPolymorphicEventsSingleton>();
-            GlobalPolymorphicStreamEventsManager<PStruct_ITestGlobalPolymorphicEvent>.Writer eventsStream = singleton.StreamEventsManager.CreateWriter(1);
+            GlobalPolymorphicStreamEventsManager<PolyTestGlobalPolymorphicEvent>.Writer eventsStream = singleton.StreamEventsManager.CreateWriter(1);
 
             eventsStream.BeginForEachIndex(0);
             for (int i = 0; i < GlobalPolymorphicEventTests.EventsPerSystemOrThread; i++)
@@ -188,7 +188,7 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public struct WriteJob : IJob
         {
-            public GlobalPolymorphicStreamEventsManager<PStruct_ITestGlobalPolymorphicEvent>.Writer EventsStream;
+            public GlobalPolymorphicStreamEventsManager<PolyTestGlobalPolymorphicEvent>.Writer EventsStream;
 
             public void Execute()
             {
@@ -235,7 +235,7 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public struct WriteJob : IJobParallelFor
         {
-            public GlobalPolymorphicStreamEventsManager<PStruct_ITestGlobalPolymorphicEvent>.Writer EventsStream;
+            public GlobalPolymorphicStreamEventsManager<PolyTestGlobalPolymorphicEvent>.Writer EventsStream;
 
             public void Execute(int index)
             {
@@ -283,9 +283,9 @@ namespace Trove.EventSystems.Tests
             counterSingleton.EventsCounter.Clear();
             
             NativeList<byte> eventsList = singleton.ReadEventsList;
-            PolymorphicObjectNativeListIterator<PStruct_ITestGlobalPolymorphicEvent> iterator = 
-                PolymorphicObjectUtilities.GetIterator<PStruct_ITestGlobalPolymorphicEvent>(eventsList);
-            while (iterator.GetNext(out PStruct_ITestGlobalPolymorphicEvent e, out _, out _))
+            PolymorphicObjectNativeListIterator<PolyTestGlobalPolymorphicEvent> iterator = 
+                PolymorphicObjectUtilities.GetIterator<PolyTestGlobalPolymorphicEvent>(eventsList);
+            while (iterator.GetNext(out PolyTestGlobalPolymorphicEvent e, out _, out _))
             {
                 e.Execute(ref counterSingleton.EventsCounter);
             }
@@ -330,9 +330,9 @@ namespace Trove.EventSystems.Tests
 
             public void Execute()
             {
-                PolymorphicObjectNativeListIterator<PStruct_ITestGlobalPolymorphicEvent> iterator = 
-                    PolymorphicObjectUtilities.GetIterator<PStruct_ITestGlobalPolymorphicEvent>(EventsList);
-                while (iterator.GetNext(out PStruct_ITestGlobalPolymorphicEvent e, out _, out _))
+                PolymorphicObjectNativeListIterator<PolyTestGlobalPolymorphicEvent> iterator = 
+                    PolymorphicObjectUtilities.GetIterator<PolyTestGlobalPolymorphicEvent>(EventsList);
+                while (iterator.GetNext(out PolyTestGlobalPolymorphicEvent e, out _, out _))
                 {
                     e.Execute(ref EventsCounter);
                 }
@@ -403,9 +403,9 @@ namespace Trove.EventSystems.Tests
                         break;
                 }
 
-                PolymorphicObjectNativeListIterator<PStruct_ITestGlobalPolymorphicEvent> iterator = 
-                    PolymorphicObjectUtilities.GetIterator<PStruct_ITestGlobalPolymorphicEvent>(EventsList);
-                while (iterator.GetNext(out PStruct_ITestGlobalPolymorphicEvent e, out _, out _))
+                PolymorphicObjectNativeListIterator<PolyTestGlobalPolymorphicEvent> iterator = 
+                    PolymorphicObjectUtilities.GetIterator<PolyTestGlobalPolymorphicEvent>(EventsList);
+                while (iterator.GetNext(out PolyTestGlobalPolymorphicEvent e, out _, out _))
                 {
                     e.Execute(ref targetCounter);
                 }

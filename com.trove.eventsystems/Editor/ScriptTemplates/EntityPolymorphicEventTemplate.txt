@@ -13,16 +13,16 @@ using Trove.PolymorphicStructs;
 
 // Register generic job types
 [assembly: RegisterGenericJobType(typeof(EventClearBuffersJob<#SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s>))]
-[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToBufferJob<#SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s, #SCRIPTNAME#ForEntity, PStruct_I#SCRIPTNAME#>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToBufferJob<#SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s, #SCRIPTNAME#ForEntity, Poly#SCRIPTNAME#>))]
 
 /// <summary>
 /// This is the singleton containing a manager for this event type.
 /// It is automatically created by the event system for this event type.
 /// Event writers access the event manager in this singleton in order to get streams to write events in.
 /// </summary>
-public struct #SCRIPTNAME#sSingleton : IComponentData, IEntityPolymorphicEventsSingleton<#SCRIPTNAME#ForEntity, PStruct_I#SCRIPTNAME#>
+public struct #SCRIPTNAME#sSingleton : IComponentData, IEntityPolymorphicEventsSingleton<#SCRIPTNAME#ForEntity, Poly#SCRIPTNAME#>
 {
-    public EntityPolymorphicStreamEventsManager<#SCRIPTNAME#ForEntity, PStruct_I#SCRIPTNAME#> StreamEventsManager { get; set; }
+    public EntityPolymorphicStreamEventsManager<#SCRIPTNAME#ForEntity, Poly#SCRIPTNAME#> StreamEventsManager { get; set; }
 }
 
 /// <summary>
@@ -30,21 +30,16 @@ public struct #SCRIPTNAME#sSingleton : IComponentData, IEntityPolymorphicEventsS
 /// It contains an "AffectedEntity" field to determine on which Entity the event will be transfered.
 /// "Event" represents what actually gets serialized to the entity's dynamic buffer.
 /// </summary>
-public struct #SCRIPTNAME#ForEntity : IPolymorphicEventForEntity<PStruct_I#SCRIPTNAME#>
+public struct #SCRIPTNAME#ForEntity : IPolymorphicEventForEntity<Poly#SCRIPTNAME#>
 {
     public Entity AffectedEntity { get; set; }
-    public PStruct_I#SCRIPTNAME# Event { get; set; }
-
-    public void WriteToStream(ref NativeStream.Writer stream)
-    {
-        
-    }
+    public Poly#SCRIPTNAME# Event { get; set; }
 }
 
 /// <summary>
 /// Polymorphic interface used for generating our event polymorphic struct. 
 ///
-/// This will generate a new polymorphic struct named PStruct_I#SCRIPTNAME# that can act as any event type implementing
+/// This will generate a new polymorphic struct named Poly#SCRIPTNAME# that can act as any event type implementing
 /// this interface and using the [PolymorphicStruct] attribute.
 ///
 /// You can add parameters and return types to the Execute function, or even add new functions. "Execute()" is only
@@ -117,13 +112,13 @@ public struct Has#SCRIPTNAME#s : IComponentData, IEnableableComponent
 /// </summary>
 partial struct #SCRIPTNAME#System : ISystem
 {
-    private EntityPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, #SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s, #SCRIPTNAME#ForEntity, PStruct_I#SCRIPTNAME#> _subSystem;
+    private EntityPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, #SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s, #SCRIPTNAME#ForEntity, Poly#SCRIPTNAME#> _subSystem;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _subSystem =
-            new EntityPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, #SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s, #SCRIPTNAME#ForEntity, PStruct_I#SCRIPTNAME#>(
+            new EntityPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, #SCRIPTNAME#BufferElement, Has#SCRIPTNAME#s, #SCRIPTNAME#ForEntity, Poly#SCRIPTNAME#>(
                 ref state, 32); // TODO: tweak initial capacities
     }
 
@@ -144,7 +139,7 @@ partial struct #SCRIPTNAME#System : ISystem
 /// Example of an events writer system
 /// </summary>
 [UpdateBefore(typeof(#SCRIPTNAME#System))]
-partial struct #SCRIPTNAME#WriterSystem : ISystem
+partial struct Example#SCRIPTNAME#WriterSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -169,7 +164,7 @@ partial struct #SCRIPTNAME#WriterSystem : ISystem
     [BurstCompile]
     public struct #SCRIPTNAME#WriterJob : IJob
     {
-        public EntityPolymorphicStreamEventsManager<#SCRIPTNAME#ForEntity, PStruct_I#SCRIPTNAME#>.Writer EventsStream;
+        public EntityPolymorphicStreamEventsManager<#SCRIPTNAME#ForEntity, Poly#SCRIPTNAME#>.Writer EventsStream;
         
         public void Execute()
         {
@@ -198,7 +193,7 @@ partial struct #SCRIPTNAME#WriterSystem : ISystem
 /// Example of an events reader system
 /// </summary>
 [UpdateAfter(typeof(#SCRIPTNAME#System))]
-partial struct #SCRIPTNAME#ReaderSystem : ISystem
+partial struct Example#SCRIPTNAME#ReaderSystem : ISystem
 {
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
@@ -210,6 +205,7 @@ partial struct #SCRIPTNAME#ReaderSystem : ISystem
     }
 
     [BurstCompile]
+    [WithAll(typeof(Has#SCRIPTNAME#s))] // This ensures we only iterate entities that have received events
     public partial struct #SCRIPTNAME#ReaderJob : IJobEntity
     {
         public void Execute(DynamicBuffer<#SCRIPTNAME#BufferElement> eventsBuffer)
@@ -217,9 +213,9 @@ partial struct #SCRIPTNAME#ReaderSystem : ISystem
             DynamicBuffer<byte> eventsBytesBuffer = eventsBuffer.Reinterpret<byte>();
             
             // Get the iterator that can read through the polymorphic structs of the list
-            PolymorphicObjectDynamicBufferIterator<PStruct_I#SCRIPTNAME#> iterator = 
-                PolymorphicObjectUtilities.GetIterator<PStruct_I#SCRIPTNAME#>(eventsBytesBuffer);
-            while (iterator.GetNext(out PStruct_I#SCRIPTNAME# e, out _, out _))
+            PolymorphicObjectDynamicBufferIterator<Poly#SCRIPTNAME#> iterator = 
+                PolymorphicObjectUtilities.GetIterator<Poly#SCRIPTNAME#>(eventsBytesBuffer);
+            while (iterator.GetNext(out Poly#SCRIPTNAME# e, out _, out _))
             {
                 // Execute the event (execution logic is implemented in the event struct itself)
                 e.Execute();

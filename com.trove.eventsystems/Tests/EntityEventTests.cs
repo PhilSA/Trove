@@ -151,7 +151,7 @@ namespace Trove.EventSystems.Tests
         {
             TestEntityEventsSingleton singleton = SystemAPI.GetSingleton<TestEntityEventsSingleton>();
             EntityEventTestSingleton testSingleton = SystemAPI.GetSingleton<EntityEventTestSingleton>();
-            NativeQueue<TestEntityEventForEntity> eventsQueue = singleton.QueueEventsManager.CreateEventQueue();
+            NativeQueue<TestEntityEventForEntity> eventsQueue = singleton.QueueEventsManager.CreateWriter();
 
             for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR1; i++)
             {
@@ -243,7 +243,7 @@ namespace Trove.EventSystems.Tests
 
             state.Dependency = new WriteJob
             {
-                EventsQueue = singleton.QueueEventsManager.CreateEventQueue(),
+                EventsQueue = singleton.QueueEventsManager.CreateWriter(),
                 TestSingleton = testSingleton,
             }.Schedule(state.Dependency);
         }
@@ -365,7 +365,7 @@ namespace Trove.EventSystems.Tests
 
             state.Dependency = new WriteJob
             {
-                EventsQueue = singleton.QueueEventsManager.CreateEventQueue().AsParallelWriter(),
+                EventsQueue = singleton.QueueEventsManager.CreateWriter().AsParallelWriter(),
                 TestSingleton = testSingleton,
             }.Schedule(EntityEventTests.ParallelCount, 1, state.Dependency);
         }

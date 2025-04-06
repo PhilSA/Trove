@@ -13,7 +13,7 @@ using UnityEngine;
 // See all TODO comments for things you are expected to modify.
 
 // Register generic job types
-[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToListJob<PStruct_I#SCRIPTNAME#>))]
+[assembly: RegisterGenericJobType(typeof(EventTransferPolymorphicStreamToListJob<Poly#SCRIPTNAME#>))]
 
 /// <summary>
 /// This is the singleton containing a manager for this event type.
@@ -21,16 +21,16 @@ using UnityEngine;
 /// Event writers access the event manager in this singleton in order to get streams to write events in.
 /// Event readers access the event manager in this singleton in order to get a list of events to read.
 /// </summary>
-public struct #SCRIPTNAME#sSingleton : IComponentData, IGlobalPolymorphicEventsSingleton<PStruct_I#SCRIPTNAME#>
+public struct #SCRIPTNAME#sSingleton : IComponentData, IGlobalPolymorphicEventsSingleton<Poly#SCRIPTNAME#>
 {
-    public GlobalPolymorphicStreamEventsManager<PStruct_I#SCRIPTNAME#> StreamEventsManager { get; set; }
+    public GlobalPolymorphicStreamEventsManager<Poly#SCRIPTNAME#> StreamEventsManager { get; set; }
     public NativeList<byte> ReadEventsList { get; set; }
 }
 
 /// <summary>
 /// Polymorphic interface used for generating our event polymorphic struct. 
 ///
-/// This will generate a new polymorphic struct named PStruct_I#SCRIPTNAME# that can act as any event type implementing
+/// This will generate a new polymorphic struct named Poly#SCRIPTNAME# that can act as any event type implementing
 /// this interface and using the [PolymorphicStruct] attribute.
 ///
 /// You can add parameters and return types to the Execute function, or even add new functions. "Execute()" is only
@@ -86,13 +86,13 @@ public struct #SCRIPTNAME#B : I#SCRIPTNAME#
 /// </summary>
 partial struct #SCRIPTNAME#System : ISystem
 {
-    private GlobalPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, PStruct_I#SCRIPTNAME#> _subSystem;
+    private GlobalPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, Poly#SCRIPTNAME#> _subSystem;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _subSystem =
-            new GlobalPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, PStruct_I#SCRIPTNAME#>(
+            new GlobalPolymorphicEventSubSystem<#SCRIPTNAME#sSingleton, Poly#SCRIPTNAME#>(
                 ref state, 32, 1000); // TODO: tweak initial capacities
     }
 
@@ -113,7 +113,7 @@ partial struct #SCRIPTNAME#System : ISystem
 /// Example of an events writer system
 /// </summary>
 [UpdateBefore(typeof(#SCRIPTNAME#System))]
-partial struct #SCRIPTNAME#WriterSystem : ISystem
+partial struct Example#SCRIPTNAME#WriterSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -137,7 +137,7 @@ partial struct #SCRIPTNAME#WriterSystem : ISystem
     [BurstCompile]
     public struct #SCRIPTNAME#WriterJob : IJob
     {
-        public GlobalPolymorphicStreamEventsManager<PStruct_I#SCRIPTNAME#>.Writer EventsStream;
+        public GlobalPolymorphicStreamEventsManager<Poly#SCRIPTNAME#>.Writer EventsStream;
         
         public void Execute()
         {
@@ -158,7 +158,7 @@ partial struct #SCRIPTNAME#WriterSystem : ISystem
 /// Example of an events reader system
 /// </summary>
 [UpdateAfter(typeof(#SCRIPTNAME#System))]
-partial struct #SCRIPTNAME#ReaderSystem : ISystem
+partial struct Example#SCRIPTNAME#ReaderSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -189,9 +189,9 @@ partial struct #SCRIPTNAME#ReaderSystem : ISystem
         public void Execute()
         {
             // Get the iterator that can read through the polymorphic structs of the list
-            PolymorphicObjectNativeListIterator<PStruct_I#SCRIPTNAME#> iterator = 
-                PolymorphicObjectUtilities.GetIterator<PStruct_I#SCRIPTNAME#>(ReadEventsList);
-            while (iterator.GetNext(out PStruct_I#SCRIPTNAME# e, out _, out _))
+            PolymorphicObjectNativeListIterator<Poly#SCRIPTNAME#> iterator = 
+                PolymorphicObjectUtilities.GetIterator<Poly#SCRIPTNAME#>(ReadEventsList);
+            while (iterator.GetNext(out Poly#SCRIPTNAME# e, out _, out _))
             {
                 // Execute the event (execution logic is implemented in the event struct itself)
                 e.Execute();

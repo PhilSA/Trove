@@ -9,11 +9,7 @@ using Trove.EventSystems.Tests;
 
 public struct GeneratedViewer
 {
-    private PStruct_IMyOutOfNamespacePolyInterface ASDsad;
-    // private ExampleParentNamespace.ParentSomething.ExampleNamespace.Something.PStruct_IMyPolyInterfaceA psA;
-    // private ExampleParentNamespace.ParentSomething.ExampleNamespace.Something.PStruct_IMyPolyInterfaceB psB;
-
-    //private PStruct_ITestGlobalPolymorphicEvent psD;
+    private PolyMyOutOfNamespacePolyInterface ASDsad;
     
     public void Test()
     {

@@ -53,7 +53,7 @@ namespace Trove.EventSystems
             _allocator = state.WorldUpdateAllocator;
         }
 
-        public NativeQueue<E> CreateEventQueue()
+        public NativeQueue<E> CreateWriter()
         {
             NativeQueue<E> newEventsQueue = new NativeQueue<E>(_allocator);
             _eventQueuesReference.GetUnsafePtr()->Add(newEventsQueue);
