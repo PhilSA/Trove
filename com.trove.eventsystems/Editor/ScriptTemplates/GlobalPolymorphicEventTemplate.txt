@@ -2,13 +2,11 @@
 using System.Runtime.CompilerServices;
 using Trove;
 using Trove.EventSystems;
-using Trove.EventSystems.Tests;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Trove.PolymorphicStructs;
-using UnityEngine;
 
 // See all TODO comments for things you are expected to modify.
 
