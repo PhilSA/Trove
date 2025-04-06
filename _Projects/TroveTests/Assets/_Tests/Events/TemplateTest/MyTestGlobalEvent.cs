@@ -22,7 +22,7 @@ using UnityEngine;
 public struct ZOINKsSingleton : IComponentData, IGlobalEventsSingleton<ZOINK>
 {
     public QueueEventsManager<ZOINK> QueueEventsManager { get; set; }
-    public StreamEventsManager StreamEventsManager { get; set; }
+    public GlobalStreamEventsManager<ZOINK> StreamEventsManager { get; set; }
     public NativeList<ZOINK> ReadEventsList { get; set; }
 }
 
@@ -84,16 +84,21 @@ partial struct ZOINKWriterSystem : ISystem
         // Get the events singleton for this event type
         ZOINKsSingleton eventsSingleton = SystemAPI.GetSingletonRW<ZOINKsSingleton>().ValueRW;
         
-        // Schedule a job with an events queue gotten from the "QueueEventsWriter" in the singleton.
-        // Note: for parallel writing, you can get a StreamEventsWriter.CreateEventStream() from the singleton instead.
-        state.Dependency = new ZOINKWriterJob
+        // Schedule a job writing to an events queue.
+        state.Dependency = new ZOINKQueueWriterJob
         {
             EventsQueue  = eventsSingleton.QueueEventsManager.CreateEventQueue(),
+        }.Schedule(state.Dependency);
+        
+        // Schedule a job writing to an events stream.
+        state.Dependency = new ZOINKStreamWriterJob
+        {
+            EventsStream  = eventsSingleton.StreamEventsManager.CreateWriter(1),
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public struct ZOINKWriterJob : IJob
+    public struct ZOINKQueueWriterJob : IJob
     {
         public NativeQueue<ZOINK> EventsQueue;
         
@@ -101,6 +106,23 @@ partial struct ZOINKWriterSystem : ISystem
         {
             // Write an example event
             EventsQueue.Enqueue(new ZOINK { Val = 1 });
+        }
+    }
+
+    [BurstCompile]
+    public struct ZOINKStreamWriterJob : IJob
+    {
+        public GlobalStreamEventsManager<ZOINK>.Writer EventsStream;
+        
+        public void Execute()
+        {
+            // When writing to a stream, we must begin/end foreach index
+            EventsStream.BeginForEachIndex(0);
+            
+            // Write an example event
+            EventsStream.Write(new ZOINK { Val = 1 });
+
+            EventsStream.EndForEachIndex();
         }
     }
 }
@@ -141,7 +163,7 @@ partial struct ZOINKReaderSystem : ISystem
             // Read events
             for (int i = 0; i < ReadEventsList.Length; i++)
             {
-                // Debug.Log($"Read ZOINK with value: {EventsList[i].Val}");
+                // Debug.Log($"Read ZOINK with value: {ReadEventsList[i].Val}");
             }
         }
     }

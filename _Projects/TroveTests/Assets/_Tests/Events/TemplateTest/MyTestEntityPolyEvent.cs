@@ -20,9 +20,9 @@ using Trove.PolymorphicStructs;
 /// It is automatically created by the event system for this event type.
 /// Event writers access the event manager in this singleton in order to get streams to write events in.
 /// </summary>
-public struct JOINKsSingleton : IComponentData, IEntityPolymorphicEventsSingleton
+public struct JOINKsSingleton : IComponentData, IEntityPolymorphicEventsSingleton<JOINKForEntity, PStruct_IJOINK>
 {
-    public StreamEventsManager StreamEventsManager { get; set; }
+    public EntityPolymorphicStreamEventsManager<JOINKForEntity, PStruct_IJOINK> StreamEventsManager { get; set; }
 }
 
 /// <summary>
@@ -162,25 +162,32 @@ partial struct JOINKWriterSystem : ISystem
         // Note: for parallel writing, you can get a StreamEventsManager.CreateEventStream() from the singleton instead.
         state.Dependency = new JOINKWriterJob
         {
-            EventsStream  = eventsSingleton.StreamEventsManager.CreateEventStream(1).AsWriter(),
+            EventsStream  = eventsSingleton.StreamEventsManager.CreateWriter(1),
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
     public struct JOINKWriterJob : IJob
     {
-        public NativeStream.Writer EventsStream;
+        public EntityPolymorphicStreamEventsManager<JOINKForEntity, PStruct_IJOINK>.Writer EventsStream;
         
         public void Execute()
         {
             // When writing to a stream, we must begin/end foreach index
             EventsStream.BeginForEachIndex(0);
             
-            // Important: when writing polymorphic events to a stream, you MUST use "PolymorphicObjectUtilities.AddObject"
             // Write an example event A
-            PolymorphicObjectUtilities.AddObject((PStruct_IBOINK)new BOINKA { Val = 1 }, ref EventsStream, out int writeSize);
+            EventsStream.Write(new JOINKForEntity
+            {
+                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<JOINK> to target
+                Event = new JOINKA { Val = 1 },
+            });
             // Write an example event B
-            PolymorphicObjectUtilities.AddObject((PStruct_IBOINK)new BOINKB { Val1 = 3, Val2 = 5, Val3 = 11 }, ref EventsStream, out writeSize);
+            EventsStream.Write(new JOINKForEntity
+            {
+                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<JOINK> to target
+                Event = new JOINKB { Val1 = 3, Val2 = 5, Val3 = 11 },
+            });
             
             EventsStream.EndForEachIndex();
         }

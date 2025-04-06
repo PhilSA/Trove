@@ -151,11 +151,11 @@ namespace Trove.EventSystems.Tests
         {
             TestEntityEventsSingleton singleton = SystemAPI.GetSingleton<TestEntityEventsSingleton>();
             EntityEventTestSingleton testSingleton = SystemAPI.GetSingleton<EntityEventTestSingleton>();
-            NativeQueue<TestIEventForEntityEvent> eventsQueue = singleton.QueueEventsManager.CreateEventQueue();
+            NativeQueue<TestEntityEventForEntity> eventsQueue = singleton.QueueEventsManager.CreateEventQueue();
 
             for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR1; i++)
             {
-                eventsQueue.Enqueue(new TestIEventForEntityEvent
+                eventsQueue.Enqueue(new TestEntityEventForEntity
                 {
                     AffectedEntity = testSingleton.ReceiverEntity1,
                     Event = new TestEntityEventBufferElement
@@ -167,7 +167,7 @@ namespace Trove.EventSystems.Tests
 
             for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR2; i++)
             {
-                eventsQueue.Enqueue(new TestIEventForEntityEvent
+                eventsQueue.Enqueue(new TestEntityEventForEntity
                 {
                     AffectedEntity = testSingleton.ReceiverEntity2,
                     Event = new TestEntityEventBufferElement
@@ -192,13 +192,13 @@ namespace Trove.EventSystems.Tests
         {
             TestEntityEventsSingleton singleton = SystemAPI.GetSingleton<TestEntityEventsSingleton>();
             EntityEventTestSingleton testSingleton = SystemAPI.GetSingleton<EntityEventTestSingleton>();
-            NativeStream.Writer eventsStream = singleton.StreamEventsManager.CreateEventStream(1).AsWriter();
+            EntityStreamEventsManager<TestEntityEventForEntity, TestEntityEventBufferElement>.Writer eventsStream = singleton.StreamEventsManager.CreateWriter(1);
 
             eventsStream.BeginForEachIndex(0);
 
             for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR1; i++)
             {
-                eventsStream.Write(new TestIEventForEntityEvent
+                eventsStream.Write(new TestEntityEventForEntity
                 {
                     AffectedEntity = testSingleton.ReceiverEntity1,
                     Event = new TestEntityEventBufferElement
@@ -210,7 +210,7 @@ namespace Trove.EventSystems.Tests
 
             for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR2; i++)
             {
-                eventsStream.Write(new TestIEventForEntityEvent
+                eventsStream.Write(new TestEntityEventForEntity
                 {
                     AffectedEntity = testSingleton.ReceiverEntity2,
                     Event = new TestEntityEventBufferElement
@@ -251,14 +251,14 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public struct WriteJob : IJob
         {
-            public NativeQueue<TestIEventForEntityEvent> EventsQueue;
+            public NativeQueue<TestEntityEventForEntity> EventsQueue;
             public EntityEventTestSingleton TestSingleton;
 
             public void Execute()
             {
                 for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR1; i++)
                 {
-                    EventsQueue.Enqueue(new TestIEventForEntityEvent
+                    EventsQueue.Enqueue(new TestEntityEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity1,
                         Event = new TestEntityEventBufferElement
@@ -270,7 +270,7 @@ namespace Trove.EventSystems.Tests
 
                 for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR2; i++)
                 {
-                    EventsQueue.Enqueue(new TestIEventForEntityEvent
+                    EventsQueue.Enqueue(new TestEntityEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity2,
                         Event = new TestEntityEventBufferElement
@@ -302,7 +302,7 @@ namespace Trove.EventSystems.Tests
 
             state.Dependency = new WriteJob
             {
-                EventsStream = singleton.StreamEventsManager.CreateEventStream(1).AsWriter(),
+                EventsStream = singleton.StreamEventsManager.CreateWriter(1),
                 TestSingleton = testSingleton,
             }.Schedule(state.Dependency);
         }
@@ -310,7 +310,7 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public struct WriteJob : IJob
         {
-            public NativeStream.Writer EventsStream;
+            public EntityStreamEventsManager<TestEntityEventForEntity, TestEntityEventBufferElement>.Writer EventsStream;
             public EntityEventTestSingleton TestSingleton;
 
             public void Execute()
@@ -319,7 +319,7 @@ namespace Trove.EventSystems.Tests
 
                 for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR1; i++)
                 {
-                    EventsStream.Write(new TestIEventForEntityEvent
+                    EventsStream.Write(new TestEntityEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity1,
                         Event = new TestEntityEventBufferElement
@@ -331,7 +331,7 @@ namespace Trove.EventSystems.Tests
 
                 for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR2; i++)
                 {
-                    EventsStream.Write(new TestIEventForEntityEvent
+                    EventsStream.Write(new TestEntityEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity2,
                         Event = new TestEntityEventBufferElement
@@ -373,14 +373,14 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public struct WriteJob : IJobParallelFor
         {
-            public NativeQueue<TestIEventForEntityEvent>.ParallelWriter EventsQueue;
+            public NativeQueue<TestEntityEventForEntity>.ParallelWriter EventsQueue;
             public EntityEventTestSingleton TestSingleton;
 
             public void Execute(int index)
             {
                 for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR1; i++)
                 {
-                    EventsQueue.Enqueue(new TestIEventForEntityEvent
+                    EventsQueue.Enqueue(new TestEntityEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity1,
                         Event = new TestEntityEventBufferElement
@@ -392,7 +392,7 @@ namespace Trove.EventSystems.Tests
 
                 for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR2; i++)
                 {
-                    EventsQueue.Enqueue(new TestIEventForEntityEvent
+                    EventsQueue.Enqueue(new TestEntityEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity2,
                         Event = new TestEntityEventBufferElement
@@ -424,7 +424,7 @@ namespace Trove.EventSystems.Tests
 
             state.Dependency = new WriteJob
             {
-                EventsStream = singleton.StreamEventsManager.CreateEventStream(EntityEventTests.ParallelCount).AsWriter(),
+                EventsStream = singleton.StreamEventsManager.CreateWriter(EntityEventTests.ParallelCount),
                 TestSingleton = testSingleton,
             }.Schedule(EntityEventTests.ParallelCount, 1, state.Dependency);
         }
@@ -432,7 +432,7 @@ namespace Trove.EventSystems.Tests
         [BurstCompile]
         public struct WriteJob : IJobParallelFor
         {
-            public NativeStream.Writer EventsStream;
+            public EntityStreamEventsManager<TestEntityEventForEntity, TestEntityEventBufferElement>.Writer EventsStream;
             public EntityEventTestSingleton TestSingleton;
 
             public void Execute(int index)
@@ -441,7 +441,7 @@ namespace Trove.EventSystems.Tests
 
                 for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR1; i++)
                 {
-                    EventsStream.Write(new TestIEventForEntityEvent
+                    EventsStream.Write(new TestEntityEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity1,
                         Event = new TestEntityEventBufferElement
@@ -453,7 +453,7 @@ namespace Trove.EventSystems.Tests
 
                 for (int i = 0; i < EntityEventTests.EventsPerSystemOrThreadForR2; i++)
                 {
-                    EventsStream.Write(new TestIEventForEntityEvent
+                    EventsStream.Write(new TestEntityEventForEntity
                     {
                         AffectedEntity = TestSingleton.ReceiverEntity2,
                         Event = new TestEntityEventBufferElement

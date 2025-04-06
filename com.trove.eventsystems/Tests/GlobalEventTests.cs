@@ -172,7 +172,7 @@ namespace Trove.EventSystems.Tests
         public void OnUpdate(ref SystemState state)
         {
             TestGlobalEventsSingleton singleton = SystemAPI.GetSingleton<TestGlobalEventsSingleton>();
-            NativeStream.Writer eventsStream = singleton.StreamEventsManager.CreateEventStream(1).AsWriter();
+            GlobalStreamEventsManager<TestGlobalEvent>.Writer eventsStream = singleton.StreamEventsManager.CreateWriter(1);
 
             eventsStream.BeginForEachIndex(0);
             for (int i = 0; i < GlobalEventTests.EventsPerSystemOrThread; i++)
@@ -242,14 +242,14 @@ namespace Trove.EventSystems.Tests
 
             state.Dependency = new WriteJob
             {
-                EventsStream = singleton.StreamEventsManager.CreateEventStream(1).AsWriter(),
+                EventsStream = singleton.StreamEventsManager.CreateWriter(1),
             }.Schedule(state.Dependency);
         }
 
         [BurstCompile]
         public struct WriteJob : IJob
         {
-            public NativeStream.Writer EventsStream;
+            public GlobalStreamEventsManager<TestGlobalEvent>.Writer EventsStream;
 
             public void Execute()
             {
@@ -322,14 +322,14 @@ namespace Trove.EventSystems.Tests
 
             state.Dependency = new WriteJob
             {
-                EventsStream = singleton.StreamEventsManager.CreateEventStream(GlobalEventTests.ParallelCount).AsWriter(),
+                EventsStream = singleton.StreamEventsManager.CreateWriter(GlobalEventTests.ParallelCount),
             }.Schedule(GlobalEventTests.ParallelCount, 1, state.Dependency);
         }
 
         [BurstCompile]
         public struct WriteJob : IJobParallelFor
         {
-            public NativeStream.Writer EventsStream;
+            public GlobalStreamEventsManager<TestGlobalEvent>.Writer EventsStream;
 
             public void Execute(int index)
             {

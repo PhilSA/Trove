@@ -7,27 +7,32 @@ using Unity.Jobs;
 
 namespace Trove.EventSystems
 {
-    public interface IEntityEventsSingleton<E> where E : unmanaged
+    public interface IEntityEventsSingleton<E, B> 
+        where E : unmanaged, IEventForEntity<B> 
+        where B : unmanaged, IBufferElementData 
     {
         public QueueEventsManager<E> QueueEventsManager { get; set; }
-        public StreamEventsManager StreamEventsManager { get; set; }
+        public EntityStreamEventsManager<E, B> StreamEventsManager { get; set; }
     }
     
     public interface IGlobalEventsSingleton<E> where E : unmanaged
     {
         public QueueEventsManager<E> QueueEventsManager { get; set; }
-        public StreamEventsManager StreamEventsManager { get; set; }
+        public GlobalStreamEventsManager<E> StreamEventsManager { get; set; }
         public NativeList<E> ReadEventsList { get; set; }
     }
     
-    public interface IEntityPolymorphicEventsSingleton
+    public interface IEntityPolymorphicEventsSingleton<E, P> 
+        where E : unmanaged, IPolymorphicEventForEntity<P>
+        where P : unmanaged, IPolymorphicObject
     {
-        public StreamEventsManager StreamEventsManager { get; set; }
+        public EntityPolymorphicStreamEventsManager<E, P> StreamEventsManager { get; set; }
     }
     
-    public interface IGlobalPolymorphicEventsSingleton
+    public interface IGlobalPolymorphicEventsSingleton<E> 
+        where E : unmanaged, IPolymorphicObject
     {
-        public StreamEventsManager StreamEventsManager { get; set; }
+        public GlobalPolymorphicStreamEventsManager<E> StreamEventsManager { get; set; }
         public NativeList<byte> ReadEventsList { get; set; }
     }
     
@@ -82,15 +87,40 @@ namespace Trove.EventSystems
         }
     }
 
-    public unsafe struct StreamEventsManager
+    public unsafe struct GlobalStreamEventsManager<E> where E : unmanaged
     {
+        public struct Writer
+        {
+            private NativeStream.Writer StreamWriter;
+
+            internal Writer(NativeStream stream)
+            {
+                StreamWriter = stream.AsWriter();
+            }
+
+            public void BeginForEachIndex(int index)
+            {
+                StreamWriter.BeginForEachIndex(index);
+            }
+
+            public void EndForEachIndex()
+            {
+                StreamWriter.EndForEachIndex();
+            }
+
+            public void Write(E evnt) 
+            {
+                StreamWriter.Write(evnt);
+            }
+        }
+        
         private byte* JobIncompatibilityPtr; // This is to prevent having this struct inside a job
         internal NativeReference<UnsafeList<NativeStream>> _eventStreamsReference;
         internal Allocator _allocator;
 
         public bool IsCreated => _eventStreamsReference.IsCreated;
 
-        public StreamEventsManager(
+        public GlobalStreamEventsManager(
             NativeReference<UnsafeList<NativeStream>> eventStreamsReference,
             ref SystemState state)
         {
@@ -99,21 +129,19 @@ namespace Trove.EventSystems
             _allocator = state.WorldUpdateAllocator;
         }
 
-        public NativeStream CreateEventStream(int bufferCount)
+        public Writer CreateWriter(int bufferCount)
         {
-            // TODO: unsafelist grow factors
-
             NativeStream newEventsStream = new NativeStream(bufferCount, _allocator);
-            _eventStreamsReference.GetUnsafePtr()->Add(newEventsStream);
-            return newEventsStream;
+            _eventStreamsReference.GetUnsafePtr()->AddWithGrowFactor(newEventsStream);
+            return new Writer(newEventsStream);
         }
 
-        public UnsafeList<NativeStream> InternalGetEventStreams()
+        internal UnsafeList<NativeStream> InternalGetEventStreams()
         {
             return _eventStreamsReference.Value;
         }
 
-        public JobHandle ScheduleClearWriterCollections(JobHandle dep)
+        internal JobHandle ScheduleClearWriterCollections(JobHandle dep)
         {
             JobHandle newDep = dep;
 
@@ -134,108 +162,235 @@ namespace Trove.EventSystems
         }
     }
 
-    public struct GlobalEventStreamWriter<E> where E : unmanaged
+
+    public unsafe struct EntityStreamEventsManager<E, B> 
+        where E : unmanaged, IEventForEntity<B> 
+        where B : unmanaged, IBufferElementData 
     {
-        private NativeStream.Writer StreamWriter;
-
-        internal GlobalEventStreamWriter(NativeStream stream)
+        public struct Writer
         {
-            StreamWriter = stream.AsWriter();
+            private NativeStream.Writer StreamWriter;
+
+            internal Writer(NativeStream stream)
+            {
+                StreamWriter = stream.AsWriter();
+            }
+
+            public void BeginForEachIndex(int index)
+            {
+                StreamWriter.BeginForEachIndex(index);
+            }
+
+            public void EndForEachIndex()
+            {
+                StreamWriter.EndForEachIndex();
+            }
+
+            public void Write(E evntForEntity) 
+            {
+                StreamWriter.Write(evntForEntity);
+            }
+        }
+        
+        private byte* JobIncompatibilityPtr; // This is to prevent having this struct inside a job
+        internal NativeReference<UnsafeList<NativeStream>> _eventStreamsReference;
+        internal Allocator _allocator;
+
+        public bool IsCreated => _eventStreamsReference.IsCreated;
+
+        public EntityStreamEventsManager(
+            NativeReference<UnsafeList<NativeStream>> eventStreamsReference,
+            ref SystemState state)
+        {
+            JobIncompatibilityPtr = default;
+            _eventStreamsReference = eventStreamsReference;
+            _allocator = state.WorldUpdateAllocator;
         }
 
-        public void BeginForEachIndex(int index)
+        public Writer CreateWriter(int bufferCount)
         {
-            StreamWriter.BeginForEachIndex(index);
+            NativeStream newEventsStream = new NativeStream(bufferCount, _allocator);
+            _eventStreamsReference.GetUnsafePtr()->AddWithGrowFactor(newEventsStream);
+            return new Writer(newEventsStream);
         }
 
-        public void EndForEachIndex(int index)
+        internal UnsafeList<NativeStream> InternalGetEventStreams()
         {
-            StreamWriter.EndForEachIndex();
+            return _eventStreamsReference.Value;
         }
 
-        public void Write(E evnt) 
+        internal JobHandle ScheduleClearWriterCollections(JobHandle dep)
         {
-            StreamWriter.Write(evnt);
+            JobHandle newDep = dep;
+
+            // Dispose streams
+            {
+                UnsafeList<NativeStream>* streamsPtr = _eventStreamsReference.GetUnsafePtr();
+                for (int i = 0; i < streamsPtr->Length; i++)
+                {
+                    if (streamsPtr->IsCreated)
+                    {
+                        newDep = JobHandle.CombineDependencies(newDep, streamsPtr->Ptr[i].Dispose(dep));
+                    }
+                }
+                streamsPtr->Clear();
+            }
+
+            return newDep;
         }
     }
 
-    public struct EntityEventStreamWriter<E, B> 
-        where E : unmanaged, IEventForEntity<B> // The event struct
-        where B : unmanaged, IBufferElementData // The event buffer element
+    public unsafe struct GlobalPolymorphicStreamEventsManager<E> 
+        where E : unmanaged, IPolymorphicObject
     {
-        private NativeStream.Writer StreamWriter;
-
-        internal EntityEventStreamWriter(NativeStream stream)
+        public struct Writer
         {
-            StreamWriter = stream.AsWriter();
+            private NativeStream.Writer StreamWriter;
+
+            internal Writer(NativeStream stream)
+            {
+                StreamWriter = stream.AsWriter();
+            }
+
+            public void BeginForEachIndex(int index)
+            {
+                StreamWriter.BeginForEachIndex(index);
+            }
+
+            public void EndForEachIndex()
+            {
+                StreamWriter.EndForEachIndex();
+            }
+
+            public void Write(E evnt) 
+            {
+                PolymorphicObjectUtilities.AddObject(evnt, ref StreamWriter, out _);
+            }
+        }
+        
+        private byte* JobIncompatibilityPtr; // This is to prevent having this struct inside a job
+        internal NativeReference<UnsafeList<NativeStream>> _eventStreamsReference;
+        internal Allocator _allocator;
+
+        public bool IsCreated => _eventStreamsReference.IsCreated;
+
+        public GlobalPolymorphicStreamEventsManager(
+            NativeReference<UnsafeList<NativeStream>> eventStreamsReference,
+            ref SystemState state)
+        {
+            JobIncompatibilityPtr = default;
+            _eventStreamsReference = eventStreamsReference;
+            _allocator = state.WorldUpdateAllocator;
         }
 
-        public void BeginForEachIndex(int index)
+        public Writer CreateWriter(int bufferCount)
         {
-            StreamWriter.BeginForEachIndex(index);
+            NativeStream newEventsStream = new NativeStream(bufferCount, _allocator);
+            _eventStreamsReference.GetUnsafePtr()->AddWithGrowFactor(newEventsStream);
+            return new Writer(newEventsStream);
         }
 
-        public void EndForEachIndex(int index)
+        internal UnsafeList<NativeStream> InternalGetEventStreams()
         {
-            StreamWriter.EndForEachIndex();
+            return _eventStreamsReference.Value;
         }
 
-        public void Write(E evntForEntity) 
+        internal JobHandle ScheduleClearWriterCollections(JobHandle dep)
         {
-            StreamWriter.Write(evntForEntity);
+            JobHandle newDep = dep;
+
+            // Dispose streams
+            {
+                UnsafeList<NativeStream>* streamsPtr = _eventStreamsReference.GetUnsafePtr();
+                for (int i = 0; i < streamsPtr->Length; i++)
+                {
+                    if (streamsPtr->IsCreated)
+                    {
+                        newDep = JobHandle.CombineDependencies(newDep, streamsPtr->Ptr[i].Dispose(dep));
+                    }
+                }
+                streamsPtr->Clear();
+            }
+
+            return newDep;
         }
     }
 
-    public struct GlobalPolymorphicEventStreamWriter<E> where E : unmanaged, IPolymorphicObject
-    {
-        private NativeStream.Writer StreamWriter;
-
-        internal GlobalPolymorphicEventStreamWriter(NativeStream stream)
-        {
-            StreamWriter = stream.AsWriter();
-        }
-
-        public void BeginForEachIndex(int index)
-        {
-            StreamWriter.BeginForEachIndex(index);
-        }
-
-        public void EndForEachIndex(int index)
-        {
-            StreamWriter.EndForEachIndex();
-        }
-
-        public void Write(E evnt) 
-        {
-            PolymorphicObjectUtilities.AddObject(evnt, ref StreamWriter, out _);
-        }
-    }
-
-    public struct EntityPolymorphicEventStreamWriter<E, P> 
+    public unsafe struct EntityPolymorphicStreamEventsManager<E, P> 
         where E : unmanaged, IPolymorphicEventForEntity<P>
         where P : unmanaged, IPolymorphicObject
     {
-        private NativeStream.Writer StreamWriter;
-
-        internal EntityPolymorphicEventStreamWriter(NativeStream stream)
+        public struct Writer
         {
-            StreamWriter = stream.AsWriter();
+            private NativeStream.Writer StreamWriter;
+
+            internal Writer(NativeStream stream)
+            {
+                StreamWriter = stream.AsWriter();
+            }
+
+            public void BeginForEachIndex(int index)
+            {
+                StreamWriter.BeginForEachIndex(index);
+            }
+
+            public void EndForEachIndex()
+            {
+                StreamWriter.EndForEachIndex();
+            }
+
+            public void Write(E evntForEntity) 
+            {
+                StreamWriter.Write(evntForEntity.AffectedEntity);
+                PolymorphicObjectUtilities.AddObject(evntForEntity.Event, ref StreamWriter, out _);
+            }
+        }
+        
+        private byte* JobIncompatibilityPtr; // This is to prevent having this struct inside a job
+        internal NativeReference<UnsafeList<NativeStream>> _eventStreamsReference;
+        internal Allocator _allocator;
+
+        public bool IsCreated => _eventStreamsReference.IsCreated;
+
+        public EntityPolymorphicStreamEventsManager(
+            NativeReference<UnsafeList<NativeStream>> eventStreamsReference,
+            ref SystemState state)
+        {
+            JobIncompatibilityPtr = default;
+            _eventStreamsReference = eventStreamsReference;
+            _allocator = state.WorldUpdateAllocator;
         }
 
-        public void BeginForEachIndex(int index)
+        public Writer CreateWriter(int bufferCount)
         {
-            StreamWriter.BeginForEachIndex(index);
+            NativeStream newEventsStream = new NativeStream(bufferCount, _allocator);
+            _eventStreamsReference.GetUnsafePtr()->AddWithGrowFactor(newEventsStream);
+            return new Writer(newEventsStream);
         }
 
-        public void EndForEachIndex(int index)
+        internal UnsafeList<NativeStream> InternalGetEventStreams()
         {
-            StreamWriter.EndForEachIndex();
+            return _eventStreamsReference.Value;
         }
 
-        public void Write(E evntForEntity) 
+        internal JobHandle ScheduleClearWriterCollections(JobHandle dep)
         {
-            StreamWriter.Write(evntForEntity.AffectedEntity);
-            PolymorphicObjectUtilities.AddObject(evntForEntity.Event, ref StreamWriter, out _);
+            JobHandle newDep = dep;
+
+            // Dispose streams
+            {
+                UnsafeList<NativeStream>* streamsPtr = _eventStreamsReference.GetUnsafePtr();
+                for (int i = 0; i < streamsPtr->Length; i++)
+                {
+                    if (streamsPtr->IsCreated)
+                    {
+                        newDep = JobHandle.CombineDependencies(newDep, streamsPtr->Ptr[i].Dispose(dep));
+                    }
+                }
+                streamsPtr->Clear();
+            }
+
+            return newDep;
         }
     }
 }

@@ -22,9 +22,9 @@ namespace Trove.EventSystems.Tests
 	/// Event writers access the event manager in this singleton in order to get streams to write events in.
 	/// Event readers access the event manager in this singleton in order to get a list of events to read.
 	/// </summary>
-	public struct TestGlobalPolymorphicEventsSingleton : IComponentData, IGlobalPolymorphicEventsSingleton
+	public struct TestGlobalPolymorphicEventsSingleton : IComponentData, IGlobalPolymorphicEventsSingleton<PStruct_ITestGlobalPolymorphicEvent>
 	{
-		public StreamEventsManager StreamEventsManager { get; set; }
+		public GlobalPolymorphicStreamEventsManager<PStruct_ITestGlobalPolymorphicEvent> StreamEventsManager { get; set; }
 		public NativeList<byte> ReadEventsList { get; set; }
 	}
 

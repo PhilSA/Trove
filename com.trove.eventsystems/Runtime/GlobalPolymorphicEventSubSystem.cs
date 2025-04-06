@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Trove.EventSystems
 {
     public unsafe struct GlobalPolymorphicEventSubSystem<S, E>
-        where S : unmanaged, IComponentData, IGlobalPolymorphicEventsSingleton // The events singleton
+        where S : unmanaged, IComponentData, IGlobalPolymorphicEventsSingleton<E> // The events singleton
         where E : unmanaged, IPolymorphicObject
     {
         private EntityQuery _singletonRWQuery;
@@ -30,7 +30,7 @@ namespace Trove.EventSystems
             // Create the event singleton
             Entity singletonEntity = state.EntityManager.CreateEntity();
             S singleton = default(S);
-            singleton.StreamEventsManager = new StreamEventsManager(
+            singleton.StreamEventsManager = new GlobalPolymorphicStreamEventsManager<E>(
                 _eventStreamsReference,
                 ref state);
             singleton.ReadEventsList = _eventList;

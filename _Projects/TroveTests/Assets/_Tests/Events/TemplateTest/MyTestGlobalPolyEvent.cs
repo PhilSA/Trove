@@ -21,9 +21,9 @@ using UnityEngine;
 /// Event writers access the event manager in this singleton in order to get streams to write events in.
 /// Event readers access the event manager in this singleton in order to get a list of events to read.
 /// </summary>
-public struct BOINKsSingleton : IComponentData, IGlobalPolymorphicEventsSingleton
+public struct BOINKsSingleton : IComponentData, IGlobalPolymorphicEventsSingleton<PStruct_IBOINK>
 {
-    public StreamEventsManager StreamEventsManager { get; set; }
+    public GlobalPolymorphicStreamEventsManager<PStruct_IBOINK> StreamEventsManager { get; set; }
     public NativeList<byte> ReadEventsList { get; set; }
 }
 
@@ -127,29 +127,27 @@ partial struct BOINKWriterSystem : ISystem
         // Get the events singleton for this event type
         BOINKsSingleton eventsSingleton = SystemAPI.GetSingletonRW<BOINKsSingleton>().ValueRW;
         
-        // Schedule a job with an events stream gotten from the "StreamEventsWriter" in the singleton.
-        // Convert the stream to writer.
+        // Schedule a job writing to an events stream.
         state.Dependency = new BOINKWriterJob
         {
-            EventsStream  = eventsSingleton.StreamEventsManager.CreateEventStream(1).AsWriter(),
+            EventsStream  = eventsSingleton.StreamEventsManager.CreateWriter(1),
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
     public struct BOINKWriterJob : IJob
     {
-        public NativeStream.Writer EventsStream;
+        public GlobalPolymorphicStreamEventsManager<PStruct_IBOINK>.Writer EventsStream;
         
         public void Execute()
         {
             // When writing to a stream, we must begin/end foreach index
             EventsStream.BeginForEachIndex(0);
             
-            // Important: when writing polymorphic events to a stream, you MUST use "PolymorphicObjectUtilities.AddObject"
             // Write an example event A
-            PolymorphicObjectUtilities.AddObject((PStruct_IBOINK)new BOINKA { Val = 1 }, ref EventsStream, out int writeSize);
+            EventsStream.Write(new BOINKA { Val = 1 });
             // Write an example event B
-            PolymorphicObjectUtilities.AddObject((PStruct_IBOINK)new BOINKB { Val1 = 3, Val2 = 5, Val3 = 11 }, ref EventsStream, out writeSize);
+            EventsStream.Write(new BOINKB { Val1 = 3, Val2 = 5, Val3 = 11 });
             
             EventsStream.EndForEachIndex();
         }

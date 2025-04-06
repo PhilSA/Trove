@@ -18,10 +18,10 @@ using Unity.Jobs;
 /// It is automatically created by the event system for this event type.
 /// Event writers access the event manager in this singleton in order to get queues/streams to write events in.
 /// </summary>
-public struct XOINKsSingleton : IComponentData, IEntityEventsSingleton<XOINKForEntity>
+public struct XOINKsSingleton : IComponentData, IEntityEventsSingleton<XOINKForEntity, XOINK>
 {
     public QueueEventsManager<XOINKForEntity> QueueEventsManager { get; set; }
-    public StreamEventsManager StreamEventsManager { get; set; }
+    public EntityStreamEventsManager<XOINKForEntity, XOINK> StreamEventsManager { get; set; }
 }
 
 /// <summary>
@@ -102,16 +102,21 @@ partial struct XOINKWriterSystem : ISystem
         // Get the events singleton for this event type
         XOINKsSingleton eventsSingleton = SystemAPI.GetSingletonRW<XOINKsSingleton>().ValueRW;
         
-        // Schedule a job with an events queue gotten from the "QueueEventsManager" in the singleton.
-        // Note: for parallel writing, you can get a StreamEventsManager.CreateEventStream() from the singleton instead.
-        state.Dependency = new XOINKWriterJob
+        // Schedule a job writing to an events queue.
+        state.Dependency = new XOINKQueueWriterJob
         {
             EventsQueue  = eventsSingleton.QueueEventsManager.CreateEventQueue(),
+        }.Schedule(state.Dependency);
+        
+        // Schedule a job writing to an events stream.
+        state.Dependency = new XOINKStreamWriterJob
+        {
+            EventsStream  = eventsSingleton.StreamEventsManager.CreateWriter(1),
         }.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    public struct XOINKWriterJob : IJob
+    public struct XOINKQueueWriterJob : IJob
     {
         public NativeQueue<XOINKForEntity> EventsQueue;
         
@@ -123,6 +128,27 @@ partial struct XOINKWriterSystem : ISystem
                 // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<XOINK> to target
                 Event = new XOINK { Val = 1 },
             });
+        }
+    }
+
+    [BurstCompile]
+    public struct XOINKStreamWriterJob : IJob
+    {
+        public EntityStreamEventsManager<XOINKForEntity, XOINK>.Writer EventsStream;
+        
+        public void Execute()
+        {
+            // When writing to a stream, we must begin/end foreach index
+            EventsStream.BeginForEachIndex(0);
+            
+            // Write an example event
+            EventsStream.Write(new XOINKForEntity
+            {
+                // AffectedEntity = someEntity, // TODO: Find some valid entity with a DynamicBuffer<XOINK> to target
+                Event = new XOINK { Val = 1 },
+            });
+
+            EventsStream.EndForEachIndex();
         }
     }
 }

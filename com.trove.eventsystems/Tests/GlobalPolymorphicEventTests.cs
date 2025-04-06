@@ -144,24 +144,21 @@ namespace Trove.EventSystems.Tests
         public void OnUpdate(ref SystemState state)
         {
             TestGlobalPolymorphicEventsSingleton singleton = SystemAPI.GetSingleton<TestGlobalPolymorphicEventsSingleton>();
-            NativeStream.Writer eventsStream = singleton.StreamEventsManager.CreateEventStream(1).AsWriter();
+            GlobalPolymorphicStreamEventsManager<PStruct_ITestGlobalPolymorphicEvent>.Writer eventsStream = singleton.StreamEventsManager.CreateWriter(1);
 
             eventsStream.BeginForEachIndex(0);
             for (int i = 0; i < GlobalPolymorphicEventTests.EventsPerSystemOrThread; i++)
             {
-                PStruct_ITestGlobalPolymorphicEvent eA = new TestGlobalPolymorphicEventA
+                eventsStream.Write(new TestGlobalPolymorphicEventA
                 {
                     Val = GlobalPolymorphicEventTests.MainThreadStreamEventKeyA,
-                };
-                PolymorphicObjectUtilities.AddObject(eA, ref eventsStream, out int writeSize);
-
-                PStruct_ITestGlobalPolymorphicEvent eB = new TestGlobalPolymorphicEventB
+                });
+                eventsStream.Write(new TestGlobalPolymorphicEventB
                 {
                     Val1 = GlobalPolymorphicEventTests.MainThreadStreamEventKeyB,
                     Val2 = GlobalPolymorphicEventTests.MainThreadStreamEventKeyB,
                     Val3 = GlobalPolymorphicEventTests.MainThreadStreamEventKeyB,
-                };
-                PolymorphicObjectUtilities.AddObject(eB, ref eventsStream, out writeSize);
+                });
             }
             eventsStream.EndForEachIndex();
         }
@@ -184,33 +181,30 @@ namespace Trove.EventSystems.Tests
 
             state.Dependency = new WriteJob
             {
-                EventsStream = singleton.StreamEventsManager.CreateEventStream(1).AsWriter(),
+                EventsStream = singleton.StreamEventsManager.CreateWriter(1),
             }.Schedule(state.Dependency);
         }
 
         [BurstCompile]
         public struct WriteJob : IJob
         {
-            public NativeStream.Writer EventsStream;
+            public GlobalPolymorphicStreamEventsManager<PStruct_ITestGlobalPolymorphicEvent>.Writer EventsStream;
 
             public void Execute()
             {
                 EventsStream.BeginForEachIndex(0);
                 for (int i = 0; i < GlobalPolymorphicEventTests.EventsPerSystemOrThread; i++)
                 {
-                    PStruct_ITestGlobalPolymorphicEvent eA = new TestGlobalPolymorphicEventA
+                    EventsStream.Write(new TestGlobalPolymorphicEventA
                     {
                         Val = GlobalPolymorphicEventTests.SingleJobStreamEventKeyA,
-                    };
-                    PolymorphicObjectUtilities.AddObject(eA, ref EventsStream, out _);
-
-                    PStruct_ITestGlobalPolymorphicEvent eB = new TestGlobalPolymorphicEventB
+                    });
+                    EventsStream.Write(new TestGlobalPolymorphicEventB
                     {
                         Val1 = GlobalPolymorphicEventTests.SingleJobStreamEventKeyB,
                         Val2 = GlobalPolymorphicEventTests.SingleJobStreamEventKeyB,
                         Val3 = GlobalPolymorphicEventTests.SingleJobStreamEventKeyB,
-                    };
-                    PolymorphicObjectUtilities.AddObject(eB, ref EventsStream, out _);
+                    });
                 }
                 EventsStream.EndForEachIndex();
             }
@@ -234,33 +228,30 @@ namespace Trove.EventSystems.Tests
 
             state.Dependency = new WriteJob
             {
-                EventsStream = singleton.StreamEventsManager.CreateEventStream(GlobalPolymorphicEventTests.ParallelCount).AsWriter(),
+                EventsStream = singleton.StreamEventsManager.CreateWriter(GlobalPolymorphicEventTests.ParallelCount),
             }.Schedule(GlobalPolymorphicEventTests.ParallelCount, 1, state.Dependency);
         }
 
         [BurstCompile]
         public struct WriteJob : IJobParallelFor
         {
-            public NativeStream.Writer EventsStream;
+            public GlobalPolymorphicStreamEventsManager<PStruct_ITestGlobalPolymorphicEvent>.Writer EventsStream;
 
             public void Execute(int index)
             {
                 EventsStream.BeginForEachIndex(index);
                 for (int i = 0; i < GlobalPolymorphicEventTests.EventsPerSystemOrThread; i++)
                 {
-                    PStruct_ITestGlobalPolymorphicEvent eA = new TestGlobalPolymorphicEventA
+                    EventsStream.Write(new TestGlobalPolymorphicEventA
                     {
                         Val = GlobalPolymorphicEventTests.ParallelJobStreamEventKeyA,
-                    };
-                    PolymorphicObjectUtilities.AddObject(eA, ref EventsStream, out _);
-
-                    PStruct_ITestGlobalPolymorphicEvent eB = new TestGlobalPolymorphicEventB
+                    });
+                    EventsStream.Write(new TestGlobalPolymorphicEventB
                     {
                         Val1 = GlobalPolymorphicEventTests.ParallelJobStreamEventKeyB,
                         Val2 = GlobalPolymorphicEventTests.ParallelJobStreamEventKeyB,
                         Val3 = GlobalPolymorphicEventTests.ParallelJobStreamEventKeyB,
-                    };
-                    PolymorphicObjectUtilities.AddObject(eB, ref EventsStream, out _);
+                    });
                 }
                 EventsStream.EndForEachIndex();
             }

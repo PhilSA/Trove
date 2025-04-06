@@ -22,7 +22,7 @@ namespace Trove.EventSystems.Tests
     public struct TestGlobalEventsSingleton : IComponentData, IGlobalEventsSingleton<TestGlobalEvent>
     {
         public QueueEventsManager<TestGlobalEvent> QueueEventsManager { get; set; }
-        public StreamEventsManager StreamEventsManager { get; set; }
+        public GlobalStreamEventsManager<TestGlobalEvent> StreamEventsManager { get; set; }
         public NativeList<TestGlobalEvent> ReadEventsList { get; set; }
     }
 

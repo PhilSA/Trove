@@ -9,7 +9,7 @@ using Unity.Jobs;
 namespace Trove.EventSystems
 {
     public unsafe struct EntityEventSubSystem<S, E, B, H>
-        where S : unmanaged, IComponentData, IEntityEventsSingleton<E> // The events singleton
+        where S : unmanaged, IComponentData, IEntityEventsSingleton<E, B> // The events singleton
         where E : unmanaged, IEventForEntity<B> // The event struct
         where B : unmanaged, IBufferElementData // The event buffer element
         where H : unmanaged, IComponentData, IEnableableComponent // The enableable component that signals presence of events on buffer entities
@@ -43,7 +43,7 @@ namespace Trove.EventSystems
             singleton.QueueEventsManager = new QueueEventsManager<E>(
                 _eventQueuesReference,
                 ref state);
-            singleton.StreamEventsManager = new StreamEventsManager(
+            singleton.StreamEventsManager = new EntityStreamEventsManager<E, B>(
                 _eventStreamsReference,
                 ref state);
             state.EntityManager.AddComponentData(singletonEntity, singleton);

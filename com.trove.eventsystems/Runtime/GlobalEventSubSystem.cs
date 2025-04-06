@@ -36,7 +36,7 @@ namespace Trove.EventSystems
             singleton.QueueEventsManager = new QueueEventsManager<E>(
                 _eventQueuesReference,
                 ref state);
-            singleton.StreamEventsManager = new StreamEventsManager(
+            singleton.StreamEventsManager = new GlobalStreamEventsManager<E>(
                 _eventStreamsReference,
                 ref state);
             singleton.ReadEventsList = _eventList;
