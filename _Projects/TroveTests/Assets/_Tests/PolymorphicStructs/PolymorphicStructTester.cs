@@ -22,7 +22,7 @@ public struct GeneratedViewer
 [PolymorphicStructInterface]
 public interface ITestMergedFieldsPolyInterface1
 {
-    public void DoSomething(int a);
+    public void DoSomething(int a, out float b, int c);
 }
 
 [PolymorphicStruct]
@@ -32,8 +32,9 @@ public struct MyIITestMergedFieldsPolyStruct1A : ITestMergedFieldsPolyInterface1
     public float3 ValueB;
     public float3 ValueC;
 
-    public void DoSomething(int a)
+    public void DoSomething(int a, out float b, int c)
     {
+        b = default;
     }
 }
 
@@ -45,8 +46,9 @@ public struct MyIITestMergedFieldsPolyStruct1B : ITestMergedFieldsPolyInterface1
     public int ValueB;
     public float3 ValueC;
 
-    public void DoSomething(int a)
+    public void DoSomething(int a, out float b, int c)
     {
+        b = default;
     }
 }
 

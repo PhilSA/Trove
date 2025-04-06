@@ -128,6 +128,7 @@ namespace PolymorphicStructsSourceGenerators
         public string MethodGenericTypesConstraint;
         public string MethodParametersDefinition;
         public string MethodParametersInvoke;
+        public string MethodOutParameterNames;
         public Accessibility Accessibility;
 
         public void RecomputeValueHash()
@@ -550,6 +551,19 @@ namespace PolymorphicStructsSourceGenerators
 
                                 methodModel.MethodParametersDefinition += $"{parameterSymbol.Name}";
                                 methodModel.MethodParametersInvoke += $"{parameterSymbol.Name}";
+
+                                // Remember out params separated by dots, so we can set them to default in method invokes
+                                if (refKindString == "out")
+                                {
+                                    if (string.IsNullOrEmpty(methodModel.MethodOutParameterNames))
+                                    {
+                                        methodModel.MethodOutParameterNames = parameterSymbol.Name;
+                                    }
+                                    else
+                                    {
+                                        methodModel.MethodOutParameterNames += $".{parameterSymbol.Name}";
+                                    }
+                                }
 
                                 parametersCounter++;
                             }
@@ -1185,7 +1199,7 @@ namespace PolymorphicStructsSourceGenerators
                                                         writer.WriteLine($"specificStruct.{methodModel.Name}({methodModel.MethodParametersInvoke});");
                                                         // cast back to merged
                                                         writer.WriteLine($"this = specificStruct;");
-                                                        writer.WriteLine($"break;");
+                                                        writer.WriteLine($"return;");
                                                     }
                                                 }
                                                 else
@@ -1198,12 +1212,22 @@ namespace PolymorphicStructsSourceGenerators
                                                     else
                                                     {
                                                         writer.WriteLine($"Field_{polyStructModel.StructModel.Name}.{methodModel.Name}({methodModel.MethodParametersInvoke});");
-                                                        writer.WriteLine($"break;");
+                                                        writer.WriteLine($"return;");
                                                     }
                                                 }
                                             });
                                         }
                                     });
+
+                                    // Out params default
+                                    if (!string.IsNullOrEmpty(methodModel.MethodOutParameterNames))
+                                    {
+                                        string[] outParamNames = methodModel.MethodOutParameterNames.Split('.');
+                                        for (int o = 0; o < methodModel.MethodOutParameterNames.Length; o++)
+                                        {
+                                            writer.WriteLine($"{methodModel.MethodOutParameterNames[o]} = default;");
+                                        }
+                                    }
 
                                     if (methodModel.HasNonVoidReturnType)
                                     {
