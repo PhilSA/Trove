@@ -19,9 +19,6 @@ namespace Trove.PolymorphicStructs.Tests
 
     public interface IMyTestCommonPoly
     {
-        public void DoSomething1A();
-        public int DoSomething1B(int a);
-        public int DoSomething1C(ref int a);
         public int DoSomething1D(ref int a, out int b);
 
         public NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1E(ref int a, out int b,
@@ -34,12 +31,18 @@ namespace Trove.PolymorphicStructs.Tests
     [PolymorphicStructInterface]
     public interface IMyTestPoly : IMyTestCommonPoly
     {
+        public void DoSomething1A();
+        public int DoSomething1B(int a);
+        public int DoSomething1C(ref int a);
     }
 
     [PolymorphicStructInterface]
     [IsMergedFieldsPolymorphicStruct]
     public interface IMyTestPolyMerged : IMyTestCommonPoly
     {
+        public void DoSomething1A();
+        public int DoSomething1B(int a);
+        public int DoSomething1C(ref int a);
     }
 
     [PolymorphicStruct]

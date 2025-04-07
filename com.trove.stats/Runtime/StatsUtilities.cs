@@ -182,14 +182,14 @@ namespace Trove.Stats
                     while (observersIterator.GetNext(in statObserversBuffer, out StatObserver observer,
                                out int observerIndex))
                     {
-                        // Immediately update same-entity observers, while we have all the buffers
                         if (observer.ObserverHandle.Entity == statHandle.Entity)
                         {
+                            // Same-entity observers will be processed next, while we have all the buffers
                             statsWorldData._tmpSameEntityUpdatedStatsList.Add(observer.ObserverHandle);
                         }
                         else
                         {
-                            // Other entity observers are added to a list
+                            // Other-entity observers will be processed later
                             statsWorldData._tmpGlobalUpdatedStatsList.Add(observer.ObserverHandle);
                         }
                     }
