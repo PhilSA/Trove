@@ -3,7 +3,6 @@ using Trove.PolymorphicStructs;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Physics;
 using Trove;
 using Unity.Collections.LowLevel.Unsafe;
 

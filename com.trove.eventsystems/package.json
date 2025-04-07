@@ -2,7 +2,7 @@
   "displayName": "Trove Event Systems",
   "description": "Event systems for DOTS",
   "dependencies": {
-    "com.unity.entities": "1.2.3"
+    "com.unity.entities": "1.3.10"
   },
   "name": "com.trove.eventsystems",
   "author": {

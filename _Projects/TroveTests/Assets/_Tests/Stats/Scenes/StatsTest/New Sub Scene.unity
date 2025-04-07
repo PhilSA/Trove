@@ -150,8 +150,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   StatOwnerPrefab: {fileID: 8018081520556862554, guid: 7edf6eb4b9c94ff4ab2aa466033024e5,
     type: 3}
-  ChangingAttributesCount: 1
-  ChangingAttributesChildDepth: 1
+  ChangingAttributesCount: 100000
+  ChangingAttributesChildDepth: 2
   UnchangingAttributesCount: 0
   MakeLocalStatsDependOnEachOther: 0
 --- !u!4 &890191725

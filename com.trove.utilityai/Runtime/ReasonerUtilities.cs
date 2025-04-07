@@ -6,7 +6,6 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Logging;
 
 namespace Trove.UtilityAI
 {
@@ -858,7 +857,7 @@ namespace Trove.UtilityAI
                     }
 
                     // If we haven't found an ID by now, it means all possible IDs are already in use
-                    Log.Error("Failed to find a valid ID. All possible IDs are already in use");
+                    UnityEngine.Debug.LogError("Failed to find a valid ID. All possible IDs are already in use");
                     return false;
                 }
             }

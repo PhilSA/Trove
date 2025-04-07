@@ -3,8 +3,8 @@
   "description": "Trove Polymorphic Structs provides a codegen tool for polymorphic behaviour in burstable unmanaged code. They can be used to solve a variety of problems that aren't so obvious to solve in ECS, such as ordered events or state machines without structural changes.",
   "dependencies": {
     "com.unity.mathematics": "1.3.2",
-    "com.unity.collections": "2.4.2",
-    "com.unity.entities": "1.2.3"
+    "com.unity.collections": "2.5.3",
+    "com.unity.entities": "1.3.10"
   },
   "name": "com.trove.polymorphicstructs",
   "author": {

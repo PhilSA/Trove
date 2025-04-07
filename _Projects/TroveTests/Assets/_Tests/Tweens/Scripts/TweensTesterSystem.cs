@@ -9,7 +9,6 @@ using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
-using Unity.Logging;
 using Random = Unity.Mathematics.Random;
 
 [Serializable]
