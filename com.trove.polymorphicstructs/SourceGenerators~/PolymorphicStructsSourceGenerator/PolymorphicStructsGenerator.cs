@@ -43,7 +43,6 @@ namespace PolymorphicStructsSourceGenerators
         public PolyInterfaceModel(
             string name,
             string typeName,
-            string typeNameOLD,
             StructModel targetStructModel,
             bool allowEntitiesAndBlobs,
             bool isMergedFieldsStruct,
@@ -215,7 +214,6 @@ namespace PolymorphicStructsSourceGenerators
         public const string TypeName_PolymorphicStructAttribute = "PolymorphicStructAttribute";
         public const string TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute = "AllowEntitiesAndBlobsInPolymorphicStructAttribute";
         public const string TypeName_IsMergedFieldsPolymorphicStructAttribute = "IsMergedFieldsPolymorphicStructAttribute";
-        public const string TypeName_UnsafeUtility = "UnsafeUtility";
         public const string TypeName_FieldOffset = "FieldOffset";
 
         public const string FullTypeName_PolymorphicStructInterfaceAttribute = NamespaceName_PolymorphicStructs + "." + TypeName_PolymorphicStructInterfaceAttribute;
@@ -520,7 +518,6 @@ namespace PolymorphicStructsSourceGenerators
             return new PolyInterfaceModel(
                 interfaceTypeSymbol.Name,
                 SourceGenUtils.GetFullTypeName(interfaceTypeSymbol),
-                SourceGenUtils.GetFullTypeName(interfaceTypeSymbol),
                 targetStructModel,
                 allowEntitiesAndBlobs,
                 isMergedFieldsStruct,
@@ -603,7 +600,7 @@ namespace PolymorphicStructsSourceGenerators
                         Message = $"PolymorphicStructs error: generic polymorphic interfaces are not supported. (Interface {compiledCodeData.PolyInterfaceModel.TypeName})",
                     });
                 }
-                FilterOutInvalidStructs(compiledCodeData, LogMessages);
+                ValidateStructs(compiledCodeData, LogMessages);
 
                 if (compiledCodeData.PolyStructModels.Count <= 0)
                 {
@@ -636,6 +633,8 @@ namespace PolymorphicStructsSourceGenerators
                             {
                                 if (memberSymbol.Kind == SymbolKind.Field &&
                                     memberSymbol is IFieldSymbol fieldSymbol &&
+                                    !fieldSymbol.IsStatic &&
+                                    !fieldSymbol.IsConst &&
                                     !fieldSymbol.IsImplicitlyDeclared)
                                 {
                                     SpecificFieldModel specificFieldModel = new SpecificFieldModel
@@ -997,7 +996,7 @@ namespace PolymorphicStructsSourceGenerators
                                         writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
                                         writer.WriteInScope(() =>
                                         {
-                                            writer.WriteLine($"return {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.TypeName}>();");
+                                            writer.WriteLine($"return sizeof({polyStructModel.StructModel.TypeName});");
                                         });
                                     }
                                 });
@@ -1022,7 +1021,7 @@ namespace PolymorphicStructsSourceGenerators
                                         writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
                                         writer.WriteInScope(() =>
                                         {
-                                            writer.WriteLine($"return {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.TypeName}>();");
+                                            writer.WriteLine($"return sizeof({polyStructModel.StructModel.TypeName});");
                                         });
                                     }
                                 });
@@ -1047,7 +1046,7 @@ namespace PolymorphicStructsSourceGenerators
                                         writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
                                         writer.WriteInScope(() =>
                                         {
-                                            writer.WriteLine($"writeSize = {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.TypeName}>();");
+                                            writer.WriteLine($"writeSize = sizeof({polyStructModel.StructModel.TypeName});");
                                             writer.WriteLine($"*({polyStructModel.StructModel.TypeName}*)dstPtr = Field_{polyStructModel.StructModel.Name};");
                                             writer.WriteLine($"return;");
                                         });
@@ -1079,7 +1078,7 @@ namespace PolymorphicStructsSourceGenerators
                                         writer.WriteLine($"case {Name_Enum_TypeId}.{polyStructModel.StructModel.Name}:");
                                         writer.WriteInScope(() =>
                                         {
-                                            writer.WriteLine($"readSize = {TypeName_UnsafeUtility}.SizeOf<{polyStructModel.StructModel.TypeName}>();");
+                                            writer.WriteLine($"readSize = sizeof({polyStructModel.StructModel.TypeName});");
                                             writer.WriteLine($" Field_{polyStructModel.StructModel.Name} = *({polyStructModel.StructModel.TypeName}*)srcPtr;");
                                             writer.WriteLine($"return;");
                                         });
@@ -1123,7 +1122,7 @@ namespace PolymorphicStructsSourceGenerators
                                                     // cast merged struct to specific
                                                     writer.WriteLine($"{polyStructModel.StructModel.TypeName} specificStruct = this;");
                                                     // invoke method on specific
-                                                    writer.WriteLine($"{(methodModel.ReturnIsRef ? "ref " : "")}{methodModel.ReturnTypeName} result = specificStruct.{methodModel.Name}({methodModel.MethodParametersInvoke});");
+                                                    writer.WriteLine($"{(methodModel.ReturnIsRef ? "ref " : "")}{methodModel.ReturnTypeName} result = {(methodModel.ReturnIsRef ? "ref " : "")}specificStruct.{methodModel.Name}({methodModel.MethodParametersInvoke});");
                                                     // cast back to merged
                                                     writer.WriteLine($"this = specificStruct;");
                                                     writer.WriteLine($"return {(methodModel.ReturnIsRef ? "ref " : "")}result;");
@@ -1191,18 +1190,17 @@ namespace PolymorphicStructsSourceGenerators
             }
         }
 
-        private static void FilterOutInvalidStructs(CompiledStructsForInterfaceData compiledData, List<LogMessage> logMessages)
+        private static void ValidateStructs(CompiledStructsForInterfaceData compiledData, List<LogMessage> logMessages)
         {
             for (int i = compiledData.PolyStructModels.Count - 1; i >= 0; i--)
             {
-                bool structIsValid = true;
                 PolyStructModel structModel = compiledData.PolyStructModels[i];
 
                 if (!compiledData.PolyInterfaceModel.AllowEntitiesAndBlobs)
                 {
                     SymbolsToProcess.Clear();
                     SymbolsToProcess.Add(structModel.StructTypeSymbol);
-                    ProcessPreventingStructInvalidFieldOrPropertyTypes(SymbolsToProcess, logMessages, ref structIsValid);
+                    ProcessPreventingStructInvalidFieldOrPropertyTypes(SymbolsToProcess, logMessages);
                 }
 
                 // Prevent generics
@@ -1214,18 +1212,12 @@ namespace PolymorphicStructsSourceGenerators
                         Message = $"PolymorphicStructs error: generic polymorphic structs are not supported. (Struct {structModel.StructModel.TypeName})",
                     });
                 }
-
-                if (!structIsValid)
-                {
-                    compiledData.PolyStructModels.RemoveAt(i);
-                }
             }
         }
 
         private static void ProcessPreventingStructInvalidFieldOrPropertyTypes(
             List<ITypeSymbol> symbolsToProcess,
-            List<LogMessage> logMessages, 
-            ref bool structIsValid)
+            List<LogMessage> logMessages)
         {
             SymbolEqualityComparer symbolEqualityComparer = SymbolEqualityComparer.Default;
             for (int i = 0; i < symbolsToProcess.Count; i++)
@@ -1234,20 +1226,16 @@ namespace PolymorphicStructsSourceGenerators
 
                 foreach (ISymbol memberSymbol in processedTypeSymbol.GetMembers())
                 {
-                    if (memberSymbol.Kind == SymbolKind.Field && memberSymbol is IFieldSymbol fieldSymbol)
+                    if (memberSymbol.Kind == SymbolKind.Field && 
+                        memberSymbol is IFieldSymbol fieldSymbol &&
+                        !fieldSymbol.IsStatic &&
+                        !fieldSymbol.IsConst)
                     {
+                        bool structIsValid = true;
                         ProcessPreventingStructInvalidFieldOrPropertyTypes(false, fieldSymbol.Type, logMessages, ref structIsValid);
                         if(structIsValid && !symbolEqualityComparer.Equals(fieldSymbol.Type, processedTypeSymbol))
                         {
                             symbolsToProcess.Add(fieldSymbol.Type);
-                        }
-                    }
-                    if (memberSymbol.Kind == SymbolKind.Property && memberSymbol is IPropertySymbol propertySymbol)
-                    {
-                        ProcessPreventingStructInvalidFieldOrPropertyTypes(true, propertySymbol.Type, logMessages, ref structIsValid);
-                        if (structIsValid && !symbolEqualityComparer.Equals(propertySymbol.Type, processedTypeSymbol))
-                        {
-                            symbolsToProcess.Add(propertySymbol.Type);
                         }
                     }
                 }
@@ -1298,7 +1286,7 @@ namespace PolymorphicStructsSourceGenerators
             return new LogMessage
             {
                 Type = LogMessage.MsgType.Error,
-                Message = $"PolymorphicStructs error: {typeName} {(isProperty ? "properties" : "fields")} are not allowed in polymorphic structs by default. Use the [{TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute}] on the polymorphic interface if you wish to disable this restriction and know what you're doing. You may also consult the documentation for suggested workarounds, such as storing these fields in a struct that encompasses the generated polymorphic struct.",
+                Message = $"PolymorphicStructs error: {typeName} fields (or property backing fields) are not allowed in polymorphic structs by default. Use the [{TypeName_AllowEntitiesAndBlobsInPolymorphicStructAttribute}] on the polymorphic interface if you wish to disable this restriction and know what you're doing. You may also consult the documentation for suggested workarounds, such as storing these fields in a struct that encompasses the generated polymorphic struct.",
             };
         }
 
@@ -1352,11 +1340,9 @@ namespace PolymorphicStructsSourceGenerators
             return new List<string>
             {
                 $"System",
-                $"{NamespaceName_Trove}",
-                $"Unity.Collections",
-                $"Unity.Collections.LowLevel.Unsafe",
                 $"System.Runtime.InteropServices",
                 $"System.Runtime.CompilerServices",
+                $"{NamespaceName_Trove}",
             };
         }
     }

@@ -1,165 +1,220 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.Mathematics;
-using UnityEngine;
+
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using NUnit.Framework;
-using Unity.Collections;
-using Trove;
-using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
+using Unity.Mathematics;
+
 
 namespace Trove.PolymorphicStructs.Tests
 {
-    public partial struct PolyMyTestPoly
-    { }
-    public partial struct PolyMyTestPolyMerged
-    { } 
     
+    
+    
+    // public partial struct PolyMyTestPoly
+    // { }
+    // public partial struct PolyMyTestPolyMerged
+    // { }
+
+    // public interface IMyTestCommonPoly
+    // {
+    // }
+
     [PolymorphicStructInterface]
     public interface IMyTestPoly
-    { 
+    {
         public void DoSomething1A();
-        public int DoSomething1B(int a);
-        public int DoSomething1C(ref int a);
-        public int DoSomething1D(ref int a, out int b);
-        public NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1E(ref int a, out int b, in NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c);
-        public ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1F(ref int a, out int b, ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c);
+        // public int DoSomething1B(int a);
+        // public int DoSomething1C(ref int a);
+        // public int DoSomething1D(ref int a, out int b);
+        // public NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1E(ref int a, out int b, in NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c);
+        // public ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1F(ref int a, out int b, ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c);
     }
-    
-    [PolymorphicStructInterface]
-    [IsMergedFieldsPolymorphicStruct]
-    public interface IMyTestPolyMerged
-    {
-        
-    }
-    
+
+    // [PolymorphicStructInterface]
+    // [IsMergedFieldsPolymorphicStruct]
+    // public interface IMyTestPolyMerged
+    // {
+    //     public void DoSomething1A();
+    //     public int DoSomething1B(int a);
+    //     public int DoSomething1C(ref int a);
+    //     public int DoSomething1D(ref int a, out int b);
+    //     public NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1E(ref int a, out int b, in NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c);
+    //     public ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1F(ref int a, out int b, ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c);
+    // }
+
     [PolymorphicStruct]
-    public struct MyTestPolyA : IMyTestPoly, IMyTestPolyMerged
+    public struct MyTestPolyA : IMyTestPoly
     {
-        public int A;
+        public float3 A;
 
         public void DoSomething1A()
         {
         }
-    
-        public int DoSomething1B(int a)
-        {
-            return a + 1;
-        }
-    
-        public int DoSomething1C(ref int a)
-        {
-            return a;
-        }
-    
-        public int DoSomething1D(ref int a, out int b)
-        {
-            b = default;
-            return a;
-        }
-    
-        public NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1E(ref int a, out int b, in NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c)
-        {
-            b = default;
-            return default;
-        }
-    
-        public ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1F(ref int a, out int b, ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c)
-        {
-            b = default;
-            return ref c;
-        }
-    } 
-    
-    namespace N1
-    {
-    
-        [PolymorphicStruct]
-        public struct MyTestPolyB : IMyTestPoly, IMyTestPolyMerged
-        {
-            public int A; 
-        
-            public void DoSomething1A()
-            {
-            }
-    
-            public int DoSomething1B(int a)
-            {
-                return a;
-            }
-    
-            public int DoSomething1C(ref int a)
-            {
-                return a;
-            }
-    
-            public int DoSomething1D(ref int a, out int b)
-            {
-                b = default;
-                return a;
-            }
-    
-            public NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1E(ref int a, out int b, in NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c)
-            {
-                b = default;
-                return default;
-            }
-    
-            public ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1F(ref int a, out int b, ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c)
-            {
-                b = default;
-                return ref c;
-            }
-        } 
-        
-        namespace N2
-        {
-            [PolymorphicStruct]
-            public struct MyTestPolyC : IMyTestPoly, IMyTestPolyMerged
-            {
-                public int A; 
-        
-                public void DoSomething1A()
-                {
-                }
-    
-                public int DoSomething1B(int a)
-                {
-                    return a;
-                }
-    
-                public int DoSomething1C(ref int a)
-                {
-                    return a;
-                }
-    
-                public int DoSomething1D(ref int a, out int b)
-                {
-                    b = default;
-                    return a;
-                }
-    
-                public NativeHashMap<int, TestGenericType<float3, float4>> DoSomething1E(ref int a, out int b, in NativeHashMap<int, TestGenericType<float3, float4>> c)
-                {
-                    b = default;
-                    return default;
-                }
-    
-                public ref NativeHashMap<int, TestGenericType<float3, float4>> DoSomething1F(ref int a, out int b, ref NativeHashMap<int, TestGenericType<float3, float4>> c)
-                {
-                    b = default;
-                    return ref c;
-                }
-            }
-    
-            public struct TestGenericType<T,R> where T : unmanaged where R : unmanaged
-            {
-                public T a;
-                public R b;
-            }
-        }
+
+        // public int DoSomething1B(int a)
+        // {
+        //     return a + 1;
+        // }
+        //
+        // public int DoSomething1C(ref int a)
+        // {
+        //     return a;
+        // }
+        //
+        // public int DoSomething1D(ref int a, out int b)
+        // {
+        //     b = default;
+        //     return a;
+        // }
+        //
+        // public NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1E(ref int a, out int b, in NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c)
+        // {
+        //     b = default;
+        //     return default;
+        // }
+        //
+        // public ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1F(ref int a, out int b, ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c)
+        // {
+        //     b = default;
+        //     return ref c;
+        // }
     }
-    
-    
+
+    // [PolymorphicStruct]
+    // public struct MyTestPolyB : IMyTestPoly
+    // {
+    //     public float3 A;
+
+    //     public void DoSomething1A()
+    //     {
+    //     }
+
+    //     public int DoSomething1B(int a)
+    //     {
+    //         return a + 1;
+    //     }
+
+    //     public int DoSomething1C(ref int a)
+    //     {
+    //         return a;
+    //     }
+
+    //     public int DoSomething1D(ref int a, out int b)
+    //     {
+    //         b = default;
+    //         return a;
+    //     }
+
+    //     public NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1E(ref int a, out int b, in NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c)
+    //     {
+    //         b = default;
+    //         return default;
+    //     }
+
+    //     public ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1F(ref int a, out int b, ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c)
+    //     {
+    //         b = default;
+    //         return ref c;
+    //     }
+    // }
+
+    // namespace N1
+    // {
+
+    //     [PolymorphicStruct]
+    //     public struct MyTestPolyB : IMyTestPoly
+    //     {
+    //         public int A;
+    //         public float3 B;
+    //         public int C;
+    //         public float3 D;
+    //         public int E;
+    //         public float3 F;
+
+    //         public void DoSomething1A()
+    //         {
+    //         }
+
+    //         public int DoSomething1B(int a)
+    //         {
+    //             return a;
+    //         }
+
+    //         public int DoSomething1C(ref int a)
+    //         {
+    //             return a;
+    //         }
+
+    //         public int DoSomething1D(ref int a, out int b)
+    //         {
+    //             b = default;
+    //             return a;
+    //         }
+
+    //         public NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1E(ref int a, out int b, in NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c)
+    //         {
+    //             b = default;
+    //             return default;
+    //         }
+
+    //         public ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1F(ref int a, out int b, ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c)
+    //         {
+    //             b = default;
+    //             return ref c;
+    //         }
+    //     }
+
+    // namespace N2
+    // {
+    //         [PolymorphicStruct]
+    //         public struct MyTestPolyC : IMyTestPoly
+    //         {
+    //             public float3 A;
+    //             public quaternion B;
+
+    //             public void DoSomething1A()
+    //             {
+    //             }
+
+    //             public int DoSomething1B(int a)
+    //             {
+    //                 return a;
+    //             }
+
+    //             public int DoSomething1C(ref int a)
+    //             {
+    //                 return a;
+    //             }
+
+    //             public int DoSomething1D(ref int a, out int b)
+    //             {
+    //                 b = default;
+    //                 return a;
+    //             }
+
+    //             public NativeHashMap<int, TestGenericType<float3, float4>> DoSomething1E(ref int a, out int b, in NativeHashMap<int, TestGenericType<float3, float4>> c)
+    //             {
+    //                 b = default;
+    //                 return default;
+    //             }
+
+    //             public ref NativeHashMap<int, TestGenericType<float3, float4>> DoSomething1F(ref int a, out int b, ref NativeHashMap<int, TestGenericType<float3, float4>> c)
+    //             {
+    //                 b = default;
+    //                 return ref c;
+    //             }
+    //         }
+
+    // public struct TestGenericType<T, R> where T : unmanaged where R : unmanaged
+    // {
+    //     public T a;
+    //     public R b;
+    // }
+    //     }
+    // }
+
+
     [TestFixture]
     public class PolymorphicStructsTests
     {

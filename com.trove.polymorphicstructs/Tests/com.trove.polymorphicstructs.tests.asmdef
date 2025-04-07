@@ -4,11 +4,11 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "Unity.Collections",
-        "Unity.Burst",
         "Unity.Mathematics",
-        "com.trove.polymorphicstructs",
-        "com.trove.common"
+        "Unity.Collections",
+        "Unity.Entities",
+        "com.trove.common",
+        "com.trove.polymorphicstructs"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -17,7 +17,7 @@
     "precompiledReferences": [
         "nunit.framework.dll"
     ],
-    "autoReferenced": false,
+    "autoReferenced": true,
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],

@@ -1,18 +1,36 @@
+using System.Runtime.InteropServices;
 using Trove.PolymorphicStructs;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Trove;
-using Trove.EventSystems.Tests;
+using Unity.Collections.LowLevel.Unsafe;
 
+
+[PolymorphicStructInterface]
+public interface IMyTestPoly
+{
+    public void DoSomething1A();
+}
+
+[PolymorphicStruct]
+public struct MyTestPolyA : IMyTestPoly
+{
+    public int A;
+
+    public void DoSomething1A()
+    {
+    }
+}
 
 public struct GeneratedViewer
 {
+    private PolyMyTestPoly fdsfds;
     private PolyMyOutOfNamespacePolyInterface ASDsad;
     private PolyTestMergedFieldsPolyInterface1 asfafas1;
     private PolyTestMergedFieldsPolyInterface2 asfafas2;
-    
+
     public void Test()
     {
     }
@@ -29,7 +47,7 @@ public interface ITestMergedFieldsPolyInterface1
 public struct MyIITestMergedFieldsPolyStruct1A : ITestMergedFieldsPolyInterface1
 {
     public int ValueA;
-    public float3 ValueB;
+    public float ValueB;
     public float3 ValueC;
 
     public void DoSomething(int a, out float b, int c)
@@ -68,7 +86,7 @@ public struct MyIITestMergedFieldsPolyStruct2A : ITestMergedFieldsPolyInterface2
     public float3 ValueC;
 
     public Entity SomeProp { get; set; }
-    
+
     public void DoSomething(int a)
     {
     }
@@ -83,7 +101,7 @@ public struct MyIITestMergedFieldsPolyStruct2B : ITestMergedFieldsPolyInterface2
     public float3 ValueC;
 
     public Entity SomeProp { get; set; }
-    
+
     public void DoSomething(int a)
     {
     }
@@ -98,7 +116,7 @@ public struct MyIITestMergedFieldsPolyStruct2B : ITestMergedFieldsPolyInterface2
 //     public BlobAssetReference<Collider> E;
 // }
 
- 
+
 [PolymorphicStructInterface]
 public interface IMyOutOfNamespacePolyInterface
 {
@@ -108,7 +126,7 @@ public interface IMyOutOfNamespacePolyInterface
 [PolymorphicStruct]
 public struct MyOutOfNamespaceStructA : IMyOutOfNamespacePolyInterface
 {
-    public int Value;
+    public float Value;
 
     public float DoSomething(int a)
     {

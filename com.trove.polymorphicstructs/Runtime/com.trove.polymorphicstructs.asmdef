@@ -1,11 +1,7 @@
 {
     "name": "com.trove.polymorphicstructs",
     "rootNamespace": "",
-    "references": [
-        "GUID:d8b63aba1907145bea998dd612889d6b",
-        "GUID:e0cd26848372d4e5c891c569017e11f1",
-        "GUID:cbffd4888132fd547a89ec624c7c1f1d"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
