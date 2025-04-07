@@ -19,11 +19,6 @@ namespace Trove.PolymorphicStructs.Tests
 
     public interface IMyTestCommonPoly
     {
-    }
-
-    [PolymorphicStructInterface]
-    public interface IMyTestPoly
-    {
         public void DoSomething1A();
         public int DoSomething1B(int a);
         public int DoSomething1C(ref int a);
@@ -34,26 +29,21 @@ namespace Trove.PolymorphicStructs.Tests
 
         public ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1F(ref int a, out int b,
             ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c);
+    }
+
+    [PolymorphicStructInterface]
+    public interface IMyTestPoly : IMyTestCommonPoly
+    {
     }
 
     [PolymorphicStructInterface]
     [IsMergedFieldsPolymorphicStruct]
-    public interface IMyTestPolyMerged
+    public interface IMyTestPolyMerged : IMyTestCommonPoly
     {
-        public void DoSomething1A();
-        public int DoSomething1B(int a);
-        public int DoSomething1C(ref int a);
-        public int DoSomething1D(ref int a, out int b);
-
-        public NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1E(ref int a, out int b,
-            in NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c);
-
-        public ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> DoSomething1F(ref int a, out int b,
-            ref NativeHashMap<int, N1.N2.TestGenericType<float3, float4>> c);
     }
 
     [PolymorphicStruct]
-    public struct MyTestPolyA : IMyTestPoly
+    public struct MyTestPolyA : IMyTestPoly, IMyTestPolyMerged
     {
         public float3 A;
 
@@ -96,7 +86,7 @@ namespace Trove.PolymorphicStructs.Tests
     {
 
         [PolymorphicStruct]
-        public struct MyTestPolyB : IMyTestPoly
+        public struct MyTestPolyA : IMyTestPoly, IMyTestPolyMerged
         {
             public int A;
             public float3 B;
@@ -143,7 +133,7 @@ namespace Trove.PolymorphicStructs.Tests
         namespace N2
         {
             [PolymorphicStruct]
-            public struct MyTestPolyC : IMyTestPoly
+            public struct MyTestPolyC : IMyTestPoly, IMyTestPolyMerged
             {
                 public float3 A;
                 public quaternion B;
@@ -208,6 +198,8 @@ namespace Trove.PolymorphicStructs.Tests
         [Test]
         public void GlobalEventTest1()
         {
+            PolyMyTestPoly testPoly = new PolyMyTestPoly();
+            PolyMyTestPolyMerged testPolyMerged = new PolyMyTestPolyMerged();
         }
     }
 }

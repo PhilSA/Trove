@@ -5,20 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/PolymorphicStructs/PolymorphicStructTester.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/PolymorphicStructs/PolymorphicStructTester.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/CurrentMaximizeLayout.dwlt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Runtime/PolymorphicStructs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Runtime/PolymorphicStructs.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Runtime/PolymorphicStructsSourceGenerator.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Runtime/PolymorphicStructsSourceGenerator.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Runtime/com.trove.polymorphicstructs.asmdef" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Runtime/com.trove.polymorphicstructs.asmdef" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/PolymorphicStructsGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/PolymorphicStructsGenerator.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/bin/Release/netstandard2.0/PolymorphicStructsSourceGenerator.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/bin/Release/netstandard2.0/PolymorphicStructsSourceGenerator.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests.meta" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests/PolymorphicStructsTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests/PolymorphicStructsTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests/PolymorphicStructsTests.cs.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests/PolymorphicStructsTests.cs.meta" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests/com.trove.polymorphicstructs.tests.asmdef" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests/com.trove.polymorphicstructs.tests.asmdef" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests/com.trove.polymorphicstructs.tests.asmdef.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests/com.trove.polymorphicstructs.tests.asmdef.meta" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,6 +18,9 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPoly.generated.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -103,7 +97,7 @@
       <option name="presentableId" value="Default" />
       <updated>1743990652791</updated>
       <workItem from="1743990655841" duration="309000" />
-      <workItem from="1743991265850" duration="924000" />
+      <workItem from="1743991265850" duration="3382000" />
     </task>
     <servers />
   </component>
