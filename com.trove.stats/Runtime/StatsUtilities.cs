@@ -120,6 +120,7 @@ namespace Trove.Stats
             where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
             where TStatModifierStack : unmanaged, IStatsModifierStack
         {
+            Stat nullStat = default;
             Stat initialStat = statRef;
             
             // Apply Modifiers
@@ -181,7 +182,16 @@ namespace Trove.Stats
                     while (observersIterator.GetNext(in statObserversBuffer, out StatObserver observer,
                                out int observerIndex))
                     {
-                        statsWorldData._tmpUpdatedStatsList.Add(observer.ObserverHandle);
+                        // Immediately update same-entity observers, while we have all the buffers
+                        if (observer.ObserverHandle.Entity == statHandle.Entity)
+                        {
+                            statsWorldData._tmpSameEntityUpdatedStatsList.Add(observer.ObserverHandle);
+                        }
+                        else
+                        {
+                            // Other entity observers are added to a list
+                            statsWorldData._tmpGlobalUpdatedStatsList.Add(observer.ObserverHandle);
+                        }
                     }
                 }
             }

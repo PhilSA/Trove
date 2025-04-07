@@ -6,21 +6,26 @@
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Runtime/PolymorphicStructsSourceGenerator.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Runtime/PolymorphicStructsSourceGenerator.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/PolymorphicStructsGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/PolymorphicStructsGenerator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/bin/Release/netstandard2.0/PolymorphicStructsSourceGenerator.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/bin/Release/netstandard2.0/PolymorphicStructsSourceGenerator.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests/PolymorphicStructsTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests/PolymorphicStructsTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Scenes/StatsTest/New Sub Scene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/Scenes/StatsTest/New Sub Scene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsWorldData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsWorldData.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="DpaMonitoringSettings">
+    <option name="firstShow" value="false" />
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPoly.generated.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/7a/798d7189/AtomicSafetyHandle.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -31,19 +36,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "dev/tmp1",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Attach to Unity Editor.Attach to Unity Editor.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev/tmp1&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.0.43f1\Editor\Unity.exe" />
@@ -97,7 +103,8 @@
       <option name="presentableId" value="Default" />
       <updated>1743990652791</updated>
       <workItem from="1743990655841" duration="309000" />
-      <workItem from="1743991265850" duration="3382000" />
+      <workItem from="1743991265850" duration="6339000" />
+      <workItem from="1744002693775" duration="631000" />
     </task>
     <servers />
   </component>
