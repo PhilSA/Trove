@@ -5,9 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scenes/StateMachineTest/New Sub Scene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scenes/StateMachineTest/New Sub Scene.unity" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachine.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachineAuthoring.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachineAuthoring.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/_Template/TemplateStateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/_Template/TemplateStateMachine.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Editor/ScriptTemplates/StateMachineTemplate.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Editor/ScriptTemplates/StateMachineTemplate.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" afterDir="false" />
     </list>
@@ -114,7 +116,7 @@
       <workItem from="1744002693775" duration="1087000" />
       <workItem from="1744031957652" duration="10818000" />
       <workItem from="1744071659283" duration="10862000" />
-      <workItem from="1744082726166" duration="10219000" />
+      <workItem from="1744082726166" duration="10744000" />
     </task>
     <servers />
   </component>

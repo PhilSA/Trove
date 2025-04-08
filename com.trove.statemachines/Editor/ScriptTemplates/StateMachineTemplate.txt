@@ -98,19 +98,19 @@ public struct #SCRIPTNAME#GlobalStateUpdateData
 public struct #SCRIPTNAME#EntityStateUpdateData
 {
     public Entity Entity;
-    public DynamicBuffer<StateData> StateDatasBuffer;
+    public DynamicBuffer<StateData> StateVersionsBuffer;
     public DynamicBuffer<Poly#SCRIPTNAME#State> StatesBuffer;
     public RefRW<LocalTransform> LocalTransform;
     // TODO: add/change entity data
     
     public #SCRIPTNAME#EntityStateUpdateData(
         Entity entity,
-        DynamicBuffer<StateData> stateDatasBuffer, 
+        DynamicBuffer<StateData> stateVersionsBuffer, 
         DynamicBuffer<Poly#SCRIPTNAME#State> statesBuffer,
         RefRW<LocalTransform> localTransform)
     {
         Entity = entity;
-        StateDatasBuffer = stateDatasBuffer;
+        StateVersionsBuffer = stateVersionsBuffer;
         StatesBuffer = statesBuffer;
         LocalTransform = localTransform;
     }

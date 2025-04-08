@@ -15,7 +15,7 @@ namespace Trove.Statemachines
             IBaker baker,
             Entity entity,
             out StateMachine stateMachine,
-            out DynamicBuffer<StateData> stateDatasBuffer,
+            out DynamicBuffer<StateVersion> stateVersionsBuffer,
             out DynamicBuffer<TState> statesBuffer)
             where TState : unmanaged, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
@@ -23,7 +23,7 @@ namespace Trove.Statemachines
         {
             stateMachine = default;
             baker.AddComponent(entity, stateMachine);
-            stateDatasBuffer = baker.AddBuffer<StateData>(entity);
+            stateVersionsBuffer = baker.AddBuffer<StateVersion>(entity);
             statesBuffer = baker.AddBuffer<TState>(entity);
         }
 
@@ -35,7 +35,7 @@ namespace Trove.Statemachines
             where TEntityStateUpdateData : unmanaged
         {
             entityManager.AddComponentData(entity, new StateMachine());
-            entityManager.AddBuffer<StateData>(entity);
+            entityManager.AddBuffer<StateVersion>(entity);
             entityManager.AddBuffer<TState>(entity);
         }
 
@@ -47,7 +47,7 @@ namespace Trove.Statemachines
             where TEntityStateUpdateData : unmanaged
         {
             ecb.AddComponent(entity, new StateMachine());
-            ecb.AddBuffer<StateData>(entity);
+            ecb.AddBuffer<StateVersion>(entity);
             ecb.AddBuffer<TState>(entity);
         }
 
@@ -60,13 +60,13 @@ namespace Trove.Statemachines
             where TEntityStateUpdateData : unmanaged
         {
             ecb.AddComponent(sortKey, entity, new StateMachine());
-            ecb.AddBuffer<StateData>(sortKey, entity);
+            ecb.AddBuffer<StateVersion>(sortKey, entity);
             ecb.AddBuffer<TState>(sortKey, entity);
         }
         
         public static void InitStateMachine<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
             ref StateMachine stateMachine,
-            ref DynamicBuffer<StateData> stateDatasBuffer,
+            ref DynamicBuffer<StateVersion> stateVersionsBuffer,
             ref DynamicBuffer<TState> statesBuffer,
             int statesInitialCapacity)
             where TState : unmanaged, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
@@ -74,7 +74,7 @@ namespace Trove.Statemachines
             where TEntityStateUpdateData : unmanaged
         {
             stateMachine.CurrentStateHandle = default;
-            ResizeStatesBuffer<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(ref statesBuffer, ref stateDatasBuffer, statesInitialCapacity);
+            ResizeStatesBuffer<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(ref statesBuffer, ref stateVersionsBuffer, statesInitialCapacity);
         }
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace Trove.Statemachines
         /// </summary>
         public static void ResizeStatesBuffer<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
             ref DynamicBuffer<TState> statesBuffer,
-            ref DynamicBuffer<StateData> stateDatasBuffer,
+            ref DynamicBuffer<StateVersion> stateVersionsBuffer,
             int newSize)
             where TState : unmanaged, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
@@ -91,14 +91,14 @@ namespace Trove.Statemachines
             if (newSize > statesBuffer.Length)
             {
                 statesBuffer.Resize(newSize, NativeArrayOptions.ClearMemory);
-                stateDatasBuffer.Resize(statesBuffer.Length, NativeArrayOptions.ClearMemory);
+                stateVersionsBuffer.Resize(statesBuffer.Length, NativeArrayOptions.ClearMemory);
             }
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Update<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
             ref StateMachine stateMachine,
-            ref DynamicBuffer<StateData> stateDatasBuffer,
+            ref DynamicBuffer<StateVersion> stateVersionsBuffer,
             ref DynamicBuffer<TState> statesBuffer,
             ref TGlobalStateUpdateData globalStateUpdateData,
             ref TEntityStateUpdateData entityStateUpdateData)
@@ -115,7 +115,7 @@ namespace Trove.Statemachines
                 if (stateMachine.CurrentStateHandle == StateHandle.Null &&
                     stateMachine.InitialState != StateHandle.Null)
                 {
-                    TryStateTransition(ref stateMachine, ref stateDatasBuffer, ref statesBuffer,
+                    TryStateTransition(ref stateMachine, ref stateVersionsBuffer, ref statesBuffer,
                         ref globalStateUpdateData,
                         ref entityStateUpdateData, stateMachine.InitialState);
                 }
@@ -124,7 +124,7 @@ namespace Trove.Statemachines
             }
 
             ref TState currentState = ref TryGetStateRef<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
-                ref stateDatasBuffer, ref statesBuffer, stateMachine.CurrentStateHandle, out bool success, ref nullState);
+                ref stateVersionsBuffer, ref statesBuffer, stateMachine.CurrentStateHandle, out bool success, ref nullState);
             if (success)
             {
                 currentState.Update(ref stateMachine, ref globalStateUpdateData, ref entityStateUpdateData);
@@ -133,7 +133,7 @@ namespace Trove.Statemachines
         
         public static bool TryStateTransition<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
             ref StateMachine stateMachine, 
-            ref DynamicBuffer<StateData> stateDatasBuffer,
+            ref DynamicBuffer<StateVersion> stateVersionsBuffer,
             ref DynamicBuffer<TState> statesBuffer,
             ref TGlobalStateUpdateData globalStateUpdateData,
             ref TEntityStateUpdateData entityStateUpdateData,
@@ -145,12 +145,12 @@ namespace Trove.Statemachines
             TState nullState = default;
             
             ref TState newState = ref TryGetStateRef<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
-                ref stateDatasBuffer, ref statesBuffer, newStateHandle, out bool success, ref nullState);
+                ref stateVersionsBuffer, ref statesBuffer, newStateHandle, out bool success, ref nullState);
             if (success)
             {
                 StateHandle prevStateHandle = stateMachine.CurrentStateHandle;
                 ref TState prevState = ref TryGetStateRef<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
-                    ref stateDatasBuffer, ref statesBuffer, prevStateHandle, out success, ref nullState);
+                    ref stateVersionsBuffer, ref statesBuffer, prevStateHandle, out success, ref nullState);
                 if (success)
                 {
                     prevState.OnStateExit(ref stateMachine, ref globalStateUpdateData, ref entityStateUpdateData);
@@ -164,7 +164,7 @@ namespace Trove.Statemachines
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetState<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
-            ref DynamicBuffer<StateData> stateDatasBuffer,
+            ref DynamicBuffer<StateVersion> stateVersionsBuffer,
             ref DynamicBuffer<TState> statesBuffer, 
             StateHandle stateHandle,
             out TState state)
@@ -174,8 +174,8 @@ namespace Trove.Statemachines
         {
             if (stateHandle.Exists() && stateHandle.Index < statesBuffer.Length)
             {
-                StateData existingStateData = stateDatasBuffer[stateHandle.Index];
-                if (existingStateData.Version == stateHandle.Version)
+                StateVersion existingStateVersion = stateVersionsBuffer[stateHandle.Index];
+                if (existingStateVersion.Version == stateHandle.Version)
                 {
                     state = statesBuffer[stateHandle.Index];
                     return true;
@@ -188,7 +188,7 @@ namespace Trove.Statemachines
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe ref TState TryGetStateRef<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
-            ref DynamicBuffer<StateData> stateDatasBuffer,
+            ref DynamicBuffer<StateVersion> stateVersionsBuffer,
             ref DynamicBuffer<TState> statesBuffer, 
             StateHandle stateHandle,
             out bool success,
@@ -199,8 +199,8 @@ namespace Trove.Statemachines
         {
             if (stateHandle.Exists() && stateHandle.Index < statesBuffer.Length)
             {
-                StateData existingStateData = stateDatasBuffer[stateHandle.Index];
-                if (existingStateData.Version == stateHandle.Version)
+                StateVersion existingStateVersion = stateVersionsBuffer[stateHandle.Index];
+                if (existingStateVersion.Version == stateHandle.Version)
                 {
                     ref TState state =
                         ref UnsafeUtility.ArrayElementAsRef<TState>(
@@ -217,7 +217,7 @@ namespace Trove.Statemachines
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TrySetState<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
-            ref DynamicBuffer<StateData> stateDatasBuffer,
+            ref DynamicBuffer<StateVersion> stateVersionsBuffer,
             ref DynamicBuffer<TState> statesBuffer, 
             StateHandle stateHandle,
             TState state)
@@ -227,11 +227,11 @@ namespace Trove.Statemachines
         {
             if (stateHandle.Exists() && stateHandle.Index < statesBuffer.Length)
             {
-                StateData existingStateData = stateDatasBuffer[stateHandle.Index];
-                if (existingStateData.Version == stateHandle.Version)
+                StateVersion existingStateVersion = stateVersionsBuffer[stateHandle.Index];
+                if (existingStateVersion.Version == stateHandle.Version)
                 {
-                    existingStateData.Version = stateHandle.Version;
-                    stateDatasBuffer[stateHandle.Index] = existingStateData;
+                    existingStateVersion.Version = stateHandle.Version;
+                    stateVersionsBuffer[stateHandle.Index] = existingStateVersion;
                     statesBuffer[stateHandle.Index] = state;
                     return true;
                 }
@@ -241,7 +241,7 @@ namespace Trove.Statemachines
         }
 
         public static void CreateState<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
-            ref DynamicBuffer<StateData> stateDatasBuffer,
+            ref DynamicBuffer<StateVersion> stateVersionsBuffer,
             ref DynamicBuffer<TState> statesBuffer, 
             TState state, 
             out StateHandle stateHandle)
@@ -252,8 +252,8 @@ namespace Trove.Statemachines
             int addIndex = -1;
             for (int i = 0; i < statesBuffer.Length; i++)
             {
-                StateData iteratedStateData = stateDatasBuffer[i];
-                if (!iteratedStateData.Exists())
+                StateVersion iteratedStateVersion = stateVersionsBuffer[i];
+                if (!iteratedStateVersion.Exists())
                 {
                     addIndex = i;
                     break;
@@ -265,33 +265,33 @@ namespace Trove.Statemachines
                 addIndex = statesBuffer.Length;
                 int newCapacity = math.max((int)math.ceil(statesBuffer.Length * StatesBufferGrowFactor),
                     statesBuffer.Length + 1);
-                ResizeStatesBuffer<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(ref statesBuffer, ref stateDatasBuffer, newCapacity);
+                ResizeStatesBuffer<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(ref statesBuffer, ref stateVersionsBuffer, newCapacity);
             }
 
-            StateData existingStateData = stateDatasBuffer[addIndex];
-            existingStateData.Version = -existingStateData.Version + 1; // flip version and increment
-            stateDatasBuffer[addIndex] = existingStateData;
+            StateVersion existingStateVersion = stateVersionsBuffer[addIndex];
+            existingStateVersion.Version = -existingStateVersion.Version + 1; // flip version and increment
+            stateVersionsBuffer[addIndex] = existingStateVersion;
 
             statesBuffer[addIndex] = state;
             
             stateHandle = new StateHandle
             {
                 Index = addIndex,
-                Version = existingStateData.Version,
+                Version = existingStateVersion.Version,
             };
         }
 
         public static bool TryDestroyState(
-            ref DynamicBuffer<StateData> stateDatasBuffer,
+            ref DynamicBuffer<StateVersion> stateVersionsBuffer,
             StateHandle stateHandle)
         {
-            if (stateHandle.Exists() && stateHandle.Index < stateDatasBuffer.Length)
+            if (stateHandle.Exists() && stateHandle.Index < stateVersionsBuffer.Length)
             {
-                StateData existingStateData = stateDatasBuffer[stateHandle.Index];
-                if (existingStateData.Version == stateHandle.Version)
+                StateVersion existingStateVersion = stateVersionsBuffer[stateHandle.Index];
+                if (existingStateVersion.Version == stateHandle.Version)
                 {
-                    existingStateData.Version = -existingStateData.Version; // flip version
-                    stateDatasBuffer[stateHandle.Index] = existingStateData;
+                    existingStateVersion.Version = -existingStateVersion.Version; // flip version
+                    stateVersionsBuffer[stateHandle.Index] = existingStateVersion;
 
                     return true;
                 }

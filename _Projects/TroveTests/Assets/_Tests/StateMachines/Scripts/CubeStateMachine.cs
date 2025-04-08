@@ -74,7 +74,7 @@ public struct CubeStateA : ICubeState
         
         if (mustTransition)
         {
-            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StateDatasBuffer,
+            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StateVersionsBuffer,
                 ref entityData.StatesBuffer, ref globalData, ref entityData, NextState);
         }
     }
@@ -111,12 +111,12 @@ public struct CubeStateB : ICubeState
             
         if (mustTransition)
         {
-            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StateDatasBuffer,
+            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StateVersionsBuffer,
                 ref entityData.StatesBuffer, ref globalData, ref entityData, NextState);
         }
         
         // Update the sub-state machine
-        StateMachineUtilities.Update(ref StateMachine, ref entityData.StateDatasBuffer, ref entityData.StatesBuffer, ref globalData, ref entityData);
+        StateMachineUtilities.Update(ref StateMachine, ref entityData.StateVersionsBuffer, ref entityData.StatesBuffer, ref globalData, ref entityData);
     }
 }
 
@@ -145,7 +145,7 @@ public struct CubeStateC : ICubeState
             
         if (mustTransition)
         {
-            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StateDatasBuffer,
+            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StateVersionsBuffer,
                 ref entityData.StatesBuffer, ref globalData, ref entityData, NextState);
         }
     }
@@ -165,18 +165,18 @@ public struct CubeEntityStateUpdateData
 {
     public Entity Entity;
     public RefRW<LocalTransform> LocalTransformRef;
-    public DynamicBuffer<StateData> StateDatasBuffer;
+    public DynamicBuffer<StateVersion> StateVersionsBuffer;
     public DynamicBuffer<PolyCubeState> StatesBuffer;
     
     public CubeEntityStateUpdateData(
         Entity entity,
         RefRW<LocalTransform> localTransformRef,
-        DynamicBuffer<StateData> stateDatasBuffer, 
+        DynamicBuffer<StateVersion> stateVersionsBuffer, 
         DynamicBuffer<PolyCubeState> statesBuffer)
     {
         Entity = entity;
         LocalTransformRef = localTransformRef;
-        StateDatasBuffer = stateDatasBuffer;
+        StateVersionsBuffer = stateVersionsBuffer;
         StatesBuffer = statesBuffer;
     }
 }
@@ -208,7 +208,7 @@ public partial struct ExampleCubeStateMachineSystem : ISystem
             Entity entity, 
             ref StateMachine stateMachine, 
             RefRW<LocalTransform> localTransformRef,
-            ref DynamicBuffer<StateData> stateVersionsBuffer, 
+            ref DynamicBuffer<StateVersion> stateVersionsBuffer, 
             ref DynamicBuffer<PolyCubeState> statesBuffer)
         {
             CubeEntityStateUpdateData entityData = new CubeEntityStateUpdateData(

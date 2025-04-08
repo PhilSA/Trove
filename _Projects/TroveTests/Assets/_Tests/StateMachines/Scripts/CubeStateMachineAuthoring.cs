@@ -22,7 +22,7 @@ class CubeStateMachineAuthoringBaker : Baker<CubeStateMachineAuthoring>
             this, 
             entity, 
             out StateMachine stateMachine, 
-            out DynamicBuffer<StateData> stateVersionsBuffer, 
+            out DynamicBuffer<StateVersion> stateVersionsBuffer, 
             out DynamicBuffer<PolyCubeState> statesBuffer);
         
         StateMachineUtilities.InitStateMachine<PolyCubeState, CubeGlobalStateUpdateData, CubeEntityStateUpdateData>(

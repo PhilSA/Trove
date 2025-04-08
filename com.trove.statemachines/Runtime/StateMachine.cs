@@ -25,7 +25,7 @@ namespace Trove.Statemachines
     }
     
     [InternalBufferCapacity(0)]
-    public struct StateData : IBufferElementData
+    public struct StateVersion : IBufferElementData
     {
         public int Version;
 

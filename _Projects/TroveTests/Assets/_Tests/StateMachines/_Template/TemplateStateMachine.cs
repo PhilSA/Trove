@@ -98,19 +98,19 @@ public struct TemplateStateMachineGlobalStateUpdateData
 public struct TemplateStateMachineEntityStateUpdateData
 {
     public Entity Entity;
-    public DynamicBuffer<StateData> StateDatasBuffer;
+    public DynamicBuffer<StateVersion> StateVersionsBuffer;
     public DynamicBuffer<PolyTemplateStateMachineState> StatesBuffer;
     public RefRW<LocalTransform> LocalTransform;
     // TODO: add/change entity data
     
     public TemplateStateMachineEntityStateUpdateData(
         Entity entity,
-        DynamicBuffer<StateData> stateDatasBuffer, 
+        DynamicBuffer<StateVersion> stateVersionsBuffer, 
         DynamicBuffer<PolyTemplateStateMachineState> statesBuffer,
         RefRW<LocalTransform> localTransform)
     {
         Entity = entity;
-        StateDatasBuffer = stateDatasBuffer;
+        StateVersionsBuffer = stateVersionsBuffer;
         StatesBuffer = statesBuffer;
         LocalTransform = localTransform;
     }
@@ -149,7 +149,7 @@ public partial struct ExampleTemplateStateMachineStateMachineSystem : ISystem
             Entity entity, 
             ref StateMachine stateMachine, 
             RefRW<LocalTransform> localTransform,
-            ref DynamicBuffer<StateData> stateVersionsBuffer, 
+            ref DynamicBuffer<StateVersion> stateVersionsBuffer, 
             ref DynamicBuffer<PolyTemplateStateMachineState> statesBuffer)
         {
             // Here we build the per-entity data
@@ -185,7 +185,7 @@ class TemplateStateMachineStateMachineAuthoring : MonoBehaviour
                     this,
                     entity,
                     out StateMachine stateMachine,
-                    out DynamicBuffer<StateData> stateVersionsBuffer,
+                    out DynamicBuffer<StateVersion> stateVersionsBuffer,
                     out DynamicBuffer<PolyTemplateStateMachineState> statesBuffer);
 
             // Initialize the state machine buffers with an initial capacity
