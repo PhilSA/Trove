@@ -1,7 +1,14 @@
 {
     "name": "com.trove.statemachines",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:cbffd4888132fd547a89ec624c7c1f1d",
+        "GUID:d82f331b33ee2ba4683e51f2a686ee4d",
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:734d92eba21c94caba915361bd5ac177",
+        "GUID:8819f35a0fc84499b990e90a4ca1911f"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,

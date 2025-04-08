@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &890191723
+--- !u!1 &84630970
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,40 +127,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 890191725}
-  - component: {fileID: 890191724}
+  - component: {fileID: 84630972}
+  - component: {fileID: 84630971}
   m_Layer: 0
-  m_Name: StatTester
+  m_Name: Tester
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &890191724
+--- !u!114 &84630971
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 890191723}
+  m_GameObject: {fileID: 84630970}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ba202f3ac25ff084cb907322b71ff550, type: 3}
+  m_Script: {fileID: 11500000, guid: aa534802ad56c1f4598168b7c779171e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  StatOwnerPrefab: {fileID: 8018081520556862554, guid: 7edf6eb4b9c94ff4ab2aa466033024e5,
-    type: 3}
-  ChangingAttributesCount: 100000
-  ChangingAttributesChildDepth: 0
-  UnchangingAttributesCount: 0
-  MakeLocalStatsDependOnEachOther: 1
---- !u!4 &890191725
+  Prefab: {fileID: 4763495753770592837, guid: bb1cfb287bc5297448a9b96c53908aaf, type: 3}
+  SpawnCount: 100000
+  SpawnSpacing: 2
+--- !u!4 &84630972
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 890191723}
+  m_GameObject: {fileID: 84630970}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -173,4 +170,4 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 890191725}
+  - {fileID: 84630972}

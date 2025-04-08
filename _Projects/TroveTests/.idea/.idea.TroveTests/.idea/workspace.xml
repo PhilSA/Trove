@@ -6,17 +6,17 @@
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/PolymorphicStructs/PolymorphicStructTester.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/PolymorphicStructs/PolymorphicStructTester.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Scenes/StatsTest/New Sub Scene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/Scenes/StatsTest/New Sub Scene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/manifest.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/packages-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/packages-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/PolymorphicObjectUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/PolymorphicObjectUtilities.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Documentation~/tutorial.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Documentation~/tutorial.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Runtime/PolymorphicStructsSourceGenerator.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Runtime/PolymorphicStructsSourceGenerator.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/PolymorphicStructsGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/PolymorphicStructsGenerator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/bin/Release/netstandard2.0/PolymorphicStructsSourceGenerator.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/bin/Release/netstandard2.0/PolymorphicStructsSourceGenerator.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests/PolymorphicStructsTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Tests/PolymorphicStructsTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Documentation~/how-it-works-advanced.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Documentation~/how-it-works-advanced.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/CHANGELOG.md.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/CHANGELOG.md.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/LICENSE.md.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/LICENSE.md.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/README.md.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/README.md.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/com.trove.statemachines.asmdef" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/com.trove.statemachines.asmdef" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/package.json.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/package.json.meta" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,10 +30,14 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/MyStateMachineAuthoring.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPoly.generated.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPolyMerged.generated.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6AC28F3E17FE520B93434DC8/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyExampleA.generated.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6AC28F3E17FE520B93434DC8/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyExampleB.generated.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6AC28F3E17FE520B93434DC8/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyZoinkState.generated.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/7a/798d7189/AtomicSafetyHandle.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
@@ -56,6 +60,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;CodeLensConfigurable&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -115,7 +120,8 @@
       <workItem from="1743991265850" duration="6339000" />
       <workItem from="1744002693775" duration="1087000" />
       <workItem from="1744031957652" duration="10818000" />
-      <workItem from="1744071659283" duration="832000" />
+      <workItem from="1744071659283" duration="10862000" />
+      <workItem from="1744082726166" duration="6262000" />
     </task>
     <servers />
   </component>
