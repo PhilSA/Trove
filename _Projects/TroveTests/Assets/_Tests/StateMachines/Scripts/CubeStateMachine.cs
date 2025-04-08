@@ -118,7 +118,7 @@ public struct StateB : ICubeState
         }
         
         // Update the sub-state machine
-        if (StateMachine.CurrentStateHandle == default)
+        if (StateMachine.CurrentStateHandle == StateHandle.Null)
         {
             StateMachineUtilities.TryStateTransition(ref StateMachine, ref entityData.StateDatasBuffer,
                 ref entityData.StatesBuffer, ref globalData, ref entityData, new StateHandle(2, entityData.StateDatasBuffer[2].Version));
@@ -226,7 +226,7 @@ public partial struct ExampleZoinkStateMachineSystem : ISystem
                 statesBuffer);
 
             // Transition to initial state
-            if (stateMachine.CurrentStateHandle == default)
+            if (stateMachine.CurrentStateHandle == StateHandle.Null)
             {
                 StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StateDatasBuffer,
                     ref entityData.StatesBuffer, ref GlobalData, ref entityData, new StateHandle(0, stateVersionsBuffer[0].Version));
