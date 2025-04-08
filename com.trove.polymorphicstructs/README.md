@@ -11,4 +11,5 @@ They are essentially a way to assign different possible behaviours to an entity 
 
 * [When to use](./Documentation~/when-to-use.md)
 * [Tutorial](./Documentation~/tutorial.md)
-
+* [Polymorphic struct types](./Documentation~/poly-struct-types.md)
+* [Netcode](./Documentation~/netcode.md)

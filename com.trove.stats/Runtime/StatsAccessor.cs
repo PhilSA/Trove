@@ -87,10 +87,12 @@ namespace Trove.Stats
         public bool TrySetStatBaseValue(StatHandle statHandle, float baseValue, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefWithBufferUnsafe(statHandle, ref _statsLookup, out DynamicBuffer<Stat> statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 statRef.BaseValue = baseValue;
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -104,10 +106,12 @@ namespace Trove.Stats
         public bool TrySetStatBaseValue(StatHandle statHandle, float baseValue, ref DynamicBuffer<Stat> statsBuffer, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(statHandle, ref statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 statRef.BaseValue = baseValue;
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -118,10 +122,12 @@ namespace Trove.Stats
         public bool TrySetStatBaseValueInt(StatHandle statHandle, int baseValue, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefWithBufferUnsafe(statHandle, ref _statsLookup, out DynamicBuffer<Stat> statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 statRef.BaseValue = baseValue.AsFloat();
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -135,10 +141,12 @@ namespace Trove.Stats
         public bool TrySetStatBaseValueInt(StatHandle statHandle, int baseValue, ref DynamicBuffer<Stat> statsBuffer, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(statHandle, ref statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 statRef.BaseValue = baseValue.AsFloat();
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -149,10 +157,12 @@ namespace Trove.Stats
         public bool TryAddStatBaseValue(StatHandle statHandle, float baseValueAdd, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefWithBufferUnsafe(statHandle, ref _statsLookup, out DynamicBuffer<Stat> statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 statRef.BaseValue += baseValueAdd;
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -166,10 +176,12 @@ namespace Trove.Stats
         public bool TryAddStatBaseValue(StatHandle statHandle, float baseValueAdd, ref DynamicBuffer<Stat> statsBuffer, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(statHandle, ref statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 statRef.BaseValue += baseValueAdd;
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -180,12 +192,14 @@ namespace Trove.Stats
         public bool TryAddStatBaseValueInt(StatHandle statHandle, int baseValueAdd, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefWithBufferUnsafe(statHandle, ref _statsLookup, out DynamicBuffer<Stat> statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 int baseValueAsInt = statRef.BaseValue.AsInt();
                 baseValueAsInt += baseValueAdd;
                 statRef.BaseValue = baseValueAsInt.AsFloat();
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -199,12 +213,14 @@ namespace Trove.Stats
         public bool TryAddStatBaseValueInt(StatHandle statHandle, int baseValueAdd, ref DynamicBuffer<Stat> statsBuffer, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(statHandle, ref statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 int baseValueAsInt = statRef.BaseValue.AsInt();
                 baseValueAsInt += baseValueAdd;
                 statRef.BaseValue = baseValueAsInt.AsFloat();
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -215,10 +231,12 @@ namespace Trove.Stats
         public bool TryMultiplyStatBaseValue(StatHandle statHandle, float baseValueMul, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefWithBufferUnsafe(statHandle, ref _statsLookup, out DynamicBuffer<Stat> statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 statRef.BaseValue *= baseValueMul;
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -229,10 +247,12 @@ namespace Trove.Stats
         public bool TryMultiplyStatBaseValue(StatHandle statHandle, float baseValueMul, ref DynamicBuffer<Stat> statsBuffer, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(statHandle, ref statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 statRef.BaseValue *= baseValueMul;
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -243,10 +263,12 @@ namespace Trove.Stats
         public bool TryMultiplyStatBaseValueInt(StatHandle statHandle, float baseValueMul, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefWithBufferUnsafe(statHandle, ref _statsLookup, out DynamicBuffer<Stat> statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 statRef.BaseValue = ((float)statRef.BaseValue.AsInt() * baseValueMul);
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -257,10 +279,12 @@ namespace Trove.Stats
         public bool TryMultiplyStatBaseValueInt(StatHandle statHandle, float baseValueMul, ref DynamicBuffer<Stat> statsBuffer, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(statHandle, ref statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 statRef.BaseValue = ((float)statRef.BaseValue.AsInt() * baseValueMul);
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -271,13 +295,15 @@ namespace Trove.Stats
         public bool TryMultiplyStatBaseValueInt(StatHandle statHandle, int baseValueMul, int baseValueDiv, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefWithBufferUnsafe(statHandle, ref _statsLookup, out DynamicBuffer<Stat> statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 int baseValueAsInt = statRef.BaseValue.AsInt();
                 baseValueAsInt *= baseValueMul;
                 baseValueAsInt /= baseValueDiv;
                 statRef.BaseValue = baseValueAsInt.AsFloat();
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -288,13 +314,15 @@ namespace Trove.Stats
         public bool TryMultiplyStatBaseValueInt(StatHandle statHandle, int baseValueMul, int baseValueDiv, ref DynamicBuffer<Stat> statsBuffer, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             ref Stat statRef = ref StatsUtilities.GetStatRefUnsafe(statHandle, ref statsBuffer, out bool success, ref _nullStat);
-            if (success)
+            if (success &&
+                _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer) && 
+                _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
             {
                 int baseValueAsInt = statRef.BaseValue.AsInt();
                 baseValueAsInt *= baseValueMul;
                 baseValueAsInt /= baseValueDiv;
                 statRef.BaseValue = baseValueAsInt.AsFloat();
-                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statsWorldData);
+                UpdateStatRef(statHandle, ref statRef, ref statsBuffer, ref statModifiersBuffer, ref statObserversBuffer, ref statsWorldData);
                 return true;
             }
 
@@ -437,18 +465,18 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateStatRef(StatHandle statHandle, ref Stat initialStatRef, ref DynamicBuffer<Stat> initialStatsBuffer, ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
+        public void UpdateStatRef(
+            StatHandle statHandle, 
+            ref Stat initialStatRef, 
+            ref DynamicBuffer<Stat> initialStatsBuffer, 
+            ref DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> initialStatModifiersBuffer,
+            ref DynamicBuffer<StatObserver> initialStatObserversBuffer,
+            ref StatsWorldData<TStatModifier, TStatModifierStack> statsWorldData)
         {
             StatsReader statsReader = new StatsReader(in _statsLookup);
 
             statsWorldData._tmpGlobalUpdatedStatsList.Clear();
             statsWorldData._tmpSameEntityUpdatedStatsList.Clear();
-
-            bool success = _statModifiersLookup.TryGetBuffer(statHandle.Entity,
-                out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> initialStatModifiersBuffer);
-            Assert.IsTrue(success);
-            success = _statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> initialStatObserversBuffer);
-            Assert.IsTrue(success);
 
             // First update the current stat ref
             StatsUtilities.UpdateSingleStatCommon(

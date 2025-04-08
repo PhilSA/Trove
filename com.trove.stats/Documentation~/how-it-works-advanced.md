@@ -15,7 +15,7 @@
 * [Dynamic stat modifiers](#dynamic-stat-modifiers)
 * [Self-removing modifiers](#self-removing-modifiers)
 * [Complex modifiers stack](#complex-modifiers-stack)
-* [Stats that are only evaluared on-demand](#stats-that-are-only-evaluared-on-demand)
+* [On-demand stats update](#stats-that-are-only-evaluared-on-demand)
 
 
 ---
@@ -91,10 +91,8 @@ For example, let's say you want a stackable health modifier that is capped to 5 
 `StatsWorldData.SetStatModifiersStack()` can also be use to add native collections or any kind of blob reference to the stack, for whatever purposes you may find.
 
 
-## Stats that are only evaluared on-demand
+## On-demand stats update
 
-In certain cases, it can be useful for performance reasons to have certain stats that only recompute on-demand (meaning they don't automatically react to stat changes of dependent stats). This can be the case if a stat that needs to be read very rarely depends on another stat that changes very frequently.
+In certain cases, it can be useful -for performance reasons- to only update stats on-demand (meaning they don't automatically react to stat changes of dependent stats). This can be the case if a stat A depends on a stat B, and B changes every frame, but A only needs to be read once in a while. Instead of having stat B's update trigger an update to stat A every frame, we can choose to only update stat A when we need to read it.
 
-In order to do this, the modifiers we add to the stat must NOT register their observed stats in the modifier's `AddObservedStatsToList`. This will prevent reactive stat changes for the modifier's affected stat. Then when we do want to access the up-to-date value of this stat, we simply call `StatsAccessor.TryUpdateStat` before reading the value.
-
-Be careful with this approach though, because if other stats depend on this on-demand stat, these other stats will also only be recomputed when the on-demand stat is manually updated. 
+In order to do this, the modifiers we add to the stat must NOT register their observed stats in the modifier's `AddObservedStatsToList`. This will prevent reactive stat changes for the modifier's affected stat. Then when we do want to access the up-to-date value of this stat, we simply call `StatsAccessor.TryUpdateStat` or `StatsAccessor.UpdateStatRef` before reading the value.

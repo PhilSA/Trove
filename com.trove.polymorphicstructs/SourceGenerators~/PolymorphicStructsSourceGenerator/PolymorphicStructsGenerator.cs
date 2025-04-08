@@ -235,6 +235,8 @@ namespace PolymorphicStructsSourceGenerators
 
         public const string SizeOf_TypeId = "4";
 
+        public const char OutParamsSplitCharacter = ',';
+
         public static List<LogMessage> LogMessages = new List<LogMessage>();
         public static List<ISymbol> InterfaceMembers = new List<ISymbol>();
         public static List<ITypeSymbol> SymbolsToProcess = new List<ITypeSymbol>();
@@ -487,7 +489,7 @@ namespace PolymorphicStructsSourceGenerators
                                     }
                                     else
                                     {
-                                        methodModel.MethodOutParameterNames += $".{parameterSymbol.Name}";
+                                        methodModel.MethodOutParameterNames += $"{OutParamsSplitCharacter}{parameterSymbol.Name}";
                                     }
                                 }
 
@@ -600,23 +602,29 @@ namespace PolymorphicStructsSourceGenerators
 
                 CompiledStructsForInterfaceData compiledCodeData = CreateCompiledStructsForInterfaceData(source.Left[a], polyStructModels);
 
-                // Prevent generics
-                if (compiledCodeData.PolyInterfaceModel.IsGeneric)
-                {
-                    LogMessages.Add(new LogMessage
-                    {
-                        Type = LogMessage.MsgType.Error,
-                        Message = $"PolymorphicStructs error: generic polymorphic interfaces are not supported. (Interface {compiledCodeData.PolyInterfaceModel.TypeName})",
-                    });
-                }
-                ValidateStructs(compiledCodeData, LogMessages);
-
-                if (compiledCodeData.PolyStructModels.Count <= 0)
-                {
-                    continue;
-                }
+                ValidateCompiledDataForPolyInterface(compiledCodeData, LogMessages, out bool canContinue);
 
                 PolyInterfaceModel polyInterfaceModel = compiledCodeData.PolyInterfaceModel;
+
+                if (!canContinue || compiledCodeData.PolyStructModels.Count <= 0)
+                {
+                    // Output all errors
+                    FileWriter errorWriter = new FileWriter();
+                    errorWriter.WriteUsingsAndRemoveDuplicates(GetCommonUsings());
+                    errorWriter.WriteLine($"");
+                    errorWriter.WriteInNamespace(polyInterfaceModel.TargetStructModel.NamespaceName, () =>
+                    {
+                        errorWriter.WriteLine($"public unsafe partial struct {polyInterfaceModel.TargetStructModel.Name}");
+                        errorWriter.WriteInScope(() =>
+                        {
+                            WriteLogMessagesOutputter(errorWriter, LogMessages);
+                        });
+                    });
+                    SourceText errorSourceText = SourceText.From(errorWriter.FileContents, Encoding.UTF8);
+                    sourceProductionContext.AddSource($"{polyInterfaceModel.TargetStructModel.Name}{FileName_GeneratedSuffixAndFileType}", errorSourceText);
+
+                    continue;
+                }
 
                 FileWriter writer = new FileWriter();
 
@@ -703,30 +711,6 @@ namespace PolymorphicStructsSourceGenerators
                                         MergedFieldsData.SpecificFieldToMergedFieldMap.Add(specificFieldModel, matchingMergedFieldModel);
                                     }
                                 }
-
-                                if (memberSymbol.Kind == SymbolKind.Property && memberSymbol is IPropertySymbol propertySymbol)
-                                {
-                                    // Only allow properties that are part of the poly interface
-                                    bool foundMatchingPropertyInInterface = false;
-                                    for (int p = 0; p < polyInterfaceModel.InterfacePropertyModels.Count; p++)
-                                    {
-                                        PropertyModel propertyModel = polyInterfaceModel.InterfacePropertyModels[p];
-                                        if (propertySymbol.Name == propertyModel.Name)
-                                        {
-                                            foundMatchingPropertyInInterface = true;
-                                            break;
-                                        }
-                                    }
-
-                                    if (!foundMatchingPropertyInInterface)
-                                    {
-                                        LogMessages.Add(new LogMessage
-                                        {
-                                            Type = LogMessage.MsgType.Error,
-                                            Message = $"PolymorphicStructs error: for MergedFields polymorphic structs, properties are only supported if they are part of the polymorphic interface. Property {polyStructModel.StructModel.TypeName}.{propertySymbol.Name} will not work as expected.",
-                                        });
-                                    }
-                                }
                             }
                         }
 
@@ -776,92 +760,68 @@ namespace PolymorphicStructsSourceGenerators
                         writer.WriteLine($"");
 
                         // Properties
-                        for (int i = 0; i < polyInterfaceModel.InterfacePropertyModels.Count; i++)
+                        if (!polyInterfaceModel.IsMergedFieldsStruct)
                         {
-                            PropertyModel propertyModel = polyInterfaceModel.InterfacePropertyModels[i];
-
-                            writer.WriteLine($"public {propertyModel.TypeName} {propertyModel.Name}");
-                            writer.WriteInScope(() =>
+                            for (int i = 0; i < polyInterfaceModel.InterfacePropertyModels.Count; i++)
                             {
-                                if (propertyModel.HasGet)
+                                PropertyModel propertyModel = polyInterfaceModel.InterfacePropertyModels[i];
+
+                                writer.WriteLine($"public {propertyModel.TypeName} {propertyModel.Name}");
+                                writer.WriteInScope(() =>
                                 {
-                                    writer.WriteLine($"get");
-                                    writer.WriteInScope(() =>
+                                    if (propertyModel.HasGet)
                                     {
-                                        // Switch over typeId
-                                        writer.WriteLine($"switch (CurrentTypeId)");
+                                        writer.WriteLine($"get");
                                         writer.WriteInScope(() =>
                                         {
-                                            for (int t = 0; t < compiledCodeData.PolyStructModels.Count; t++)
+                                            // Switch over typeId
+                                            writer.WriteLine($"switch (CurrentTypeId)");
+                                            writer.WriteInScope(() =>
                                             {
-                                                PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[t];
-
-                                                writer.WriteLine($"case {polyStructModel.TypeId}:");
-                                                writer.WriteInScope(() =>
+                                                for (int t = 0; t < compiledCodeData.PolyStructModels.Count; t++)
                                                 {
-                                                    if (polyInterfaceModel.IsMergedFieldsStruct)
-                                                    {
-                                                        // Merged fields
-                                                        // cast merged struct to specific
-                                                        writer.WriteLine($"{polyStructModel.StructModel.TypeName} specificStruct = this;");
-                                                        // invoke property on specific
-                                                        writer.WriteLine($"{propertyModel.TypeName} result = specificStruct.{propertyModel.Name};");
-                                                        // cast back to merged
-                                                        writer.WriteLine($"this = specificStruct;");
-                                                        writer.WriteLine($"return result;");
-                                                    }
-                                                    else
+                                                    PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[t];
+
+                                                    writer.WriteLine($"case {polyStructModel.TypeId}:");
+                                                    writer.WriteInScope(() =>
                                                     {
                                                         // Union struct
                                                         writer.WriteLine($"return Field{t}.{propertyModel.Name};");
-                                                    }
-                                                });
-                                            }
-                                        });
+                                                    });
+                                                }
+                                            });
 
-                                        writer.WriteLine($"return default;");
-                                    });
-                                }
-                                if (propertyModel.HasSet)
-                                {
-                                    writer.WriteLine($"set");
-                                    writer.WriteInScope(() =>
+                                            writer.WriteLine($"return default;");
+                                        });
+                                    }
+                                    if (propertyModel.HasSet)
                                     {
-                                        // Switch over typeId
-                                        writer.WriteLine($"switch (CurrentTypeId)");
+                                        writer.WriteLine($"set");
                                         writer.WriteInScope(() =>
                                         {
-                                            for (int t = 0; t < compiledCodeData.PolyStructModels.Count; t++)
+                                            // Switch over typeId
+                                            writer.WriteLine($"switch (CurrentTypeId)");
+                                            writer.WriteInScope(() =>
                                             {
-                                                PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[t];
-
-                                                writer.WriteLine($"case {polyStructModel.TypeId}:");
-                                                writer.WriteInScope(() =>
+                                                for (int t = 0; t < compiledCodeData.PolyStructModels.Count; t++)
                                                 {
-                                                    if (polyInterfaceModel.IsMergedFieldsStruct)
-                                                    {
-                                                        // Merged fields
-                                                        // cast merged struct to specific
-                                                        writer.WriteLine($"{polyStructModel.StructModel.TypeName} specificStruct = this;");
-                                                        // invoke property on specific
-                                                        writer.WriteLine($"specificStruct.{propertyModel.Name} = value;");
-                                                        // cast back to merged
-                                                        writer.WriteLine($"this = specificStruct;");
-                                                    }
-                                                    else
+                                                    PolyStructModel polyStructModel = compiledCodeData.PolyStructModels[t];
+
+                                                    writer.WriteLine($"case {polyStructModel.TypeId}:");
+                                                    writer.WriteInScope(() =>
                                                     {
                                                         // Union struct
                                                         writer.WriteLine($"Field{t}.{propertyModel.Name} = value;");
-                                                    }
-                                                    writer.WriteLine($"break;");
-                                                });
-                                            }
+                                                        writer.WriteLine($"break;");
+                                                    });
+                                                }
+                                            });
                                         });
-                                    });
-                                }
-                            });
+                                    }
+                                });
 
-                            writer.WriteLine($"");
+                                writer.WriteLine($"");
+                            }
                         }
 
                         writer.WriteLine($"");
@@ -879,16 +839,6 @@ namespace PolymorphicStructsSourceGenerators
                                 {
                                     // Merged fields
                                     writer.WriteLine($"{polyInterfaceModel.TargetStructModel.TypeName} newPolyStruct = default;");
-
-                                    // set properties that can store a value
-                                    for (int p = 0; p < polyInterfaceModel.InterfacePropertyModels.Count; p++)
-                                    {
-                                        PropertyModel propertyModel = polyInterfaceModel.InterfacePropertyModels[p];
-                                        if (propertyModel.HasSet && propertyModel.HasGet)
-                                        {
-                                            writer.WriteLine($"newPolyStruct.{propertyModel.Name} = s.{propertyModel.Name};");
-                                        }
-                                    }
 
                                     // set fields
                                     writer.WriteLine($"newPolyStruct.CurrentTypeId = {polyStructModel.TypeId};");
@@ -927,16 +877,6 @@ namespace PolymorphicStructsSourceGenerators
                                 {
                                     // Merged fields
                                     writer.WriteLine($"{polyStructModel.StructModel.TypeName} newStruct = default;");
-
-                                    // set properties that can store a value
-                                    for (int p = 0; p < polyInterfaceModel.InterfacePropertyModels.Count; p++)
-                                    {
-                                        PropertyModel propertyModel = polyInterfaceModel.InterfacePropertyModels[p];
-                                        if (propertyModel.HasSet && propertyModel.HasGet)
-                                        {
-                                            writer.WriteLine($"newStruct.{propertyModel.Name} = s.{propertyModel.Name};");
-                                        }
-                                    }
 
                                     // set fields
                                     foreach (KeyValuePair<MergedFieldModel, Dictionary<int, SpecificFieldModel>> entry in MergedFieldsData.MergedFieldToSpecificFieldsMap)
@@ -1154,10 +1094,10 @@ namespace PolymorphicStructsSourceGenerators
                                 // Out params default
                                 if (!string.IsNullOrEmpty(methodModel.MethodOutParameterNames))
                                 {
-                                    string[] outParamNames = methodModel.MethodOutParameterNames.Split('.');
-                                    for (int o = 0; o < methodModel.MethodOutParameterNames.Length; o++)
+                                    string[] outParamNames = methodModel.MethodOutParameterNames.Split(OutParamsSplitCharacter);
+                                    for (int o = 0; o < outParamNames.Length; o++)
                                     {
-                                        writer.WriteLine($"{methodModel.MethodOutParameterNames[o]} = default;");
+                                        writer.WriteLine($"{outParamNames[o]} = default;");
                                     }
                                 }
 
@@ -1186,52 +1126,98 @@ namespace PolymorphicStructsSourceGenerators
             }
         }
 
-        private static void ValidateStructs(CompiledStructsForInterfaceData compiledData, List<LogMessage> logMessages)
+        private static void ValidateCompiledDataForPolyInterface(CompiledStructsForInterfaceData compiledData, List<LogMessage> logMessages, out bool canContinue)
         {
+            canContinue = true;
+
+            // Prevent properties in mergedFields interfaces
+            if (compiledData.PolyInterfaceModel.IsMergedFieldsStruct)
+            {
+                if (compiledData.PolyInterfaceModel.InterfacePropertyModels.Count > 0)
+                {
+                    LogMessages.Add(new LogMessage
+                    {
+                        Type = LogMessage.MsgType.Error,
+                        Message = $"PolymorphicStructs error: Properties are not supported in MergedFields polymorphic interfaces. (Interface {compiledData.PolyInterfaceModel.TypeName})",
+                    });
+                    canContinue = false;
+                }
+            }
+
+            // Prevent generics in interfaces
+            if (compiledData.PolyInterfaceModel.IsGeneric)
+            {
+                logMessages.Add(new LogMessage
+                {
+                    Type = LogMessage.MsgType.Error,
+                    Message = $"PolymorphicStructs error: generic polymorphic interfaces are not supported. (Interface {compiledData.PolyInterfaceModel.TypeName})",
+                });
+                canContinue = false;
+            }
+
             for (int i = compiledData.PolyStructModels.Count - 1; i >= 0; i--)
             {
-                PolyStructModel structModel = compiledData.PolyStructModels[i];
+                PolyStructModel polyStructModel = compiledData.PolyStructModels[i];
 
+                // Prevent entities and blobs
                 if (!compiledData.PolyInterfaceModel.AllowEntitiesAndBlobs)
                 {
                     SymbolsToProcess.Clear();
-                    SymbolsToProcess.Add(structModel.StructTypeSymbol);
-                    ProcessPreventingStructInvalidFieldOrPropertyTypes(SymbolsToProcess, logMessages);
+                    SymbolsToProcess.Add(polyStructModel.StructTypeSymbol);
+                    SymbolEqualityComparer symbolEqualityComparer = SymbolEqualityComparer.Default;
+                    for (int m = 0; m < SymbolsToProcess.Count; m++)
+                    {
+                        ITypeSymbol processedTypeSymbol = SymbolsToProcess[m];
+
+                        foreach (ISymbol memberSymbol in processedTypeSymbol.GetMembers())
+                        {
+                            if (memberSymbol.Kind == SymbolKind.Field &&
+                                memberSymbol is IFieldSymbol fieldSymbol &&
+                                !fieldSymbol.IsStatic &&
+                                !fieldSymbol.IsConst)
+                            {
+                                bool structIsValid = true;
+                                ProcessPreventingStructInvalidFieldOrPropertyTypes(false, fieldSymbol.Type, logMessages, ref structIsValid);
+                                if (structIsValid && !symbolEqualityComparer.Equals(fieldSymbol.Type, processedTypeSymbol))
+                                {
+                                    SymbolsToProcess.Add(fieldSymbol.Type);
+                                }
+
+                                if(!structIsValid)
+                                {
+                                    canContinue = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Prevent generics
-                if(((INamedTypeSymbol)structModel.StructTypeSymbol).IsGenericType)
+                if(((INamedTypeSymbol)polyStructModel.StructTypeSymbol).IsGenericType)
                 {
                     logMessages.Add(new LogMessage
                     {
                         Type = LogMessage.MsgType.Error,
-                        Message = $"PolymorphicStructs error: generic polymorphic structs are not supported. (Struct {structModel.StructModel.TypeName})",
+                        Message = $"PolymorphicStructs error: generic polymorphic structs are not supported. (Struct {polyStructModel.StructModel.TypeName})",
                     });
+                    canContinue = false;
                 }
-            }
-        }
 
-        private static void ProcessPreventingStructInvalidFieldOrPropertyTypes(
-            List<ITypeSymbol> symbolsToProcess,
-            List<LogMessage> logMessages)
-        {
-            SymbolEqualityComparer symbolEqualityComparer = SymbolEqualityComparer.Default;
-            for (int i = 0; i < symbolsToProcess.Count; i++)
-            {
-                ITypeSymbol processedTypeSymbol = symbolsToProcess[i];
-
-                foreach (ISymbol memberSymbol in processedTypeSymbol.GetMembers())
+                // Prevent properties in mergedFields structs
+                if (compiledData.PolyInterfaceModel.IsMergedFieldsStruct)
                 {
-                    if (memberSymbol.Kind == SymbolKind.Field && 
-                        memberSymbol is IFieldSymbol fieldSymbol &&
-                        !fieldSymbol.IsStatic &&
-                        !fieldSymbol.IsConst)
+                    foreach (ISymbol memberSymbol in polyStructModel.StructTypeSymbol.GetMembers())
                     {
-                        bool structIsValid = true;
-                        ProcessPreventingStructInvalidFieldOrPropertyTypes(false, fieldSymbol.Type, logMessages, ref structIsValid);
-                        if(structIsValid && !symbolEqualityComparer.Equals(fieldSymbol.Type, processedTypeSymbol))
+                        if (memberSymbol.Kind == SymbolKind.Property &&
+                            memberSymbol is IPropertySymbol propertySymbol)
                         {
-                            symbolsToProcess.Add(fieldSymbol.Type);
+                            LogMessages.Add(new LogMessage
+                            {
+                                Type = LogMessage.MsgType.Error,
+                                Message = $"PolymorphicStructs error: Properties are not supported in MergedFields polymorphic structs. (Property {polyStructModel.StructModel.TypeName}.{propertySymbol.Name})",
+                            });
+                            canContinue = false;
                         }
                     }
                 }

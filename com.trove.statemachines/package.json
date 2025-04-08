@@ -1,0 +1,16 @@
+{
+  "displayName": "Trove State Machines",
+  "description": "Trove State Machines provides templates for state machines in DOTS",
+  "dependencies": {
+    "com.unity.mathematics": "1.3.2",
+    "com.unity.collections": "2.5.3",
+    "com.unity.entities": "1.3.10"
+  },
+  "name": "com.trove.statemachines",
+  "author": {
+    "name": "Philippe St-Amand"
+  },
+  "unity": "6000.1",
+  "unityRelease": "0f1",
+  "version": "0.1.0"
+}

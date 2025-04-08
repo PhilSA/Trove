@@ -6,319 +6,61 @@ using Unity.Mathematics;
 using Trove;
 using Unity.Collections.LowLevel.Unsafe;
 
+public partial struct PolyExampleA { }
+public partial struct PolyExampleB { }
+
 
 [PolymorphicStructInterface]
-public interface IMyTestPoly
+public interface IExampleA
 {
-    public void DoSomething1A();
+    public void DoSomething(int p1);
 }
 
 [PolymorphicStruct]
-public struct MyTestPolyA : IMyTestPoly
+public struct ExampleA1 : IExampleA
 {
     public int A;
-
-    public void DoSomething1A()
-    {
-    }
+    public NativeList<float3> B;
+    
+    public void DoSomething(int p1)
+    { }
 }
 
-public struct GeneratedViewer
+[PolymorphicStruct]
+public struct ExampleA2 : IExampleA
 {
-    private PolyMyTestPoly fdsfds;
-    private PolyMyOutOfNamespacePolyInterface ASDsad;
-    private PolyTestMergedFieldsPolyInterface1 asfafas1;
-    private PolyTestMergedFieldsPolyInterface2 asfafas2;
-
-    public void Test()
-    {
-    }
+    public int A;
+    public int B;
+    public float3 C;
+    
+    public void DoSomething(int p1)
+    { }
 }
 
 [IsMergedFieldsPolymorphicStruct]
 [PolymorphicStructInterface]
-public interface ITestMergedFieldsPolyInterface1
+public interface IExampleB
 {
-    public void DoSomething(int a, out float b, int c);
+    public void DoSomething(int p1);
 }
 
 [PolymorphicStruct]
-public struct MyIITestMergedFieldsPolyStruct1A : ITestMergedFieldsPolyInterface1
+public struct ExampleB1 : IExampleB
 {
-    public int ValueA;
-    public float ValueB;
-    public float3 ValueC;
-
-    public void DoSomething(int a, out float b, int c)
-    {
-        b = default;
-    }
+    public int A;
+    public NativeList<float3> B;
+    
+    public void DoSomething(int p1)
+    { }
 }
 
 [PolymorphicStruct]
-public struct MyIITestMergedFieldsPolyStruct1B : ITestMergedFieldsPolyInterface1
+public struct ExampleB2 : IExampleB
 {
-    public Entity EntityA;
-    public int ValueA;
-    public int ValueB;
-    public float3 ValueC;
-
-    public void DoSomething(int a, out float b, int c)
-    {
-        b = default;
-    }
+    public int A;
+    public int B;
+    public float3 C;
+    
+    public void DoSomething(int p1)
+    { }
 }
-
-[IsMergedFieldsPolymorphicStruct]
-[PolymorphicStructInterface]
-public interface ITestMergedFieldsPolyInterface2
-{
-    public Entity SomeProp { get; set; }
-    public void DoSomething(int a);
-}
-
-[PolymorphicStruct]
-public struct MyIITestMergedFieldsPolyStruct2A : ITestMergedFieldsPolyInterface2
-{
-    public int ValueA;
-    public float3 ValueB;
-    public float3 ValueC;
-
-    public Entity SomeProp { get; set; }
-
-    public void DoSomething(int a)
-    {
-    }
-}
-
-[PolymorphicStruct]
-public struct MyIITestMergedFieldsPolyStruct2B : ITestMergedFieldsPolyInterface2
-{
-    public Entity EntityA;
-    public int ValueA;
-    public int ValueB;
-    public float3 ValueC;
-
-    public Entity SomeProp { get; set; }
-
-    public void DoSomething(int a)
-    {
-    }
-}
-
-// public struct TestNestedThing
-// {
-//     public Entity A;
-//     public BlobString B;
-//     public BlobArray<int> C;
-//     public BlobPtr<Entity> D;
-//     public BlobAssetReference<Collider> E;
-// }
-
-
-[PolymorphicStructInterface]
-public interface IMyOutOfNamespacePolyInterface
-{
-    public float DoSomething(int a);
-}
-
-[PolymorphicStruct]
-public struct MyOutOfNamespaceStructA : IMyOutOfNamespacePolyInterface
-{
-    public float Value;
-
-    public float DoSomething(int a)
-    {
-        return default;
-    }
-}
-
-// [PolymorphicStruct]
-// public struct MyOutOfNamespaceStructB : IMyOutOfNamespacePolyInterface
-// {
-//     public float3 Value;
-
-//     public void DoSomething(int a)
-//     {
-//     }
-// }
-
-// namespace TestNamespaceA
-// {
-//     [PolymorphicStructInterface]
-//     public interface IMyOutOfNamespacePolyInterface
-//     {
-//         public void DoSomething(int a);
-//     }
-//
-//     [PolymorphicStruct]
-//     public struct MyOutOfNamespaceStructA : IMyOutOfNamespacePolyInterface
-//     {
-//         public int Value;
-//
-//         public void DoSomething(int a)
-//         {
-//         }
-//     }
-// }
-
-
-// namespace ExampleParentNamespace.ParentSomething
-// {
-//     namespace ExampleNamespace.Something
-//     {
-//         public struct TestType
-//         {
-//             public float2 Val;
-//         }
-
-//         public interface ITestParentInterface
-//         {
-//             public void DoParentInterfaceThing(ref float3 a);
-//         }
-
-//         [AllowEntitiesAndBlobsInPolymorphicStruct]
-//         [PolymorphicStructInterface]
-//         public interface IMyPolyInterfaceA : ITestParentInterface
-//         {
-//             public int PropA { get; set; }
-//             public int PropB { set; }
-//             public int PropC { get; }
-
-//             public void DoSomething(int a);
-
-//             public TGenA DoSomething2<TGenA, TGen2>(NativeList<TGenA> a, TGen2 b)
-//                 where TGenA : unmanaged, IBufferElementData
-//                 where TGen2 : unmanaged, IComponentData;
-//         }
-
-//         [PolymorphicStructInterface]
-//         public interface IMyPolyInterfaceB
-//         {
-//             public void DoSomethingA(TestType a);
-//             public void DoSomethingB(int a, ref NativeList<float3> b);
-//         }
-
-//         [PolymorphicStruct]
-//         public struct MyStructA : IMyPolyInterfaceA, IMyPolyInterfaceB
-//         {
-//             public int Value;
-
-//             public int PropA { get; set; }
-//             public int PropB { get; set; }
-//             public int PropC { get; }
-
-//             public void DoSomething(int a)
-//             {
-//             }
-
-//             public TGenA DoSomething2<TGenA, TGen2>(NativeList<TGenA> a, TGen2 b)
-//                 where TGenA : unmanaged, IBufferElementData where TGen2 : unmanaged, IComponentData
-//             {
-//                 return a[0];
-//             }
-
-//             public void DoSomethingA(TestType a)
-//             {
-//             }
-
-//             public void DoSomethingB(int a, ref NativeList<float3> b)
-//             {
-//             }
-
-//             public void DoParentInterfaceThing(ref float3 a)
-//             {
-//             }
-//         }
-
-//         [PolymorphicStruct]
-//         public struct MyStructB : IMyPolyInterfaceA
-//         {
-//             public int Value;
-//             public TestNestedThing Test;
-
-//             public int PropA { get; set; }
-//             public int PropB { get; set; }
-//             public int PropC { get; }
-
-//             public void DoSomething(int a)
-//             {
-//             }
-
-//             public TGenA DoSomething2<TGenA, TGen2>(NativeList<TGenA> a, TGen2 b)
-//                 where TGenA : unmanaged, IBufferElementData where TGen2 : unmanaged, IComponentData
-//             {
-//                 return a[0];
-//             }
-
-//             public void DoParentInterfaceThing(ref float3 a)
-//             {
-//             }
-//         }
-
-//         [PolymorphicStruct]
-//         public struct MyStructC : IMyPolyInterfaceA
-//         {
-//             public int Value;
-
-//             public int PropA { get; set; }
-//             public int PropB { get; set; }
-//             public int PropC { get; }
-
-//             public void DoSomething(int a)
-//             {
-//             }
-
-//             public TGenA DoSomething2<TGenA, TGen2>(NativeList<TGenA> a, TGen2 b)
-//                 where TGenA : unmanaged, IBufferElementData where TGen2 : unmanaged, IComponentData
-//             {
-//                 return a[0];
-//             }
-
-//             public void DoParentInterfaceThing(ref float3 a)
-//             {
-//             }
-//         }
-
-//         [PolymorphicStruct]
-//         public struct MyStructD : IMyPolyInterfaceB
-//         {
-//             public int Value;
-
-//             public void DoSomethingA(TestType a)
-//             {
-//             }
-
-//             public void DoSomethingB(int a, ref NativeList<float3> b)
-//             {
-
-//             }
-
-//             public TGenA DoSomething2<TGenA, TGen2>(NativeList<TGenA> a, TGen2 b)
-//                 where TGenA : unmanaged, IBufferElementData where TGen2 : unmanaged, IComponentData
-//             {
-//                 return a[0];
-//             }
-//         }
-
-//         [PolymorphicStruct]
-//         public struct MyStructE : IMyPolyInterfaceB
-//         {
-//             public int Value;
-
-//             public void DoSomethingA(TestType a)
-//             {
-//             }
-
-//             public void DoSomethingB(int a, ref NativeList<float3> b)
-//             {
-//             }
-
-//             public TGenA DoSomething2<TGenA, TGen2>(NativeList<TGenA> a, TGen2 b)
-//                 where TGenA : unmanaged, IBufferElementData where TGen2 : unmanaged, IComponentData
-//             {
-//                 return a[0];
-//             }
-//         }
-//     }
-// }
