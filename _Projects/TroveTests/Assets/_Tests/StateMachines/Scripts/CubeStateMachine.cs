@@ -4,8 +4,6 @@ using Trove.PolymorphicStructs;
 using Trove.Statemachines;
 using Unity.Mathematics;
 using Unity.Transforms;
-using Unity.VisualScripting;
-using StateMachine = Trove.Statemachines.StateMachine;
 
 public partial struct PolyCubeState : IState<CubeGlobalStateUpdateData, CubeEntityStateUpdateData>, IBufferElementData
 { }  
@@ -45,7 +43,7 @@ public struct StateTransitionTimer
 } 
 
 [PolymorphicStruct] 
-public struct StateA : ICubeState
+public struct CubeStateA : ICubeState
 {
     public StateTransitionTimer TransitionTimer;
     public StateHandle NextState;
@@ -83,7 +81,7 @@ public struct StateA : ICubeState
 }
 
 [PolymorphicStruct]
-public struct StateB : ICubeState 
+public struct CubeStateB : ICubeState 
 {
     public StateTransitionTimer TransitionTimer;
     public StateHandle NextState;
@@ -118,18 +116,12 @@ public struct StateB : ICubeState
         }
         
         // Update the sub-state machine
-        if (StateMachine.CurrentStateHandle == StateHandle.Null)
-        {
-            StateMachineUtilities.TryStateTransition(ref StateMachine, ref entityData.StateDatasBuffer,
-                ref entityData.StatesBuffer, ref globalData, ref entityData, new StateHandle(2, entityData.StateDatasBuffer[2].Version));
-        }
-            
         StateMachineUtilities.Update(ref StateMachine, ref entityData.StateDatasBuffer, ref entityData.StatesBuffer, ref globalData, ref entityData);
     }
 }
 
 [PolymorphicStruct]
-public struct StateC : ICubeState 
+public struct CubeStateC : ICubeState 
 {
     public StateTransitionTimer TransitionTimer;
     public StateHandle NextState;
@@ -190,7 +182,7 @@ public struct CubeEntityStateUpdateData
 }
 
 [BurstCompile]
-public partial struct ExampleZoinkStateMachineSystem : ISystem
+public partial struct ExampleCubeStateMachineSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -201,14 +193,14 @@ public partial struct ExampleZoinkStateMachineSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        state.Dependency = new ZoinkStateMachineUpdateJob
+        state.Dependency = new CubeStateMachineUpdateJob
         {
             GlobalData = new CubeGlobalStateUpdateData(SystemAPI.Time.DeltaTime), 
         }.ScheduleParallel(state.Dependency); 
     }
     
     [BurstCompile]
-    public partial struct ZoinkStateMachineUpdateJob : IJobEntity
+    public partial struct CubeStateMachineUpdateJob : IJobEntity
     {
         public CubeGlobalStateUpdateData GlobalData;
         
@@ -224,13 +216,6 @@ public partial struct ExampleZoinkStateMachineSystem : ISystem
                 localTransformRef,
                 stateVersionsBuffer,
                 statesBuffer);
-
-            // Transition to initial state
-            if (stateMachine.CurrentStateHandle == StateHandle.Null)
-            {
-                StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StateDatasBuffer,
-                    ref entityData.StatesBuffer, ref GlobalData, ref entityData, new StateHandle(0, stateVersionsBuffer[0].Version));
-            }
             
             StateMachineUtilities.Update(ref stateMachine, ref stateVersionsBuffer, ref statesBuffer, ref GlobalData, ref entityData);
         }

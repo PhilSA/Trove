@@ -107,7 +107,22 @@ namespace Trove.Statemachines
             where TEntityStateUpdateData : unmanaged
         {
             TState nullState = default;
-            
+
+            // State machine initialization
+            if (stateMachine.HasInitialized == 0)
+            {
+                // Transition to initial state
+                if (stateMachine.CurrentStateHandle == StateHandle.Null &&
+                    stateMachine.InitialState != StateHandle.Null)
+                {
+                    TryStateTransition(ref stateMachine, ref stateDatasBuffer, ref statesBuffer,
+                        ref globalStateUpdateData,
+                        ref entityStateUpdateData, stateMachine.InitialState);
+                }
+
+                stateMachine.HasInitialized = 1;
+            }
+
             ref TState currentState = ref TryGetStateRef<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
                 ref stateDatasBuffer, ref statesBuffer, stateMachine.CurrentStateHandle, out bool success, ref nullState);
             if (success)

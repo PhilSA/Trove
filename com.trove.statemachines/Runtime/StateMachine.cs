@@ -19,7 +19,9 @@ namespace Trove.Statemachines
     
     public struct StateMachine : IComponentData
     {
+        public StateHandle InitialState;
         public StateHandle CurrentStateHandle;
+        public byte HasInitialized;
     }
     
     [InternalBufferCapacity(0)]
@@ -38,7 +40,7 @@ namespace Trove.Statemachines
         public int Index;
         public int Version;
 
-        public static StateHandle Null = default;
+        public static readonly StateHandle Null = default;
         
         public StateHandle(int index, int version)
         {

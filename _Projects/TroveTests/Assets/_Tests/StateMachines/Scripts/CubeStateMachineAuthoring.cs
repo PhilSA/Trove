@@ -65,7 +65,7 @@ class CubeStateMachineAuthoringBaker : Baker<CubeStateMachineAuthoring>
             ref stateVersionsBuffer,
             ref statesBuffer,
             stateAHandle,
-            new StateA
+            new CubeStateA
             {
                 NextState = stateBHandle,
                 TransitionTimer = new StateTransitionTimer(1f),
@@ -76,19 +76,22 @@ class CubeStateMachineAuthoringBaker : Baker<CubeStateMachineAuthoring>
             ref stateVersionsBuffer,
             ref statesBuffer,
             stateBHandle,
-            new StateB
+            new CubeStateB
             {
                 NextState = stateAHandle,
                 TransitionTimer = new StateTransitionTimer(0.7f),
                 RotationSpeed = authoring.RotSpeed,
-                StateMachine = new StateMachine(),
+                StateMachine = new StateMachine
+                {
+                    InitialState = stateC1Handle,
+                },
             });
 
         StateMachineUtilities.TrySetState<PolyCubeState, CubeGlobalStateUpdateData, CubeEntityStateUpdateData>(
             ref stateVersionsBuffer,
             ref statesBuffer,
             stateC1Handle,
-            new StateC
+            new CubeStateC
             {
                 NextState = stateC2Handle,
                 TransitionTimer = new StateTransitionTimer(0.3f),
@@ -99,7 +102,7 @@ class CubeStateMachineAuthoringBaker : Baker<CubeStateMachineAuthoring>
             ref stateVersionsBuffer,
             ref statesBuffer,
             stateC2Handle,
-            new StateC
+            new CubeStateC
             {
                 NextState = stateC3Handle,
                 TransitionTimer = new StateTransitionTimer(0.3f),
@@ -110,12 +113,14 @@ class CubeStateMachineAuthoringBaker : Baker<CubeStateMachineAuthoring>
             ref stateVersionsBuffer,
             ref statesBuffer,
             stateC3Handle,
-            new StateC
+            new CubeStateC
             {
                 NextState = stateC1Handle,
                 TransitionTimer = new StateTransitionTimer(0.3f),
                 Scale = authoring.Scale3,
             });
+        
+        stateMachine.InitialState = stateAHandle;
         
         SetComponent(entity, stateMachine);
     }
