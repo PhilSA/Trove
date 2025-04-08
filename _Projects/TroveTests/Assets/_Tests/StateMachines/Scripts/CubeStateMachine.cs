@@ -43,7 +43,7 @@ public struct StateTransitionTimer
 } 
 
 [PolymorphicStruct] 
-public struct CubeStateA : ICubeState
+public struct CubeStatePosition : ICubeState
 {
     public StateTransitionTimer TransitionTimer;
     public StateHandle NextState;
@@ -81,7 +81,7 @@ public struct CubeStateA : ICubeState
 }
 
 [PolymorphicStruct]
-public struct CubeStateB : ICubeState 
+public struct CubeStateRotation : ICubeState 
 {
     public StateTransitionTimer TransitionTimer;
     public StateHandle NextState;
@@ -121,7 +121,7 @@ public struct CubeStateB : ICubeState
 }
 
 [PolymorphicStruct]
-public struct CubeStateC : ICubeState 
+public struct CubeStateScale : ICubeState 
 {
     public StateTransitionTimer TransitionTimer;
     public StateHandle NextState;

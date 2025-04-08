@@ -65,7 +65,7 @@ class CubeStateMachineAuthoringBaker : Baker<CubeStateMachineAuthoring>
             ref stateVersionsBuffer,
             ref statesBuffer,
             stateAHandle,
-            new CubeStateA
+            new CubeStatePosition
             {
                 NextState = stateBHandle,
                 TransitionTimer = new StateTransitionTimer(1f),
@@ -76,7 +76,7 @@ class CubeStateMachineAuthoringBaker : Baker<CubeStateMachineAuthoring>
             ref stateVersionsBuffer,
             ref statesBuffer,
             stateBHandle,
-            new CubeStateB
+            new CubeStateRotation
             {
                 NextState = stateAHandle,
                 TransitionTimer = new StateTransitionTimer(0.7f),
@@ -91,7 +91,7 @@ class CubeStateMachineAuthoringBaker : Baker<CubeStateMachineAuthoring>
             ref stateVersionsBuffer,
             ref statesBuffer,
             stateC1Handle,
-            new CubeStateC
+            new CubeStateScale
             {
                 NextState = stateC2Handle,
                 TransitionTimer = new StateTransitionTimer(0.3f),
@@ -102,7 +102,7 @@ class CubeStateMachineAuthoringBaker : Baker<CubeStateMachineAuthoring>
             ref stateVersionsBuffer,
             ref statesBuffer,
             stateC2Handle,
-            new CubeStateC
+            new CubeStateScale
             {
                 NextState = stateC3Handle,
                 TransitionTimer = new StateTransitionTimer(0.3f),
@@ -113,7 +113,7 @@ class CubeStateMachineAuthoringBaker : Baker<CubeStateMachineAuthoring>
             ref stateVersionsBuffer,
             ref statesBuffer,
             stateC3Handle,
-            new CubeStateC
+            new CubeStateScale
             {
                 NextState = stateC1Handle,
                 TransitionTimer = new StateTransitionTimer(0.3f),
