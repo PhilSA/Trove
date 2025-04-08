@@ -101,3 +101,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PosOffset: 1
   RotSpeed: 3
+  Scale1: 0.5
+  Scale2: 0.75
+  Scale3: 1

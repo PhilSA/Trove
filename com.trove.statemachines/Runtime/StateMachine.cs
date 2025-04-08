@@ -12,9 +12,9 @@ namespace Trove.Statemachines
         where TGlobalStateUpdateData : unmanaged
         where TEntityStateUpdateData : unmanaged
     {
-        public void OnStateEnter(ref TGlobalStateUpdateData globalData, ref TEntityStateUpdateData entityData);
-        public void OnStateExit(ref TGlobalStateUpdateData globalData, ref TEntityStateUpdateData entityData);
-        public void Update(ref TGlobalStateUpdateData globalData, ref TEntityStateUpdateData entityData);
+        public void OnStateEnter(ref StateMachine stateMachine, ref TGlobalStateUpdateData globalData, ref TEntityStateUpdateData entityData);
+        public void OnStateExit(ref StateMachine stateMachine, ref TGlobalStateUpdateData globalData, ref TEntityStateUpdateData entityData);
+        public void Update(ref StateMachine stateMachine, ref TGlobalStateUpdateData globalData, ref TEntityStateUpdateData entityData);
     }
     
     public struct StateMachine : IComponentData
@@ -23,7 +23,7 @@ namespace Trove.Statemachines
     }
     
     [InternalBufferCapacity(0)]
-    public struct StateVersion : IBufferElementData
+    public struct StateData : IBufferElementData
     {
         public int Version;
 
@@ -37,6 +37,8 @@ namespace Trove.Statemachines
     {
         public int Index;
         public int Version;
+
+        public static StateHandle Null = default;
         
         public StateHandle(int index, int version)
         {
