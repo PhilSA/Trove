@@ -21,9 +21,6 @@ namespace Trove.Statemachines
     {
         public StateHandle InitialState;
         public StateHandle CurrentStateHandle;
-
-        public MultiLinkedListPool ChildStates;
-        
         public byte HasInitialized;
     }
     

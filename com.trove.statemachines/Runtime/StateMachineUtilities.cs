@@ -68,7 +68,6 @@ namespace Trove.Statemachines
             where TEntityStateUpdateData : unmanaged
         {
             stateMachine.CurrentStateHandle = default;
-            stateMachine.ChildStates = MultiLinkedListPool.Create();
             Pool.Init(ref statesBuffer, statesInitialCapacity);
         }
         
