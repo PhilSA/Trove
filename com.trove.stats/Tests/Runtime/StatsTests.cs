@@ -281,12 +281,12 @@ namespace Trove.Stats.Tests
         {
             bool success = true;
             success &= StatsUtilities.TryGetStat(statHandle, in statsAccessor._statsLookup, out stat);
-            success &= statsAccessor.TryCalculateStatModifiersCount(statHandle, out modifiersCount);
-            success &= statsAccessor.TryCalculateObserversCount(statHandle, out observersCount);
+            success &= statsAccessor.TryGetStatModifiersCount(statHandle, out modifiersCount);
+            success &= statsAccessor.TryGetObserversCount(statHandle, out observersCount);
             return success;
         }
 
-        private void AssertBufferLengths(Entity entity, int statsLength, int modifiersLength, int observersLength)
+        private void AssertBufferValidElementLengths(Entity entity, int statsLength, int modifiersLength, int observersLength)
         {
             if (EntityManager.HasBuffer<Stat>(entity))
             {
@@ -299,7 +299,17 @@ namespace Trove.Stats.Tests
 
             if (EntityManager.HasBuffer<StatModifier<StatsTestsStatModifier, StatsTestsStatModifier.Stack>>(entity))
             {
-                Assert.AreEqual(modifiersLength, EntityManager.GetBuffer<StatModifier<StatsTestsStatModifier, StatsTestsStatModifier.Stack>>(entity).Length);
+                DynamicBuffer<StatModifier<StatsTestsStatModifier, StatsTestsStatModifier.Stack>> buffer =
+                    EntityManager.GetBuffer<StatModifier<StatsTestsStatModifier, StatsTestsStatModifier.Stack>>(entity);
+                int validElementsLength = 0;
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    if (buffer[i].IsCreated == 1)
+                    {
+                        validElementsLength++;
+                    }
+                }
+                Assert.AreEqual(modifiersLength, validElementsLength);
             }
             else
             {
@@ -308,7 +318,16 @@ namespace Trove.Stats.Tests
 
             if (EntityManager.HasBuffer<StatObserver>(entity))
             {
-                Assert.AreEqual(observersLength, EntityManager.GetBuffer<StatObserver>(entity).Length);
+                DynamicBuffer<StatObserver> buffer = EntityManager.GetBuffer<StatObserver>(entity);
+                int validElementsLength = 0;
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    if (buffer[i].IsCreated == 1)
+                    {
+                        validElementsLength++;
+                    }
+                }
+                Assert.AreEqual(observersLength, validElementsLength);
             }
             else
             {
@@ -335,7 +354,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1A.Value.IsRoughlyEqual(10f));
             Assert.AreEqual(0, stat1AModifiersCount);
             Assert.AreEqual(0, stat1AObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
 
             success = statsAccessor.TrySetStatBaseValue(statHandle1A, 2f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -345,7 +364,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1A.Value.IsRoughlyEqual(2f));
             Assert.AreEqual(0, stat1AModifiersCount);
             Assert.AreEqual(0, stat1AObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
 
             success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -355,7 +374,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1A.Value.IsRoughlyEqual(3f));
             Assert.AreEqual(0, stat1AModifiersCount);
             Assert.AreEqual(0, stat1AObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
 
             success = statsAccessor.TryMultiplyStatBaseValue(statHandle1A, 2f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -365,7 +384,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1A.Value.IsRoughlyEqual(6f));
             Assert.AreEqual(0, stat1AModifiersCount);
             Assert.AreEqual(0, stat1AObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
 
             success = statsAccessor.TryMultiplyStatBaseValue(statHandle1A, -2f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -375,7 +394,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1A.Value.IsRoughlyEqual(-12f));
             Assert.AreEqual(0, stat1AModifiersCount);
             Assert.AreEqual(0, stat1AObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
 
             success = statsAccessor.TryAddStatBaseValue(statHandle1A, -4f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -385,7 +404,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1A.Value.IsRoughlyEqual(-16f));
             Assert.AreEqual(0, stat1AModifiersCount);
             Assert.AreEqual(0, stat1AObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
             
             statsWorldStorage.Dispose();
         }
@@ -420,7 +439,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1B.Value.IsRoughlyEqual(10f));
             Assert.AreEqual(0, stat1BModifiersCount);
             Assert.AreEqual(0, stat1BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
 
             // -------------------------------------------------
             // Add modifiers
@@ -452,7 +471,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1B.Value.IsRoughlyEqual(12f));
             Assert.AreEqual(1, stat1BModifiersCount);
             Assert.AreEqual(0, stat1BObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 0);
+            AssertBufferValidElementLengths(entity1, 3, 1, 0);
 
             success = statsAccessor.TryAddStatModifier(
                 statHandle1B,
@@ -478,7 +497,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1B.Value.IsRoughlyEqual(17f));
             Assert.AreEqual(2, stat1BModifiersCount);
             Assert.AreEqual(0, stat1BObserversCount);
-            AssertBufferLengths(entity1, 3, 2, 1);
+            AssertBufferValidElementLengths(entity1, 3, 2, 1);
 
             success = statsAccessor.TryAddStatModifier(
                 statHandle1B,
@@ -504,7 +523,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1B.Value.IsRoughlyEqual(22f));
             Assert.AreEqual(3, stat1BModifiersCount);
             Assert.AreEqual(0, stat1BObserversCount);
-            AssertBufferLengths(entity1, 3, 3, 2);
+            AssertBufferValidElementLengths(entity1, 3, 3, 2);
 
             success = statsAccessor.TryAddStatModifier(
                 statHandle1C,
@@ -536,7 +555,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(32f));
             Assert.AreEqual(1, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 4, 3);
+            AssertBufferValidElementLengths(entity1, 3, 4, 3);
 
             success = statsAccessor.TryAddStatModifier(
                 statHandle1A,
@@ -568,7 +587,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(40f));
             Assert.AreEqual(1, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 5, 3);
+            AssertBufferValidElementLengths(entity1, 3, 5, 3);
 
             // -------------------------------------------------
             // Change values
@@ -596,7 +615,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(44f));
             Assert.AreEqual(1, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 5, 3);
+            AssertBufferValidElementLengths(entity1, 3, 5, 3);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle1B, 5f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -620,7 +639,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(49f));
             Assert.AreEqual(1, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 5, 3);
+            AssertBufferValidElementLengths(entity1, 3, 5, 3);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle1C, 9f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -644,7 +663,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(58f));
             Assert.AreEqual(1, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 5, 3);
+            AssertBufferValidElementLengths(entity1, 3, 5, 3);
             
             // -------------------------------------------------
             // Remove modifiers and change values
@@ -672,7 +691,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(47f));
             Assert.AreEqual(1, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 4, 2);
+            AssertBufferValidElementLengths(entity1, 3, 4, 2);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -696,7 +715,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(48f));
             Assert.AreEqual(1, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 4, 2);
+            AssertBufferValidElementLengths(entity1, 3, 4, 2);
 
             success = statsAccessor.TryRemoveStatModifier(modifier5, ref statsWorldStorage);
             Assert.IsTrue(success);
@@ -720,7 +739,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(44f));
             Assert.AreEqual(1, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 3, 2);
+            AssertBufferValidElementLengths(entity1, 3, 3, 2);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -744,7 +763,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(45f));
             Assert.AreEqual(1, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 3, 2);
+            AssertBufferValidElementLengths(entity1, 3, 3, 2);
 
             success = statsAccessor.TryRemoveStatModifier(modifier4, ref statsWorldStorage);
             Assert.IsTrue(success);
@@ -768,7 +787,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(19f));
             Assert.AreEqual(0, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 2, 1);
+            AssertBufferValidElementLengths(entity1, 3, 2, 1);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -792,7 +811,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(19f));
             Assert.AreEqual(0, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 2, 1);
+            AssertBufferValidElementLengths(entity1, 3, 2, 1);
 
             success = statsAccessor.TryRemoveStatModifier(modifier1, ref statsWorldStorage);
             Assert.IsTrue(success);
@@ -816,7 +835,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(19f));
             Assert.AreEqual(0, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 1);
+            AssertBufferValidElementLengths(entity1, 3, 1, 1);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -840,7 +859,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(19f));
             Assert.AreEqual(0, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 1);
+            AssertBufferValidElementLengths(entity1, 3, 1, 1);
 
             success = statsAccessor.TryRemoveStatModifier(modifier3, ref statsWorldStorage);
             Assert.IsTrue(success);
@@ -864,7 +883,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(19f));
             Assert.AreEqual(0, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -888,7 +907,7 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat1C.Value.IsRoughlyEqual(19f));
             Assert.AreEqual(0, stat1CModifiersCount);
             Assert.AreEqual(0, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
             
             statsWorldStorage.Dispose();
         }
@@ -939,9 +958,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat2A.Value.IsRoughlyEqual(10f));
             Assert.AreEqual(0, stat2AModifiersCount);
             Assert.AreEqual(0, stat2AObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
-            AssertBufferLengths(entity2, 3, 0, 0);
-            AssertBufferLengths(entity3, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity2, 3, 0, 0);
+            AssertBufferValidElementLengths(entity3, 3, 0, 0);
 
             // -------------------------------------------------
             // Add modifiers
@@ -973,9 +992,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat2A.Value.IsRoughlyEqual(12f));
             Assert.AreEqual(1, stat2AModifiersCount);
             Assert.AreEqual(0, stat2AObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
-            AssertBufferLengths(entity2, 3, 1, 0);
-            AssertBufferLengths(entity3, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity2, 3, 1, 0);
+            AssertBufferValidElementLengths(entity3, 3, 0, 0);
 
             success = statsAccessor.TryAddStatModifier(
                 statHandle2A,
@@ -1001,9 +1020,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat2A.Value.IsRoughlyEqual(17f));
             Assert.AreEqual(2, stat2AModifiersCount);
             Assert.AreEqual(0, stat2AObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 1);
-            AssertBufferLengths(entity2, 3, 2, 0);
-            AssertBufferLengths(entity3, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 1);
+            AssertBufferValidElementLengths(entity2, 3, 2, 0);
+            AssertBufferValidElementLengths(entity3, 3, 0, 0);
 
             success = statsAccessor.TryAddStatModifier(
                 statHandle2A,
@@ -1029,9 +1048,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat2A.Value.IsRoughlyEqual(22f));
             Assert.AreEqual(3, stat2AModifiersCount);
             Assert.AreEqual(0, stat2AObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 2);
-            AssertBufferLengths(entity2, 3, 3, 0);
-            AssertBufferLengths(entity3, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 2);
+            AssertBufferValidElementLengths(entity2, 3, 3, 0);
+            AssertBufferValidElementLengths(entity3, 3, 0, 0);
 
             success = statsAccessor.TryAddStatModifier(
                 statHandle3A,
@@ -1063,9 +1082,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3A.Value.IsRoughlyEqual(32f));
             Assert.AreEqual(1, stat3AModifiersCount);
             Assert.AreEqual(0, stat3AObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 2);
-            AssertBufferLengths(entity2, 3, 3, 1);
-            AssertBufferLengths(entity3, 3, 1, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 2);
+            AssertBufferValidElementLengths(entity2, 3, 3, 1);
+            AssertBufferValidElementLengths(entity3, 3, 1, 0);
 
             success = statsAccessor.TryAddStatModifier(
                 statHandle1A,
@@ -1097,9 +1116,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3A.Value.IsRoughlyEqual(40f));
             Assert.AreEqual(1, stat3AModifiersCount);
             Assert.AreEqual(0, stat3AObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 2);
-            AssertBufferLengths(entity2, 3, 3, 1);
-            AssertBufferLengths(entity3, 3, 1, 0);
+            AssertBufferValidElementLengths(entity1, 3, 1, 2);
+            AssertBufferValidElementLengths(entity2, 3, 3, 1);
+            AssertBufferValidElementLengths(entity3, 3, 1, 0);
 
             success = statsAccessor.TryAddStatModifier(
                 statHandle3B,
@@ -1137,9 +1156,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(50f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(0, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 2);
-            AssertBufferLengths(entity2, 3, 3, 1);
-            AssertBufferLengths(entity3, 3, 2, 1);
+            AssertBufferValidElementLengths(entity1, 3, 1, 2);
+            AssertBufferValidElementLengths(entity2, 3, 3, 1);
+            AssertBufferValidElementLengths(entity3, 3, 2, 1);
 
             success = statsAccessor.TryAddStatModifier(
                 statHandle2C,
@@ -1183,9 +1202,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(50f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 2);
-            AssertBufferLengths(entity2, 3, 4, 1);
-            AssertBufferLengths(entity3, 3, 2, 2);
+            AssertBufferValidElementLengths(entity1, 3, 1, 2);
+            AssertBufferValidElementLengths(entity2, 3, 4, 1);
+            AssertBufferValidElementLengths(entity3, 3, 2, 2);
 
             // -------------------------------------------------
             // Change values
@@ -1225,9 +1244,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(54f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 2);
-            AssertBufferLengths(entity2, 3, 4, 1);
-            AssertBufferLengths(entity3, 3, 2, 2);
+            AssertBufferValidElementLengths(entity1, 3, 1, 2);
+            AssertBufferValidElementLengths(entity2, 3, 4, 1);
+            AssertBufferValidElementLengths(entity3, 3, 2, 2);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle2A, 5f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -1263,9 +1282,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(59f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 2);
-            AssertBufferLengths(entity2, 3, 4, 1);
-            AssertBufferLengths(entity3, 3, 2, 2);
+            AssertBufferValidElementLengths(entity1, 3, 1, 2);
+            AssertBufferValidElementLengths(entity2, 3, 4, 1);
+            AssertBufferValidElementLengths(entity3, 3, 2, 2);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle3A, 9f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -1325,9 +1344,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3C.Value.IsRoughlyEqual(10f));
             Assert.AreEqual(0, stat3CModifiersCount);
             Assert.AreEqual(0, stat3CObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 2);
-            AssertBufferLengths(entity2, 3, 4, 1);
-            AssertBufferLengths(entity3, 3, 2, 2);
+            AssertBufferValidElementLengths(entity1, 3, 1, 2);
+            AssertBufferValidElementLengths(entity2, 3, 4, 1);
+            AssertBufferValidElementLengths(entity3, 3, 2, 2);
             
             // -------------------------------------------------
             // Remove modifiers and change values
@@ -1367,9 +1386,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(57f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 1);
-            AssertBufferLengths(entity2, 3, 3, 1);
-            AssertBufferLengths(entity3, 3, 2, 2);
+            AssertBufferValidElementLengths(entity1, 3, 1, 1);
+            AssertBufferValidElementLengths(entity2, 3, 3, 1);
+            AssertBufferValidElementLengths(entity3, 3, 2, 2);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -1405,9 +1424,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(58f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 1);
-            AssertBufferLengths(entity2, 3, 3, 1);
-            AssertBufferLengths(entity3, 3, 2, 2);
+            AssertBufferValidElementLengths(entity1, 3, 1, 1);
+            AssertBufferValidElementLengths(entity2, 3, 3, 1);
+            AssertBufferValidElementLengths(entity3, 3, 2, 2);
 
             success = statsAccessor.TryRemoveStatModifier(modifier5, ref statsWorldStorage);
             Assert.IsTrue(success);
@@ -1443,9 +1462,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(54f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 1);
-            AssertBufferLengths(entity2, 3, 3, 1);
-            AssertBufferLengths(entity3, 3, 2, 2);
+            AssertBufferValidElementLengths(entity1, 3, 0, 1);
+            AssertBufferValidElementLengths(entity2, 3, 3, 1);
+            AssertBufferValidElementLengths(entity3, 3, 2, 2);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -1481,9 +1500,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(55f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 1);
-            AssertBufferLengths(entity2, 3, 3, 1);
-            AssertBufferLengths(entity3, 3, 2, 2);
+            AssertBufferValidElementLengths(entity1, 3, 0, 1);
+            AssertBufferValidElementLengths(entity2, 3, 3, 1);
+            AssertBufferValidElementLengths(entity3, 3, 2, 2);
 
             success = statsAccessor.TryRemoveStatModifier(modifier4, ref statsWorldStorage);
             Assert.IsTrue(success);
@@ -1519,9 +1538,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(29f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 1);
-            AssertBufferLengths(entity2, 3, 3, 0);
-            AssertBufferLengths(entity3, 3, 1, 2);
+            AssertBufferValidElementLengths(entity1, 3, 0, 1);
+            AssertBufferValidElementLengths(entity2, 3, 3, 0);
+            AssertBufferValidElementLengths(entity3, 3, 1, 2);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -1557,9 +1576,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(29f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 1);
-            AssertBufferLengths(entity2, 3, 3, 0);
-            AssertBufferLengths(entity3, 3, 1, 2);
+            AssertBufferValidElementLengths(entity1, 3, 0, 1);
+            AssertBufferValidElementLengths(entity2, 3, 3, 0);
+            AssertBufferValidElementLengths(entity3, 3, 1, 2);
 
             success = statsAccessor.TryRemoveStatModifier(modifier1, ref statsWorldStorage);
             Assert.IsTrue(success);
@@ -1595,9 +1614,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(29f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 1);
-            AssertBufferLengths(entity2, 3, 2, 0);
-            AssertBufferLengths(entity3, 3, 1, 2);
+            AssertBufferValidElementLengths(entity1, 3, 0, 1);
+            AssertBufferValidElementLengths(entity2, 3, 2, 0);
+            AssertBufferValidElementLengths(entity3, 3, 1, 2);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -1633,9 +1652,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(29f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 1);
-            AssertBufferLengths(entity2, 3, 2, 0);
-            AssertBufferLengths(entity3, 3, 1, 2);
+            AssertBufferValidElementLengths(entity1, 3, 0, 1);
+            AssertBufferValidElementLengths(entity2, 3, 2, 0);
+            AssertBufferValidElementLengths(entity3, 3, 1, 2);
 
             success = statsAccessor.TryRemoveStatModifier(modifier3, ref statsWorldStorage);
             Assert.IsTrue(success);
@@ -1671,9 +1690,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(29f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
-            AssertBufferLengths(entity2, 3, 1, 0);
-            AssertBufferLengths(entity3, 3, 1, 2);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity2, 3, 1, 0);
+            AssertBufferValidElementLengths(entity3, 3, 1, 2);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle1A, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -1709,9 +1728,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(29f));
             Assert.AreEqual(1, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
-            AssertBufferLengths(entity2, 3, 1, 0);
-            AssertBufferLengths(entity3, 3, 1, 2);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity2, 3, 1, 0);
+            AssertBufferValidElementLengths(entity3, 3, 1, 2);
 
             success = statsAccessor.TryRemoveStatModifier(modifier6, ref statsWorldStorage);
             Assert.IsTrue(success);
@@ -1747,9 +1766,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(10f));
             Assert.AreEqual(0, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
-            AssertBufferLengths(entity2, 3, 1, 0);
-            AssertBufferLengths(entity3, 3, 0, 1);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity2, 3, 1, 0);
+            AssertBufferValidElementLengths(entity3, 3, 0, 1);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle2C, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -1785,9 +1804,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(10f));
             Assert.AreEqual(0, stat3BModifiersCount);
             Assert.AreEqual(1, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
-            AssertBufferLengths(entity2, 3, 1, 0);
-            AssertBufferLengths(entity3, 3, 0, 1);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity2, 3, 1, 0);
+            AssertBufferValidElementLengths(entity3, 3, 0, 1);
 
             success = statsAccessor.TryRemoveStatModifier(modifier7, ref statsWorldStorage);
             Assert.IsTrue(success);
@@ -1823,9 +1842,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(10f));
             Assert.AreEqual(0, stat3BModifiersCount);
             Assert.AreEqual(0, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
-            AssertBufferLengths(entity2, 3, 0, 0);
-            AssertBufferLengths(entity3, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity2, 3, 0, 0);
+            AssertBufferValidElementLengths(entity3, 3, 0, 0);
             
             success = statsAccessor.TryAddStatBaseValue(statHandle2C, 1f, ref statsWorldStorage); 
             Assert.IsTrue(success);
@@ -1861,9 +1880,9 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat3B.Value.IsRoughlyEqual(10f));
             Assert.AreEqual(0, stat3BModifiersCount);
             Assert.AreEqual(0, stat3BObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
-            AssertBufferLengths(entity2, 3, 0, 0);
-            AssertBufferLengths(entity3, 3, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity2, 3, 0, 0);
+            AssertBufferValidElementLengths(entity3, 3, 0, 0);
             
             statsWorldStorage.Dispose();
         }
@@ -2067,7 +2086,7 @@ namespace Trove.Stats.Tests
             Assert.AreEqual(0, stat1BObserversCount);
             Assert.AreEqual(0, stat1CModifiersCount);
             Assert.AreEqual(4, stat1CObserversCount);
-            AssertBufferLengths(entity1, 3, 8, 8);
+            AssertBufferValidElementLengths(entity1, 3, 8, 8);
             
             // Remove middle modifier
             {
@@ -2091,7 +2110,7 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1BObserversCount);
                 Assert.AreEqual(0, stat1CModifiersCount);
                 Assert.AreEqual(4, stat1CObserversCount);
-                AssertBufferLengths(entity1, 3, 7, 7);
+                AssertBufferValidElementLengths(entity1, 3, 7, 7);
                 
                 // Try removing it a second time
                 success = statsAccessor.TryRemoveStatModifier(modifier4, ref statsWorldStorage);
@@ -2120,7 +2139,7 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1BObserversCount);
                 Assert.AreEqual(0, stat1CModifiersCount);
                 Assert.AreEqual(4, stat1CObserversCount);
-                AssertBufferLengths(entity1, 3, 6, 6);
+                AssertBufferValidElementLengths(entity1, 3, 6, 6);
                 
                 // Try removing it a second time
                 success = statsAccessor.TryRemoveStatModifier(modifier2, ref statsWorldStorage);
@@ -2149,7 +2168,7 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1BObserversCount);
                 Assert.AreEqual(0, stat1CModifiersCount);
                 Assert.AreEqual(3, stat1CObserversCount);
-                AssertBufferLengths(entity1, 3, 5, 5);
+                AssertBufferValidElementLengths(entity1, 3, 5, 5);
                 
                 // Try removing it a second time
                 success = statsAccessor.TryRemoveStatModifier(modifier1, ref statsWorldStorage);
@@ -2186,7 +2205,7 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1BObserversCount);
                 Assert.AreEqual(0, stat1CModifiersCount);
                 Assert.AreEqual(3, stat1CObserversCount);
-                AssertBufferLengths(entity1, 3, 6, 6);
+                AssertBufferValidElementLengths(entity1, 3, 6, 6);
                 
                 // Modifiers buffer: 3-A(C), 5-A(C), 6-B(A), 7-A(C), 8-B(A), 9-B(A)
                 
@@ -2208,7 +2227,7 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1BObserversCount);
                 Assert.AreEqual(0, stat1CModifiersCount);
                 Assert.AreEqual(3, stat1CObserversCount);
-                AssertBufferLengths(entity1, 3, 5, 5);
+                AssertBufferValidElementLengths(entity1, 3, 5, 5);
                 
                 // Try removing it a second time
                 success = statsAccessor.TryRemoveStatModifier(modifier9, ref statsWorldStorage);
@@ -2237,7 +2256,7 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1BObserversCount);
                 Assert.AreEqual(0, stat1CModifiersCount);
                 Assert.AreEqual(2, stat1CObserversCount);
-                AssertBufferLengths(entity1, 3, 4, 4);
+                AssertBufferValidElementLengths(entity1, 3, 4, 4);
                 
                 // Try removing it a second time
                 success = statsAccessor.TryRemoveStatModifier(modifier7, ref statsWorldStorage);
@@ -2266,7 +2285,7 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1BObserversCount);
                 Assert.AreEqual(0, stat1CModifiersCount);
                 Assert.AreEqual(2, stat1CObserversCount);
-                AssertBufferLengths(entity1, 3, 3, 3);
+                AssertBufferValidElementLengths(entity1, 3, 3, 3);
                 
                 // Try removing it a second time
                 success = statsAccessor.TryRemoveStatModifier(modifier8, ref statsWorldStorage);
@@ -2295,7 +2314,7 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1BObserversCount);
                 Assert.AreEqual(0, stat1CModifiersCount);
                 Assert.AreEqual(0, stat1CObserversCount);
-                AssertBufferLengths(entity1, 3, 1, 1);
+                AssertBufferValidElementLengths(entity1, 3, 1, 1);
                 
                 // Try a second time
                 
@@ -2315,7 +2334,7 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1BObserversCount);
                 Assert.AreEqual(0, stat1CModifiersCount);
                 Assert.AreEqual(0, stat1CObserversCount);
-                AssertBufferLengths(entity1, 3, 1, 1);
+                AssertBufferValidElementLengths(entity1, 3, 1, 1);
                 
                 // Modifiers buffer: 6-B(A)
                 
@@ -2337,7 +2356,7 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1BObserversCount);
                 Assert.AreEqual(0, stat1CModifiersCount);
                 Assert.AreEqual(0, stat1CObserversCount);
-                AssertBufferLengths(entity1, 3, 1, 1);
+                AssertBufferValidElementLengths(entity1, 3, 1, 1);
                 
                 // Modifiers buffer: 6-B(A)
                 
@@ -2359,7 +2378,7 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1BObserversCount);
                 Assert.AreEqual(0, stat1CModifiersCount);
                 Assert.AreEqual(0, stat1CObserversCount);
-                AssertBufferLengths(entity1, 3, 0, 0);
+                AssertBufferValidElementLengths(entity1, 3, 0, 0);
                 
                 // Try a second time 
                 success = statsAccessor.TryRemoveAllStatModifiersOfStat(statHandle1B, ref statsWorldStorage);
@@ -2378,7 +2397,7 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, stat1BObserversCount);
                 Assert.AreEqual(0, stat1CModifiersCount);
                 Assert.AreEqual(0, stat1CObserversCount);
-                AssertBufferLengths(entity1, 3, 0, 0);
+                AssertBufferValidElementLengths(entity1, 3, 0, 0);
             }
             
             statsWorldStorage.Dispose();
@@ -2517,8 +2536,8 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat2A.Value.IsRoughlyEqual(10f));
             Assert.AreEqual(0, stat2AModifiersCount);
             Assert.AreEqual(1, stat2AObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 0);
-            AssertBufferLengths(entity2, 3, 0, 1);
+            AssertBufferValidElementLengths(entity1, 3, 1, 0);
+            AssertBufferValidElementLengths(entity2, 3, 0, 1);
             
             // Destroy entity2 (so destroy stat 2A)
             EntityManager.DestroyEntity(entity2);
@@ -2540,8 +2559,8 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat2A.Value.IsRoughlyEqual(0f));
             Assert.AreEqual(0, stat2AModifiersCount);
             Assert.AreEqual(0, stat2AObserversCount);
-            AssertBufferLengths(entity1, 3, 1, 0);
-            AssertBufferLengths(entity2, 0, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 1, 0);
+            AssertBufferValidElementLengths(entity2, 0, 0, 0);
             
             // Remove modifier
             success = statsAccessor.TryRemoveStatModifier(modifier1, ref statsWorldStorage);
@@ -2560,8 +2579,8 @@ namespace Trove.Stats.Tests
             Assert.IsTrue(stat2A.Value.IsRoughlyEqual(0f));
             Assert.AreEqual(0, stat2AModifiersCount);
             Assert.AreEqual(0, stat2AObserversCount);
-            AssertBufferLengths(entity1, 3, 0, 0);
-            AssertBufferLengths(entity2, 0, 0, 0);
+            AssertBufferValidElementLengths(entity1, 3, 0, 0);
+            AssertBufferValidElementLengths(entity2, 0, 0, 0);
             
             statsWorldStorage.Dispose();
         }

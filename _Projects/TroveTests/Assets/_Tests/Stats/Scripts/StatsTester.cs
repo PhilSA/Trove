@@ -15,6 +15,8 @@ public struct StatsTester : IComponentData
     public int UnchangingAttributesCount;
     public bool MakeLocalStatsDependOnEachOther;
 
+    public int SimpleAddModifiersAdded;
+
     public bool HasInitialized;
 }
 

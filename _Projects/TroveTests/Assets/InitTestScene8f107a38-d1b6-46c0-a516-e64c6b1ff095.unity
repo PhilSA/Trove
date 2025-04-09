@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &890191723
+--- !u!1 &1344651162
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,41 +127,77 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 890191725}
-  - component: {fileID: 890191724}
+  - component: {fileID: 1344651164}
+  - component: {fileID: 1344651163}
   m_Layer: 0
-  m_Name: StatTester
+  m_Name: Code-based tests runner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &890191724
+--- !u!114 &1344651163
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 890191723}
+  m_GameObject: {fileID: 1344651162}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ba202f3ac25ff084cb907322b71ff550, type: 3}
+  m_Script: {fileID: 11500000, guid: 102e512f651ee834f951a2516c1ea3b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  StatOwnerPrefab: {fileID: 8018081520556862554, guid: 7edf6eb4b9c94ff4ab2aa466033024e5,
-    type: 3}
-  ChangingAttributesCount: 1
-  ChangingAttributesChildDepth: 0
-  UnchangingAttributesCount: 0
-  MakeLocalStatsDependOnEachOther: 0
-  SimpleAddModifiersAdded: 100000
---- !u!4 &890191725
+  m_AssembliesWithTests:
+  - com.trove.common.tests
+  - com.trove.eventsystems.tests
+  - com.trove.polymorphicstructs.tests
+  - com.trove.stats.tests
+  - com.trove.tweens.tests
+  - com.trove.utilityai.tests
+  - Unity.PerformanceTesting
+  - UnityEngine.TestRunner
+  testStartedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  testFinishedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  runStartedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  runFinishedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  settings:
+    filters:
+    - testMode: 4
+      assemblyNames: []
+      groupNames: []
+      categoryNames: []
+      testNames:
+      - Trove.Stats.Tests.StatsTests.ComplexTree
+      synchronousOnly: 0
+    sceneBased: 0
+    originalScene: 
+    bootstrapScene: 
+    orderedTestNames: []
+    featureFlags:
+      fileCleanUpCheck: 0
+      requiresSplashScreen: 0
+      strictDomainReload: 0
+      disableNestedEnumeratorBugfix: 0
+    retryCount: 0
+    repeatCount: 0
+    automated: 0
+    randomOrderSeed: 0
+--- !u!4 &1344651164
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 890191723}
+  m_GameObject: {fileID: 1344651162}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -174,4 +210,4 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 890191725}
+  - {fileID: 1344651164}

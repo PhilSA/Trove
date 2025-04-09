@@ -24,7 +24,8 @@ namespace Trove
      * `Item`s in that buffer (without having to check each `Effect` in the buffer to see which `Item` it belongs to).
      *
      * IMPORTANT: when using sub-lists, you must only ever add or remove elements to/from buffers using the sub-list APIs.
-     *            You must also never change the data of sub-list interface properties in buffer elements.
+     *            The buffer must ONLY contain elements that were added/set using sublist APIs. You must also never
+     *            change the data of sub-list interface properties in buffer elements.
      *
      * Different types of sub-lists are available, each with their pros and cons.
      */
@@ -83,7 +84,7 @@ namespace Trove
                 subList.GrowFactor = growFactor;
                 subList.ElementsStartIndex = -1;
 
-                SetCapacity(ref subList, ref buffer, initialCapacity);
+                SetCapacity(ref subList, ref buffer, math.max(1, initialCapacity));
                 
                 subList.IsCreated = 1;
             }
@@ -314,31 +315,420 @@ namespace Trove
 
     #region PooledLinkedSubList
 
+    public interface IPooledLinkedSubListElement
+    {
+        public int Version { get; set; }
+        public PooledLinkedSubList.ElementHandle PrevElementHandle { get; set; }
+    }
+    
     /// <summary>
     /// 
     /// Allows storing multiple growable lists in the same list/buffer.
     /// - Sub-list elements are not contiguous in memory.
     /// - Sub-list element indexes do not change after being added.
     /// - Medium sub-list element remove performance, due to only being able to remove an element by iterating
-    ///   from the last element in the sub-list. Relatively poor sub-list element add performance due to having to
+    ///   from the last element in the sub-list. Medium sub-list element add performance due to having to
     ///   search for the lowest free index in the buffer.
     /// - The encompassing buffer will grow by a certain factor as elements are added, but it will never shrink unless
     ///   <Trim> is called. But even then, it cannot shrink smaller than the highest-index element in the buffer.
     ///
-    /// This type of sub-list is best suited when keeping a handle to a specific element is needed, due to the
-    /// unchanging element indexes. The resulting buffer is also likely to be more compact in size than with the
-    /// regular <SubList>, but it depends on the scenario.
+    /// This type of sub-list is best suited for when keeping a stable handle to a specific element is needed. The
+    /// resulting buffer is also likely to be more compact in size than with the regular <SubList>, and add/remove
+    /// performance doesn't decay as much with buffer length as with the <CompactLinkedSubList>. 
     /// 
     /// </summary>
+    // TODO: optional version relying on FreeIndexRanges?
     public struct PooledLinkedSubList
     {
-        public struct ElementHandle
+        public ElementHandle LastElementHandle;
+        public int Length;
+            
+        public struct ElementHandle : IEquatable<ElementHandle>
         {
             public int Index;
             public int Version;
+
+            public static ElementHandle Null => new ElementHandle { Index = 0, Version = 0 };
+            
+            public bool Exists()
+            {
+                return Version > 0 && Index >= 0;
+            }
+            
+            public bool Equals(ElementHandle other)
+            {
+                return Index == other.Index && Version == other.Version;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is ElementHandle other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(Index, Version);
+            }
+
+            public static bool operator ==(ElementHandle left, ElementHandle right)
+            {
+                return left.Equals(right);
+            }
+
+            public static bool operator !=(ElementHandle left, ElementHandle right)
+            {
+                return !left.Equals(right);
+            }
         }
 
-        // TODO: optional FreeRanges param? Or LinkedFreeRangesSubList
+        public struct Iterator<T>
+            where T : unmanaged, IPooledLinkedSubListElement
+        {
+            internal int PrevPrevIteratedElementIndex;
+            internal int PrevIteratedElementIndex;
+            internal ElementHandle IteratedElementHandle;
+            internal bool LastGetWasByRef;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool GetNext(in DynamicBuffer<T> buffer, out T iteratedElement, out ElementHandle iteratedElementHandle)
+            {
+                LastGetWasByRef = false;
+                
+                if (IteratedElementHandle.Exists() && IteratedElementHandle.Index < buffer.Length)
+                {
+                    iteratedElement = buffer[IteratedElementHandle.Index];
+                    if (iteratedElement.Version == IteratedElementHandle.Version)
+                    {
+                        iteratedElementHandle = IteratedElementHandle;
+                        return true;
+                    }
+
+                    PrevPrevIteratedElementIndex = PrevIteratedElementIndex;
+                    PrevIteratedElementIndex = IteratedElementHandle.Index;
+                    IteratedElementHandle = iteratedElement.PrevElementHandle;
+                }
+
+                PrevPrevIteratedElementIndex = -1;
+                PrevIteratedElementIndex = -1;
+                iteratedElementHandle = default;
+                iteratedElement = default;
+                return false;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public unsafe ref T GetNextRef(ref DynamicBuffer<T> buffer, out bool success, out ElementHandle iteratedElementHandle)
+            {
+                LastGetWasByRef = true;
+                
+                if (IteratedElementHandle.Exists() && IteratedElementHandle.Index < buffer.Length)
+                {
+                    ref T element = ref UnsafeUtility.ArrayElementAsRef<T>(buffer.GetUnsafePtr(), IteratedElementHandle.Index);
+                    if (element.Version == IteratedElementHandle.Version)
+                    {
+                        iteratedElementHandle = IteratedElementHandle;
+                        
+                        success = true;
+                        return ref element;
+                    }
+
+                    PrevPrevIteratedElementIndex = PrevIteratedElementIndex;
+                    PrevIteratedElementIndex = IteratedElementHandle.Index;
+                    IteratedElementHandle = element.PrevElementHandle;
+                }
+
+                PrevPrevIteratedElementIndex = -1;
+                PrevIteratedElementIndex = -1;
+                iteratedElementHandle = default;
+                success = false;
+                return ref *(T*)buffer.GetUnsafePtr();
+            }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void RemoveIteratedElement(ref PooledLinkedSubList subList, ref DynamicBuffer<T> buffer)
+            {
+                int removedElementIndex = PrevIteratedElementIndex;
+                if (removedElementIndex >= 0)
+                {
+                    if (LastGetWasByRef)
+                    {
+                        throw new Exception("Cannot remove iterated elements when the element was gotten by ref");
+                    }
+
+                    int removedElementNextIndex = PrevPrevIteratedElementIndex;
+                    T removedElement = buffer[removedElementIndex];
+
+                    // If there was an element after the removed one, update its PrevElement to the removed element's PrevElement
+                    if (removedElementNextIndex >= 0)
+                    {
+                        T removedElementNextElement = buffer[removedElementNextIndex];
+                        removedElementNextElement.PrevElementHandle = removedElement.PrevElementHandle;
+                        buffer[removedElementNextIndex] = removedElementNextElement;
+                    }
+                    // If we're removing the last element, update sub-list
+                    else
+                    {
+                        subList.LastElementHandle = removedElement.PrevElementHandle;
+                    }
+
+                    // Write removed element
+                    removedElement.Version = -removedElement.Version; // flip version
+                    buffer[removedElementIndex] = removedElement;
+                    
+                    // Update sub-list
+                    subList.Length--;
+                    Assert.IsTrue(subList.Length >= 0);
+                }
+            }
+        }
+        
+        public static Iterator<T> GetIterator<T>(PooledLinkedSubList subList)
+            where T : unmanaged, IPooledLinkedSubListElement
+        {
+            return new Iterator<T>
+            {
+                PrevPrevIteratedElementIndex = -1,
+                PrevIteratedElementIndex = -1,
+                IteratedElementHandle = subList.LastElementHandle,
+            };
+        }
+    
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Exists<T>(T element)
+            where T : unmanaged, IPooledLinkedSubListElement
+        {
+            return element.Version > 0;
+        }
+    
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Exists<T>(ref DynamicBuffer<T> buffer, ElementHandle elementHandle)
+            where T : unmanaged, IPooledLinkedSubListElement
+        {
+            if (elementHandle.Exists() && elementHandle.Index < buffer.Length)
+            {
+                return Exists(buffer[elementHandle.Index]);
+            }
+
+            return false;
+        }
+        
+        public static void AddObject<T>(ref PooledLinkedSubList subList, ref DynamicBuffer<T> buffer, T element,
+            out ElementHandle elementHandle, float growFactor = 1.5f)
+            where T : unmanaged, IPooledLinkedSubListElement
+        {
+            int addIndex = -1;
+
+            // Iterate buffer element to try to find a free index
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                T iteratedObject = buffer[i];
+                if (!Exists(iteratedObject))
+                {
+                    addIndex = i;
+                    break;
+                }
+            }
+
+            // If haven't found a free index, grow buffer capacity/length
+            if (addIndex < 0)
+            {
+                addIndex = buffer.Length;
+                int newCapacity = math.max((int)math.ceil(buffer.Length * growFactor), buffer.Length + 1);
+                Resize(ref buffer, newCapacity);
+            }
+
+            // Write element at free index
+            T existingElement = buffer[addIndex];
+            element.Version = -existingElement.Version + 1; // flip version and increment
+            element.PrevElementHandle = subList.LastElementHandle;
+            buffer[addIndex] = element;
+            
+            elementHandle = new ElementHandle
+            {
+                Index = addIndex,
+                Version = element.Version,
+            };
+            
+            // Update sub-list
+            subList.LastElementHandle = elementHandle;
+            subList.Length++;
+            Assert.IsTrue(subList.Length >= 0);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryGetObject<T>(ref DynamicBuffer<T> buffer, ElementHandle elementHandle,
+            out T existingObject)
+            where T : unmanaged, IPooledLinkedSubListElement
+        {
+            if (elementHandle.Exists() && elementHandle.Index < buffer.Length)
+            {
+                existingObject = buffer[elementHandle.Index];
+                if (existingObject.Version == elementHandle.Version)
+                {
+                    return true;
+                }
+            }
+
+            existingObject = default;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe ref T TryGetObjectRef<T>(
+            ref DynamicBuffer<T> buffer,
+            ElementHandle elementHandle,
+            out bool success,
+            ref T nullResult)
+            where T : unmanaged, IPooledLinkedSubListElement
+        {
+            if (elementHandle.Exists() && elementHandle.Index < buffer.Length)
+            {
+                ref T existingObject =
+                    ref UnsafeUtility.ArrayElementAsRef<T>(buffer.GetUnsafePtr(), elementHandle.Index);
+                if (existingObject.Version == elementHandle.Version)
+                {
+                    success = true;
+                    return ref existingObject;
+                }
+            }
+
+            success = false;
+            return ref nullResult;
+        }
+        
+        public static bool TryRemoveObject<T>(ref PooledLinkedSubList subList, ref DynamicBuffer<T> buffer, ElementHandle elementHandle)
+            where T : unmanaged, IPooledLinkedSubListElement
+        {
+            if (subList.LastElementHandle.Exists() && elementHandle.Exists())
+            {
+                Iterator<T> iterator = GetIterator<T>(subList);
+                while (iterator.GetNext(in buffer, out T iteratedElement, out ElementHandle iteratedElementHandle))
+                {
+                    if (iteratedElementHandle == elementHandle)
+                    {
+                        iterator.RemoveIteratedElement(ref subList, ref buffer);
+                        return true;
+                    }
+                }
+            }
+            
+            Assert.IsTrue(subList.Length == 0);
+            return false;
+        }
+
+        public static void Clear<T>(ref PooledLinkedSubList subList, ref DynamicBuffer<T> buffer)
+            where T : unmanaged, IPooledLinkedSubListElement
+        {
+            if (subList.LastElementHandle.Exists())
+            {
+                Iterator<T> iterator = GetIterator<T>(subList);
+                while (iterator.GetNext(in buffer, out _, out _))
+                {
+                    iterator.RemoveIteratedElement(ref subList, ref buffer);
+                }
+            }
+            
+            Assert.IsTrue(subList.LastElementHandle == ElementHandle.Null);
+            Assert.IsTrue(subList.Length == 0);
+        }
+
+        /// <summary>
+        /// Note: can only grow; not shrink
+        /// </summary>
+        public static void Resize<T>(ref DynamicBuffer<T> buffer, int newSize)
+            where T : unmanaged, IPooledLinkedSubListElement
+        {
+            if (newSize > buffer.Length)
+            {
+                buffer.Resize(newSize, NativeArrayOptions.ClearMemory);
+            }
+        }
+        
+        public static void Trim<T>(ref DynamicBuffer<T> buffer, bool trimCapacity = false)
+            where T : unmanaged, IPooledLinkedSubListElement
+        {
+            for (int i = buffer.Length - 1; i >= 0; i--)
+            {
+                T iteratedElement = buffer[i];
+                if (Exists(iteratedElement))
+                {
+                    buffer.Resize(i + 1, NativeArrayOptions.ClearMemory);
+                    if (trimCapacity)
+                    {
+                        buffer.Capacity = i + 1;
+                    }
+
+                    return;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Reorganizes the pool so that all elements are compact and the pool length fits the elements count exactly.
+        /// This will invalidate the data of any <PooledLinkedSubList>, or of any <ElementHandle> aside from the subList
+        /// elements' "PrevElementHandle". However, a "allSubListsInBuffer" array will contain the updated SubLists data,
+        /// and the handlesRemapper will allow remapping old <ElementHandle>s to the updated ones. You will have to handle
+        /// setting back updated SubLists data and remapping <ElementHandle>s manually.
+        /// </summary>
+        public static void MakeCompactAndInvalidateHandles<T>(
+            ref DynamicBuffer<T> buffer,
+            ref NativeArray<PooledLinkedSubList> allSubListsInBuffer,
+            ref NativeHashMap<ElementHandle, ElementHandle> handlesRemapper,
+            bool alsoTrimCapacity)
+            where T : unmanaged, IPooledLinkedSubListElement
+        {
+            handlesRemapper.Clear();
+
+            // Iterate buffer from the start until we find free indices. When we do, iterate from the end to find an
+            // existing element to move there. Continue until start iterator and end iterator meet
+            int dscIndex = buffer.Length - 1;
+            for (int ascIndex = 0; ascIndex < dscIndex; ascIndex++)
+            {
+                T iteratedAscElement = buffer[ascIndex];
+                if (!Exists(iteratedAscElement))
+                {
+                    T iteratedDscElement = default;
+                    while (dscIndex > ascIndex && !Exists(iteratedDscElement))
+                    {
+                        iteratedDscElement = buffer[ascIndex];
+                        dscIndex--;
+                    }
+
+                    // Move element
+                    if (Exists(iteratedDscElement))
+                    {
+                        handlesRemapper.Add(
+                            new ElementHandle { Index = dscIndex, Version = iteratedDscElement.Version },
+                            new ElementHandle { Index = ascIndex, Version = iteratedDscElement.Version });
+                        buffer[ascIndex] = iteratedDscElement;
+                    }
+                }
+            }
+
+            // Trim excess length (and optionally capacity)
+            Trim(ref buffer, alsoTrimCapacity);
+            
+            // Update elements
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                T iteratedElement = buffer[i];
+                if (handlesRemapper.TryGetValue(iteratedElement.PrevElementHandle, out ElementHandle newPrevElementHandle))
+                {
+                    iteratedElement.PrevElementHandle = newPrevElementHandle;
+                }
+                buffer[i] = iteratedElement;
+            }
+            
+            // Update sublists
+            for (int i = 0; i < allSubListsInBuffer.Length; i++)
+            {
+                PooledLinkedSubList subList = allSubListsInBuffer[i];
+                if (handlesRemapper.TryGetValue(subList.LastElementHandle, out ElementHandle newLastElementHandle))
+                {
+                    subList.LastElementHandle = newLastElementHandle;
+                }
+                allSubListsInBuffer[i] = subList;
+            }
+        }
     }
 
     #endregion
@@ -348,6 +738,7 @@ namespace Trove
     public interface ICompactLinkedSubListElement
     {
         public int NextElementIndex { get; set; }
+        public int LastElementIndex { get; set; }
         public byte IsCreated { get; set; }
         public byte IsPinnedFirstElement { get; set; }
     }
@@ -357,8 +748,9 @@ namespace Trove
     /// Allows storing multiple growable lists in the same list/buffer.
     /// - Sub-list elements are not contiguous in memory.
     /// - Sub-list element indexes can change when elements are added or removed.
-    /// - Medium sub-list element add and remove performance due to having to iterate elements of the sub-list until the
-    ///   last one (for add) or the removed one (for remove) are found.
+    /// - Relatively poor sub-list element add and remove performance due to having to iterate elements of the sub-list until the
+    ///   last one (for add) or the removed one (for remove) are found, and having to patch all elements in buffer during
+    ///   removes or first sub-list adds. So add/remove performance decays with buffer and sub-list size.
     /// - The encompassing buffer will always have the just exact length needed to host all sub-list elements.
     ///
     /// This type of sub-list is best suited for when minimizing total list size is key, such as for netcode buffer
@@ -394,9 +786,13 @@ namespace Trove
             internal int PrevPrevIteratedIndex;
             internal int PrevIteratedIndex;
             internal int IteratedIndex;
+            internal bool LastGetWasByRef;
 
-            public bool GetNext(ref DynamicBuffer<T> buffer, out T element, out int elementIndex)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool GetNext(in DynamicBuffer<T> buffer, out T element, out int elementIndex)
             {
+                LastGetWasByRef = false;
+                
                 if (IteratedIndex >= 0 && IteratedIndex < buffer.Length)
                 {
                     element = buffer[IteratedIndex];
@@ -405,6 +801,7 @@ namespace Trove
                     PrevPrevIteratedIndex = PrevIteratedIndex;
                     PrevIteratedIndex = IteratedIndex;
                     IteratedIndex = element.NextElementIndex;
+                    
                     return true;
                 }
 
@@ -413,68 +810,115 @@ namespace Trove
                 return false;
             }
 
-            public void RemoveCurrentElement(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public unsafe ref T GetNextRef(ref DynamicBuffer<T> buffer, out bool success, out int elementIndex)
             {
-                int removedElementPrevIndex = PrevPrevIteratedIndex;
-                int removedElementIndex = PrevIteratedIndex;
-
-                if (removedElementIndex >= 0)
+                LastGetWasByRef = true;
+                
+                if (IteratedIndex >= 0 && IteratedIndex < buffer.Length)
                 {
-                    Assert.IsTrue(buffer.Length > removedElementPrevIndex);
-                    Assert.IsTrue(buffer.Length > removedElementIndex);
+                    ref T element = ref UnsafeUtility.ArrayElementAsRef<T>(buffer.GetUnsafePtr(), IteratedIndex);
+                    elementIndex = IteratedIndex;
 
-                    T removedElement = buffer[removedElementIndex];
-                    int removedElementNextIndex = removedElement.NextElementIndex;
+                    PrevPrevIteratedIndex = PrevIteratedIndex;
+                    PrevIteratedIndex = IteratedIndex;
+                    IteratedIndex = element.NextElementIndex;
 
-                    Assert.IsTrue(buffer.Length > removedElementNextIndex);
+                    success = true;
+                    return ref element;
+                }
+
+                elementIndex = -1;
+                success = false;
+                return ref *(T*)buffer.GetUnsafePtr();
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void RemoveIteratedElement(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer)
+            {
+                int indexOfElementBeforeRemovedElement = PrevPrevIteratedIndex;
+                int indexOfRemovedElement = PrevIteratedIndex;
+
+                if (indexOfRemovedElement >= 0)
+                {
+                    if (LastGetWasByRef)
+                    {
+                        throw new Exception("Cannot remove iterated elements when the element was gotten by ref");
+                    }
+
+                    Assert.IsTrue(buffer.Length > indexOfElementBeforeRemovedElement);
+                    Assert.IsTrue(buffer.Length > indexOfRemovedElement);
+
+                    T removedElement = buffer[indexOfRemovedElement];
+
+                    Assert.IsTrue(buffer.Length > removedElement.NextElementIndex);
                     Assert.AreEqual(1, removedElement.IsCreated);
 
                     // Removing a pinned first element
                     if (removedElement.IsPinnedFirstElement == 1)
                     {
                         // If there was a next element, this next element becomes the first
-                        if (removedElementNextIndex >= 0)
+                        if (removedElement.NextElementIndex >= 0)
                         {
-                            T nextElement = buffer[removedElementNextIndex];
-                            removedElement = nextElement;
-                            removedElement.IsPinnedFirstElement = 1;
+                            int indexOfRemovedElementNextElement = removedElement.NextElementIndex;
+                            T removedElementNextElement = buffer[indexOfRemovedElementNextElement];
+                            
+                            // Transfer pinned first element data 
+                            removedElementNextElement.LastElementIndex = removedElement.LastElementIndex;
+                            removedElementNextElement.IsPinnedFirstElement = 1;
+                            removedElement = removedElementNextElement;
 
+                            // Overwrite first element data. 
+                            buffer[indexOfRemovedElement] = removedElement;
+                            
                             // Remove next element and patch indexes
-                            buffer.RemoveAt(removedElementNextIndex);
-                            PatchNextIndexes(ref buffer, removedElementNextIndex, -1);
-
+                            buffer.RemoveAt(indexOfRemovedElementNextElement);
+                            PatchNextIndexes(ref buffer, indexOfRemovedElementNextElement, -1);
+                            int patchedRemovedElementNextElementIndex = removedElement.NextElementIndex -= 1;
+                            
                             // Make the iterated index the next element index
-                            IteratedIndex = removedElement.NextElementIndex;
+                            IteratedIndex = patchedRemovedElementNextElementIndex;
                         }
                         // If there was no next element, mark not created, and update sub-list
                         else
                         {
                             removedElement.IsCreated = 0;
                             removedElement.NextElementIndex = -1;
+                            removedElement.LastElementIndex = -1;
                             subList.FirstElementIndex = -1;
-                        }
 
-                        // Overwrite first element data. First elements are never removed, because removing one
-                        // first element must never change the index of another first element.
-                        buffer[removedElementIndex] = removedElement;
+                            // Overwrite first element data. 
+                            buffer[indexOfRemovedElement] = removedElement;
+                        }
                     }
                     // Removing a regular element
                     else
                     {
                         // Make the previous element's NextIndex be the removed element's NextIndex
-                        if (removedElementPrevIndex >= 0)
+                        if (indexOfElementBeforeRemovedElement >= 0)
                         {
-                            T prevElement = buffer[removedElementPrevIndex];
-                            prevElement.NextElementIndex = removedElementNextIndex;
-                            buffer[removedElementPrevIndex] = prevElement;
+                            T elementBeforeRemovedElement = buffer[indexOfElementBeforeRemovedElement];
+                            elementBeforeRemovedElement.NextElementIndex = removedElement.NextElementIndex;
+                            buffer[indexOfElementBeforeRemovedElement] = elementBeforeRemovedElement;
+                        }
+
+                        // If we're removing the last element, update LastElementIndex with the index of the element
+                        // that was before this one.
+                        if (removedElement.NextElementIndex < 0)
+                        {
+                            Assert.IsTrue(subList.FirstElementIndex >= 0);
+                            T firstElementOfSubList = buffer[subList.FirstElementIndex];
+                            firstElementOfSubList.LastElementIndex = indexOfElementBeforeRemovedElement;
+                            buffer[subList.FirstElementIndex] = firstElementOfSubList;
                         }
 
                         // Remove and patch indexes
-                        buffer.RemoveAt(removedElementIndex);
-                        PatchNextIndexes(ref buffer, removedElementIndex, -1);
+                        buffer.RemoveAt(indexOfRemovedElement);
+                        PatchNextIndexes(ref buffer, indexOfRemovedElement, -1);
+                        int patchedRemovedElementNextElementIndex = removedElement.NextElementIndex -= 1;
 
                         // Make the iterated index the next element index
-                        IteratedIndex = removedElementNextIndex;
+                        IteratedIndex = patchedRemovedElementNextElementIndex;
                     }
 
                     subList.Length--;
@@ -485,20 +929,28 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AutoInitialze()
+        private void CheckCreated()
         {
             if (IsCreated == 0)
             {
-                FirstElementIndex = -1;
-                Length = 0;
-                IsCreated = 1;
+                throw new Exception($"Error: CompactLinkedSubList is not created.");
             }
         }
 
-        public static Iterator<T> GetIterator<T>(ref CompactLinkedSubList subList)
+        public static CompactLinkedSubList Create()
+        {
+            return new CompactLinkedSubList
+            {
+                FirstElementIndex = -1,
+                Length = 0,
+                IsCreated = 1,
+            };
+        }
+
+        public static Iterator<T> GetIterator<T>(CompactLinkedSubList subList)
             where T : unmanaged, ICompactLinkedSubListElement
         {
-            subList.AutoInitialze();
+            subList.CheckCreated();
 
             return new Iterator<T>
             {
@@ -514,15 +966,16 @@ namespace Trove
             T element)
             where T : unmanaged, ICompactLinkedSubListElement
         {
-            subList.AutoInitialze();
+            subList.CheckCreated();
 
             // Handle adding the first element at the start of the buffer
             if (subList.FirstElementIndex < 0)
             {
                 Assert.AreEqual(0, subList.Length);
 
+                bool firstElementReplacesExisting = false;
                 int firstElementInsertionIndex = -1;
-                int lastPinnedFirstElementIndex = 0;
+                int lastPinnedFirstElementIndex = -1;
 
                 // If there are any pinned first elements added, look for a free one
                 for (int i = 0; i < buffer.Length; i++)
@@ -532,12 +985,16 @@ namespace Trove
                     // Stop looking as soon as we are not iterating pinned first elements anymore.
                     if (iteratedElement.IsPinnedFirstElement == 0)
                     {
+                        firstElementInsertionIndex = i;
                         break;
                     }
 
                     lastPinnedFirstElementIndex = i;
+                    
+                    // If this is a pinned first element that is not valid, take its place
                     if (iteratedElement.IsCreated == 0)
                     {
+                        firstElementReplacesExisting = true;
                         firstElementInsertionIndex = i;
                         break;
                     }
@@ -546,51 +1003,63 @@ namespace Trove
                 // If we haven't found a free first element index, allocate new one at the end of the current first elements
                 if (firstElementInsertionIndex < 0)
                 {
-                    firstElementInsertionIndex = lastPinnedFirstElementIndex;
+                    firstElementInsertionIndex = lastPinnedFirstElementIndex + 1;
                 }
 
-                // Insert the first element of the sub-list
+                // Set element data
                 element.IsCreated = 1;
                 element.IsPinnedFirstElement = 1;
                 element.NextElementIndex = -1;
-                buffer.Insert(firstElementInsertionIndex, element);
+                element.LastElementIndex = firstElementInsertionIndex;
 
-                // Patch all "NextElementIndex"s of the buffer if they were affected by the insert
-                PatchNextIndexes(ref buffer, firstElementInsertionIndex, 1);
+                // Write element to buffer
+                if (firstElementReplacesExisting)
+                {
+                    buffer[firstElementInsertionIndex] = element;
+                }
+                else
+                {
+                    if (firstElementInsertionIndex >= buffer.Length)
+                    {
+                        buffer.Add(element);
+                    }
+                    else
+                    {
+                        buffer.Insert(firstElementInsertionIndex, element);
 
+                        // Patch all "NextElementIndex"s of the buffer if they were affected by the insert
+                        PatchNextIndexes(ref buffer, firstElementInsertionIndex, 1);
+                    }
+                }
+                
                 // Update sub-list
                 subList.FirstElementIndex = firstElementInsertionIndex;
                 subList.Length = 1;
                 return;
             }
+            
+            Assert.IsTrue(subList.FirstElementIndex < buffer.Length);
 
-            // If this isn't the first element of the sub-list, iterate sub-list elements until we find the last one.
-            int lastElementIndex = -1;
-            T lastElement = default;
-            Iterator<T> iterator = GetIterator<T>(ref subList);
-            while (iterator.GetNext(ref buffer, out T iteratedElement, out int iteratedElementIndex))
-            {
-                // If reached last one, remember it
-                if (iteratedElement.NextElementIndex < 0)
-                {
-                    lastElementIndex = iteratedElementIndex;
-                    lastElement = iteratedElement;
-                    break;
-                }
-            }
-
-            Assert.IsTrue(lastElementIndex >= 0);
-
+            int lastElementIndexBeforeAdd = buffer[subList.FirstElementIndex].LastElementIndex;
+            
+            Assert.IsTrue(lastElementIndexBeforeAdd >= subList.FirstElementIndex && lastElementIndexBeforeAdd < buffer.Length);
+            
             // Add element at the end of the buffer
-            int newElementIndex = buffer.Length;
+            int addedElementIndex = buffer.Length;
             element.IsCreated = 1;
             element.IsPinnedFirstElement = 0;
             element.NextElementIndex = -1;
             buffer.Add(element);
+            
+            // Update first element of sublist, storing LastElementIndex
+            T subListFirstElement = buffer[subList.FirstElementIndex];
+            subListFirstElement.LastElementIndex = addedElementIndex;
+            buffer[subList.FirstElementIndex] = subListFirstElement;
 
             // Patch NextIndex of previous last element
-            lastElement.NextElementIndex = newElementIndex;
-            buffer[lastElementIndex] = lastElement;
+            T elementBeforeTheAddedElement = buffer[lastElementIndexBeforeAdd];
+            elementBeforeTheAddedElement.NextElementIndex = addedElementIndex;
+            buffer[lastElementIndexBeforeAdd] = elementBeforeTheAddedElement;
 
             // Update sub-list
             subList.Length++;
@@ -599,12 +1068,12 @@ namespace Trove
         public static void Clear<T>(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer)
             where T : unmanaged, ICompactLinkedSubListElement
         {
-            subList.AutoInitialze();
+            subList.CheckCreated();
 
-            Iterator<T> iterator = GetIterator<T>(ref subList);
-            while (iterator.GetNext(ref buffer, out T iteratedElement, out int iteratedElementIndex))
+            Iterator<T> iterator = GetIterator<T>(subList);
+            while (iterator.GetNext(in buffer, out T iteratedElement, out int iteratedElementIndex))
             {
-                iterator.RemoveCurrentElement(ref subList, ref buffer);
+                iterator.RemoveIteratedElement(ref subList, ref buffer);
             }
 
             Assert.AreEqual(0, subList.Length);
@@ -615,11 +1084,11 @@ namespace Trove
             int indexInSubList, out T element, out int elementIndexInBuffer)
             where T : unmanaged, ICompactLinkedSubListElement
         {
-            subList.AutoInitialze();
+            subList.CheckCreated();
 
             int indexCounter = 0;
-            Iterator<T> iterator = GetIterator<T>(ref subList);
-            while (iterator.GetNext(ref buffer, out T iteratedElement, out int iteratedElementIndex))
+            Iterator<T> iterator = GetIterator<T>(subList);
+            while (iterator.GetNext(in buffer, out T iteratedElement, out int iteratedElementIndex))
             {
                 if (indexCounter == indexInSubList)
                 {
@@ -641,11 +1110,11 @@ namespace Trove
             int indexInSubList, T element)
             where T : unmanaged, ICompactLinkedSubListElement
         {
-            subList.AutoInitialze();
+            subList.CheckCreated();
 
             int indexCounter = 0;
-            Iterator<T> iterator = GetIterator<T>(ref subList);
-            while (iterator.GetNext(ref buffer, out T iteratedElement, out int iteratedElementIndex))
+            Iterator<T> iterator = GetIterator<T>(subList);
+            while (iterator.GetNext(in buffer, out T iteratedElement, out int iteratedElementIndex))
             {
                 if (indexCounter == indexInSubList)
                 {
@@ -668,15 +1137,15 @@ namespace Trove
             int indexInSubList)
             where T : unmanaged, ICompactLinkedSubListElement
         {
-            subList.AutoInitialze();
+            subList.CheckCreated();
 
             int indexCounter = 0;
-            Iterator<T> iterator = GetIterator<T>(ref subList);
-            while (iterator.GetNext(ref buffer, out T iteratedElement, out int iteratedElementIndex))
+            Iterator<T> iterator = GetIterator<T>(subList);
+            while (iterator.GetNext(in buffer, out T iteratedElement, out int iteratedElementIndex))
             {
                 if (indexCounter == indexInSubList)
                 {
-                    iterator.RemoveCurrentElement(ref subList, ref buffer);
+                    iterator.RemoveIteratedElement(ref subList, ref buffer);
                     return true;
                 }
 
@@ -689,6 +1158,7 @@ namespace Trove
         public static void PatchNextIndexes<T>(ref DynamicBuffer<T> buffer, int changedIndex, int changeAmount)
             where T : unmanaged, ICompactLinkedSubListElement
         {
+            // Next indexes of all element
             for (int i = 0; i < buffer.Length; i++)
             {
                 T iteratedElement = buffer[i];
@@ -696,6 +1166,22 @@ namespace Trove
                 {
                     iteratedElement.NextElementIndex += changeAmount;
                     buffer[i] = iteratedElement;
+                }
+            }
+
+            // Last indexes of only first elements
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                T iteratedElement = buffer[i];
+                if (iteratedElement.LastElementIndex != i && iteratedElement.LastElementIndex >= changedIndex)
+                {
+                    iteratedElement.LastElementIndex += changeAmount;
+                    buffer[i] = iteratedElement;
+                }
+                
+                if (iteratedElement.IsPinnedFirstElement == 0)
+                {
+                    break;
                 }
             }
         }

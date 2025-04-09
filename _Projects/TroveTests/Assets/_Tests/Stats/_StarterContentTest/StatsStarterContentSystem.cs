@@ -51,7 +51,7 @@ partial struct StatsStarterContentSystem : ISystem
 
             StatsAccessor.TrySetStatProduceChangeEvents(stats.Intelligence, true);
 
-            if (StatsAccessor.TryCalculateStatModifiersCount(stats.Intelligence, out int intelligenceModifiersCount))
+            if (StatsAccessor.TryGetStatModifiersCount(stats.Intelligence, out int intelligenceModifiersCount))
             {
                 if (intelligenceModifiersCount <= 0)
                 {

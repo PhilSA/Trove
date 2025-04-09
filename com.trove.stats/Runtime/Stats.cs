@@ -36,36 +36,78 @@ namespace Trove.Stats
         public float BaseValue;
         public float Value;
 
-        public CompactMultiLinkedList ModifiersList;
-        public CompactMultiLinkedList ObserversList;
+        public CompactLinkedSubList ModifiersList;
+        public CompactLinkedSubList ObserversList;
         
         public byte ProduceChangeEvents;
     }
 
-    public partial struct StatModifier<TStatModifier, TStatModifierStack> : IBufferElementData, ICompactMultiLinkedListElement
+    public partial struct StatModifier<TStatModifier, TStatModifierStack> : IBufferElementData, ICompactLinkedSubListElement
         where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
         public uint ID;
         public TStatModifier Modifier;
-        public int PrevElementIndexData;
         
-        public int PrevElementIndex
-        {
-            get => PrevElementIndexData;
-            set => PrevElementIndexData = value;
+        public int _nextElementIndex;
+        public int NextElementIndex 
+        { 
+            get => _nextElementIndex; 
+            set => _nextElementIndex = value; 
+        }
+        
+        public int _lastElementIndex;
+        public int LastElementIndex 
+        { 
+            get => _lastElementIndex; 
+            set => _lastElementIndex = value; 
+        }
+
+        public byte _isCreated;
+        public byte IsCreated
+        { 
+            get => _isCreated; 
+            set => _isCreated = value; 
+        }
+        
+        public byte _isPinnedFirstElement;
+        public byte IsPinnedFirstElement
+        { 
+            get => _isPinnedFirstElement; 
+            set => _isPinnedFirstElement = value; 
         }
     }
 
-    public partial struct StatObserver : IBufferElementData, ICompactMultiLinkedListElement
+    public partial struct StatObserver : IBufferElementData, ICompactLinkedSubListElement
     {
         public StatHandle ObserverHandle;
-        public int PrevElementIndexData;
         
-        public int PrevElementIndex
-        {
-            get => PrevElementIndexData;
-            set => PrevElementIndexData = value;
+        public int _nextElementIndex;
+        public int NextElementIndex 
+        { 
+            get => _nextElementIndex; 
+            set => _nextElementIndex = value; 
+        }
+        
+        public int _lastElementIndex;
+        public int LastElementIndex 
+        { 
+            get => _lastElementIndex; 
+            set => _lastElementIndex = value; 
+        }
+
+        public byte _isCreated;
+        public byte IsCreated
+        { 
+            get => _isCreated; 
+            set => _isCreated = value; 
+        }
+        
+        public byte _isPinnedFirstElement;
+        public byte IsPinnedFirstElement
+        { 
+            get => _isPinnedFirstElement; 
+            set => _isPinnedFirstElement = value; 
         }
     }
 
@@ -188,7 +230,7 @@ namespace Trove.Stats
         }
     }
 
-    public struct StatModifierAndHandle<TStatModifier, TStatModifierStack>
+    public struct StatModifierAndModifierHandle<TStatModifier, TStatModifierStack>
         where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {

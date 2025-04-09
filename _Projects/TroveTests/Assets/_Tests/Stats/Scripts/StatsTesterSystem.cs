@@ -1,4 +1,5 @@
 
+using Trove;
 using Trove.Stats;
 using Unity.Burst;
 using Unity.Collections;
@@ -50,6 +51,12 @@ partial struct StatsTesterSystem : ISystem
                 state.EntityManager.AddComponentData(observedEntity, new UpdatingStat());
                 statsOwnerLookup = SystemAPI.GetComponentLookup<TestStatOwner>(false);
                 TestStatOwner observedStatOwner = statsOwnerLookup[observedEntity];
+ 
+                _statsAccessor.Update(ref state);
+                
+                DynamicBuffer<StatModifier<TestStatModifier, TestStatModifier.Stack>> modifiersBuffer = 
+                    state.EntityManager.GetBuffer<StatModifier<TestStatModifier, TestStatModifier.Stack>>(observedEntity);
+                AddSimpleModifiers(ref tester, observedStatOwner.StatA, ref modifiersBuffer);
 
                 if(tester.MakeLocalStatsDependOnEachOther)
                 {
@@ -86,6 +93,9 @@ partial struct StatsTesterSystem : ISystem
                     
                     _statsAccessor.Update(ref state);
                     
+                    modifiersBuffer = state.EntityManager.GetBuffer<StatModifier<TestStatModifier, TestStatModifier.Stack>>(newObserverEntity);
+                    AddSimpleModifiers(ref tester, newObserverStatOwner.StatA, ref modifiersBuffer);
+                    
                     _statsAccessor.TryAddStatModifier(
                         newObserverStatOwner.StatA,
                         new TestStatModifier
@@ -94,7 +104,7 @@ partial struct StatsTesterSystem : ISystem
                             StatHandleA = observedStatOwner.StatA,
                             ValueA = 0f,
                         },
-                        out StatModifierHandle modifierHandle, 
+                        out _, 
                         ref _statsWorldData);
 
                     observedStatOwner = newObserverStatOwner;
@@ -116,6 +126,35 @@ partial struct StatsTesterSystem : ISystem
         state.Dependency = new StatGetValueJob()
         {
         }.ScheduleParallel(state.Dependency);
+    }
+
+    private void AddSimpleModifiers(ref StatsTester tester, StatHandle onStat, ref DynamicBuffer<StatModifier<TestStatModifier, TestStatModifier.Stack>> modifiers)
+    {
+        UnsafeList<TestStatModifier> addedSimpleModifiers = new UnsafeList<TestStatModifier>(tester.SimpleAddModifiersAdded, Allocator.Temp);
+        for (int j = 0; j < tester.SimpleAddModifiersAdded; j++)
+        {
+            addedSimpleModifiers.Add(new TestStatModifier
+            {
+                ModifierType = TestStatModifier.Type.Add,
+                ValueA = 1f,
+            });
+        }
+
+        if (addedSimpleModifiers.Length > 0)
+        {
+            // CompactLinkedSubList subList = CompactLinkedSubList.Create();
+            // for (int i = 0; i < addedSimpleModifiers.Length; i++)
+            // {
+            //     CompactLinkedSubList.Add(ref subList, ref modifiers, default); 
+            // }
+            
+            UnsafeList<StatModifierHandle> tmpHandles = new UnsafeList<StatModifierHandle>(tester.SimpleAddModifiersAdded, Allocator.Temp);
+            _statsAccessor.TryAddStatModifiersBatch(
+                onStat,
+                in addedSimpleModifiers,
+                ref tmpHandles,
+                ref _statsWorldData);
+        }
     }
 
     [BurstCompile]

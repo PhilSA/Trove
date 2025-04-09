@@ -10,6 +10,8 @@ class StatsTesterAuthoring : MonoBehaviour
     public int ChangingAttributesChildDepth;
     public int UnchangingAttributesCount;
     public bool MakeLocalStatsDependOnEachOther;
+    
+    public int SimpleAddModifiersAdded;
 
     class Baker : Baker<StatsTesterAuthoring>
     {
@@ -24,6 +26,8 @@ class StatsTesterAuthoring : MonoBehaviour
                 ChangingAttributesChildDepth = authoring.ChangingAttributesChildDepth,
                 UnchangingAttributesCount = authoring.UnchangingAttributesCount,
                 MakeLocalStatsDependOnEachOther = authoring.MakeLocalStatsDependOnEachOther,
+                
+                SimpleAddModifiersAdded = authoring.SimpleAddModifiersAdded,
             });
         }
     }

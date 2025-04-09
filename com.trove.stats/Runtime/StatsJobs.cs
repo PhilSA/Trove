@@ -12,7 +12,7 @@ namespace Trove.Stats
     /// </summary>
     [BurstCompile]
     public struct DeferredStatsUpdateListJob<TStatModifier, TStatModifierStack> : IJob
-        where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactMultiLinkedListElement
+        where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactLinkedSubListElement
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
         public StatsAccessor<TStatModifier, TStatModifierStack> StatsAccessor;
@@ -36,7 +36,7 @@ namespace Trove.Stats
     /// </summary>
     [BurstCompile]
     public struct DeferredStatsUpdateQueueJob<TStatModifier, TStatModifierStack> : IJob
-        where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactMultiLinkedListElement
+        where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactLinkedSubListElement
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
         public StatsAccessor<TStatModifier, TStatModifierStack> StatsAccessor;
@@ -60,7 +60,7 @@ namespace Trove.Stats
     /// </summary>
     [BurstCompile]
     public struct DeferredStatsUpdateStreamJob<TStatModifier, TStatModifierStack> : IJob
-        where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactMultiLinkedListElement
+        where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>, IBufferElementData, ICompactLinkedSubListElement
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
         public StatsAccessor<TStatModifier, TStatModifierStack> StatsAccessor;
