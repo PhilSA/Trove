@@ -36,8 +36,8 @@ namespace Trove.Stats
         public float BaseValue;
         public float Value;
 
-        public int LastModifierIndex;
-        public int LastObserverIndex;
+        public CompactMultiLinkedList ModifiersList;
+        public CompactMultiLinkedList ObserversList;
         
         public byte ProduceChangeEvents;
     }

@@ -5,13 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scenes/StateMachineTest/New Sub Scene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scenes/StateMachineTest/New Sub Scene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachine.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachineAuthoring.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachineAuthoring.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/_Template/TemplateStateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/_Template/TemplateStateMachine.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.common/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/CollectionUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/CollectionUtilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.eventsystems/Documentation~/index.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.eventsystems/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.eventsystems/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Editor/ScriptTemplates/StateMachineTemplate.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Editor/ScriptTemplates/StateMachineTemplate.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/Stats.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/Stats.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsWorldData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsWorldData.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,13 +36,12 @@
   </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachineAuthoring.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Assets/_Tests/StateMachines/_Template/NewStateMachine.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../com.trove.common/Runtime/VersionedPool.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPoly.generated.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPolyMerged.generated.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6AC28F3E17FE520B93434DC8/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyExampleA.generated.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6AC28F3E17FE520B93434DC8/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyExampleB.generated.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6AC28F3E17FE520B93434DC8/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyCubeState.generated.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/7a/798d7189/AtomicSafetyHandle.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
@@ -116,7 +125,8 @@
       <workItem from="1744002693775" duration="1087000" />
       <workItem from="1744031957652" duration="10818000" />
       <workItem from="1744071659283" duration="10862000" />
-      <workItem from="1744082726166" duration="10744000" />
+      <workItem from="1744082726166" duration="11430000" />
+      <workItem from="1744119960759" duration="25184000" />
     </task>
     <servers />
   </component>

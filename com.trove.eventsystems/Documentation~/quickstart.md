@@ -1,17 +1,8 @@
 
-# Trove Event Systems
-
-This package provides an all-purpose, high-performance, high-versatility event system. It has the following features:
-- Allows creating events that are stored globally in a singleton list, or events that are stored per-entity in dynamic buffers.
-- Allows parallel writing of events in burst jobs.
-- Allows executing events in parallel burst jobs, single burst jobs, burst main thread, or non-burst main thread. This is fully controlled by the user.
-- Allows multiple event writers and multiple event readers.
-- Allows polymorphic ordered events when combined with Trove Polymorphic Structs.
+# Quick Start
 
 
-## Quick Start
-
-### Creating a new event type
+## Creating a new event type
 
 Right-click in the Project window and select "Create > Trove > EventSystems > ..." in order to create a new event system based on a template. See [Event System Types](#event-system-types) for a description of the various types of event systems.
 
@@ -20,7 +11,7 @@ When creating a new events file from templates this way, it is recommended to na
 Once you have your new event from template, read the comments in the file and look at all the `TODO`s in order to understand how it works.
 
 
-### Using the events system
+## Using the events system
 
 > Note: each of the event templates include example events, event writers, and event readers. You can delete or change them after creating the template, but they should give you enough of an idea of how to use this system.
 

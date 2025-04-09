@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using Trove;
 using Unity.Burst;
 using Unity.Entities;
 using Trove.PolymorphicStructs;
@@ -6,30 +8,50 @@ using Unity.Transforms;
 using UnityEngine;
 
 #region States
+
 /// <summary>
-/// This is the generated polymorphic struct representing our state buffer elements.
-/// 
-/// Note: You can't add any new fields to it, but you can make it implement interfaces. You can also make it implement
-/// a polymorphic interface by making ITemplateStateMachineState implement the same interface (ex: the IState interface is implemented
-/// by both PolyTemplateStateMachineState and ITemplateStateMachineState, and this works because the polymorphic structs codegen handles interface
-/// inheritance, and the polymorphic states will implement that interface).
+/// This is the polymorphic state buffer element.
 /// </summary>
 [InternalBufferCapacity(8)] // TODO: tweak internal capacity
-public partial struct PolyTemplateStateMachineState : IState<TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>, IBufferElementData
-{ }  
+public struct TemplateState : IBufferElementData, IPoolObject, IState<TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>
+{
+    // Required for VersionedPool handling. Determines if the state exists in the states pool.
+    public int Version { get; set; }
+    // This is the generated polymorphic state struct, based on the ITemplateStateMachineState polymorphic interface
+    public PolyTemplateState State;
+
+    public void OnStateEnter(ref StateMachine stateMachine, ref TemplateStateMachineGlobalStateUpdateData globalData,
+        ref TemplateStateMachineEntityStateUpdateData entityData)
+    {
+        State.OnStateEnter(ref stateMachine, ref globalData, ref entityData);
+    }
+
+    public void OnStateExit(ref StateMachine stateMachine, ref TemplateStateMachineGlobalStateUpdateData globalData,
+        ref TemplateStateMachineEntityStateUpdateData entityData)
+    {
+        State.OnStateExit(ref stateMachine, ref globalData, ref entityData);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref TemplateStateMachineGlobalStateUpdateData globalData,
+        ref TemplateStateMachineEntityStateUpdateData entityData)
+    {
+        State.Update(ref stateMachine, ref globalData, ref entityData);
+    }
+}
 
 /// <summary>
 /// This is the polymorphic interface definition for our states. It inherits the IState interface.
 /// </summary>
 [PolymorphicStructInterface]
-public interface ITemplateStateMachineState : IState<TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>
+public interface ITemplateState : IState<TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>
 { }
 
 /// <summary>
 /// This is an example state
 /// </summary>
 [PolymorphicStruct] 
-public struct TemplateStateMachineStateA : ITemplateStateMachineState
+public struct ITemplateStateA : ITemplateState
 {
     // TODO: add state data
     
@@ -43,6 +65,7 @@ public struct TemplateStateMachineStateA : ITemplateStateMachineState
         // TODO: implement
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Update(ref StateMachine stateMachine, ref TemplateStateMachineGlobalStateUpdateData globalData, ref TemplateStateMachineEntityStateUpdateData entityData)
     {
         // TODO: implement
@@ -53,7 +76,7 @@ public struct TemplateStateMachineStateA : ITemplateStateMachineState
 /// This is an example state
 /// </summary>
 [PolymorphicStruct]
-public struct TemplateStateMachineStateB : ITemplateStateMachineState 
+public struct ITemplateStateB : ITemplateState 
 {
     // TODO: add state data
     
@@ -67,6 +90,7 @@ public struct TemplateStateMachineStateB : ITemplateStateMachineState
         // TODO: implement
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Update(ref StateMachine stateMachine, ref TemplateStateMachineGlobalStateUpdateData globalData, ref TemplateStateMachineEntityStateUpdateData entityData)
     {
         // TODO: implement
@@ -98,19 +122,16 @@ public struct TemplateStateMachineGlobalStateUpdateData
 public struct TemplateStateMachineEntityStateUpdateData
 {
     public Entity Entity;
-    public DynamicBuffer<StateVersion> StateVersionsBuffer;
-    public DynamicBuffer<PolyTemplateStateMachineState> StatesBuffer;
+    public DynamicBuffer<TemplateState> StatesBuffer;
     public RefRW<LocalTransform> LocalTransform;
     // TODO: add/change entity data
     
     public TemplateStateMachineEntityStateUpdateData(
         Entity entity,
-        DynamicBuffer<StateVersion> stateVersionsBuffer, 
-        DynamicBuffer<PolyTemplateStateMachineState> statesBuffer,
+        DynamicBuffer<TemplateState> statesBuffer,
         RefRW<LocalTransform> localTransform)
     {
         Entity = entity;
-        StateVersionsBuffer = stateVersionsBuffer;
         StatesBuffer = statesBuffer;
         LocalTransform = localTransform;
     }
@@ -127,7 +148,7 @@ public partial struct ExampleTemplateStateMachineStateMachineSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<PolyTemplateStateMachineState>();
+        state.RequireForUpdate<TemplateState>();
     }
     
     [BurstCompile]
@@ -149,18 +170,16 @@ public partial struct ExampleTemplateStateMachineStateMachineSystem : ISystem
             Entity entity, 
             ref StateMachine stateMachine, 
             RefRW<LocalTransform> localTransform,
-            ref DynamicBuffer<StateVersion> stateVersionsBuffer, 
-            ref DynamicBuffer<PolyTemplateStateMachineState> statesBuffer)
+            ref DynamicBuffer<TemplateState> statesBuffer)
         {
             // Here we build the per-entity data
             TemplateStateMachineEntityStateUpdateData entityData = new TemplateStateMachineEntityStateUpdateData(
                 entity, 
-                stateVersionsBuffer,
                 statesBuffer,
                 localTransform);
 
             // Update the state machine
-            StateMachineUtilities.Update(ref stateMachine, ref stateVersionsBuffer, ref statesBuffer, ref GlobalData, ref entityData);
+            StateMachineUtilities.Update(ref stateMachine, ref statesBuffer, ref GlobalData, ref entityData);
         }
     }
 }
@@ -169,7 +188,7 @@ public partial struct ExampleTemplateStateMachineStateMachineSystem : ISystem
 #region Example Authoring
 /// <summary>
 /// This an example of an authoring component for this state machine
-/// TODO: move this code out of this file, to a new file named "TemplateStateMachineStateMachineAuthoring". Otherwise it won't work
+/// TODO: move this code out of this file, to a new file named "TemplateStateMachineStateMachineAuthoring". MonoBehaviours need their file name to match.
 /// </summary>
 class TemplateStateMachineStateMachineAuthoring : MonoBehaviour
 {
@@ -181,69 +200,56 @@ class TemplateStateMachineStateMachineAuthoring : MonoBehaviour
 
             // Add the state machine components
             StateMachineUtilities
-                .BakeStateMachineComponents<PolyTemplateStateMachineState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
+                .BakeStateMachineComponents<TemplateState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
                     this,
                     entity,
                     out StateMachine stateMachine,
-                    out DynamicBuffer<StateVersion> stateVersionsBuffer,
-                    out DynamicBuffer<PolyTemplateStateMachineState> statesBuffer);
+                    out DynamicBuffer<TemplateState> statesBuffer);
 
             // Initialize the state machine buffers with an initial capacity
             StateMachineUtilities
-                .InitStateMachine<PolyTemplateStateMachineState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
+                .InitStateMachine<TemplateState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
                     ref stateMachine,
-                    ref stateVersionsBuffer,
                     ref statesBuffer,
                     8);
 
             // Create a few states and remember their StateHandles.
-            // Note: you can create multiple states of the same type.
             StateMachineUtilities
-                .CreateState<PolyTemplateStateMachineState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
-                    ref stateVersionsBuffer,
+                .CreateState<TemplateState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
                     ref statesBuffer,
                     default,
                     out StateHandle state1Handle);
             StateMachineUtilities
-                .CreateState<PolyTemplateStateMachineState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
-                    ref stateVersionsBuffer,
+                .CreateState<TemplateState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
                     ref statesBuffer,
                     default,
                     out StateHandle state2Handle);
-            StateMachineUtilities
-                .CreateState<PolyTemplateStateMachineState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
-                    ref stateVersionsBuffer,
-                    ref statesBuffer,
-                    default,
-                    out StateHandle state3Handle);
 
             // Set state data, now that we have all of our state handles created.
             // Note: it can be useful to set state data after creating all of our state handles, in cases where
             // Our states must store state handles to transition to. If not, we could've also set state data directly
             // in the "CreateState" function.
-            StateMachineUtilities.TrySetState<PolyTemplateStateMachineState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
-                ref stateVersionsBuffer,
+            StateMachineUtilities.TrySetState<TemplateState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
                 ref statesBuffer,
                 state1Handle,
-                new TemplateStateMachineStateA
+                new TemplateState
                 {
                     // TODO: set state data
+                    State = new ITemplateStateA
+                    {
+                        
+                    },
                 });
-            StateMachineUtilities.TrySetState<PolyTemplateStateMachineState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
-                ref stateVersionsBuffer,
+            StateMachineUtilities.TrySetState<TemplateState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
                 ref statesBuffer,
                 state2Handle,
-                new TemplateStateMachineStateB
+                new TemplateState
                 {
                     // TODO: set state data
-                });
-            StateMachineUtilities.TrySetState<PolyTemplateStateMachineState, TemplateStateMachineGlobalStateUpdateData, TemplateStateMachineEntityStateUpdateData>(
-                ref stateVersionsBuffer,
-                ref statesBuffer,
-                state3Handle,
-                new TemplateStateMachineStateA
-                {
-                    // TODO: set state data
+                    State = new ITemplateStateB
+                    {
+                        
+                    },
                 });
 
             // Set an initial state for our state machine. This is a state the state machine will automatically 

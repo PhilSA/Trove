@@ -17,7 +17,7 @@ namespace Trove.Stats
         internal NativeList<StatObserver> _tmpStatObserversList;
         internal NativeList<StatHandle> _tmpGlobalUpdatedStatsList;
         internal NativeList<StatHandle> _tmpSameEntityUpdatedStatsList;
-        internal NativeList<int> _tmpLastIndexesList;
+        internal NativeList<CompactMultiLinkedList> _tmpCompactMultiLinkedLists;
 
         internal TStatModifierStack _modifiersStack;
 
@@ -30,7 +30,7 @@ namespace Trove.Stats
             _tmpStatObserversList = new NativeList<StatObserver>(Allocator.Persistent);
             _tmpGlobalUpdatedStatsList = new NativeList<StatHandle>(Allocator.Persistent);
             _tmpSameEntityUpdatedStatsList = new NativeList<StatHandle>(Allocator.Persistent);
-            _tmpLastIndexesList = new NativeList<int>(Allocator.Persistent);
+            _tmpCompactMultiLinkedLists = new NativeList<CompactMultiLinkedList>(Allocator.Persistent);
 
             _modifiersStack = default;
         }
@@ -67,9 +67,9 @@ namespace Trove.Stats
                 _tmpSameEntityUpdatedStatsList.Dispose(dep);
             }
 
-            if (_tmpLastIndexesList.IsCreated)
+            if (_tmpCompactMultiLinkedLists.IsCreated)
             {
-                _tmpLastIndexesList.Dispose(dep);
+                _tmpCompactMultiLinkedLists.Dispose(dep);
             }
         }
 

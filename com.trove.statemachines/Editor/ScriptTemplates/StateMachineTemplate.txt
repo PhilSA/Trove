@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using Trove;
 using Unity.Burst;
 using Unity.Entities;
 using Trove.PolymorphicStructs;
@@ -6,44 +8,65 @@ using Unity.Transforms;
 using UnityEngine;
 
 #region States
+
 /// <summary>
-/// This is the generated polymorphic struct representing our state buffer elements.
-/// 
-/// Note: You can't add any new fields to it, but you can make it implement interfaces. You can also make it implement
-/// a polymorphic interface by making I#SCRIPTNAME#State implement the same interface (ex: the IState interface is implemented
-/// by both Poly#SCRIPTNAME#State and I#SCRIPTNAME#State, and this works because the polymorphic structs codegen handles interface
-/// inheritance, and the polymorphic states will implement that interface).
+/// This is the polymorphic state buffer element.
 /// </summary>
 [InternalBufferCapacity(8)] // TODO: tweak internal capacity
-public partial struct Poly#SCRIPTNAME#State : IState<#SCRIPTNAME#GlobalStateUpdateData, #SCRIPTNAME#EntityStateUpdateData>, IBufferElementData
-{ }  
+public struct #SCRIPTNAME#State : IBufferElementData, IVersionedPoolElement, IState<#SCRIPTNAME#StateMachineGlobalStateUpdateData, #SCRIPTNAME#StateMachineEntityStateUpdateData>
+{
+    // Required for VersionedPool handling. Determines if the state exists in the states pool.
+    public int Version { get; set; }
+    // This is the generated polymorphic state struct, based on the I#SCRIPTNAME#StateMachineState polymorphic interface
+    public Poly#SCRIPTNAME#State State;
+
+    public void OnStateEnter(ref StateMachine stateMachine, ref #SCRIPTNAME#StateMachineGlobalStateUpdateData globalData,
+        ref #SCRIPTNAME#StateMachineEntityStateUpdateData entityData)
+    {
+        State.OnStateEnter(ref stateMachine, ref globalData, ref entityData);
+    }
+
+    public void OnStateExit(ref StateMachine stateMachine, ref #SCRIPTNAME#StateMachineGlobalStateUpdateData globalData,
+        ref #SCRIPTNAME#StateMachineEntityStateUpdateData entityData)
+    {
+        State.OnStateExit(ref stateMachine, ref globalData, ref entityData);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref #SCRIPTNAME#StateMachineGlobalStateUpdateData globalData,
+        ref #SCRIPTNAME#StateMachineEntityStateUpdateData entityData)
+    {
+        State.Update(ref stateMachine, ref globalData, ref entityData);
+    }
+}
 
 /// <summary>
 /// This is the polymorphic interface definition for our states. It inherits the IState interface.
 /// </summary>
 [PolymorphicStructInterface]
-public interface I#SCRIPTNAME#State : IState<#SCRIPTNAME#GlobalStateUpdateData, #SCRIPTNAME#EntityStateUpdateData>
+public interface I#SCRIPTNAME#State : IState<#SCRIPTNAME#StateMachineGlobalStateUpdateData, #SCRIPTNAME#StateMachineEntityStateUpdateData>
 { }
 
 /// <summary>
 /// This is an example state
 /// </summary>
 [PolymorphicStruct] 
-public struct #SCRIPTNAME#StateA : I#SCRIPTNAME#State
+public struct I#SCRIPTNAME#StateA : I#SCRIPTNAME#State
 {
     // TODO: add state data
     
-    public void OnStateEnter(ref StateMachine stateMachine, ref #SCRIPTNAME#GlobalStateUpdateData globalData, ref #SCRIPTNAME#EntityStateUpdateData entityData)
+    public void OnStateEnter(ref StateMachine stateMachine, ref #SCRIPTNAME#StateMachineGlobalStateUpdateData globalData, ref #SCRIPTNAME#StateMachineEntityStateUpdateData entityData)
     {
         // TODO: implement
     } 
 
-    public void OnStateExit(ref StateMachine stateMachine, ref #SCRIPTNAME#GlobalStateUpdateData globalData, ref #SCRIPTNAME#EntityStateUpdateData entityData)
+    public void OnStateExit(ref StateMachine stateMachine, ref #SCRIPTNAME#StateMachineGlobalStateUpdateData globalData, ref #SCRIPTNAME#StateMachineEntityStateUpdateData entityData)
     {
         // TODO: implement
     }
 
-    public void Update(ref StateMachine stateMachine, ref #SCRIPTNAME#GlobalStateUpdateData globalData, ref #SCRIPTNAME#EntityStateUpdateData entityData)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref #SCRIPTNAME#StateMachineGlobalStateUpdateData globalData, ref #SCRIPTNAME#StateMachineEntityStateUpdateData entityData)
     {
         // TODO: implement
     }
@@ -53,21 +76,22 @@ public struct #SCRIPTNAME#StateA : I#SCRIPTNAME#State
 /// This is an example state
 /// </summary>
 [PolymorphicStruct]
-public struct #SCRIPTNAME#StateB : I#SCRIPTNAME#State 
+public struct I#SCRIPTNAME#StateB : I#SCRIPTNAME#State 
 {
     // TODO: add state data
     
-    public void OnStateEnter(ref StateMachine stateMachine, ref #SCRIPTNAME#GlobalStateUpdateData globalData, ref #SCRIPTNAME#EntityStateUpdateData entityData)
+    public void OnStateEnter(ref StateMachine stateMachine, ref #SCRIPTNAME#StateMachineGlobalStateUpdateData globalData, ref #SCRIPTNAME#StateMachineEntityStateUpdateData entityData)
     {
         // TODO: implement
     }
 
-    public void OnStateExit(ref StateMachine stateMachine, ref #SCRIPTNAME#GlobalStateUpdateData globalData, ref #SCRIPTNAME#EntityStateUpdateData entityData)
+    public void OnStateExit(ref StateMachine stateMachine, ref #SCRIPTNAME#StateMachineGlobalStateUpdateData globalData, ref #SCRIPTNAME#StateMachineEntityStateUpdateData entityData)
     {
         // TODO: implement
     }
 
-    public void Update(ref StateMachine stateMachine, ref #SCRIPTNAME#GlobalStateUpdateData globalData, ref #SCRIPTNAME#EntityStateUpdateData entityData)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref #SCRIPTNAME#StateMachineGlobalStateUpdateData globalData, ref #SCRIPTNAME#StateMachineEntityStateUpdateData entityData)
     {
         // TODO: implement
     }
@@ -79,12 +103,12 @@ public struct #SCRIPTNAME#StateB : I#SCRIPTNAME#State
 /// This represents the global data that our state updates may need access to.
 /// Here you can store time, singletons, component lookups, native collections, etc....
 /// </summary>
-public struct #SCRIPTNAME#GlobalStateUpdateData
+public struct #SCRIPTNAME#StateMachineGlobalStateUpdateData
 {
     public float DeltaTime;
     // TODO: add/change global data
 
-    public #SCRIPTNAME#GlobalStateUpdateData(float deltaTime)
+    public #SCRIPTNAME#StateMachineGlobalStateUpdateData(float deltaTime)
     {
         DeltaTime = deltaTime;
     }
@@ -95,22 +119,19 @@ public struct #SCRIPTNAME#GlobalStateUpdateData
 /// Note that if you need access to a component by reference, you can do so by using RefRW<T>. The LocalTransform
 /// field demonstrates this here.
 /// </summary>
-public struct #SCRIPTNAME#EntityStateUpdateData
+public struct #SCRIPTNAME#StateMachineEntityStateUpdateData
 {
     public Entity Entity;
-    public DynamicBuffer<StateData> StateVersionsBuffer;
-    public DynamicBuffer<Poly#SCRIPTNAME#State> StatesBuffer;
+    public DynamicBuffer<#SCRIPTNAME#State> StatesBuffer;
     public RefRW<LocalTransform> LocalTransform;
     // TODO: add/change entity data
     
-    public #SCRIPTNAME#EntityStateUpdateData(
+    public #SCRIPTNAME#StateMachineEntityStateUpdateData(
         Entity entity,
-        DynamicBuffer<StateData> stateVersionsBuffer, 
-        DynamicBuffer<Poly#SCRIPTNAME#State> statesBuffer,
+        DynamicBuffer<#SCRIPTNAME#State> statesBuffer,
         RefRW<LocalTransform> localTransform)
     {
         Entity = entity;
-        StateVersionsBuffer = stateVersionsBuffer;
         StatesBuffer = statesBuffer;
         LocalTransform = localTransform;
     }
@@ -122,45 +143,43 @@ public struct #SCRIPTNAME#EntityStateUpdateData
 /// An example of a system that schedules a state machine update job
 /// </summary>
 [BurstCompile]
-public partial struct Example#SCRIPTNAME#StateMachineSystem : ISystem
+public partial struct Example#SCRIPTNAME#StateMachineStateMachineSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<Poly#SCRIPTNAME#State>();
+        state.RequireForUpdate<#SCRIPTNAME#State>();
     }
     
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        state.Dependency = new #SCRIPTNAME#StateMachineUpdateJob
+        state.Dependency = new #SCRIPTNAME#StateMachineStateMachineUpdateJob
         {
             // Here we build the global data and pass it to the job
-            GlobalData = new #SCRIPTNAME#GlobalStateUpdateData(SystemAPI.Time.DeltaTime), 
+            GlobalData = new #SCRIPTNAME#StateMachineGlobalStateUpdateData(SystemAPI.Time.DeltaTime), 
         }.ScheduleParallel(state.Dependency); 
     }
     
     [BurstCompile]
-    public partial struct #SCRIPTNAME#StateMachineUpdateJob : IJobEntity
+    public partial struct #SCRIPTNAME#StateMachineStateMachineUpdateJob : IJobEntity
     {
-        public #SCRIPTNAME#GlobalStateUpdateData GlobalData;
+        public #SCRIPTNAME#StateMachineGlobalStateUpdateData GlobalData;
         
         public void Execute(
             Entity entity, 
             ref StateMachine stateMachine, 
             RefRW<LocalTransform> localTransform,
-            ref DynamicBuffer<StateData> stateVersionsBuffer, 
-            ref DynamicBuffer<Poly#SCRIPTNAME#State> statesBuffer)
+            ref DynamicBuffer<#SCRIPTNAME#State> statesBuffer)
         {
             // Here we build the per-entity data
-            #SCRIPTNAME#EntityStateUpdateData entityData = new #SCRIPTNAME#EntityStateUpdateData(
+            #SCRIPTNAME#StateMachineEntityStateUpdateData entityData = new #SCRIPTNAME#StateMachineEntityStateUpdateData(
                 entity, 
-                stateVersionsBuffer,
                 statesBuffer,
                 localTransform);
 
             // Update the state machine
-            StateMachineUtilities.Update(ref stateMachine, ref stateVersionsBuffer, ref statesBuffer, ref GlobalData, ref entityData);
+            StateMachineUtilities.Update(ref stateMachine, ref statesBuffer, ref GlobalData, ref entityData);
         }
     }
 }
@@ -169,81 +188,68 @@ public partial struct Example#SCRIPTNAME#StateMachineSystem : ISystem
 #region Example Authoring
 /// <summary>
 /// This an example of an authoring component for this state machine
-/// TODO: move this code out of this file, to a new file named "#SCRIPTNAME#StateMachineAuthoring". Otherwise it won't work
+/// TODO: move this code out of this file, to a new file named "TemplateStateMachineStateMachineAuthoring". MonoBehaviours need their file name to match.
 /// </summary>
-class #SCRIPTNAME#StateMachineAuthoring : MonoBehaviour
+class #SCRIPTNAME#StateMachineStateMachineAuthoring : MonoBehaviour
 {
-    class Baker : Baker<#SCRIPTNAME#StateMachineAuthoring>
+    class Baker : Baker<#SCRIPTNAME#StateMachineStateMachineAuthoring>
     {
-        public override void Bake(#SCRIPTNAME#StateMachineAuthoring authoring)
+        public override void Bake(#SCRIPTNAME#StateMachineStateMachineAuthoring authoring)
         {
             Entity entity = GetEntity(authoring, TransformUsageFlags.None);
 
             // Add the state machine components
             StateMachineUtilities
-                .BakeStateMachineComponents<Poly#SCRIPTNAME#State, #SCRIPTNAME#GlobalStateUpdateData, #SCRIPTNAME#EntityStateUpdateData>(
+                .BakeStateMachineComponents<#SCRIPTNAME#State, #SCRIPTNAME#StateMachineGlobalStateUpdateData, #SCRIPTNAME#StateMachineEntityStateUpdateData>(
                     this,
                     entity,
                     out StateMachine stateMachine,
-                    out DynamicBuffer<StateData> stateVersionsBuffer,
-                    out DynamicBuffer<Poly#SCRIPTNAME#State> statesBuffer);
+                    out DynamicBuffer<#SCRIPTNAME#State> statesBuffer);
 
             // Initialize the state machine buffers with an initial capacity
             StateMachineUtilities
-                .InitStateMachine<Poly#SCRIPTNAME#State, #SCRIPTNAME#GlobalStateUpdateData, #SCRIPTNAME#EntityStateUpdateData>(
+                .InitStateMachine<#SCRIPTNAME#State, #SCRIPTNAME#StateMachineGlobalStateUpdateData, #SCRIPTNAME#StateMachineEntityStateUpdateData>(
                     ref stateMachine,
-                    ref stateVersionsBuffer,
                     ref statesBuffer,
                     8);
 
             // Create a few states and remember their StateHandles.
-            // Note: you can create multiple states of the same type.
             StateMachineUtilities
-                .CreateState<Poly#SCRIPTNAME#State, #SCRIPTNAME#GlobalStateUpdateData, #SCRIPTNAME#EntityStateUpdateData>(
-                    ref stateVersionsBuffer,
+                .CreateState<#SCRIPTNAME#State, #SCRIPTNAME#StateMachineGlobalStateUpdateData, #SCRIPTNAME#StateMachineEntityStateUpdateData>(
                     ref statesBuffer,
                     default,
                     out StateHandle state1Handle);
             StateMachineUtilities
-                .CreateState<Poly#SCRIPTNAME#State, #SCRIPTNAME#GlobalStateUpdateData, #SCRIPTNAME#EntityStateUpdateData>(
-                    ref stateVersionsBuffer,
+                .CreateState<#SCRIPTNAME#State, #SCRIPTNAME#StateMachineGlobalStateUpdateData, #SCRIPTNAME#StateMachineEntityStateUpdateData>(
                     ref statesBuffer,
                     default,
                     out StateHandle state2Handle);
-            StateMachineUtilities
-                .CreateState<Poly#SCRIPTNAME#State, #SCRIPTNAME#GlobalStateUpdateData, #SCRIPTNAME#EntityStateUpdateData>(
-                    ref stateVersionsBuffer,
-                    ref statesBuffer,
-                    default,
-                    out StateHandle state3Handle);
 
             // Set state data, now that we have all of our state handles created.
             // Note: it can be useful to set state data after creating all of our state handles, in cases where
             // Our states must store state handles to transition to. If not, we could've also set state data directly
             // in the "CreateState" function.
-            StateMachineUtilities.TrySetState<Poly#SCRIPTNAME#State, #SCRIPTNAME#GlobalStateUpdateData, #SCRIPTNAME#EntityStateUpdateData>(
-                ref stateVersionsBuffer,
+            StateMachineUtilities.TrySetState<#SCRIPTNAME#State, #SCRIPTNAME#StateMachineGlobalStateUpdateData, #SCRIPTNAME#StateMachineEntityStateUpdateData>(
                 ref statesBuffer,
                 state1Handle,
-                new #SCRIPTNAME#StateA
+                new #SCRIPTNAME#State
                 {
                     // TODO: set state data
+                    State = new I#SCRIPTNAME#StateA
+                    {
+                        
+                    },
                 });
-            StateMachineUtilities.TrySetState<Poly#SCRIPTNAME#State, #SCRIPTNAME#GlobalStateUpdateData, #SCRIPTNAME#EntityStateUpdateData>(
-                ref stateVersionsBuffer,
+            StateMachineUtilities.TrySetState<#SCRIPTNAME#State, #SCRIPTNAME#StateMachineGlobalStateUpdateData, #SCRIPTNAME#StateMachineEntityStateUpdateData>(
                 ref statesBuffer,
                 state2Handle,
-                new #SCRIPTNAME#StateB
+                new #SCRIPTNAME#State
                 {
                     // TODO: set state data
-                });
-            StateMachineUtilities.TrySetState<Poly#SCRIPTNAME#State, #SCRIPTNAME#GlobalStateUpdateData, #SCRIPTNAME#EntityStateUpdateData>(
-                ref stateVersionsBuffer,
-                ref statesBuffer,
-                state3Handle,
-                new #SCRIPTNAME#StateA
-                {
-                    // TODO: set state data
+                    State = new I#SCRIPTNAME#StateB
+                    {
+                        
+                    },
                 });
 
             // Set an initial state for our state machine. This is a state the state machine will automatically 

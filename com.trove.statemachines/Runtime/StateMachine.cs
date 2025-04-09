@@ -7,7 +7,7 @@ namespace Trove.Statemachines
     {
         public void ResetForStateMachine();
     }
-    
+
     public interface IState<TGlobalStateUpdateData, TEntityStateUpdateData> 
         where TGlobalStateUpdateData : unmanaged
         where TEntityStateUpdateData : unmanaged
@@ -21,61 +21,44 @@ namespace Trove.Statemachines
     {
         public StateHandle InitialState;
         public StateHandle CurrentStateHandle;
-        public byte HasInitialized;
-    }
-    
-    [InternalBufferCapacity(0)]
-    public struct StateVersion : IBufferElementData
-    {
-        public int Version;
 
-        public bool Exists()
-        {
-            return Version > 0;
-        }
+        public MultiLinkedListPool ChildStates;
+        
+        public byte HasInitialized;
     }
     
     public struct StateHandle : IEquatable<StateHandle>
     {
-        public int Index;
-        public int Version;
-
-        public static readonly StateHandle Null = default;
-        
-        public StateHandle(int index, int version)
-        {
-            Index = index;
-            Version = version;
-        }
+        public Pool.ObjectHandle Handle;
         
         public bool Exists()
         {
-            return Version > 0 && Index >= 0;
+            return Handle.Exists();
         }
 
         public bool Equals(StateHandle other)
         {
-            return Index == other.Index && Version == other.Version;
+            return Handle.Equals(other.Handle);
         }
 
         public override bool Equals(object obj)
         {
-            return obj is StateHandle other && Equals(other);
+            return obj is StateHandle other && Handle.Equals(other.Handle);
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Index, Version);
+            return Handle.GetHashCode();
         }
 
         public static bool operator ==(StateHandle left, StateHandle right)
         {
-            return left.Equals(right);
+            return left.Handle.Equals(right.Handle);
         }
 
         public static bool operator !=(StateHandle left, StateHandle right)
         {
-            return !left.Equals(right);
+            return !left.Handle.Equals(right.Handle);
         }
     }
 }

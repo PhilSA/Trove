@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using Trove;
 using Unity.Burst;
 using Unity.Entities;
 using Trove.PolymorphicStructs;
@@ -5,8 +7,42 @@ using Trove.Statemachines;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-public partial struct PolyCubeState : IState<CubeGlobalStateUpdateData, CubeEntityStateUpdateData>, IBufferElementData
-{ }  
+/// <summary>
+/// This is the polymorphic state buffer element.
+/// </summary>
+[InternalBufferCapacity(8)] // TODO: tweak internal capacity
+public struct CubeState : IBufferElementData, IPoolObject, IState<CubeGlobalStateUpdateData, CubeEntityStateUpdateData>
+{
+    // Required for VersionedPool handling. Determines if the state exists in the states pool.
+    public int Version { get; set; }
+    // This is the generated polymorphic state struct, based on the ITemplateStateMachineState polymorphic interface
+    public PolyCubeState State;
+    
+    public StateMachine SubStateMachine;
+
+    public void OnStateEnter(ref StateMachine stateMachine, ref CubeGlobalStateUpdateData globalData,
+        ref CubeEntityStateUpdateData entityData)
+    {
+        State.OnStateEnter(ref stateMachine, ref globalData, ref entityData);
+    }
+
+    public void OnStateExit(ref StateMachine stateMachine, ref CubeGlobalStateUpdateData globalData,
+        ref CubeEntityStateUpdateData entityData)
+    {
+        State.OnStateExit(ref stateMachine, ref globalData, ref entityData);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref CubeGlobalStateUpdateData globalData,
+        ref CubeEntityStateUpdateData entityData)
+    {
+        State.Update(ref stateMachine, ref globalData, ref entityData);
+        
+        // Update the sub-state machine
+        StateMachineUtilities.Update(ref SubStateMachine, ref entityData.StatesBuffer, ref globalData,
+            ref entityData);
+    }
+}
 
 [PolymorphicStructInterface]
 public interface ICubeState : IState<CubeGlobalStateUpdateData, CubeEntityStateUpdateData>
@@ -65,6 +101,7 @@ public struct CubeStatePosition : ICubeState
         entityData.LocalTransformRef.ValueRW.Position = StartPosition;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Update(ref StateMachine stateMachine, ref CubeGlobalStateUpdateData globalData, ref CubeEntityStateUpdateData entityData)
     {
         TransitionTimer.Update(globalData.DeltaTime, out bool mustTransition);
@@ -74,8 +111,8 @@ public struct CubeStatePosition : ICubeState
         
         if (mustTransition)
         {
-            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StateVersionsBuffer,
-                ref entityData.StatesBuffer, ref globalData, ref entityData, NextState);
+            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StatesBuffer, ref globalData, 
+                ref entityData, NextState);
         }
     }
 }
@@ -86,8 +123,6 @@ public struct CubeStateRotation : ICubeState
     public StateTransitionTimer TransitionTimer;
     public StateHandle NextState;
     public float RotationSpeed;
-    
-    public StateMachine StateMachine;
     
     public float3 RandomDirection;
     
@@ -102,6 +137,7 @@ public struct CubeStateRotation : ICubeState
         TransitionTimer.Reset();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Update(ref StateMachine stateMachine, ref CubeGlobalStateUpdateData globalData, ref CubeEntityStateUpdateData entityData)
     {
         TransitionTimer.Update(globalData.DeltaTime, out bool mustTransition);
@@ -111,12 +147,9 @@ public struct CubeStateRotation : ICubeState
             
         if (mustTransition)
         {
-            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StateVersionsBuffer,
-                ref entityData.StatesBuffer, ref globalData, ref entityData, NextState);
+            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StatesBuffer, ref globalData, 
+                ref entityData, NextState);
         }
-        
-        // Update the sub-state machine
-        StateMachineUtilities.Update(ref StateMachine, ref entityData.StateVersionsBuffer, ref entityData.StatesBuffer, ref globalData, ref entityData);
     }
 }
 
@@ -137,6 +170,7 @@ public struct CubeStateScale : ICubeState
         TransitionTimer.Reset();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Update(ref StateMachine stateMachine, ref CubeGlobalStateUpdateData globalData, ref CubeEntityStateUpdateData entityData)
     {
         TransitionTimer.Update(globalData.DeltaTime, out bool mustTransition);
@@ -145,8 +179,8 @@ public struct CubeStateScale : ICubeState
             
         if (mustTransition)
         {
-            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StateVersionsBuffer,
-                ref entityData.StatesBuffer, ref globalData, ref entityData, NextState);
+            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StatesBuffer, ref globalData, 
+                ref entityData, NextState);
         }
     }
 }
@@ -165,18 +199,15 @@ public struct CubeEntityStateUpdateData
 {
     public Entity Entity;
     public RefRW<LocalTransform> LocalTransformRef;
-    public DynamicBuffer<StateVersion> StateVersionsBuffer;
-    public DynamicBuffer<PolyCubeState> StatesBuffer;
+    public DynamicBuffer<CubeState> StatesBuffer;
     
     public CubeEntityStateUpdateData(
         Entity entity,
         RefRW<LocalTransform> localTransformRef,
-        DynamicBuffer<StateVersion> stateVersionsBuffer, 
-        DynamicBuffer<PolyCubeState> statesBuffer)
+        DynamicBuffer<CubeState> statesBuffer)
     {
         Entity = entity;
         LocalTransformRef = localTransformRef;
-        StateVersionsBuffer = stateVersionsBuffer;
         StatesBuffer = statesBuffer;
     }
 }
@@ -187,7 +218,7 @@ public partial struct ExampleCubeStateMachineSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<PolyCubeState>();
+        state.RequireForUpdate<CubeState>();
     }
     
     [BurstCompile]
@@ -208,16 +239,14 @@ public partial struct ExampleCubeStateMachineSystem : ISystem
             Entity entity, 
             ref StateMachine stateMachine, 
             RefRW<LocalTransform> localTransformRef,
-            ref DynamicBuffer<StateVersion> stateVersionsBuffer, 
-            ref DynamicBuffer<PolyCubeState> statesBuffer)
+            ref DynamicBuffer<CubeState> statesBuffer)
         {
             CubeEntityStateUpdateData entityData = new CubeEntityStateUpdateData(
                 entity, 
                 localTransformRef,
-                stateVersionsBuffer,
                 statesBuffer);
             
-            StateMachineUtilities.Update(ref stateMachine, ref stateVersionsBuffer, ref statesBuffer, ref GlobalData, ref entityData);
+            StateMachineUtilities.Update(ref stateMachine, ref statesBuffer, ref GlobalData, ref entityData);
         }
     }
 }

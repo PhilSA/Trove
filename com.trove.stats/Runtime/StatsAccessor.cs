@@ -750,8 +750,7 @@ namespace Trove.Stats
             {
                 // Add modifier
                 {
-                    CollectionUtilities.AddToCompactMultiLinkedList(ref statModifiersBufferOnAffectedStatEntity,
-                        ref affectedStatRef.LastModifierIndex, modifierElement);
+                    CompactMultiLinkedList.Add(ref affectedStatRef.ModifiersList, ref statModifiersBufferOnAffectedStatEntity, modifierElement);
                 }
 
                 // Add affected stat as observer of all observed stats
@@ -816,8 +815,9 @@ namespace Trove.Stats
             {
                 Stat affectedStat = statsBuffer[modifierHandle.AffectedStatHandle.Index];
 
-                CompactMultiLinkedListIterator<StatModifier<TStatModifier, TStatModifierStack>> modifiersIterator =
-                    new CompactMultiLinkedListIterator<StatModifier<TStatModifier, TStatModifierStack>>(affectedStat.LastModifierIndex);
+                CompactMultiLinkedList.Iterator<StatModifier<TStatModifier, TStatModifierStack>> modifiersIterator =
+                    CompactMultiLinkedList.GetIterator<StatModifier<TStatModifier, TStatModifierStack>>(
+                        affectedStat.ModifiersList);
                 while (modifiersIterator.GetNext(in statModifiersBuffer, out StatModifier<TStatModifier, TStatModifierStack> modifier, out int modifierIndex))
                 {
                     if (modifier.ID == modifierHandle.ModifierID)
@@ -843,33 +843,34 @@ namespace Trove.Stats
             {
                 Stat affectedStat = statsBufferOnAffectedStatEntity[modifierHandle.AffectedStatHandle.Index];
 
-                CompactMultiLinkedListIterator<StatModifier<TStatModifier, TStatModifierStack>> modifiersIterator =
-                    new CompactMultiLinkedListIterator<StatModifier<TStatModifier, TStatModifierStack>>(affectedStat.LastModifierIndex);
+                CompactMultiLinkedList.Iterator<StatModifier<TStatModifier, TStatModifierStack>> modifiersIterator =
+                    CompactMultiLinkedList.GetIterator<StatModifier<TStatModifier, TStatModifierStack>>(
+                        affectedStat.ModifiersList);
                 while (modifiersIterator.GetNext(in statModifiersBufferOnAffectedStatEntity, out StatModifier<TStatModifier, TStatModifierStack> modifier, out int modifierIndex))
                 {
                     if (modifier.ID == modifierHandle.ModifierID)
                     {
-                        statsWorldData._tmpLastIndexesList.Clear();
+                        statsWorldData._tmpCompactMultiLinkedLists.Clear();
 
                         // Remove modifier
                         {
                             // Build the last indexes array
-                            statsWorldData._tmpLastIndexesList.Resize(statsBufferOnAffectedStatEntity.Length, NativeArrayOptions.ClearMemory);
+                            statsWorldData._tmpCompactMultiLinkedLists.Resize(statsBufferOnAffectedStatEntity.Length, NativeArrayOptions.ClearMemory);
                             for (int i = 0; i < statsBufferOnAffectedStatEntity.Length; i++)
                             {
-                                statsWorldData._tmpLastIndexesList[i] = statsBufferOnAffectedStatEntity[i].LastModifierIndex;
+                                statsWorldData._tmpCompactMultiLinkedLists[i] = statsBufferOnAffectedStatEntity[i].ModifiersList;
                             }
 
                             modifiersIterator.RemoveCurrentIteratedElementAndUpdateIndexes(
                                 ref statModifiersBufferOnAffectedStatEntity,
-                                ref statsWorldData._tmpLastIndexesList,
+                                ref statsWorldData._tmpCompactMultiLinkedLists,
                                 out int firstUpdatedLastIndexIndex);
 
                             // Write back updated last indexes
                             for (int i = firstUpdatedLastIndexIndex; i < statsBufferOnAffectedStatEntity.Length; i++)
                             {
                                 Stat tmpStatOnAffectedEntity = statsBufferOnAffectedStatEntity[i];
-                                tmpStatOnAffectedEntity.LastModifierIndex = statsWorldData._tmpLastIndexesList[i];
+                                tmpStatOnAffectedEntity.ModifiersList = statsWorldData._tmpCompactMultiLinkedLists[i];
                                 statsBufferOnAffectedStatEntity[i] = tmpStatOnAffectedEntity;
                             }
                         }
@@ -892,18 +893,17 @@ namespace Trove.Stats
                                     Stat observedStat = statsBufferOnObservedStatEntity[observedStatHandle.Index];
 
                                     // Build the last indexes array
-                                    statsWorldData._tmpLastIndexesList.Resize(statsBufferOnObservedStatEntity.Length, NativeArrayOptions.ClearMemory);
+                                    statsWorldData._tmpCompactMultiLinkedLists.Resize(statsBufferOnObservedStatEntity.Length, NativeArrayOptions.ClearMemory);
                                     for (int i = 0; i < statsBufferOnObservedStatEntity.Length; i++)
                                     {
-                                        statsWorldData._tmpLastIndexesList[i] = statsBufferOnObservedStatEntity[i].LastObserverIndex;
+                                        statsWorldData._tmpCompactMultiLinkedLists[i] = statsBufferOnObservedStatEntity[i].ObserversList;
                                     }
 
                                     int firstUpdatedLastIndexIndex = int.MaxValue;
 
                                     // Iterate observers of the observed stat and try to remove the affected stat
-                                    CompactMultiLinkedListIterator<StatObserver> observersIterator =
-                                        new CompactMultiLinkedListIterator<StatObserver>(observedStat
-                                            .LastObserverIndex);
+                                    CompactMultiLinkedList.Iterator<StatObserver> observersIterator =
+                                        CompactMultiLinkedList.GetIterator<StatObserver>(observedStat.ObserversList);
                                     while (observersIterator.GetNext(in statObserversBufferOnObservedStatEntity,
                                                out StatObserver observerOfObservedStat, out int observerIndex))
                                     {
@@ -911,7 +911,7 @@ namespace Trove.Stats
                                         {
                                             observersIterator.RemoveCurrentIteratedElementAndUpdateIndexes(
                                                 ref statObserversBufferOnObservedStatEntity,
-                                                ref statsWorldData._tmpLastIndexesList,
+                                                ref statsWorldData._tmpCompactMultiLinkedLists,
                                                 out int tmpFirstUpdatedLastIndexIndex);
 
                                             // Remember the lowest valid updated last index index
@@ -931,7 +931,7 @@ namespace Trove.Stats
                                         for (int i = firstUpdatedLastIndexIndex; i < statsBufferOnObservedStatEntity.Length; i++)
                                         {
                                             Stat tmpStatOnObservedEntity = statsBufferOnObservedStatEntity[i];
-                                            tmpStatOnObservedEntity.LastObserverIndex = statsWorldData._tmpLastIndexesList[i];
+                                            tmpStatOnObservedEntity.ObserversList = statsWorldData._tmpCompactMultiLinkedLists[i];
                                             statsBufferOnObservedStatEntity[i] = tmpStatOnObservedEntity;
                                         }
                                     }
@@ -957,10 +957,9 @@ namespace Trove.Stats
             if (getStatSuccess &&
                 _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer))
             {
-                // Note: at each removal, the LastModifierIndex is updated
-                while (statRef.LastModifierIndex >= 0)
+                while (statRef.ModifiersList.HasAnyElements)
                 {
-                    StatModifier<TStatModifier, TStatModifierStack> modifier = statModifiersBuffer[statRef.LastModifierIndex];
+                    StatModifier<TStatModifier, TStatModifierStack> modifier = statModifiersBuffer[statRef.ModifiersList.LastElementIndex];
 
                     TryRemoveStatModifier(new StatModifierHandle
                     {
