@@ -5,7 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/LinkedSubList.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/LinkedSubList.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/SubList.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/SubList.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -112,7 +112,7 @@
       <workItem from="1744031957652" duration="10818000" />
       <workItem from="1744071659283" duration="10862000" />
       <workItem from="1744082726166" duration="11430000" />
-      <workItem from="1744119960759" duration="41206000" />
+      <workItem from="1744119960759" duration="41533000" />
     </task>
     <servers />
   </component>

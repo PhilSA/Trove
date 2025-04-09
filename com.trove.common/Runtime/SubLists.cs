@@ -37,6 +37,7 @@ namespace Trove
     }
     
     /// <summary>
+    /// 
     /// Allows storing multiple growable lists in the same list/buffer.
     /// - Sub-list elements are contiguous in memory.
     /// - Sub-list element indexes can change when list grows
@@ -53,6 +54,7 @@ namespace Trove
     ///   another indexes range that can accomodate the new capacity.
     /// - When resizing capacity like this, we first iterate the buffer in order to find an existing free range that
     ///   could accomodate the capacity. If an existing range is not found, we increase the buffer length to accomodate it.
+    /// 
     /// </summary>
     public struct SubList
     {
@@ -310,9 +312,10 @@ namespace Trove
 
     #endregion
 
-    #region LinkedSubList
+    #region PooledLinkedSubList
 
     /// <summary>
+    /// 
     /// Allows storing multiple growable lists in the same list/buffer.
     /// - Sub-list elements are not contiguous in memory.
     /// - Sub-list element indexes do not change after being added.
@@ -325,8 +328,9 @@ namespace Trove
     /// This type of sub-list is best suited when keeping a handle to a specific element is needed, due to the
     /// unchanging element indexes. The resulting buffer is also likely to be more compact in size than with the
     /// regular <SubList>, but it depends on the scenario.
+    /// 
     /// </summary>
-    public struct LinkedSubList
+    public struct PooledLinkedSubList
     {
         public struct ElementHandle
         {
