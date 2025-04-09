@@ -31,6 +31,11 @@ namespace Trove
 
     #region SubList
 
+    public interface ISubListElement
+    {
+        public byte IsOccupied { get; set; }
+    }
+    
     /// <summary>
     /// Allows storing multiple growable lists in the same list/buffer.
     /// - Sub-list elements are contiguous in memory.
@@ -44,7 +49,256 @@ namespace Trove
     /// </summary>
     public struct SubList
     {
+        public int Length;
+        public int Capacity;
+        public float GrowFactor;
+        public int ElementsStartIndex;
+        public byte IsCreated;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void CheckCreated(in SubList subList)
+        {
+            if (subList.IsCreated == 0)
+            {
+                throw new Exception($"Error: SubList is not created.");
+            }
+        }
+        
+        private static void Create<T>(ref SubList subList, ref DynamicBuffer<T> buffer, int initialCapacity, float growFactor = 1.5f)
+            where T : unmanaged, ISubListElement
+        {
+            if (subList.IsCreated == 0)
+            {
+                subList.Length = 0;
+                subList.Capacity = 0;
+                subList.GrowFactor = growFactor;
+                subList.ElementsStartIndex = -1;
+
+                SetCapacity(ref subList, ref buffer, initialCapacity);
+                
+                subList.IsCreated = 1;
+            }
+        }
+
+        public static void Add<T>(ref SubList subList, ref DynamicBuffer<T> buffer, T element)
+            where T : unmanaged, ISubListElement
+        {
+            CheckCreated(in subList);
+            
+            int newLength = subList.Length + 1;
+            
+            // Grow capacity
+            if (newLength > buffer.Capacity)
+            {
+                int newCapacity = math.max(
+                    (int)math.ceil(subList.Capacity * subList.GrowFactor), 
+                    subList.Capacity + 1);
+                SetCapacity(ref subList, ref buffer, newCapacity);
+            }
+
+            element.IsOccupied = 1;
+            buffer[subList.ElementsStartIndex + subList.Length] = element;
+            subList.Length = newLength;
+        }
+
+        public static unsafe bool TryRemoveAt<T>(ref SubList subList, ref DynamicBuffer<T> buffer, int indexInSubList)
+            where T : unmanaged, ISubListElement
+        {
+            CheckCreated(in subList);
+
+            if (indexInSubList >= 0 && indexInSubList < subList.Length)
+            {
+                int elementIndexInBuffer = subList.ElementsStartIndex + indexInSubList;
+                int nextElementsLength = subList.Length - indexInSubList - 1;
+                void* src = UnsafeUtility.AddressOf(
+                    ref UnsafeUtility.ArrayElementAsRef<T>((byte*)buffer.GetUnsafePtr(), elementIndexInBuffer + 1));
+                void* dst = UnsafeUtility.AddressOf(
+                    ref UnsafeUtility.ArrayElementAsRef<T>((byte*)buffer.GetUnsafePtr(), elementIndexInBuffer));
+                UnsafeUtility.MemMove(dst, src, nextElementsLength);
+                subList.Length--;
+                Assert.IsTrue(subList.Length >= 0);
+                return true;
+            }
+            
+            return false;
+        }
+
+        public static bool TryRemoveAtSwapBack<T>(ref SubList subList, ref DynamicBuffer<T> buffer, int indexInSubList)
+            where T : unmanaged, ISubListElement
+        {
+            CheckCreated(in subList);
+
+            if (indexInSubList >= 0 && indexInSubList < subList.Length)
+            {
+                int elementIndexInBuffer = subList.ElementsStartIndex + indexInSubList;
+                int lastElementIndexInBuffer = subList.ElementsStartIndex + subList.Length - 1;
+                buffer[elementIndexInBuffer] = buffer[lastElementIndexInBuffer];
+                subList.Length--;
+                Assert.IsTrue(subList.Length >= 0);
+                return true;
+            }
+            
+            return false;
+        }
+
+        public static void Clear<T>(ref SubList subList, ref DynamicBuffer<T> buffer)
+            where T : unmanaged, ISubListElement
+        {
+            CheckCreated(in subList);
+            subList.Length = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryGet<T>(ref SubList subList, ref DynamicBuffer<T> buffer, int indexInSubList, out T element)
+            where T : unmanaged, ISubListElement
+        {
+            CheckCreated(in subList);
+            
+            if (indexInSubList >= 0 && indexInSubList < subList.Length)
+            {
+                int indexInBuffer = subList.ElementsStartIndex + indexInSubList;
+                if (indexInBuffer < buffer.Length)
+                {
+                    element = buffer[indexInBuffer];
+                    return true;
+                }
+            }
+
+            element = default;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TrySet<T>(ref SubList subList, ref DynamicBuffer<T> buffer, int indexInSubList, T element)
+            where T : unmanaged, ISubListElement
+        {
+            CheckCreated(in subList);
+            
+            if (indexInSubList >= 0 && indexInSubList < subList.Length)
+            {
+                int indexInBuffer = subList.ElementsStartIndex + indexInSubList;
+                if (indexInBuffer < buffer.Length)
+                {
+                    element.IsOccupied = 1;
+                    buffer[indexInBuffer] = element;
+                    return true;
+                }
+            }
+
+            element = default;
+            return false;
+        }
+
+        public static unsafe bool SetCapacity<T>(ref SubList subList, ref DynamicBuffer<T> buffer, int newCapacity)
+            where T : unmanaged, ISubListElement
+        {
+            CheckCreated(in subList);
+            
+            int prevCapacity = subList.Capacity;
+            
+            // Grow
+            if (newCapacity > prevCapacity)
+            {
+                // Search for available free range
+                int freeRangeStart = -1;
+                int freeRangeLength = 0;
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    T iteratedElement = buffer[i];
+                    if (iteratedElement.IsOccupied == 0)
+                    {
+                        // Detect start of free range
+                        if (freeRangeStart < 0)
+                        {
+                            freeRangeStart = i;
+                        }
+
+                        freeRangeLength++;
+
+                        // Detect reached required capacity
+                        if (freeRangeLength >= newCapacity)
+                        {
+                            break;
+                        }
+                    }
+                    // Reset free range
+                    else
+                    {
+                        freeRangeStart = -1;
+                        freeRangeLength = 0;
+                    }
+                }
+
+                // If haven't found a free range, resize buffer to create one
+                if (freeRangeLength < newCapacity)
+                {
+                    int requiredLengthDiff = newCapacity - freeRangeLength;
+
+                    if (freeRangeStart < 0)
+                    {
+                        freeRangeStart = buffer.Length;
+                    }
+                    
+                    buffer.Resize(buffer.Length + requiredLengthDiff, NativeArrayOptions.ClearMemory);
+                }
+                
+                // Copy sub-list over to new range,
+                if (subList.ElementsStartIndex >= 0 && subList.Length > 0)
+                {
+                    void* src = UnsafeUtility.AddressOf(
+                        ref UnsafeUtility.ArrayElementAsRef<T>((byte*)buffer.GetUnsafePtr(),
+                            subList.ElementsStartIndex));
+                    void* dst = UnsafeUtility.AddressOf(
+                        ref UnsafeUtility.ArrayElementAsRef<T>((byte*)buffer.GetUnsafePtr(), freeRangeStart));
+                    UnsafeUtility.MemMove(dst, src, subList.Length);
+                
+                    // Free previous range
+                    UnsafeUtility.MemClear(src, sizeof(T) * subList.Length);
+                }
+
+                // Mark the rest of the new capacity indexes as occupied
+                for (int i = freeRangeStart + subList.Length; i < freeRangeStart + newCapacity; i++)
+                {
+                    buffer[i] = new T { IsOccupied = 1 };
+                }
+                
+                // Update sublist
+                subList.Capacity = newCapacity;
+                subList.ElementsStartIndex = freeRangeStart;
+                
+                return true;
+            }
+            // Shrink
+            else if (newCapacity < prevCapacity)
+            {
+                // Can't shrink more than current length
+                if (newCapacity > subList.Length)
+                {
+                    subList.Capacity = newCapacity;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static void Resize<T>(ref SubList subList, ref DynamicBuffer<T> buffer, int newLength)
+            where T : unmanaged, ISubListElement
+        {
+            CheckCreated(in subList);
+            
+            // Only allow growing
+            if (newLength > subList.Length)
+            {
+                // Check grow capacity
+                if (newLength > subList.Capacity)
+                {
+                    SetCapacity(ref subList, ref buffer, newLength);
+                }
+                
+                subList.Length = newLength;
+            }
+        }
     }
 
     #endregion
