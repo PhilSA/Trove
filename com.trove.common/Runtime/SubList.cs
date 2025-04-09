@@ -15,7 +15,7 @@ namespace Trove
      * but then you have to pay the price of a buffer lookup for each item when accessing `Effect`s. You could choose
      * to store `Effect`s in a `FixedList` in `Item`, but the storage size of that `FixedList` would be limited, and
      * it would no doubt make iterating your `Item`s less efficient if you pick a worst-case-scenario `FixedList` size.
-     * 
+     *
      * With sub-lists, we can solve this problem without paying the price of buffer lookups and without the limitations
      * of FixedLists. Sub-lists use a single buffer in order to store multiple individual lists. In the use case above,
      * each `Item` buffer element would have a sub-list field, and this sub-list would allow them to store a list of
@@ -28,10 +28,11 @@ namespace Trove
      *
      * Different types of sub-lists are available, each with their pros and cons.
      */
-    
+
     #region SubList
+
     /// <summary>
-    /// Allows storing multiple lists in the same list/buffer.
+    /// Allows storing multiple growable lists in the same list/buffer.
     /// - Sub-list elements are contiguous in memory.
     /// - Sub-list element indexes can change when list grows
     /// - Great sub-list element add and remove performance.
@@ -45,11 +46,13 @@ namespace Trove
     {
 
     }
+
     #endregion
 
     #region LinkedSubList
+
     /// <summary>
-    /// Allows storing multiple lists in the same list/buffer.
+    /// Allows storing multiple growable lists in the same list/buffer.
     /// - Sub-list elements are not contiguous in memory.
     /// - Sub-list element indexes do not change after being added.
     /// - Medium sub-list element remove performance, due to only being able to remove an element by iterating
@@ -69,30 +72,50 @@ namespace Trove
             public int Index;
             public int Version;
         }
-        
+
         // TODO: optional FreeRanges param? Or LinkedFreeRangesSubList
     }
+
     #endregion
 
     #region CompactLinkedSubList
-    
+
     public interface ICompactLinkedSubListElement
     {
         public int NextElementIndex { get; set; }
         public byte IsCreated { get; set; }
         public byte IsPinnedFirstElement { get; set; }
     }
-    
+
     /// <summary>
-    /// Allows storing multiple lists in the same list/buffer.
+    /// 
+    /// Allows storing multiple growable lists in the same list/buffer.
     /// - Sub-list elements are not contiguous in memory.
     /// - Sub-list element indexes can change when elements are added or removed.
     /// - Medium sub-list element add and remove performance due to having to iterate elements of the sub-list until the
-    ///   last one (add) or the removed one (remove) is found.
+    ///   last one (for add) or the removed one (for remove) are found.
     /// - The encompassing buffer will always have the just exact length needed to host all sub-list elements.
     ///
     /// This type of sub-list is best suited for when minimizing total list size is key, such as for netcode buffer
-    /// serialization. 
+    /// serialization.
+    ///
+    /// How it works:
+    /// - The buffer starts with a series of "pinned" elements representing the first element of each sub-list. These
+    ///   are "pinned" in the sense that they are never actually removed from the buffer; they are just marked as "not created"
+    ///   when removed. The purpose of this is that it guarantees that removing an element from a sub-list will never
+    ///   change the index of the first element of any other sub-list. Sub-lists can therefore always rely on their
+    ///   first element index to be their "anchor point" in the buffer of elements.
+    /// - Each element remembers their "NextElementIndex". This is updated by Add/Remove operations.
+    /// - Iterating the sub-list elements therefore means getting the first element, and following the
+    ///   "NextElementIndex"s.
+    /// - When a sub-list adds a first element, it first checks if there are any available free pinned first element
+    ///   slots in the buffer. If so, it stores its first element there. If not, it will insert its first element at the
+    ///   end of all the other pinned first elements. This will cause all the element "NextElementIndex" in the buffer
+    ///   to be patched following the insertion.
+    /// - Removing a sub-list's first element therefore frees up a "pinned first element" slot for the next sub-list
+    ///   that adds its first element. So the buffer has a minimum length corresponding to the max amount of different
+    ///   sub-lists that had a first element added at the same time.
+    ///
     /// </summary>
     public struct CompactLinkedSubList
     {
@@ -106,14 +129,14 @@ namespace Trove
             internal int PrevPrevIteratedIndex;
             internal int PrevIteratedIndex;
             internal int IteratedIndex;
-            
+
             public bool GetNext(ref DynamicBuffer<T> buffer, out T element, out int elementIndex)
             {
                 if (IteratedIndex >= 0 && IteratedIndex < buffer.Length)
                 {
                     element = buffer[IteratedIndex];
                     elementIndex = IteratedIndex;
-                    
+
                     PrevPrevIteratedIndex = PrevIteratedIndex;
                     PrevIteratedIndex = IteratedIndex;
                     IteratedIndex = element.NextElementIndex;
@@ -129,15 +152,15 @@ namespace Trove
             {
                 int removedElementPrevIndex = PrevPrevIteratedIndex;
                 int removedElementIndex = PrevIteratedIndex;
-                
+
                 if (removedElementIndex >= 0)
                 {
                     Assert.IsTrue(buffer.Length > removedElementPrevIndex);
                     Assert.IsTrue(buffer.Length > removedElementIndex);
-                    
+
                     T removedElement = buffer[removedElementIndex];
                     int removedElementNextIndex = removedElement.NextElementIndex;
-                    
+
                     Assert.IsTrue(buffer.Length > removedElementNextIndex);
                     Assert.AreEqual(1, removedElement.IsCreated);
 
@@ -150,11 +173,11 @@ namespace Trove
                             T nextElement = buffer[removedElementNextIndex];
                             removedElement = nextElement;
                             removedElement.IsPinnedFirstElement = 1;
-                            
+
                             // Remove next element and patch indexes
                             buffer.RemoveAt(removedElementNextIndex);
                             PatchNextIndexes(ref buffer, removedElementNextIndex, -1);
-                        
+
                             // Make the iterated index the next element index
                             IteratedIndex = removedElement.NextElementIndex;
                         }
@@ -165,7 +188,7 @@ namespace Trove
                             removedElement.NextElementIndex = -1;
                             subList.FirstElementIndex = -1;
                         }
-                        
+
                         // Overwrite first element data. First elements are never removed, because removing one
                         // first element must never change the index of another first element.
                         buffer[removedElementIndex] = removedElement;
@@ -184,18 +207,18 @@ namespace Trove
                         // Remove and patch indexes
                         buffer.RemoveAt(removedElementIndex);
                         PatchNextIndexes(ref buffer, removedElementIndex, -1);
-                        
+
                         // Make the iterated index the next element index
                         IteratedIndex = removedElementNextIndex;
                     }
 
                     subList.Length--;
-                    
+
                     Assert.IsTrue(subList.Length >= 0);
                 }
             }
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AutoInitialze()
         {
@@ -211,7 +234,7 @@ namespace Trove
             where T : unmanaged, ICompactLinkedSubListElement
         {
             subList.AutoInitialze();
-            
+
             return new Iterator<T>
             {
                 PrevPrevIteratedIndex = -1,
@@ -221,9 +244,9 @@ namespace Trove
         }
 
         public static void Add<T>(
-            ref CompactLinkedSubList subList, 
+            ref CompactLinkedSubList subList,
             ref DynamicBuffer<T> buffer,
-            T element) 
+            T element)
             where T : unmanaged, ICompactLinkedSubListElement
         {
             subList.AutoInitialze();
@@ -232,21 +255,21 @@ namespace Trove
             if (subList.FirstElementIndex < 0)
             {
                 Assert.AreEqual(0, subList.Length);
-                
+
                 int firstElementInsertionIndex = -1;
                 int lastPinnedFirstElementIndex = 0;
-                
+
                 // If there are any pinned first elements added, look for a free one
                 for (int i = 0; i < buffer.Length; i++)
                 {
                     T iteratedElement = buffer[i];
-                    
+
                     // Stop looking as soon as we are not iterating pinned first elements anymore.
                     if (iteratedElement.IsPinnedFirstElement == 0)
                     {
                         break;
                     }
-                    
+
                     lastPinnedFirstElementIndex = i;
                     if (iteratedElement.IsCreated == 0)
                     {
@@ -254,28 +277,28 @@ namespace Trove
                         break;
                     }
                 }
-                
+
                 // If we haven't found a free first element index, allocate new one at the end of the current first elements
                 if (firstElementInsertionIndex < 0)
                 {
                     firstElementInsertionIndex = lastPinnedFirstElementIndex;
                 }
-                
+
                 // Insert the first element of the sub-list
                 element.IsCreated = 1;
                 element.IsPinnedFirstElement = 1;
                 element.NextElementIndex = -1;
                 buffer.Insert(firstElementInsertionIndex, element);
-                
+
                 // Patch all "NextElementIndex"s of the buffer if they were affected by the insert
                 PatchNextIndexes(ref buffer, firstElementInsertionIndex, 1);
-                
+
                 // Update sub-list
                 subList.FirstElementIndex = firstElementInsertionIndex;
                 subList.Length = 1;
                 return;
             }
-            
+
             // If this isn't the first element of the sub-list, iterate sub-list elements until we find the last one.
             int lastElementIndex = -1;
             T lastElement = default;
@@ -290,20 +313,20 @@ namespace Trove
                     break;
                 }
             }
-            
+
             Assert.IsTrue(lastElementIndex >= 0);
-            
+
             // Add element at the end of the buffer
             int newElementIndex = buffer.Length;
             element.IsCreated = 1;
             element.IsPinnedFirstElement = 0;
             element.NextElementIndex = -1;
             buffer.Add(element);
-            
+
             // Patch NextIndex of previous last element
             lastElement.NextElementIndex = newElementIndex;
             buffer[lastElementIndex] = lastElement;
-            
+
             // Update sub-list
             subList.Length++;
         }
@@ -312,18 +335,19 @@ namespace Trove
             where T : unmanaged, ICompactLinkedSubListElement
         {
             subList.AutoInitialze();
-            
+
             Iterator<T> iterator = GetIterator<T>(ref subList);
             while (iterator.GetNext(ref buffer, out T iteratedElement, out int iteratedElementIndex))
             {
                 iterator.RemoveCurrentElement(ref subList, ref buffer);
             }
-            
+
             Assert.AreEqual(0, subList.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetAt<T>(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer, int indexInSubList, out T element, out int elementIndexInBuffer)
+        public static bool TryGetAt<T>(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer,
+            int indexInSubList, out T element, out int elementIndexInBuffer)
             where T : unmanaged, ICompactLinkedSubListElement
         {
             subList.AutoInitialze();
@@ -348,7 +372,8 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TrySetAt<T>(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer, int indexInSubList, T element)
+        public static bool TrySetAt<T>(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer,
+            int indexInSubList, T element)
             where T : unmanaged, ICompactLinkedSubListElement
         {
             subList.AutoInitialze();
@@ -374,7 +399,8 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryRemoveAt<T>(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer, int indexInSubList)
+        public static bool TryRemoveAt<T>(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer,
+            int indexInSubList)
             where T : unmanaged, ICompactLinkedSubListElement
         {
             subList.AutoInitialze();
@@ -409,5 +435,6 @@ namespace Trove
             }
         }
     }
+
     #endregion
 }
