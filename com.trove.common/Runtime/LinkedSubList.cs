@@ -14,14 +14,22 @@ namespace Trove
     }
 
     /// <summary>
-    /// Allows storing multiple independent linked lists in a single buffer acting as a pool of objects.
-    /// - Guarantees unchanging object indexes.
+    /// Allows storing multiple independent growable lists in a single buffer.
+    /// - Guarantees unchanging indexes for all objects added to lists.
     /// - Object allocation has to search through the indexes in ascending order to find the first free slot.
-    /// - Each object can only be part of one (and only one) linked list.
-    /// Main use case is for object hierarchies, like for a hierarchical state machines where each state can have
-    /// a list of child states.
+    /// - Each object can only be part of one -and only one- linked list (the API enforces it).
+    ///
+    /// ----
+    /// 
+    /// The main use case for this is to provide a solution to the lack of nested collections on entities. Imagine you
+    /// have a `DynamicBuffer<Item>`, and each `Item` needs a list of `Effect`s, and `Item`s will gain and lose
+    /// `Effect`s during play. You could choose to give each `Item` an Entity that stores a `DynamicBuffer<Effect>`,
+    /// but then you have to pay the price of a buffer lookup for each item when accessing `Effect`s. You could choose
+    /// to store `Effect`s in a `FixedList` in `Item`, but the storage size of that `FixedList` would be limited, and
+    /// it would no doubt make iterating your `Item`s less efficient if you pick a worst-case-scenario `FixedList` size.
+    ///
+    /// `MultiLinkedListPool` is an alternative
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     public struct MultiLinkedListPool
     {
         public ObjectHandle LastObjectHandle;
@@ -184,13 +192,13 @@ namespace Trove
             };
         }
 
-        public Iterator<T> GetIterator<T>()
+        public static Iterator<T> GetIterator<T>(MultiLinkedListPool listPool)
             where T : unmanaged, IMultiLinkedListPoolObject
         {
             return new Iterator<T>
             {
                 _prevIteratedObjectIndex = -1,
-                _iteratedObjectHandle = LastObjectHandle,
+                _iteratedObjectHandle = listPool.LastObjectHandle,
             };
         }
     
@@ -203,7 +211,7 @@ namespace Trove
         
         #region DynamicBuffer
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetObject<T>(ref DynamicBuffer<T> poolBuffer, ObjectHandle objectHandle,
+        public static bool TryGetObject<T>(ref DynamicBuffer<T> poolBuffer, ObjectHandle objectHandle,
             out T existingObject)
             where T : unmanaged, IMultiLinkedListPoolObject
         {
@@ -221,7 +229,7 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe ref T TryGetObjectRef<T>(
+        public static unsafe ref T TryGetObjectRef<T>(
             ref DynamicBuffer<T> poolBuffer,
             ObjectHandle objectHandle,
             out bool success,
@@ -243,7 +251,7 @@ namespace Trove
             return ref nullResult;
         }
 
-        public void AddObject<T>(ref DynamicBuffer<T> poolBuffer, T newObject,
+        public static void AddObject<T>(ref MultiLinkedListPool listPool, ref DynamicBuffer<T> poolBuffer, T newObject,
             out ObjectHandle objectHandle, float growFactor = 1.5f)
             where T : unmanaged, IMultiLinkedListPoolObject
         {
@@ -267,7 +275,7 @@ namespace Trove
 
             T existingObject = poolBuffer[addIndex];
             newObject.Version = -existingObject.Version + 1; // flip version and increment
-            newObject.PrevObjectHandle = LastObjectHandle;
+            newObject.PrevObjectHandle = listPool.LastObjectHandle;
             poolBuffer[addIndex] = newObject;
             
             objectHandle = new ObjectHandle
@@ -276,21 +284,21 @@ namespace Trove
                 Version = newObject.Version,
             };
             
-            LastObjectHandle = objectHandle;
+            listPool.LastObjectHandle = objectHandle;
         }
 
-        public bool TryRemoveObject<T>(ref DynamicBuffer<T> poolBuffer, ObjectHandle objectHandle)
+        public static bool TryRemoveObject<T>(ref MultiLinkedListPool listPool, ref DynamicBuffer<T> poolBuffer, ObjectHandle objectHandle)
             where T : unmanaged, IMultiLinkedListPoolObject
         {
-            if (LastObjectHandle.Exists() && objectHandle.Exists())
+            if (listPool.LastObjectHandle.Exists() && objectHandle.Exists())
             {
-                Iterator<T> iterator = GetIterator<T>();
+                Iterator<T> iterator = GetIterator<T>(listPool);
                 while (iterator.GetNext(ref poolBuffer, out T iteratedObject,
                            out ObjectHandle iteratedObjectHandle))
                 {
                     if (iteratedObjectHandle == objectHandle)
                     {
-                        iterator.RemoveIteratedObject(ref this, ref poolBuffer);
+                        iterator.RemoveIteratedObject(ref listPool, ref poolBuffer);
                         return true;
                     }
                 }
@@ -299,15 +307,15 @@ namespace Trove
             return false;
         }
 
-        public void Clear<T>(ref DynamicBuffer<T> poolBuffer)
+        public static void Clear<T>(ref MultiLinkedListPool listPool, ref DynamicBuffer<T> poolBuffer)
             where T : unmanaged, IMultiLinkedListPoolObject
         {
-            if (LastObjectHandle.Exists())
+            if (listPool.LastObjectHandle.Exists())
             {
-                Iterator<T> iterator = GetIterator<T>();
+                Iterator<T> iterator = GetIterator<T>(listPool);
                 while (iterator.GetNext(ref poolBuffer, out _, out _))
                 {
-                    iterator.RemoveIteratedObject(ref this, ref poolBuffer);
+                    iterator.RemoveIteratedObject(ref listPool, ref poolBuffer);
                 }
             }
         }
@@ -356,7 +364,7 @@ namespace Trove
 
         #region NativeList
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetObject<T>(ref NativeList<T> poolBuffer, ObjectHandle objectHandle,
+        public static bool TryGetObject<T>(ref NativeList<T> poolBuffer, ObjectHandle objectHandle,
             out T existingObject)
             where T : unmanaged, IMultiLinkedListPoolObject
         {
@@ -374,7 +382,7 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe ref T TryGetObjectRef<T>(
+        public static unsafe ref T TryGetObjectRef<T>(
             ref NativeList<T> poolBuffer,
             ObjectHandle objectHandle,
             out bool success,
@@ -396,7 +404,7 @@ namespace Trove
             return ref nullResult;
         }
 
-        public void AddObject<T>(ref NativeList<T> poolBuffer, T newObject,
+        public static void AddObject<T>(ref MultiLinkedListPool listPool, ref NativeList<T> poolBuffer, T newObject,
             out ObjectHandle objectHandle, float growFactor = 1.5f)
             where T : unmanaged, IMultiLinkedListPoolObject
         {
@@ -420,7 +428,7 @@ namespace Trove
 
             T existingObject = poolBuffer[addIndex];
             newObject.Version = -existingObject.Version + 1; // flip version and increment
-            newObject.PrevObjectHandle = LastObjectHandle;
+            newObject.PrevObjectHandle = listPool.LastObjectHandle;
             poolBuffer[addIndex] = newObject;
             
             objectHandle = new ObjectHandle
@@ -429,21 +437,21 @@ namespace Trove
                 Version = newObject.Version,
             };
             
-            LastObjectHandle = objectHandle;
+            listPool.LastObjectHandle = objectHandle;
         }
 
-        public bool TryRemoveObject<T>(ref NativeList<T> poolBuffer, ObjectHandle objectHandle)
+        public static bool TryRemoveObject<T>(ref MultiLinkedListPool listPool, ref NativeList<T> poolBuffer, ObjectHandle objectHandle)
             where T : unmanaged, IMultiLinkedListPoolObject
         {
-            if (LastObjectHandle.Exists() && objectHandle.Exists())
+            if (listPool.LastObjectHandle.Exists() && objectHandle.Exists())
             {
-                Iterator<T> iterator = GetIterator<T>();
+                Iterator<T> iterator = GetIterator<T>(listPool);
                 while (iterator.GetNext(ref poolBuffer, out T iteratedObject,
                            out ObjectHandle iteratedObjectHandle))
                 {
                     if (iteratedObjectHandle == objectHandle)
                     {
-                        iterator.RemoveIteratedObject(ref this, ref poolBuffer);
+                        iterator.RemoveIteratedObject(ref listPool, ref poolBuffer);
                         return true;
                     }
                 }
@@ -452,15 +460,15 @@ namespace Trove
             return false;
         }
 
-        public void Clear<T>(ref NativeList<T> poolBuffer)
+        public static void Clear<T>(ref MultiLinkedListPool listPool, ref NativeList<T> poolBuffer)
             where T : unmanaged, IMultiLinkedListPoolObject
         {
-            if (LastObjectHandle.Exists())
+            if (listPool.LastObjectHandle.Exists())
             {
-                Iterator<T> iterator = GetIterator<T>();
+                Iterator<T> iterator = GetIterator<T>(listPool);
                 while (iterator.GetNext(ref poolBuffer, out _, out _))
                 {
-                    iterator.RemoveIteratedObject(ref this, ref poolBuffer);
+                    iterator.RemoveIteratedObject(ref listPool, ref poolBuffer);
                 }
             }
         }
@@ -500,7 +508,7 @@ namespace Trove
                     poolBuffer.Resize(i + 1, NativeArrayOptions.ClearMemory);
                     if (trimCapacity)
                     {
-                        poolBuffer.SetCapacity(i + 1);
+                        poolBuffer.Capacity = i + 1;
                     }
                 }
             }

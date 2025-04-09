@@ -7,10 +7,6 @@
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/MultiLinkedListPool.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/MultiLinkedListPool.cs.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,7 +21,8 @@
   </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachineAuthoring.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../com.trove.common/Runtime/VersionedPool.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../com.trove.common/Runtime/MultiLinkedListPool.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPoly.generated.cs" root0="FORCE_HIGHLIGHTING" />
@@ -115,7 +112,7 @@
       <workItem from="1744031957652" duration="10818000" />
       <workItem from="1744071659283" duration="10862000" />
       <workItem from="1744082726166" duration="11430000" />
-      <workItem from="1744119960759" duration="25941000" />
+      <workItem from="1744119960759" duration="36283000" />
     </task>
     <servers />
   </component>
