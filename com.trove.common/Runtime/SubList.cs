@@ -46,6 +46,13 @@ namespace Trove
     ///
     /// This type of sub-list is best suited when sub-list element iteration performance is key, due to sub-list
     /// elements being contiguous in memory. Or when element add/remove performance is key.
+    ///
+    /// How it works:
+    /// - Each sub-list reserves a range a contiguous indexes in the buffer, equivalent to capacity.
+    /// - When length would exceed capacity, the sub-list capacity is resized and the sub-list elements are moved to
+    ///   another indexes range that can accomodate the new capacity.
+    /// - When resizing capacity like this, we first iterate the buffer in order to find an existing free range that
+    ///   could accomodate the capacity. If an existing range is not found, we increase the buffer length to accomodate it.
     /// </summary>
     public struct SubList
     {
