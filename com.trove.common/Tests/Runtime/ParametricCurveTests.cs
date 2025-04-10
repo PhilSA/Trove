@@ -5,7 +5,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Trove
+namespace Trove.Tests
 {
     [TestFixture]
     public class ParametricCurveTests

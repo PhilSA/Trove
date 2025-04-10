@@ -841,7 +841,7 @@ namespace Trove.Stats
             {
                 // Add modifier
                 {
-                    CompactLinkedSubList.Add(ref affectedStatRef.ModifiersList, ref statModifiersBufferOnAffectedStatEntity, modifierElement);
+                    CompactSubList.Add(ref affectedStatRef.ModifiersList, ref statModifiersBufferOnAffectedStatEntity, modifierElement);
                 }
 
                 // Add affected stat as observer of all observed stats
@@ -910,8 +910,8 @@ namespace Trove.Stats
             {
                 Stat affectedStat = statsBuffer[modifierHandle.AffectedStatHandle.Index];
 
-                CompactLinkedSubList.Iterator<StatModifier<TStatModifier, TStatModifierStack>> modifiersIterator =
-                    CompactLinkedSubList.GetIterator<StatModifier<TStatModifier, TStatModifierStack>>(
+                CompactSubList.Iterator<StatModifier<TStatModifier, TStatModifierStack>> modifiersIterator =
+                    CompactSubList.GetIterator<StatModifier<TStatModifier, TStatModifierStack>>(
                         affectedStat.ModifiersList);
                 while (modifiersIterator.GetNext(in statModifiersBuffer, out StatModifier<TStatModifier, TStatModifierStack> modifier, out int modifierIndex))
                 {
@@ -939,8 +939,8 @@ namespace Trove.Stats
                 ref Stat affectedStatRef = ref UnsafeUtility.ArrayElementAsRef<Stat>(
                     statsBufferOnAffectedStatEntity.GetUnsafePtr(), modifierHandle.AffectedStatHandle.Index);
 
-                CompactLinkedSubList.Iterator<StatModifier<TStatModifier, TStatModifierStack>> modifiersIterator =
-                    CompactLinkedSubList.GetIterator<StatModifier<TStatModifier, TStatModifierStack>>(
+                CompactSubList.Iterator<StatModifier<TStatModifier, TStatModifierStack>> modifiersIterator =
+                    CompactSubList.GetIterator<StatModifier<TStatModifier, TStatModifierStack>>(
                         affectedStatRef.ModifiersList);
                 while (modifiersIterator.GetNext(in statModifiersBufferOnAffectedStatEntity, out StatModifier<TStatModifier, TStatModifierStack> modifier, out int modifierIndex))
                 {
@@ -970,8 +970,8 @@ namespace Trove.Stats
                                         statsBufferOnObservedStatEntity.GetUnsafePtr(), observedStatHandle.Index);
 
                                     // Iterate observers of the observed stat and try to remove the affected stat
-                                    CompactLinkedSubList.Iterator<StatObserver> observersIterator =
-                                        CompactLinkedSubList.GetIterator<StatObserver>(observedStatRef.ObserversList);
+                                    CompactSubList.Iterator<StatObserver> observersIterator =
+                                        CompactSubList.GetIterator<StatObserver>(observedStatRef.ObserversList);
                                     while (observersIterator.GetNext(in statObserversBufferOnObservedStatEntity,
                                                out StatObserver observerOfObservedStat, out int observerIndex))
                                     {
@@ -1007,7 +1007,7 @@ namespace Trove.Stats
             if (getStatSuccess &&
                 _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> statModifiersBuffer))
             {
-                while (statRef.ModifiersList.Length > 0)
+                while (statRef.ModifiersList.Count > 0)
                 {
                     StatModifier<TStatModifier, TStatModifierStack> modifier = statModifiersBuffer[statRef.ModifiersList.FirstElementIndex];
 

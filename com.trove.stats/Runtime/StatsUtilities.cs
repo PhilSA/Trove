@@ -88,8 +88,8 @@ namespace Trove.Stats
                 BaseValue = baseValue,
                 Value = baseValue,
                 
-                ModifiersList = CompactLinkedSubList.Create(),
-                ObserversList = CompactLinkedSubList.Create(),
+                ModifiersList = CompactSubList.Create(),
+                ObserversList = CompactSubList.Create(),
                 
                 ProduceChangeEvents = produceChangeEvents ? (byte)1 : (byte)0,
             };
@@ -125,10 +125,10 @@ namespace Trove.Stats
             
             // Apply Modifiers
             statsWorldData._modifiersStack.Reset();
-            if (statRef.ModifiersList.Length > 0)
+            if (statRef.ModifiersList.Count > 0)
             {
-                CompactLinkedSubList.Iterator<StatModifier<TStatModifier, TStatModifierStack>> modifiersIterator =
-                    CompactLinkedSubList.GetIterator<StatModifier<TStatModifier, TStatModifierStack>>(
+                CompactSubList.Iterator<StatModifier<TStatModifier, TStatModifierStack>> modifiersIterator =
+                    CompactSubList.GetIterator<StatModifier<TStatModifier, TStatModifierStack>>(
                         statRef.ModifiersList);
                 ref StatModifier<TStatModifier, TStatModifierStack> modifierRef = ref modifiersIterator.GetNextRef(
                     ref statModifiersBuffer, out bool success, out int modifierIndex);
@@ -175,10 +175,10 @@ namespace Trove.Stats
                 }
 
                 // Notify Observers (add to update list)
-                if (statRef.ObserversList.Length > 0)
+                if (statRef.ObserversList.Count > 0)
                 {
-                    CompactLinkedSubList.Iterator<StatObserver> observersIterator =
-                        CompactLinkedSubList.GetIterator<StatObserver>(statRef.ObserversList);
+                    CompactSubList.Iterator<StatObserver> observersIterator =
+                        CompactSubList.GetIterator<StatObserver>(statRef.ObserversList);
                     while (observersIterator.GetNext(in statObserversBuffer, out StatObserver observer,
                                out int observerIndex))
                     {
@@ -202,10 +202,10 @@ namespace Trove.Stats
             in DynamicBuffer<StatObserver> statObserversBufferOnStatEntity,
             ref NativeList<StatObserver> statObserversList)
         {
-            if (stat.ObserversList.Length > 0)
+            if (stat.ObserversList.Count > 0)
             {
-                CompactLinkedSubList.Iterator<StatObserver> observersIterator =
-                    CompactLinkedSubList.GetIterator<StatObserver>(stat.ObserversList);
+                CompactSubList.Iterator<StatObserver> observersIterator =
+                    CompactSubList.GetIterator<StatObserver>(stat.ObserversList);
                 while (observersIterator.GetNext(in statObserversBufferOnStatEntity,
                            out StatObserver observerOfStat, out int observerIndex))
                 {
@@ -226,7 +226,7 @@ namespace Trove.Stats
             {
                 Stat observedStat = statsBufferOnObservedStat[observedStatHandle.Index];
                 
-                CompactLinkedSubList.Add(ref observedStat.ObserversList,
+                CompactSubList.Add(ref observedStat.ObserversList,
                     ref statObserversBufferOnObservedStatEntity,
                     new StatObserver { ObserverHandle = observerStatHandle });
                 
@@ -362,7 +362,7 @@ namespace Trove.Stats
                 if (statHandle.Index < statsBuffer.Length)
                 {
                     Stat stat = statsBuffer[statHandle.Index];
-                    modifiersCount = stat.ModifiersList.Length;
+                    modifiersCount = stat.ModifiersList.Count;
                     return true;
                 }
             }
@@ -388,8 +388,8 @@ namespace Trove.Stats
                 {
                     Stat stat = statsBuffer[statHandle.Index];
 
-                    CompactLinkedSubList.Iterator<StatModifier<TStatModifier, TStatModifierStack>> modifiersIterator =
-                        CompactLinkedSubList.GetIterator<StatModifier<TStatModifier, TStatModifierStack>>(stat.ModifiersList);
+                    CompactSubList.Iterator<StatModifier<TStatModifier, TStatModifierStack>> modifiersIterator =
+                        CompactSubList.GetIterator<StatModifier<TStatModifier, TStatModifierStack>>(stat.ModifiersList);
                     while (modifiersIterator.GetNext(in statModifiersBuffer, out StatModifier<TStatModifier, TStatModifierStack> modifier, out int modifierIndex))
                     {
                         modifiers.Add(new StatModifierAndModifierHandle<TStatModifier, TStatModifierStack>()
@@ -423,7 +423,7 @@ namespace Trove.Stats
                 if (statHandle.Index < statsBuffer.Length)
                 {
                     Stat stat = statsBuffer[statHandle.Index];
-                    observersCount = stat.ObserversList.Length;
+                    observersCount = stat.ObserversList.Count;
                     return true;
                 }
             }

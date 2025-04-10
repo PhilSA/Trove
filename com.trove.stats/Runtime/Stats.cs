@@ -36,13 +36,13 @@ namespace Trove.Stats
         public float BaseValue;
         public float Value;
 
-        public CompactLinkedSubList ModifiersList;
-        public CompactLinkedSubList ObserversList;
+        public CompactSubList ModifiersList;
+        public CompactSubList ObserversList;
         
         public byte ProduceChangeEvents;
     }
 
-    public partial struct StatModifier<TStatModifier, TStatModifierStack> : IBufferElementData, ICompactLinkedSubListElement
+    public partial struct StatModifier<TStatModifier, TStatModifierStack> : IBufferElementData, ICompactSubListElement
         where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
@@ -78,7 +78,7 @@ namespace Trove.Stats
         }
     }
 
-    public partial struct StatObserver : IBufferElementData, ICompactLinkedSubListElement
+    public partial struct StatObserver : IBufferElementData, ICompactSubListElement
     {
         public StatHandle ObserverHandle;
         

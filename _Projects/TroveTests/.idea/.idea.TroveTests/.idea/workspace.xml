@@ -6,26 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Prefabs/StessTestAI.prefab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Prefabs/StessTestAI.prefab.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Scenes/StatsTest/New Sub Scene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/Scenes/StatsTest/New Sub Scene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTester.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTester.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTesterAuthoring.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTesterAuthoring.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTesterSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTesterSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/_StarterContentTest/StatsStarterContentSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/_StarterContentTest/StatsStarterContentSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/manifest.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/packages-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/packages-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/CompactMultiLinkedList.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/CompactMultiLinkedList.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/LinkedSubList.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/LinkedSubList.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/SubLists.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/SubLists.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/BitUtilitiesTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/BitUtilitiesTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/ParametricCurveTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/ParametricCurveTests.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/Stats.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/Stats.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsJobs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsJobs.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsWorldData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsWorldData.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Tests/Runtime/StatsTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Tests/Runtime/StatsTests.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,10 +91,10 @@
       </option>
       <method v="2" />
     </configuration>
-    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" ignored-value-for-modified-check="13964">
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" ignored-value-for-modified-check="30976">
       <option name="allowRunningInParallel" value="false" />
       <option name="listenPortForConnections" value="false" />
-      <option name="pid" value="13964" />
+      <option name="pid" value="30976" />
       <option name="projectPathOnTarget" />
       <option name="runtimes">
         <list>
@@ -138,7 +125,8 @@
       <workItem from="1744199683612" duration="6331000" />
       <workItem from="1744206058030" duration="234000" />
       <workItem from="1744206575142" duration="2214000" />
-      <workItem from="1744209017329" duration="15385000" />
+      <workItem from="1744209017329" duration="15437000" />
+      <workItem from="1744242492403" duration="4228000" />
     </task>
     <servers />
   </component>
@@ -173,43 +161,17 @@
           <option name="timeStamp" value="53" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/../../com.trove.stats/Tests/Runtime/StatsTests.cs</url>
-          <line>2725</line>
-          <properties documentPath="C:\Projects\Trove\com.trove.stats\Tests\Runtime\StatsTests.cs" containingFunctionPresentation="Method 'ComplexTree'">
+          <url>file://$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/SubListTests.cs</url>
+          <line>84</line>
+          <properties documentPath="C:\Projects\Trove\com.trove.common\Tests\Runtime\SubListTests.cs" containingFunctionPresentation="Method 'SubListTest'">
             <startOffsets>
-              <option value="144458" />
+              <option value="3285" />
             </startOffsets>
             <endOffsets>
-              <option value="144868" />
+              <option value="3317" />
             </endOffsets>
           </properties>
-          <option name="timeStamp" value="54" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/../../com.trove.stats/Tests/Runtime/StatsTests.cs</url>
-          <line>2735</line>
-          <properties documentPath="C:\Projects\Trove\com.trove.stats\Tests\Runtime\StatsTests.cs" containingFunctionPresentation="Method 'ComplexTree'">
-            <startOffsets>
-              <option value="144881" />
-            </startOffsets>
-            <endOffsets>
-              <option value="145239" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="55" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/../../com.trove.common/Runtime/SubLists.cs</url>
-          <line>971</line>
-          <properties documentPath="C:\Projects\Trove\com.trove.common\Runtime\SubLists.cs" containingFunctionPresentation="Method 'Add'">
-            <startOffsets>
-              <option value="41323" />
-            </startOffsets>
-            <endOffsets>
-              <option value="41357" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="56" />
+          <option name="timeStamp" value="72" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

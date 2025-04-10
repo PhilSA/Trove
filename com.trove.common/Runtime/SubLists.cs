@@ -73,21 +73,20 @@ namespace Trove
                 throw new Exception($"Error: SubList is not created.");
             }
         }
-        
-        private static void Create<T>(ref SubList subList, ref DynamicBuffer<T> buffer, int initialCapacity, float growFactor = 1.5f)
+
+        public static SubList Create<T>(ref DynamicBuffer<T> buffer, int initialCapacity, float growFactor = 1.5f)
             where T : unmanaged, ISubListElement
         {
-            if (subList.IsCreated == 0)
-            {
-                subList.Length = 0;
-                subList.Capacity = 0;
-                subList.GrowFactor = growFactor;
-                subList.ElementsStartIndex = -1;
+            SubList subList = new SubList();
+            subList.Length = 0;
+            subList.Capacity = 0;
+            subList.GrowFactor = growFactor;
+            subList.ElementsStartIndex = -1;
+            subList.IsCreated = 1;
 
-                SetCapacity(ref subList, ref buffer, math.max(1, initialCapacity));
-                
-                subList.IsCreated = 1;
-            }
+            SetCapacity(ref subList, ref buffer, math.max(1, initialCapacity));
+
+            return subList;
         }
 
         public static void Add<T>(ref SubList subList, ref DynamicBuffer<T> buffer, T element)
@@ -98,7 +97,7 @@ namespace Trove
             int newLength = subList.Length + 1;
             
             // Grow capacity
-            if (newLength > buffer.Capacity)
+            if (newLength > subList.Capacity)
             {
                 int newCapacity = math.max(
                     (int)math.ceil(subList.Capacity * subList.GrowFactor), 
@@ -209,6 +208,14 @@ namespace Trove
             // Grow
             if (newCapacity > prevCapacity)
             {
+                // Mark the current occupied as unoccupied before searching
+                for (int i = subList.ElementsStartIndex; i < subList.ElementsStartIndex + subList.Length; i++)
+                {
+                    T iteratedElement = buffer[i];
+                    iteratedElement.IsOccupied = 0;
+                    buffer[i] = iteratedElement;
+                }
+                
                 // Search for available free range
                 int freeRangeStart = -1;
                 int freeRangeLength = 0;
@@ -260,16 +267,18 @@ namespace Trove
                             subList.ElementsStartIndex));
                     void* dst = UnsafeUtility.AddressOf(
                         ref UnsafeUtility.ArrayElementAsRef<T>((byte*)buffer.GetUnsafePtr(), freeRangeStart));
-                    UnsafeUtility.MemMove(dst, src, subList.Length);
+                    UnsafeUtility.MemMove(dst, src, sizeof(T) * subList.Length);
                 
                     // Free previous range
                     UnsafeUtility.MemClear(src, sizeof(T) * subList.Length);
                 }
 
-                // Mark the rest of the new capacity indexes as occupied
-                for (int i = freeRangeStart + subList.Length; i < freeRangeStart + newCapacity; i++)
+                // Mark the new range as occupied
+                for (int i = freeRangeStart; i < freeRangeStart + newCapacity; i++)
                 {
-                    buffer[i] = new T { IsOccupied = 1 };
+                    T iteratedElement = buffer[i];
+                    iteratedElement.IsOccupied = 1;
+                    buffer[i] = iteratedElement;
                 }
                 
                 // Update sublist
@@ -313,12 +322,12 @@ namespace Trove
 
     #endregion
 
-    #region PooledLinkedSubList
+    #region PooledSubList
 
-    public interface IPooledLinkedSubListElement
+    public interface IPooledSubListElement
     {
         public int Version { get; set; }
-        public PooledLinkedSubList.ElementHandle PrevElementHandle { get; set; }
+        public PooledSubList.ElementHandle PrevElementHandle { get; set; }
     }
     
     /// <summary>
@@ -334,14 +343,14 @@ namespace Trove
     ///
     /// This type of sub-list is best suited for when keeping a stable handle to a specific element is needed. The
     /// resulting buffer is also likely to be more compact in size than with the regular <SubList>, and add/remove
-    /// performance doesn't decay as much with buffer length as with the <CompactLinkedSubList>. 
+    /// performance doesn't decay as much with buffer length as with the <CompactSubList>. 
     /// 
     /// </summary>
     // TODO: optional version relying on FreeIndexRanges?
-    public struct PooledLinkedSubList
+    public struct PooledSubList
     {
         public ElementHandle LastElementHandle;
-        public int Length;
+        public int Count;
             
         public struct ElementHandle : IEquatable<ElementHandle>
         {
@@ -382,7 +391,7 @@ namespace Trove
         }
 
         public struct Iterator<T>
-            where T : unmanaged, IPooledLinkedSubListElement
+            where T : unmanaged, IPooledSubListElement
         {
             internal int PrevPrevIteratedElementIndex;
             internal int PrevIteratedElementIndex;
@@ -444,7 +453,7 @@ namespace Trove
             }
             
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveIteratedElement(ref PooledLinkedSubList subList, ref DynamicBuffer<T> buffer)
+            public void RemoveIteratedElement(ref PooledSubList subList, ref DynamicBuffer<T> buffer)
             {
                 int removedElementIndex = PrevIteratedElementIndex;
                 if (removedElementIndex >= 0)
@@ -475,14 +484,14 @@ namespace Trove
                     buffer[removedElementIndex] = removedElement;
                     
                     // Update sub-list
-                    subList.Length--;
-                    Assert.IsTrue(subList.Length >= 0);
+                    subList.Count--;
+                    Assert.IsTrue(subList.Count >= 0);
                 }
             }
         }
         
-        public static Iterator<T> GetIterator<T>(PooledLinkedSubList subList)
-            where T : unmanaged, IPooledLinkedSubListElement
+        public static Iterator<T> GetIterator<T>(PooledSubList subList)
+            where T : unmanaged, IPooledSubListElement
         {
             return new Iterator<T>
             {
@@ -494,14 +503,14 @@ namespace Trove
     
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Exists<T>(T element)
-            where T : unmanaged, IPooledLinkedSubListElement
+            where T : unmanaged, IPooledSubListElement
         {
             return element.Version > 0;
         }
     
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Exists<T>(ref DynamicBuffer<T> buffer, ElementHandle elementHandle)
-            where T : unmanaged, IPooledLinkedSubListElement
+            where T : unmanaged, IPooledSubListElement
         {
             if (elementHandle.Exists() && elementHandle.Index < buffer.Length)
             {
@@ -511,9 +520,9 @@ namespace Trove
             return false;
         }
         
-        public static void AddObject<T>(ref PooledLinkedSubList subList, ref DynamicBuffer<T> buffer, T element,
+        public static void Add<T>(ref PooledSubList subList, ref DynamicBuffer<T> buffer, T element,
             out ElementHandle elementHandle, float growFactor = 1.5f)
-            where T : unmanaged, IPooledLinkedSubListElement
+            where T : unmanaged, IPooledSubListElement
         {
             int addIndex = -1;
 
@@ -550,14 +559,14 @@ namespace Trove
             
             // Update sub-list
             subList.LastElementHandle = elementHandle;
-            subList.Length++;
-            Assert.IsTrue(subList.Length >= 0);
+            subList.Count++;
+            Assert.IsTrue(subList.Count >= 0);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetObject<T>(ref DynamicBuffer<T> buffer, ElementHandle elementHandle,
+        public static bool TryGet<T>(ref DynamicBuffer<T> buffer, ElementHandle elementHandle,
             out T existingObject)
-            where T : unmanaged, IPooledLinkedSubListElement
+            where T : unmanaged, IPooledSubListElement
         {
             if (elementHandle.Exists() && elementHandle.Index < buffer.Length)
             {
@@ -573,12 +582,12 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe ref T TryGetObjectRef<T>(
+        public static unsafe ref T TryGetRef<T>(
             ref DynamicBuffer<T> buffer,
             ElementHandle elementHandle,
             out bool success,
             ref T nullResult)
-            where T : unmanaged, IPooledLinkedSubListElement
+            where T : unmanaged, IPooledSubListElement
         {
             if (elementHandle.Exists() && elementHandle.Index < buffer.Length)
             {
@@ -595,8 +604,8 @@ namespace Trove
             return ref nullResult;
         }
         
-        public static bool TryRemoveObject<T>(ref PooledLinkedSubList subList, ref DynamicBuffer<T> buffer, ElementHandle elementHandle)
-            where T : unmanaged, IPooledLinkedSubListElement
+        public static bool TryRemove<T>(ref PooledSubList subList, ref DynamicBuffer<T> buffer, ElementHandle elementHandle)
+            where T : unmanaged, IPooledSubListElement
         {
             if (subList.LastElementHandle.Exists() && elementHandle.Exists())
             {
@@ -611,12 +620,12 @@ namespace Trove
                 }
             }
             
-            Assert.IsTrue(subList.Length == 0);
+            Assert.IsTrue(subList.Count == 0);
             return false;
         }
 
-        public static void Clear<T>(ref PooledLinkedSubList subList, ref DynamicBuffer<T> buffer)
-            where T : unmanaged, IPooledLinkedSubListElement
+        public static void Clear<T>(ref PooledSubList subList, ref DynamicBuffer<T> buffer)
+            where T : unmanaged, IPooledSubListElement
         {
             if (subList.LastElementHandle.Exists())
             {
@@ -628,14 +637,14 @@ namespace Trove
             }
             
             Assert.IsTrue(subList.LastElementHandle == ElementHandle.Null);
-            Assert.IsTrue(subList.Length == 0);
+            Assert.IsTrue(subList.Count == 0);
         }
 
         /// <summary>
         /// Note: can only grow; not shrink
         /// </summary>
         public static void Resize<T>(ref DynamicBuffer<T> buffer, int newSize)
-            where T : unmanaged, IPooledLinkedSubListElement
+            where T : unmanaged, IPooledSubListElement
         {
             if (newSize > buffer.Length)
             {
@@ -644,7 +653,7 @@ namespace Trove
         }
         
         public static void Trim<T>(ref DynamicBuffer<T> buffer, bool trimCapacity = false)
-            where T : unmanaged, IPooledLinkedSubListElement
+            where T : unmanaged, IPooledSubListElement
         {
             for (int i = buffer.Length - 1; i >= 0; i--)
             {
@@ -664,17 +673,17 @@ namespace Trove
 
         /// <summary>
         /// Reorganizes the pool so that all elements are compact and the pool length fits the elements count exactly.
-        /// This will invalidate the data of any <PooledLinkedSubList>, or of any <ElementHandle> aside from the subList
+        /// This will invalidate the data of any <PooledSubList>, or of any <ElementHandle> aside from the subList
         /// elements' "PrevElementHandle". However, a "allSubListsInBuffer" array will contain the updated SubLists data,
         /// and the handlesRemapper will allow remapping old <ElementHandle>s to the updated ones. You will have to handle
         /// setting back updated SubLists data and remapping <ElementHandle>s manually.
         /// </summary>
         public static void MakeCompactAndInvalidateHandles<T>(
             ref DynamicBuffer<T> buffer,
-            ref NativeArray<PooledLinkedSubList> allSubListsInBuffer,
+            ref NativeArray<PooledSubList> allSubListsInBuffer,
             ref NativeHashMap<ElementHandle, ElementHandle> handlesRemapper,
             bool alsoTrimCapacity)
-            where T : unmanaged, IPooledLinkedSubListElement
+            where T : unmanaged, IPooledSubListElement
         {
             handlesRemapper.Clear();
 
@@ -721,7 +730,7 @@ namespace Trove
             // Update sublists
             for (int i = 0; i < allSubListsInBuffer.Length; i++)
             {
-                PooledLinkedSubList subList = allSubListsInBuffer[i];
+                PooledSubList subList = allSubListsInBuffer[i];
                 if (handlesRemapper.TryGetValue(subList.LastElementHandle, out ElementHandle newLastElementHandle))
                 {
                     subList.LastElementHandle = newLastElementHandle;
@@ -733,9 +742,9 @@ namespace Trove
 
     #endregion
 
-    #region CompactLinkedSubList
+    #region CompactSubList
 
-    public interface ICompactLinkedSubListElement
+    public interface ICompactSubListElement
     {
         public int NextElementIndex { get; set; }
         public int LastElementIndex { get; set; }
@@ -774,14 +783,14 @@ namespace Trove
     ///   sub-lists that had a first element added at the same time.
     ///
     /// </summary>
-    public struct CompactLinkedSubList
+    public struct CompactSubList
     {
         public int FirstElementIndex;
-        public int Length;
+        public int Count;
         public byte IsCreated;
 
         public struct Iterator<T>
-            where T : unmanaged, ICompactLinkedSubListElement
+            where T : unmanaged, ICompactSubListElement
         {
             internal int PrevPrevIteratedIndex;
             internal int PrevIteratedIndex;
@@ -834,7 +843,7 @@ namespace Trove
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveIteratedElement(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer)
+            public void RemoveIteratedElement(ref CompactSubList subList, ref DynamicBuffer<T> buffer)
             {
                 int indexOfElementBeforeRemovedElement = PrevPrevIteratedIndex;
                 int indexOfRemovedElement = PrevIteratedIndex;
@@ -921,9 +930,9 @@ namespace Trove
                         IteratedIndex = patchedRemovedElementNextElementIndex;
                     }
 
-                    subList.Length--;
+                    subList.Count--;
 
-                    Assert.IsTrue(subList.Length >= 0);
+                    Assert.IsTrue(subList.Count >= 0);
                 }
             }
         }
@@ -933,22 +942,22 @@ namespace Trove
         {
             if (IsCreated == 0)
             {
-                throw new Exception($"Error: CompactLinkedSubList is not created.");
+                throw new Exception($"Error: CompactSubList is not created.");
             }
         }
 
-        public static CompactLinkedSubList Create()
+        public static CompactSubList Create()
         {
-            return new CompactLinkedSubList
+            return new CompactSubList
             {
                 FirstElementIndex = -1,
-                Length = 0,
+                Count = 0,
                 IsCreated = 1,
             };
         }
 
-        public static Iterator<T> GetIterator<T>(CompactLinkedSubList subList)
-            where T : unmanaged, ICompactLinkedSubListElement
+        public static Iterator<T> GetIterator<T>(CompactSubList subList)
+            where T : unmanaged, ICompactSubListElement
         {
             subList.CheckCreated();
 
@@ -961,17 +970,17 @@ namespace Trove
         }
 
         public static void Add<T>(
-            ref CompactLinkedSubList subList,
+            ref CompactSubList subList,
             ref DynamicBuffer<T> buffer,
             T element)
-            where T : unmanaged, ICompactLinkedSubListElement
+            where T : unmanaged, ICompactSubListElement
         {
             subList.CheckCreated();
 
             // Handle adding the first element at the start of the buffer
             if (subList.FirstElementIndex < 0)
             {
-                Assert.AreEqual(0, subList.Length);
+                Assert.AreEqual(0, subList.Count);
 
                 bool firstElementReplacesExisting = false;
                 int firstElementInsertionIndex = -1;
@@ -1034,7 +1043,7 @@ namespace Trove
                 
                 // Update sub-list
                 subList.FirstElementIndex = firstElementInsertionIndex;
-                subList.Length = 1;
+                subList.Count = 1;
                 return;
             }
             
@@ -1062,11 +1071,11 @@ namespace Trove
             buffer[lastElementIndexBeforeAdd] = elementBeforeTheAddedElement;
 
             // Update sub-list
-            subList.Length++;
+            subList.Count++;
         }
 
-        public static void Clear<T>(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer)
-            where T : unmanaged, ICompactLinkedSubListElement
+        public static void Clear<T>(ref CompactSubList subList, ref DynamicBuffer<T> buffer)
+            where T : unmanaged, ICompactSubListElement
         {
             subList.CheckCreated();
 
@@ -1076,13 +1085,13 @@ namespace Trove
                 iterator.RemoveIteratedElement(ref subList, ref buffer);
             }
 
-            Assert.AreEqual(0, subList.Length);
+            Assert.AreEqual(0, subList.Count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetAt<T>(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer,
+        public static bool TryGet<T>(ref CompactSubList subList, ref DynamicBuffer<T> buffer,
             int indexInSubList, out T element, out int elementIndexInBuffer)
-            where T : unmanaged, ICompactLinkedSubListElement
+            where T : unmanaged, ICompactSubListElement
         {
             subList.CheckCreated();
 
@@ -1106,9 +1115,9 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TrySetAt<T>(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer,
+        public static bool TrySet<T>(ref CompactSubList subList, ref DynamicBuffer<T> buffer,
             int indexInSubList, T element)
-            where T : unmanaged, ICompactLinkedSubListElement
+            where T : unmanaged, ICompactSubListElement
         {
             subList.CheckCreated();
 
@@ -1133,9 +1142,9 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryRemoveAt<T>(ref CompactLinkedSubList subList, ref DynamicBuffer<T> buffer,
+        public static bool TryRemove<T>(ref CompactSubList subList, ref DynamicBuffer<T> buffer,
             int indexInSubList)
-            where T : unmanaged, ICompactLinkedSubListElement
+            where T : unmanaged, ICompactSubListElement
         {
             subList.CheckCreated();
 
@@ -1156,7 +1165,7 @@ namespace Trove
         }
 
         public static void PatchNextIndexes<T>(ref DynamicBuffer<T> buffer, int changedIndex, int changeAmount)
-            where T : unmanaged, ICompactLinkedSubListElement
+            where T : unmanaged, ICompactSubListElement
         {
             // Next indexes of all element
             for (int i = 0; i < buffer.Length; i++)

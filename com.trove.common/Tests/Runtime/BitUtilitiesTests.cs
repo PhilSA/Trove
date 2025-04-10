@@ -3,10 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Trove
+namespace Trove.Tests
 {
     [TestFixture]
-    public class BitUtilitiesTests : MonoBehaviour
+    public class BitUtilitiesTests
     {
         [Test]
         public void Test()
