@@ -3,25 +3,31 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using UnityEngine;
 
 namespace Trove.Tests
 {
-    public struct TestSubListElement : IBufferElementData, ISubListElement
+    public interface ISublistTestElement
     {
-        public int Value;
+        public int Value { get; set; }
+    }
+    
+    public struct TestSubListElement : IBufferElementData, ISubListElement, ISublistTestElement
+    {
+        public int Value { get; set; }
         public byte IsOccupied { get; set; }
     }
     
-    public struct TestPooledSubListElement : IBufferElementData, IPooledSubListElement
+    public struct TestPooledSubListElement : IBufferElementData, IPooledSubListElement, ISublistTestElement
     {
-        public int Value;
+        public int Value { get; set; }
         public int Version { get; set; }
         public PooledSubList.ElementHandle PrevElementHandle { get; set; }
     }
     
-    public struct TestCompactSubListElement : IBufferElementData, ICompactSubListElement
+    public struct TestCompactSubListElement : IBufferElementData, ICompactSubListElement, ISublistTestElement
     {
-        public int Value;
+        public int Value { get; set; }
         public int NextElementIndex { get; set; }
         public int LastElementIndex { get; set; }
         public byte IsCreated { get; set; }
@@ -31,15 +37,29 @@ namespace Trove.Tests
     [TestFixture]
     public class SubListTests
     {
+        private static void LogBuffer<T>(ref DynamicBuffer<T> buffer)
+            where T : unmanaged, IBufferElementData, ISublistTestElement
+        {
+            string str = "";
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                str += $"{buffer[i].Value} ";
+            }
+            Debug.Log(str);
+        }
+        
         [Test]
         public void SubListTest()
         {
             bool success = false;
+            Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex(0);
             World world = World.DefaultGameObjectInjectionWorld;
             EntityManager entityManager = world.EntityManager;
             Entity testEntity = TestUtilities.CreateTestEntity(entityManager);
             DynamicBuffer<TestSubListElement> buffer = entityManager.AddBuffer<TestSubListElement>(testEntity);
 
+            TestSubListElement elemResult;
+            
             int initialCapacity = 5;
             SubList subList1 = SubList.Create(ref buffer, initialCapacity, 2f);
             SubList subList2 = SubList.Create(ref buffer, initialCapacity, 2f);
@@ -62,10 +82,10 @@ namespace Trove.Tests
             // Add 6th element that breaks capacity
             {
                 SubList.Add(ref subList1, ref buffer, new TestSubListElement { Value = 5 });
-                Assert.AreEqual(5 + 1, subList1.Length);
+                Assert.AreEqual(6, subList1.Length);
 
                 SubList.Add(ref subList2, ref buffer, new TestSubListElement { Value = 5 });
-                Assert.AreEqual(5 + 1, subList2.Length);
+                Assert.AreEqual(6, subList2.Length);
             }
             
             Assert.AreEqual(10, subList1.ElementsStartIndex);
@@ -76,14 +96,295 @@ namespace Trove.Tests
             // Read
             for (int i = 0; i < 6; i++)
             {
-                success = SubList.TryGet(ref subList1, ref buffer,i, out TestSubListElement elem1);
+                success = SubList.TryGet(ref subList1, ref buffer,i, out elemResult);
                 Assert.IsTrue(success);
-                Assert.AreEqual(i, elem1.Value);
+                Assert.AreEqual(i, elemResult.Value);
                 
-                success = SubList.TryGet(ref subList2, ref buffer, i, out TestSubListElement elem2);
+                success = SubList.TryGet(ref subList2, ref buffer, i, out elemResult);
                 Assert.IsTrue(success);
-                Assert.AreEqual(i, elem2.Value);
+                Assert.AreEqual(i, elemResult.Value);
             }
+
+            // Values:
+            // 0 1 2 3 4 5 0 0 0 0 0 1 2 3 4 5 0 0 0 0
+            // -------sl2---------|--------sl1--------
+            
+            // Remove
+            {
+                // Remove first elem of sl2 and of buffer
+                success = SubList.TryRemoveAt(ref subList2, ref buffer, 0);
+                Assert.IsTrue(success);
+                Assert.AreEqual(5, subList2.Length);
+                
+                success = SubList.TryGet(ref subList2, ref buffer, 0, out elemResult);
+                Assert.IsTrue(success);
+                Assert.AreEqual(1, elemResult.Value);
+                success = SubList.TryGet(ref subList1, ref buffer, 1, out elemResult);
+                Assert.IsTrue(success);
+                Assert.AreEqual(1, elemResult.Value);
+                
+                // Remove outside of length
+                success = SubList.TryRemoveAt(ref subList2, ref buffer, 6);
+                Assert.IsFalse(success);
+                
+                // Remove last elem of sl1
+                success = SubList.TryRemoveAt(ref subList1, ref buffer, 5);
+                Assert.IsTrue(success);
+                Assert.AreEqual(5, subList1.Length);
+                
+                success = SubList.TryGet(ref subList1, ref buffer, subList1.Length - 1, out elemResult);
+                Assert.IsTrue(success);
+                Assert.AreEqual(4, elemResult.Value);
+                
+                // Remove swapback
+                success = SubList.TryRemoveAtSwapBack(ref subList1, ref buffer, 0);
+                Assert.IsTrue(success);
+                Assert.AreEqual(4, subList1.Length);
+                
+                success = SubList.TryGet(ref subList1, ref buffer, 0, out elemResult);
+                Assert.IsTrue(success);
+                Assert.AreEqual(4, elemResult.Value);
+                
+                // Many removes sl1
+                for (int i = 0; i < 10; i++)
+                {
+                    success = SubList.TryRemoveAt(ref subList1, ref buffer, 0);
+                    Assert.AreEqual(i < 4 ? true : false, success);
+                }
+                Assert.AreEqual(0, subList1.Length);
+                
+                // Many removeatswapbacks sl2
+                for (int i = 0; i < 10; i++)
+                {
+                    success = SubList.TryRemoveAtSwapBack(ref subList2, ref buffer, 0);
+                    Assert.AreEqual(i < 5 ? true : false, success);
+                }
+                Assert.AreEqual(0, subList2.Length);
+            }
+            
+            // Add sublist 3
+            SubList subList3 = SubList.Create(ref buffer, initialCapacity, 2f);
+            
+            // Clear all
+            SubList.Clear(ref subList1, ref buffer);
+            SubList.Clear(ref subList2, ref buffer);
+            SubList.Clear(ref subList3, ref buffer);
+            SubList.Resize(ref subList1, ref buffer, subList1.Capacity);
+            SubList.Resize(ref subList2, ref buffer, subList2.Capacity);
+            SubList.Resize(ref subList3, ref buffer, subList3.Capacity);
+            Assert.AreEqual(subList1.Capacity, subList1.Length);
+            Assert.AreEqual(subList2.Capacity, subList2.Length);
+            Assert.AreEqual(subList3.Capacity, subList3.Length);
+            
+            // Fill with respective Values
+            for (int i = 0; i < subList1.Length; i++)
+            {
+                SubList.TrySet(ref subList1, ref buffer, i, new TestSubListElement { Value = 1 });
+            }
+            for (int i = 0; i < subList2.Length; i++)
+            {
+                SubList.TrySet(ref subList2, ref buffer, i, new TestSubListElement { Value = 2 });
+            }
+            for (int i = 0; i < subList3.Length; i++)
+            {
+                SubList.TrySet(ref subList3, ref buffer, i, new TestSubListElement { Value = 3 });
+            }
+            
+            // 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1 1 3 3 3 3 3 
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                int expectedVal = 0;
+                if (i < subList2.Length)
+                {
+                    expectedVal = 2;
+                }
+                else if (i < subList2.Length + subList1.Length)
+                {
+                    expectedVal = 1;
+                }
+                else if (i < subList2.Length + subList1.Length + subList3.Length)
+                {
+                    expectedVal = 3;
+                }
+                
+                Assert.AreEqual(expectedVal, buffer[i].Value);
+            }
+            
+            // Expand sl1 past capacity
+            SubList.Resize(ref subList1, ref buffer, 12);
+            for (int i = 0; i < subList1.Length; i++)
+            {
+                SubList.TrySet(ref subList1, ref buffer, i, new TestSubListElement { Value = 1 });
+            }
+
+            // 2 2 2 2 2 2 2 2 2 2 0 0 0 0 0 0 0 0 0 0 3 3 3 3 3 1 1 1 1 1 1 1 1 1 1 1 1
+            
+            for (int i = subList3.ElementsStartIndex + subList3.Length; i < buffer.Length; i++)
+            {
+                Assert.AreEqual(1, buffer[i].Value);
+            }
+
+            // Add elem and expand sl3 past capacity
+            SubList.Add(ref subList3, ref buffer, new TestSubListElement { Value = 3 });
+            SubList.Resize(ref subList3, ref buffer, subList3.Capacity);
+            for (int i = 0; i < subList3.Length; i++)
+            {
+                SubList.TrySet(ref subList3, ref buffer, i, new TestSubListElement { Value = 3 });
+            }
+            
+            // 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 3 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 
+            
+            for (int i = subList2.ElementsStartIndex + subList2.Length; i < subList2.ElementsStartIndex + subList2.Length + subList3.Length; i++)
+            {
+                Assert.AreEqual(3, buffer[i].Value);
+            }
+            Assert.AreEqual(10, subList3.ElementsStartIndex);
+            Assert.AreEqual(10, subList3.Capacity);
+            
+            // Check that resize clears values but not IsOccupied
+            SubList.Clear(ref subList3, ref buffer);
+            for (int i = subList3.ElementsStartIndex; i < subList3.ElementsStartIndex + subList3.Length; i++)
+            {
+                Assert.AreEqual(3, buffer[i].Value);
+                Assert.AreEqual(1, buffer[i].IsOccupied);
+            }
+            SubList.Resize(ref subList3, ref buffer, 5);
+            for (int i = subList3.ElementsStartIndex; i < subList3.ElementsStartIndex + subList3.Length; i++)
+            {
+                Assert.AreEqual(0, buffer[i].Value);
+                Assert.AreEqual(1, buffer[i].IsOccupied);
+            }
+            
+            // 2 2 2 2 2 2 2 2 2 2 0 0 0 0 0 3 3 3 3 3 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 
+            
+            // Check shrink capacity marks indexes unoccupied
+            int prev3Capacity = subList3.Capacity;
+            SubList.SetCapacity(ref subList3, ref buffer, 5);
+            for (int i = subList3.ElementsStartIndex; i < subList3.ElementsStartIndex + prev3Capacity; i++)
+            {
+                if (i < subList3.ElementsStartIndex + subList3.Capacity)
+                {
+                    Assert.AreEqual(1, buffer[i].IsOccupied);
+                }
+                else
+                {
+                    Assert.AreEqual(0, buffer[i].IsOccupied);
+                }
+            }
+            
+            success = SubList.SetCapacity(ref subList3, ref buffer, 3);
+            Assert.IsFalse(success);
+            Assert.AreEqual(5, subList3.Capacity);
+            
+            // Jumble
+            Assert.DoesNotThrow(() =>
+            {
+                SubList.Clear(ref subList1, ref buffer);
+                SubList.Clear(ref subList2, ref buffer);
+                SubList.Clear(ref subList3, ref buffer);
+
+                for (int i = 0; i < 2000; i++)
+                {
+                    int jumbleOperation = random.NextInt(0, 4);
+                    int jumbleList = random.NextInt(0, 2);
+                    switch (jumbleOperation)
+                    {
+                        case 0:
+                            switch (jumbleList)
+                            {
+                                case 0:
+                                    SubList.Add(ref subList1, ref buffer,
+                                        new TestSubListElement { Value = random.NextInt(0, 9) });
+                                    break;
+                                case 1:
+                                    SubList.Add(ref subList2, ref buffer,
+                                        new TestSubListElement { Value = random.NextInt(0, 9) });
+                                    break;
+                                case 2:
+                                    SubList.Add(ref subList3, ref buffer,
+                                        new TestSubListElement { Value = random.NextInt(0, 9) });
+                                    break;
+                            }
+                            break;
+                        case 1:
+                            switch (jumbleList)
+                            {
+                                case 0:
+                                    success = SubList.TryRemoveAt(ref subList1, ref buffer, random.NextInt(-1, subList1.Length + 1));
+                                    break;
+                                case 1:
+                                    success = SubList.TryRemoveAt(ref subList2, ref buffer, random.NextInt(-1, subList2.Length + 1));
+                                    break;
+                                case 2:
+                                    success = SubList.TryRemoveAt(ref subList3, ref buffer, random.NextInt(-1, subList3.Length + 1));
+                                    break;
+                            }
+                            break;
+                        case 2:
+                            switch (jumbleList)
+                            {
+                                case 0:
+                                    success = SubList.TryRemoveAtSwapBack(ref subList1, ref buffer, random.NextInt(-1, subList1.Length + 1));
+                                    break;
+                                case 1:
+                                    success = SubList.TryRemoveAtSwapBack(ref subList2, ref buffer, random.NextInt(-1, subList2.Length + 1));
+                                    break;
+                                case 2:
+                                    success = SubList.TryRemoveAtSwapBack(ref subList3, ref buffer, random.NextInt(-1, subList3.Length + 1));
+                                    break;
+                            }
+                            break;
+                        case 3:
+                            switch (jumbleList)
+                            {
+                                case 0:
+                                    SubList.Resize(ref subList1, ref buffer, random.NextInt(subList1.Length - 2, subList1.Length + 2));
+                                    break;
+                                case 1:
+                                    SubList.Resize(ref subList2, ref buffer, random.NextInt(subList2.Length - 2, subList2.Length + 2));
+                                    break;
+                                case 2:
+                                    SubList.Resize(ref subList3, ref buffer, random.NextInt(subList3.Length - 2, subList3.Length + 2));
+                                    break;
+                            }
+                            break;
+                        case 4:
+                            switch (jumbleList)
+                            {
+                                case 0:
+                                    SubList.SetCapacity(ref subList1, ref buffer, random.NextInt(subList1.Capacity - 2, subList1.Capacity + 2));
+                                    break;
+                                case 1:
+                                    SubList.SetCapacity(ref subList2, ref buffer, random.NextInt(subList2.Capacity - 2, subList2.Capacity + 2));
+                                    break;
+                                case 2:
+                                    SubList.SetCapacity(ref subList3, ref buffer, random.NextInt(subList3.Capacity - 2, subList3.Capacity + 2));
+                                    break;
+                            }
+                            break;
+                        case 5:
+                            int chances = random.NextInt(0, 5);
+                            if (chances == 1)
+                            {
+                                switch (jumbleList)
+                                {
+                                    case 0:
+                                        SubList.Clear(ref subList1, ref buffer);
+                                        break;
+                                    case 1:
+                                        SubList.Clear(ref subList2, ref buffer);
+                                        break;
+                                    case 2:
+                                        SubList.Clear(ref subList3, ref buffer);
+                                        break;
+                                }
+                            }
+
+                            break;
+                    }
+                }
+            });
+
 
             TestUtilities.DestroyTestEntities(world);
         }
@@ -92,6 +393,7 @@ namespace Trove.Tests
         public void PooledSubListTest()
         {
             bool success = false;
+            Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex(0);
             World world = World.DefaultGameObjectInjectionWorld;
             EntityManager entityManager = world.EntityManager;
             Entity testEntity = TestUtilities.CreateTestEntity(entityManager);
@@ -139,6 +441,7 @@ namespace Trove.Tests
         public void CompactSubListTest()
         {
             bool success = false;
+            Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex(0);
             World world = World.DefaultGameObjectInjectionWorld;
             EntityManager entityManager = world.EntityManager;
             Entity testEntity = TestUtilities.CreateTestEntity(entityManager);

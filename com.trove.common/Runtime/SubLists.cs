@@ -123,7 +123,7 @@ namespace Trove
                     ref UnsafeUtility.ArrayElementAsRef<T>((byte*)buffer.GetUnsafePtr(), elementIndexInBuffer + 1));
                 void* dst = UnsafeUtility.AddressOf(
                     ref UnsafeUtility.ArrayElementAsRef<T>((byte*)buffer.GetUnsafePtr(), elementIndexInBuffer));
-                UnsafeUtility.MemMove(dst, src, nextElementsLength);
+                UnsafeUtility.MemMove(dst, src, sizeof(T) * nextElementsLength);
                 subList.Length--;
                 Assert.IsTrue(subList.Length >= 0);
                 return true;
@@ -291,8 +291,14 @@ namespace Trove
             else if (newCapacity < prevCapacity)
             {
                 // Can't shrink more than current length
-                if (newCapacity > subList.Length)
+                if (newCapacity >= subList.Length)
                 {
+                    // Mark the freed range as occupied
+                    for (int i = subList.ElementsStartIndex + newCapacity; i < subList.ElementsStartIndex + subList.Capacity; i++)
+                    {
+                        buffer[i] = new T {  IsOccupied = 0 };
+                    }
+                    
                     subList.Capacity = newCapacity;
                     return true;
                 }
@@ -301,7 +307,7 @@ namespace Trove
             return false;
         }
 
-        public static void Resize<T>(ref SubList subList, ref DynamicBuffer<T> buffer, int newLength)
+        public static unsafe void Resize<T>(ref SubList subList, ref DynamicBuffer<T> buffer, int newLength)
             where T : unmanaged, ISubListElement
         {
             CheckCreated(in subList);
@@ -313,6 +319,14 @@ namespace Trove
                 if (newLength > subList.Capacity)
                 {
                     SetCapacity(ref subList, ref buffer, newLength);
+                }
+                
+                // Clear elements up to new length
+                for (int i = subList.ElementsStartIndex + subList.Length; i < subList.ElementsStartIndex + newLength; i++)
+                {
+                    T elem = buffer[i];
+                    elem = new T { IsOccupied = 1 };
+                    buffer[i] = elem;
                 }
                 
                 subList.Length = newLength;
