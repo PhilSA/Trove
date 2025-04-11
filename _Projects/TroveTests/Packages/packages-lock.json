@@ -13,7 +13,8 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "com.unity.entities": "1.3.10"
+        "com.unity.entities": "1.3.10",
+        "com.trove.common": "0.3.0"
       }
     },
     "com.trove.polymorphicstructs": {
@@ -21,9 +22,8 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "com.unity.mathematics": "1.3.2",
-        "com.unity.collections": "2.5.3",
-        "com.unity.entities": "1.3.10"
+        "com.unity.entities": "1.3.10",
+        "com.trove.common": "0.3.0"
       }
     },
     "com.trove.statemachines": {
@@ -31,9 +31,9 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "com.unity.mathematics": "1.3.2",
-        "com.unity.collections": "2.5.3",
-        "com.unity.entities": "1.3.10"
+        "com.unity.entities": "1.3.10",
+        "com.trove.common": "0.3.0",
+        "com.trove.polymorphicstructs": "0.3.1"
       }
     },
     "com.trove.stats": {
@@ -41,7 +41,8 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "com.unity.entities": "1.3.10"
+        "com.unity.entities": "1.3.10",
+        "com.trove.common": "0.3.0"
       }
     },
     "com.trove.tweens": {
@@ -49,7 +50,8 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "com.unity.entities": "1.3.10"
+        "com.unity.entities": "1.3.10",
+        "com.trove.common": "0.3.0"
       }
     },
     "com.trove.utilityai": {
@@ -57,7 +59,8 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "com.unity.entities": "1.3.10"
+        "com.unity.entities": "1.3.10",
+        "com.trove.common": "0.3.0"
       }
     },
     "com.unity.burst": {

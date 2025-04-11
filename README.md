@@ -14,7 +14,18 @@ All of these packages care about:
 
 ## Installing the packages
 
-The packages are hosted on [OpenUPM](https://openupm.com/). The OpenUPM page of each Trove package is linked below. Follow installation instructions on OpenUPM.
+The packages are hosted on [OpenUPM](https://openupm.com/). The OpenUPM page of each Trove package is linked below.
+
+Instructions:
+* Open `Edit/Project Settings/Package Manager`.
+* Add a new Scoped Registry
+    * Name: `package.openupm.com`
+    * URL: `https://package.openupm.com`
+    * Scope: `com.trove`
+* Click **Save** or **Apply**.
+* Open `Window/Package Manager`.
+* Click `+` and select `Add package by name...`.
+* Enter package name and version, then click `Add`.
 
 ----------------------------
 
