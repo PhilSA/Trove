@@ -2,7 +2,8 @@
   "displayName": "Trove Stats",
   "description": "Trove Stats allows you to define identifiable \"numbers\" (Stats) on entities, and add/remove \"rules\" (Modifiers) that affect the evaluation of these numbers' values. Modifiers are reactive, and can make the value of a certain attribute depend on the value of another. This tool can be used to effortlessly setup gameplay mechanics such as RPG character/equipment attributes, buffs, effects, roguelike-style stackable powerups and synergies, etc...",
   "dependencies": {
-    "com.unity.entities": "1.3.10"
+    "com.unity.entities": "1.3.10",
+    "com.trove.common": "0.3.0"
   },
   "name": "com.trove.stats",
   "author": {

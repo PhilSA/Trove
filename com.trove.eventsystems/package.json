@@ -1,8 +1,9 @@
 {
   "displayName": "Trove Event Systems",
-  "description": "Event systems for DOTS",
+  "description": "Trove Event Systems provides various types of event systems to facilitate deferred logic.",
   "dependencies": {
-    "com.unity.entities": "1.3.10"
+    "com.unity.entities": "1.3.10",
+    "com.trove.common": "0.3.0"
   },
   "name": "com.trove.eventsystems",
   "author": {
@@ -10,5 +11,5 @@
   },
   "unity": "6000.1",
   "unityRelease": "0f1",
-  "version": "0.4.0"
+  "version": "0.1.0"
 }
