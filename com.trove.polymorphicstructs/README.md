@@ -13,3 +13,4 @@ They are essentially a way to assign different possible behaviours to an entity 
 * [Tutorial](./Documentation~/tutorial.md)
 * [Polymorphic struct types](./Documentation~/poly-struct-types.md)
 * [Netcode](./Documentation~/netcode.md)
+* [Usage Patterns](./Documentation~/patterns.md)

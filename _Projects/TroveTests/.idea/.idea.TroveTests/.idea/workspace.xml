@@ -6,22 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Samples/Trove Stats/0.4.0/Starter Content/SampleStatModifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Samples/Trove Stats/0.4.0/Starter Content/SampleStatModifier.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Samples/Trove Stats/0.4.0/Starter Content/Stats Destruction/StatsDestructionSystems.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Samples/Trove Stats/0.4.0/Starter Content/Stats Destruction/StatsDestructionSystems.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Samples/Trove Stats/0.4.0/Starter Content/Trove.Stats/StatsBuffers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Samples/Trove Stats/0.4.0/Starter Content/Trove.Stats/StatsBuffers.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTester.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTester.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachine.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTesterSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTesterSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/SubLists.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/SubLists.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/SubListTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/SubListTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/Stats.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/Stats.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsBaker.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsBaker.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsJobs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsJobs.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Samples~/Starter Content/SampleStatModifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Samples~/Starter Content/SampleStatModifier.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Samples~/Starter Content/Stats Destruction/StatsDestructionSystems.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Samples~/Starter Content/Stats Destruction/StatsDestructionSystems.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Samples~/Starter Content/Trove.Stats/StatsBuffers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Samples~/Starter Content/Trove.Stats/StatsBuffers.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Tests/Runtime/StatsTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Tests/Runtime/StatsTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,15 +89,13 @@
       </option>
       <method v="2" />
     </configuration>
-    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" ignored-value-for-modified-check="30976">
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
       <option name="allowRunningInParallel" value="false" />
       <option name="listenPortForConnections" value="false" />
-      <option name="pid" value="30976" />
+      <option name="pid" />
       <option name="projectPathOnTarget" />
       <option name="runtimes">
-        <list>
-          <MonoRuntime />
-        </list>
+        <list />
       </option>
       <option name="selectedOptions">
         <list />
@@ -138,7 +123,8 @@
       <workItem from="1744206575142" duration="2214000" />
       <workItem from="1744209017329" duration="15437000" />
       <workItem from="1744242492403" duration="10530000" />
-      <workItem from="1744293542621" duration="24147000" />
+      <workItem from="1744293542621" duration="25977000" />
+      <workItem from="1744344955500" duration="996000" />
     </task>
     <servers />
   </component>
@@ -171,6 +157,19 @@
             </endOffsets>
           </properties>
           <option name="timeStamp" value="78" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs</url>
+          <line>952</line>
+          <properties documentPath="C:\Projects\Trove\com.trove.stats\Runtime\StatsAccessor.cs" containingFunctionPresentation="Method 'TryRemoveStatModifier'">
+            <startOffsets>
+              <option value="48758" />
+            </startOffsets>
+            <endOffsets>
+              <option value="49196" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="79" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -602,29 +602,9 @@ namespace PolymorphicStructsSourceGenerators
 
                 CompiledStructsForInterfaceData compiledCodeData = CreateCompiledStructsForInterfaceData(source.Left[a], polyStructModels);
 
-                ValidateCompiledDataForPolyInterface(compiledCodeData, LogMessages, out bool canContinue);
+                ValidateCompiledDataForPolyInterface(compiledCodeData, LogMessages);
 
                 PolyInterfaceModel polyInterfaceModel = compiledCodeData.PolyInterfaceModel;
-
-                if (!canContinue || compiledCodeData.PolyStructModels.Count <= 0)
-                {
-                    // Output all errors
-                    FileWriter errorWriter = new FileWriter();
-                    errorWriter.WriteUsingsAndRemoveDuplicates(GetCommonUsings());
-                    errorWriter.WriteLine($"");
-                    errorWriter.WriteInNamespace(polyInterfaceModel.TargetStructModel.NamespaceName, () =>
-                    {
-                        errorWriter.WriteLine($"public unsafe partial struct {polyInterfaceModel.TargetStructModel.Name}");
-                        errorWriter.WriteInScope(() =>
-                        {
-                            WriteLogMessagesOutputter(errorWriter, LogMessages);
-                        });
-                    });
-                    SourceText errorSourceText = SourceText.From(errorWriter.FileContents, Encoding.UTF8);
-                    sourceProductionContext.AddSource($"{polyInterfaceModel.TargetStructModel.Name}{FileName_GeneratedSuffixAndFileType}", errorSourceText);
-
-                    continue;
-                }
 
                 FileWriter writer = new FileWriter();
 
@@ -1126,10 +1106,8 @@ namespace PolymorphicStructsSourceGenerators
             }
         }
 
-        private static void ValidateCompiledDataForPolyInterface(CompiledStructsForInterfaceData compiledData, List<LogMessage> logMessages, out bool canContinue)
+        private static void ValidateCompiledDataForPolyInterface(CompiledStructsForInterfaceData compiledData, List<LogMessage> logMessages)
         {
-            canContinue = true;
-
             // Prevent properties in mergedFields interfaces
             if (compiledData.PolyInterfaceModel.IsMergedFieldsStruct)
             {
@@ -1140,7 +1118,7 @@ namespace PolymorphicStructsSourceGenerators
                         Type = LogMessage.MsgType.Error,
                         Message = $"PolymorphicStructs error: Properties are not supported in MergedFields polymorphic interfaces. (Interface {compiledData.PolyInterfaceModel.TypeName})",
                     });
-                    canContinue = false;
+                    compiledData.PolyInterfaceModel.InterfacePropertyModels.Clear();
                 }
             }
 
@@ -1152,7 +1130,6 @@ namespace PolymorphicStructsSourceGenerators
                     Type = LogMessage.MsgType.Error,
                     Message = $"PolymorphicStructs error: generic polymorphic interfaces are not supported. (Interface {compiledData.PolyInterfaceModel.TypeName})",
                 });
-                canContinue = false;
             }
 
             for (int i = compiledData.PolyStructModels.Count - 1; i >= 0; i--)
@@ -1185,7 +1162,6 @@ namespace PolymorphicStructsSourceGenerators
 
                                 if(!structIsValid)
                                 {
-                                    canContinue = false;
                                     break;
                                 }
                             }
@@ -1201,7 +1177,6 @@ namespace PolymorphicStructsSourceGenerators
                         Type = LogMessage.MsgType.Error,
                         Message = $"PolymorphicStructs error: generic polymorphic structs are not supported. (Struct {polyStructModel.StructModel.TypeName})",
                     });
-                    canContinue = false;
                 }
 
                 // Prevent properties in mergedFields structs
@@ -1217,7 +1192,6 @@ namespace PolymorphicStructsSourceGenerators
                                 Type = LogMessage.MsgType.Error,
                                 Message = $"PolymorphicStructs error: Properties are not supported in MergedFields polymorphic structs. (Property {polyStructModel.StructModel.TypeName}.{propertySymbol.Name})",
                             });
-                            canContinue = false;
                         }
                     }
                 }

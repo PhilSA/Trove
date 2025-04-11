@@ -142,12 +142,6 @@ partial struct StatsTesterSystem : ISystem
 
         if (addedSimpleModifiers.Length > 0)
         {
-            // CompactLinkedSubList subList = CompactLinkedSubList.Create();
-            // for (int i = 0; i < addedSimpleModifiers.Length; i++)
-            // {
-            //     CompactLinkedSubList.Add(ref subList, ref modifiers, default); 
-            // }
-            
             UnsafeList<StatModifierHandle> tmpHandles = new UnsafeList<StatModifierHandle>(tester.SimpleAddModifiersAdded, Allocator.Temp);
             _statsAccessor.TryAddStatModifiersBatch(
                 onStat,
