@@ -4,8 +4,6 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
-[assembly: RegisterGenericComponentType(typeof(StatModifier<TestStatModifier, TestStatModifier.Stack>))]
-
 public struct StatsTester : IComponentData
 {
     public Entity StatOwnerPrefab;
@@ -29,7 +27,7 @@ public struct TestStatOwner : IComponentData
     public float tmp;
 }
 
-public struct TestStatModifier : IStatsModifier<TestStatModifier.Stack>
+public struct TestStatModifier : IBufferElementData, IStatsModifier<TestStatModifier.Stack>
 {
     public enum Type
     {
@@ -63,7 +61,9 @@ public struct TestStatModifier : IStatsModifier<TestStatModifier.Stack>
     public Type ModifierType;
     public float ValueA;
     public StatHandle StatHandleA;
-    
+
+    public uint Id { get; set; }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddObservedStatsToList(ref NativeList<StatHandle> observedStatHandles)
     {

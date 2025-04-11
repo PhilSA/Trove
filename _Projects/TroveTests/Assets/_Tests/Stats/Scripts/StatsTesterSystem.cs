@@ -54,8 +54,8 @@ partial struct StatsTesterSystem : ISystem
  
                 _statsAccessor.Update(ref state);
                 
-                DynamicBuffer<StatModifier<TestStatModifier, TestStatModifier.Stack>> modifiersBuffer = 
-                    state.EntityManager.GetBuffer<StatModifier<TestStatModifier, TestStatModifier.Stack>>(observedEntity);
+                DynamicBuffer<TestStatModifier> modifiersBuffer = 
+                    state.EntityManager.GetBuffer<TestStatModifier>(observedEntity);
                 AddSimpleModifiers(ref tester, observedStatOwner.StatA, ref modifiersBuffer);
 
                 if(tester.MakeLocalStatsDependOnEachOther)
@@ -93,7 +93,7 @@ partial struct StatsTesterSystem : ISystem
                     
                     _statsAccessor.Update(ref state);
                     
-                    modifiersBuffer = state.EntityManager.GetBuffer<StatModifier<TestStatModifier, TestStatModifier.Stack>>(newObserverEntity);
+                    modifiersBuffer = state.EntityManager.GetBuffer<TestStatModifier>(newObserverEntity);
                     AddSimpleModifiers(ref tester, newObserverStatOwner.StatA, ref modifiersBuffer);
                     
                     _statsAccessor.TryAddStatModifier(
@@ -128,7 +128,7 @@ partial struct StatsTesterSystem : ISystem
         }.ScheduleParallel(state.Dependency);
     }
 
-    private void AddSimpleModifiers(ref StatsTester tester, StatHandle onStat, ref DynamicBuffer<StatModifier<TestStatModifier, TestStatModifier.Stack>> modifiers)
+    private void AddSimpleModifiers(ref StatsTester tester, StatHandle onStat, ref DynamicBuffer<TestStatModifier> modifiers)
     {
         UnsafeList<TestStatModifier> addedSimpleModifiers = new UnsafeList<TestStatModifier>(tester.SimpleAddModifiersAdded, Allocator.Temp);
         for (int j = 0; j < tester.SimpleAddModifiersAdded; j++)

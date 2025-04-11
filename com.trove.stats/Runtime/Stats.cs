@@ -19,6 +19,7 @@ namespace Trove.Stats
     public interface IStatsModifier<TStatModifierStack>
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
+        public uint Id { get; set; }
         public void AddObservedStatsToList(ref NativeList<StatHandle> observedStatHandles);
         public void Apply(
             ref StatsReader statsReader,
@@ -36,79 +37,15 @@ namespace Trove.Stats
         public float BaseValue;
         public float Value;
 
-        public CompactSubList ModifiersList;
-        public CompactSubList ObserversList;
+        public int ModifiersCount;
+        public int ObserversCount;
         
         public byte ProduceChangeEvents;
     }
 
-    public partial struct StatModifier<TStatModifier, TStatModifierStack> : IBufferElementData, ICompactSubListElement
-        where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
-        where TStatModifierStack : unmanaged, IStatsModifierStack
-    {
-        public uint ID;
-        public TStatModifier Modifier;
-        
-        public int _nextElementIndex;
-        public int NextElementIndex 
-        { 
-            get => _nextElementIndex; 
-            set => _nextElementIndex = value; 
-        }
-        
-        public int _lastElementIndex;
-        public int LastElementIndex 
-        { 
-            get => _lastElementIndex; 
-            set => _lastElementIndex = value; 
-        }
-
-        public byte _isCreated;
-        public byte IsCreated
-        { 
-            get => _isCreated; 
-            set => _isCreated = value; 
-        }
-        
-        public byte _isPinnedFirstElement;
-        public byte IsPinnedFirstElement
-        { 
-            get => _isPinnedFirstElement; 
-            set => _isPinnedFirstElement = value; 
-        }
-    }
-
-    public partial struct StatObserver : IBufferElementData, ICompactSubListElement
+    public partial struct StatObserver : IBufferElementData
     {
         public StatHandle ObserverHandle;
-        
-        public int _nextElementIndex;
-        public int NextElementIndex 
-        { 
-            get => _nextElementIndex; 
-            set => _nextElementIndex = value; 
-        }
-        
-        public int _lastElementIndex;
-        public int LastElementIndex 
-        { 
-            get => _lastElementIndex; 
-            set => _lastElementIndex = value; 
-        }
-
-        public byte _isCreated;
-        public byte IsCreated
-        { 
-            get => _isCreated; 
-            set => _isCreated = value; 
-        }
-        
-        public byte _isPinnedFirstElement;
-        public byte IsPinnedFirstElement
-        { 
-            get => _isPinnedFirstElement; 
-            set => _isPinnedFirstElement = value; 
-        }
     }
 
     public struct StatChangeEvent

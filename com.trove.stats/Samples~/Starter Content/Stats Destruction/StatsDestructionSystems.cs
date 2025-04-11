@@ -48,7 +48,7 @@ partial struct StatsPreDestructionSystem : ISystem
 
     [BurstCompile]
     [WithAll(typeof(DestroyEntity))]
-    [WithAll(typeof(StatModifier<SampleStatModifier, SampleStatModifier.Stack>))] // needed so we don't try to update stat handles that cannot use the same StatAccessor<T,S> type
+    [WithAll(typeof(SampleStatModifier))] // needed so we don't try to update stat handles that cannot use the same StatAccessor<T,S> type
     public partial struct StatsPreDestructionJob : IJobEntity
     {
         public NativeList<StatHandle> StatsToUpdate;

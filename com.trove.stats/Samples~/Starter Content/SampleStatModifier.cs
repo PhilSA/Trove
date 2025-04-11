@@ -4,10 +4,8 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
-[assembly: RegisterGenericComponentType(typeof(StatModifier<SampleStatModifier, SampleStatModifier.Stack>))]
-
 // TODO: Tweak internal buffer capacity for your use case
-public struct SampleStatModifier : IStatsModifier<SampleStatModifier.Stack>
+public struct SampleStatModifier : IBufferElementData, IStatsModifier<SampleStatModifier.Stack>
 {
     // TODO: Customize the modifier types
     public enum Type
@@ -57,6 +55,14 @@ public struct SampleStatModifier : IStatsModifier<SampleStatModifier.Stack>
     public float ValueB;
     public StatHandle StatHandleA;
     public StatHandle StatHandleB;
+
+    // Don't mess with the Id property; it needs to just get/set a uint field directly
+    public uint _id;
+    public uint Id
+    {
+        get => _id; 
+        set => _id = value;
+    } 
 
     // TODO: If the modifier relies on any values gotten from a StatHandle, you must add those handles to the list here.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

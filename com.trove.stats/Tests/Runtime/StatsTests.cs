@@ -11,8 +11,6 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using UnityEngine;
 
-[assembly: RegisterGenericComponentType(typeof(StatModifier<Trove.Stats.Tests.StatsTestsStatModifier, Trove.Stats.Tests.StatsTestsStatModifier.Stack>))]
-
 namespace Trove.Stats.Tests
 {
     public struct TestEntity : IComponentData
@@ -29,7 +27,7 @@ namespace Trove.Stats.Tests
     }
 
     [InternalBufferCapacity(8)]
-    public struct StatsTestsStatModifier : IStatsModifier<StatsTestsStatModifier.Stack>
+    public struct StatsTestsStatModifier : IBufferElementData, IStatsModifier<StatsTestsStatModifier.Stack>
     {
         public enum Type
         {
@@ -80,7 +78,9 @@ namespace Trove.Stats.Tests
         public StatHandle StatHandleB;
 
         public bool MustRemove;
-        
+
+        public uint Id { get; set; }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddObservedStatsToList(ref NativeList<StatHandle> observedStatHandles)
         {
@@ -297,19 +297,10 @@ namespace Trove.Stats.Tests
                 Assert.AreEqual(0, statsLength);
             }
 
-            if (EntityManager.HasBuffer<StatModifier<StatsTestsStatModifier, StatsTestsStatModifier.Stack>>(entity))
+            if (EntityManager.HasBuffer<StatsTestsStatModifier>(entity))
             {
-                DynamicBuffer<StatModifier<StatsTestsStatModifier, StatsTestsStatModifier.Stack>> buffer =
-                    EntityManager.GetBuffer<StatModifier<StatsTestsStatModifier, StatsTestsStatModifier.Stack>>(entity);
-                int validElementsLength = 0;
-                for (int i = 0; i < buffer.Length; i++)
-                {
-                    if (buffer[i].IsCreated == 1)
-                    {
-                        validElementsLength++;
-                    }
-                }
-                Assert.AreEqual(modifiersLength, validElementsLength);
+                DynamicBuffer<StatsTestsStatModifier> buffer = EntityManager.GetBuffer<StatsTestsStatModifier>(entity);
+                Assert.AreEqual(modifiersLength, buffer.Length);
             }
             else
             {
@@ -319,15 +310,7 @@ namespace Trove.Stats.Tests
             if (EntityManager.HasBuffer<StatObserver>(entity))
             {
                 DynamicBuffer<StatObserver> buffer = EntityManager.GetBuffer<StatObserver>(entity);
-                int validElementsLength = 0;
-                for (int i = 0; i < buffer.Length; i++)
-                {
-                    if (buffer[i].IsCreated == 1)
-                    {
-                        validElementsLength++;
-                    }
-                }
-                Assert.AreEqual(observersLength, validElementsLength);
+                Assert.AreEqual(observersLength, buffer.Length);
             }
             else
             {

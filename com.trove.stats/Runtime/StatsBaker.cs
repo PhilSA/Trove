@@ -9,7 +9,7 @@ using Unity.Entities;
 namespace Trove.Stats
 {
     public struct StatsBaker<TStatModifier, TStatModifierStack>
-        where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
+        where TStatModifier : unmanaged, IBufferElementData, IStatsModifier<TStatModifierStack>
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
         internal IBaker Baker;
@@ -17,7 +17,7 @@ namespace Trove.Stats
         
         internal StatsOwner StatsOwner;
         internal DynamicBuffer<Stat> StatsBuffer;
-        internal DynamicBuffer<StatModifier<TStatModifier, TStatModifierStack>> StatModifiersBuffer;
+        internal DynamicBuffer<TStatModifier> StatModifiersBuffer;
         internal DynamicBuffer<StatObserver> StatObserversBuffer;
 
         public void CreateStat(float baseValue, bool produceChangeEvents, out StatHandle statHandle)

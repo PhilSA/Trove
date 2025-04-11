@@ -11,12 +11,6 @@ namespace Trove.Stats
     { }
     
     [InternalBufferCapacity(8)]
-    public partial struct StatModifier<TStatModifier, TStatModifierStack>
-        where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
-        where TStatModifierStack : unmanaged, IStatsModifierStack
-    { }
-    
-    [InternalBufferCapacity(8)]
     public partial struct StatObserver
     { }
 }

@@ -6,8 +6,22 @@
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Samples/Trove Stats/0.4.0/Starter Content/SampleStatModifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Samples/Trove Stats/0.4.0/Starter Content/SampleStatModifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Samples/Trove Stats/0.4.0/Starter Content/Stats Destruction/StatsDestructionSystems.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Samples/Trove Stats/0.4.0/Starter Content/Stats Destruction/StatsDestructionSystems.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Samples/Trove Stats/0.4.0/Starter Content/Trove.Stats/StatsBuffers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Samples/Trove Stats/0.4.0/Starter Content/Trove.Stats/StatsBuffers.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTester.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTester.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTesterSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTesterSystem.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/SubLists.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/SubLists.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/SubListTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/SubListTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/Stats.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/Stats.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsBaker.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsBaker.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsJobs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsJobs.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Samples~/Starter Content/SampleStatModifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Samples~/Starter Content/SampleStatModifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Samples~/Starter Content/Stats Destruction/StatsDestructionSystems.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Samples~/Starter Content/Stats Destruction/StatsDestructionSystems.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Samples~/Starter Content/Trove.Stats/StatsBuffers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Samples~/Starter Content/Trove.Stats/StatsBuffers.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Tests/Runtime/StatsTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Tests/Runtime/StatsTests.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,6 +42,7 @@
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPoly.generated.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPolyMerged.generated.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6AC28F3E17FE520B93434DC8/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyCubeState.generated.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/29/ef672424/Assert.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/59/a62945fb/UnsafeUtility.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/7a/798d7189/AtomicSafetyHandle.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
@@ -41,22 +56,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Attach to Unity Editor.Attach to Unity Editor.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "XThreadsFramesViewSplitterKey": "0.5004965",
-    "git-widget-placeholder": "dev/tmp1",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "RoslynSettingsId",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Attach to Unity Editor.Attach to Unity Editor.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.5004965&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev/tmp1&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;RoslynSettingsId&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.0.43f1\Editor\Unity.exe" />
@@ -123,6 +138,7 @@
       <workItem from="1744206575142" duration="2214000" />
       <workItem from="1744209017329" duration="15437000" />
       <workItem from="1744242492403" duration="10530000" />
+      <workItem from="1744293542621" duration="24147000" />
     </task>
     <servers />
   </component>
@@ -145,42 +161,16 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/../../com.trove.stats/Tests/Runtime/StatsTests.cs</url>
-          <line>2798</line>
-          <properties documentPath="C:\Projects\Trove\com.trove.stats\Tests\Runtime\StatsTests.cs" containingFunctionPresentation="Method 'ComplexTree'">
+          <line>750</line>
+          <properties documentPath="C:\Projects\Trove\com.trove.stats\Tests\Runtime\StatsTests.cs" containingFunctionPresentation="Method 'SameEntityStatModifiers'">
             <startOffsets>
-              <option value="148484" />
+              <option value="35197" />
             </startOffsets>
             <endOffsets>
-              <option value="148531" />
+              <option value="35277" />
             </endOffsets>
           </properties>
-          <option name="timeStamp" value="53" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/SubListTests.cs</url>
-          <line>262</line>
-          <properties documentPath="C:\Projects\Trove\com.trove.common\Tests\Runtime\SubListTests.cs" containingFunctionPresentation="Method 'SubListTest'">
-            <startOffsets>
-              <option value="10970" />
-            </startOffsets>
-            <endOffsets>
-              <option value="11019" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="73" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/../../com.trove.common/Runtime/SubLists.cs</url>
-          <line>293</line>
-          <properties documentPath="C:\Projects\Trove\com.trove.common\Runtime\SubLists.cs" containingFunctionPresentation="Method 'SetCapacity'">
-            <startOffsets>
-              <option value="12502" />
-            </startOffsets>
-            <endOffsets>
-              <option value="12536" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="75" />
+          <option name="timeStamp" value="78" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

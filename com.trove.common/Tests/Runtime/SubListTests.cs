@@ -15,24 +15,20 @@ namespace Trove.Tests
     public struct TestSubListElement : IBufferElementData, ISubListElement, ISublistTestElement
     {
         public int Value { get; set; }
-        public byte IsOccupied { get; set; }
+        public SubList.InternalElementData SubListData { get; set; }
     }
     
-    public struct TestPooledSubListElement : IBufferElementData, IPooledSubListElement, ISublistTestElement
-    {
-        public int Value { get; set; }
-        public int Version { get; set; }
-        public PooledSubList.ElementHandle PrevElementHandle { get; set; }
-    }
-    
-    public struct TestCompactSubListElement : IBufferElementData, ICompactSubListElement, ISublistTestElement
-    {
-        public int Value { get; set; }
-        public int NextElementIndex { get; set; }
-        public int LastElementIndex { get; set; }
-        public byte IsCreated { get; set; }
-        public byte IsPinnedFirstElement { get; set; }
-    }
+    // public struct TestPooledSubListElement : IBufferElementData, IPooledSubListElement, ISublistTestElement
+    // {
+    //     public int Value { get; set; }
+    //     public PooledSubList.InternalElementData PooledSubListData { get; set; }
+    // }
+    //
+    // public struct TestCompactSubListElement : IBufferElementData, ICompactSubListElement, ISublistTestElement
+    // {
+    //     public int Value { get; set; }
+    //     public CompactSubList.InternalElementData CompactSubListData { get; set; }
+    // }
     
     [TestFixture]
     public class SubListTests
@@ -246,13 +242,13 @@ namespace Trove.Tests
             for (int i = subList3.ElementsStartIndex; i < subList3.ElementsStartIndex + subList3.Length; i++)
             {
                 Assert.AreEqual(3, buffer[i].Value);
-                Assert.AreEqual(1, buffer[i].IsOccupied);
+                Assert.AreEqual(1, buffer[i].SubListData.IsOccupied);
             }
             SubList.Resize(ref subList3, ref buffer, 5);
             for (int i = subList3.ElementsStartIndex; i < subList3.ElementsStartIndex + subList3.Length; i++)
             {
                 Assert.AreEqual(0, buffer[i].Value);
-                Assert.AreEqual(1, buffer[i].IsOccupied);
+                Assert.AreEqual(1, buffer[i].SubListData.IsOccupied);
             }
             
             // 2 2 2 2 2 2 2 2 2 2 0 0 0 0 0 3 3 3 3 3 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 
@@ -264,17 +260,39 @@ namespace Trove.Tests
             {
                 if (i < subList3.ElementsStartIndex + subList3.Capacity)
                 {
-                    Assert.AreEqual(1, buffer[i].IsOccupied);
+                    Assert.AreEqual(1, buffer[i].SubListData.IsOccupied);
                 }
                 else
                 {
-                    Assert.AreEqual(0, buffer[i].IsOccupied);
+                    Assert.AreEqual(0, buffer[i].SubListData.IsOccupied);
                 }
             }
             
             success = SubList.SetCapacity(ref subList3, ref buffer, 3);
             Assert.IsFalse(success);
             Assert.AreEqual(5, subList3.Capacity);
+            
+            // Dispose
+            SubList.Dispose(ref subList1, ref buffer);
+            for (int i = subList1.ElementsStartIndex; i < subList1.ElementsStartIndex + subList1.Length; i++)
+            {
+                Assert.AreEqual(0, buffer[i].SubListData.IsOccupied);
+            }
+            SubList.Dispose(ref subList2, ref buffer);
+            for (int i = subList2.ElementsStartIndex; i < subList2.ElementsStartIndex + subList2.Length; i++)
+            {
+                Assert.AreEqual(0, buffer[i].SubListData.IsOccupied);
+            }
+            SubList.Dispose(ref subList3, ref buffer);
+            for (int i = subList3.ElementsStartIndex; i < subList3.ElementsStartIndex + subList3.Length; i++)
+            {
+                Assert.AreEqual(0, buffer[i].SubListData.IsOccupied);
+            }
+            
+            // Recreate
+            subList1 = SubList.Create(ref buffer, initialCapacity, 2f);
+            subList2 = SubList.Create(ref buffer, initialCapacity, 2f);
+            subList3 = SubList.Create(ref buffer, initialCapacity, 2f);
             
             // Jumble
             Assert.DoesNotThrow(() =>
@@ -384,97 +402,96 @@ namespace Trove.Tests
                     }
                 }
             });
-
-
+            
             TestUtilities.DestroyTestEntities(world);
         }
         
-        [Test]
-        public void PooledSubListTest()
-        {
-            bool success = false;
-            Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex(0);
-            World world = World.DefaultGameObjectInjectionWorld;
-            EntityManager entityManager = world.EntityManager;
-            Entity testEntity = TestUtilities.CreateTestEntity(entityManager);
-            DynamicBuffer<TestPooledSubListElement> buffer = entityManager.AddBuffer<TestPooledSubListElement>(testEntity);
-            
-            PooledSubList subList1 = new PooledSubList();
-            PooledSubList subList2 = new PooledSubList();
-            UnsafeList<PooledSubList.ElementHandle> handles1 = new UnsafeList<PooledSubList.ElementHandle>(16, Allocator.Temp);
-            UnsafeList<PooledSubList.ElementHandle> handles2 = new UnsafeList<PooledSubList.ElementHandle>(16, Allocator.Temp);
-            
-            // Add
-            for (int i = 0; i < 6; i++)
-            {
-                PooledSubList.Add(ref subList1, ref buffer, new TestPooledSubListElement { Value = i }, out PooledSubList.ElementHandle handle1);
-                handles1.Add(handle1);
-                Assert.AreEqual(i + 1, subList1.Count);
-                Assert.AreEqual((i*2), handle1.Index);
-                Assert.AreEqual(1, handle1.Version);
-                
-                PooledSubList.Add(ref subList2, ref buffer, new TestPooledSubListElement { Value = i }, out PooledSubList.ElementHandle handle2);
-                handles2.Add(handle2);
-                Assert.AreEqual(i + 1, subList2.Count);
-                Assert.AreEqual((i*2)+1, handle2.Index);
-                Assert.AreEqual(1, handle2.Version);
-            }
-            
-            // Read
-            for (int i = 0; i < 6; i++)
-            {
-                success = PooledSubList.TryGet(ref buffer, handles1[i], out TestPooledSubListElement elem1);
-                Assert.IsTrue(success);
-                Assert.AreEqual(i, elem1.Value);
-                
-                success = PooledSubList.TryGet(ref buffer, handles2[i], out TestPooledSubListElement elem2);
-                Assert.IsTrue(success);
-                Assert.AreEqual(i, elem2.Value);
-            }
-            
-            TestUtilities.DestroyTestEntities(world);
-            handles1.Dispose();
-            handles2.Dispose();
-        }
-        
-        [Test]
-        public void CompactSubListTest()
-        {
-            bool success = false;
-            Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex(0);
-            World world = World.DefaultGameObjectInjectionWorld;
-            EntityManager entityManager = world.EntityManager;
-            Entity testEntity = TestUtilities.CreateTestEntity(entityManager);
-            DynamicBuffer<TestCompactSubListElement> buffer = entityManager.AddBuffer<TestCompactSubListElement>(testEntity);
-            
-            CompactSubList subList1 = CompactSubList.Create();
-            CompactSubList subList2 = CompactSubList.Create();
-            
-            // Add
-            for (int i = 0; i < 6; i++)
-            {
-                CompactSubList.Add(ref subList1, ref buffer, new TestCompactSubListElement { Value = i });
-                Assert.AreEqual(i + 1, subList1.Count);
-                
-                CompactSubList.Add(ref subList2, ref buffer, new TestCompactSubListElement { Value = i });
-                Assert.AreEqual(i + 1, subList2.Count);
-            }
-            
-            // Read
-            for (int i = 0; i < 6; i++)
-            {
-                success = CompactSubList.TryGet(ref subList1, ref buffer, i, out TestCompactSubListElement elem1, out int elemIndex1);
-                Assert.IsTrue(success);
-                Assert.AreEqual((i*2), elemIndex1);
-                Assert.AreEqual(i, elem1.Value);
-                
-                success = CompactSubList.TryGet(ref subList2, ref buffer, i, out TestCompactSubListElement elem2, out int elemIndex2);
-                Assert.IsTrue(success);
-                Assert.AreEqual((i*2)+1, elemIndex2);
-                Assert.AreEqual(i, elem2.Value);
-            }
-            
-            TestUtilities.DestroyTestEntities(world);
-        }
+        // [Test]
+        // public void PooledSubListTest()
+        // {
+        //     bool success = false;
+        //     Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex(0);
+        //     World world = World.DefaultGameObjectInjectionWorld;
+        //     EntityManager entityManager = world.EntityManager;
+        //     Entity testEntity = TestUtilities.CreateTestEntity(entityManager);
+        //     DynamicBuffer<TestPooledSubListElement> buffer = entityManager.AddBuffer<TestPooledSubListElement>(testEntity);
+        //     
+        //     PooledSubList subList1 = new PooledSubList();
+        //     PooledSubList subList2 = new PooledSubList();
+        //     UnsafeList<PooledSubList.ElementHandle> handles1 = new UnsafeList<PooledSubList.ElementHandle>(16, Allocator.Temp);
+        //     UnsafeList<PooledSubList.ElementHandle> handles2 = new UnsafeList<PooledSubList.ElementHandle>(16, Allocator.Temp);
+        //     
+        //     // Add
+        //     for (int i = 0; i < 6; i++)
+        //     {
+        //         PooledSubList.Add(ref subList1, ref buffer, new TestPooledSubListElement { Value = i }, out PooledSubList.ElementHandle handle1);
+        //         handles1.Add(handle1);
+        //         Assert.AreEqual(i + 1, subList1.Count);
+        //         Assert.AreEqual((i*2), handle1.Index);
+        //         Assert.AreEqual(1, handle1.Version);
+        //         
+        //         PooledSubList.Add(ref subList2, ref buffer, new TestPooledSubListElement { Value = i }, out PooledSubList.ElementHandle handle2);
+        //         handles2.Add(handle2);
+        //         Assert.AreEqual(i + 1, subList2.Count);
+        //         Assert.AreEqual((i*2)+1, handle2.Index);
+        //         Assert.AreEqual(1, handle2.Version);
+        //     }
+        //     
+        //     // Read
+        //     for (int i = 0; i < 6; i++)
+        //     {
+        //         success = PooledSubList.TryGet(ref buffer, handles1[i], out TestPooledSubListElement elem1);
+        //         Assert.IsTrue(success);
+        //         Assert.AreEqual(i, elem1.Value);
+        //         
+        //         success = PooledSubList.TryGet(ref buffer, handles2[i], out TestPooledSubListElement elem2);
+        //         Assert.IsTrue(success);
+        //         Assert.AreEqual(i, elem2.Value);
+        //     }
+        //     
+        //     TestUtilities.DestroyTestEntities(world);
+        //     handles1.Dispose();
+        //     handles2.Dispose();
+        // }
+        //
+        // [Test]
+        // public void CompactSubListTest()
+        // {
+        //     bool success = false;
+        //     Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex(0);
+        //     World world = World.DefaultGameObjectInjectionWorld;
+        //     EntityManager entityManager = world.EntityManager;
+        //     Entity testEntity = TestUtilities.CreateTestEntity(entityManager);
+        //     DynamicBuffer<TestCompactSubListElement> buffer = entityManager.AddBuffer<TestCompactSubListElement>(testEntity);
+        //     
+        //     CompactSubList subList1 = CompactSubList.Create();
+        //     CompactSubList subList2 = CompactSubList.Create();
+        //     
+        //     // Add
+        //     for (int i = 0; i < 6; i++)
+        //     {
+        //         CompactSubList.Add(ref subList1, ref buffer, new TestCompactSubListElement { Value = i });
+        //         Assert.AreEqual(i + 1, subList1.Length);
+        //         
+        //         CompactSubList.Add(ref subList2, ref buffer, new TestCompactSubListElement { Value = i });
+        //         Assert.AreEqual(i + 1, subList2.Length);
+        //     }
+        //     
+        //     // Read
+        //     for (int i = 0; i < 6; i++)
+        //     {
+        //         success = CompactSubList.TryGet(ref subList1, ref buffer, i, out TestCompactSubListElement elem1, out int elemIndex1);
+        //         Assert.IsTrue(success);
+        //         Assert.AreEqual((i*2), elemIndex1);
+        //         Assert.AreEqual(i, elem1.Value);
+        //         
+        //         success = CompactSubList.TryGet(ref subList2, ref buffer, i, out TestCompactSubListElement elem2, out int elemIndex2);
+        //         Assert.IsTrue(success);
+        //         Assert.AreEqual((i*2)+1, elemIndex2);
+        //         Assert.AreEqual(i, elem2.Value);
+        //     }
+        //     
+        //     TestUtilities.DestroyTestEntities(world);
+        // }
     }
 }
