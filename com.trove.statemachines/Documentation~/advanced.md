@@ -327,7 +327,7 @@ public static void StateMachineFixedUpdate(
 
 ## State machines as Coroutines
 
-A coroutine is, essentially, a state machine. It's a thing that updates, but the update logic goes through different "states" separated by `yeild` statements.
+A coroutine is, essentially, a state machine. It's a thing that updates, but the update logic goes through different "states" over time.
 
 For example, consider this Coroutine that makes something rotate towards a target, then wait 1s once it has started facing the target, then do some action:
 ```cs
