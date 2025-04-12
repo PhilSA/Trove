@@ -14,7 +14,7 @@
       "source": "local",
       "dependencies": {
         "com.unity.entities": "1.3.10",
-        "com.trove.common": "0.3.0"
+        "com.trove.common": "0.3.2"
       }
     },
     "com.trove.polymorphicstructs": {
@@ -23,7 +23,7 @@
       "source": "local",
       "dependencies": {
         "com.unity.entities": "1.3.10",
-        "com.trove.common": "0.3.0"
+        "com.trove.common": "0.3.2"
       }
     },
     "com.trove.statemachines": {
@@ -32,8 +32,8 @@
       "source": "local",
       "dependencies": {
         "com.unity.entities": "1.3.10",
-        "com.trove.common": "0.3.0",
-        "com.trove.polymorphicstructs": "0.3.1"
+        "com.trove.common": "0.3.2",
+        "com.trove.polymorphicstructs": "0.3.2"
       }
     },
     "com.trove.stats": {
@@ -42,7 +42,7 @@
       "source": "local",
       "dependencies": {
         "com.unity.entities": "1.3.10",
-        "com.trove.common": "0.3.0"
+        "com.trove.common": "0.3.2"
       }
     },
     "com.trove.tweens": {
@@ -51,7 +51,7 @@
       "source": "local",
       "dependencies": {
         "com.unity.entities": "1.3.10",
-        "com.trove.common": "0.3.0"
+        "com.trove.common": "0.3.2"
       }
     },
     "com.trove.utilityai": {
@@ -60,7 +60,7 @@
       "source": "local",
       "dependencies": {
         "com.unity.entities": "1.3.10",
-        "com.trove.common": "0.3.0"
+        "com.trove.common": "0.3.2"
       }
     },
     "com.unity.burst": {

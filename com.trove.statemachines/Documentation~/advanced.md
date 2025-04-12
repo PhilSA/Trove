@@ -3,6 +3,7 @@
 
 **Table of Contents**
 * [Netcode](#netcode)
+* [Non-instant state transitions](#non-instant-state-transitions)
 * [State inheritance and composition](#state-inheritance-and-composition)
 * [Multiple state updates](#multiple-state-updates)
 
@@ -12,6 +13,63 @@
 State machines can be made compatible with netcode and prediction. Simply create ghost variants for the `StateMachine` component and your `DynamicBuffer<MyState>`, and make sure all fields are ghost fields. Note however that since `MyState` will be a polymorphic struct, you must follow the guidance on [netcode for polymorphic structs](https://github.com/PhilSA/Trove/blob/main/com.trove.polymorphicstructs/Documentation~/netcode.md).
 
 Then make your state update system run in the prediction system group, and you're good to go.
+
+
+## Non-instant state transitions
+
+You can create non-instant state transitions by turning the transition itself into a state. Here's an example of a timed transition:
+```cs
+[PolymorphicStruct] 
+public struct TimedStateTransition : IMySMState
+{
+    public float Timer;
+    public float Duration;
+    public StateHandle FromState;
+    public StateHandle ToState;
+    
+    public void OnStateEnter(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        Timer = 0f;
+        entityData.StateBlendRatio = 0f;
+    } 
+
+    public void OnStateExit(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        entityData.StateBlendRatio = 1f;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        Timer += globalData.DeltaTime;
+
+        // HERE, you could even implement some update logic that merges the updates of the "From" and "To" states. In this case, we calculate
+        // a "StateBlendRatio" based on transition normalized time, store it in our "entityData", and call the "Update()" function of our "From" 
+        // and "To" states. These updates can take the "StateBlendRatio" into account
+        {
+            if(StateMachineUtilities.TryGetState(ref statesBuffer, FromState, out MySMState fromState) &&
+               StateMachineUtilities.TryGetState(ref statesBuffer, ToState, out MySMState toState))
+            {
+                entityData.StateBlendRatio = math.saturate(Timer / Duration);
+                fromState.Update(ref stateMachine, ref globalStateUpdateData, ref entityStateUpdateData);
+                entityData.StateBlendRatio = 1f - entityData.StateBlendRatio;
+                toState.Update(ref stateMachine, ref globalStateUpdateData, ref entityStateUpdateData);
+
+                StateMachineUtilities.TrySetState(ref statesBuffer, FromState, fromState);
+                StateMachineUtilities.TrySetState(ref statesBuffer, ToState, toState);
+            }
+        }
+
+        if(Timer >= Duration)
+        {
+            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StatesBuffer, ref globalData, ref entityData, ToState);
+        }
+    }
+}
+```
+
+Notice the comment in the `Update()` function, that explains that you can handle a transition update that merges the updates of the "From" and "To" states.
+
 
 
 ## State inheritance and composition
