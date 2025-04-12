@@ -2,10 +2,22 @@
 # Usage Patterns
 
 **Table of Contents**
+* [Polymorphic structs as a way to minimize structural changes or job counts](#polymorphic-structs-as-a-way-to-minimize-structural-changes-or-job-counts)
 * [Polymorphic structs as a way to minimize buffer lookups](#polymorphic-structs-as-a-way-to-minimize-buffer-lookups)
 * [Polymorphic structs as a way to handle type-independent ordering](#polymorphic-structs-as-a-way-to-handle-type-independent-ordering)
 * [Polymorphic structs as a graph solving tool](#polymorphic-structs-as-a-graph-solving-tool)
 * [Entity and Blob fields restriction workaround](#entity-and-blob-fields-restriction-workaround)
+
+
+## Polymorphic structs as a way to minimize structural changes or job counts
+
+Consider a use case where a single entity can change behaviour very often. Two typical ways of handling this is ECS would be:
+* Use structural changes to remove the current behaviour component and add a new one on the entity.
+* Une enableable components to enable the new behaviour component and disable the previous one.
+
+There are cases where these will be the best solution for the job, but there are also cases where they won't. There is a certain point at the structural changes will be too costly (for the first approach), or at which the jobs overhead will be too costly (for the second approach). In these cases, polymorphic structs can be a better approach.
+
+You would simply create a polymorphic `MyBehaviour` component, that can take many forms. When you want to change the behaviour, simply assign a new polymorphic struct sub-type to it, and the behaviour will change. This avoids both the cost of structural changes and the overhead of many jobs iterating enableable components.
 
 
 ## Polymorphic structs as a way to minimize buffer lookups
