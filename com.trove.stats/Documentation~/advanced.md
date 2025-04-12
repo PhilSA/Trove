@@ -1,7 +1,7 @@
 
 [Home](../README.md)
 
-# How it works - Advanced topics
+# Advanced topics
 
 ## Table of Contents
 * [Netcode](#netcode)
