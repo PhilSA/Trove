@@ -3,8 +3,8 @@
   "description": "Trove State Machines provides templates for state machines in DOTS",
   "dependencies": {
     "com.unity.entities": "1.3.10",
-    "com.trove.common": "0.3.0",
-    "com.trove.polymorphicstructs": "0.3.1"
+    "com.trove.common": "0.3.2",
+    "com.trove.polymorphicstructs": "0.3.2"
   },
   "name": "com.trove.statemachines",
   "author": {
@@ -12,5 +12,5 @@
   },
   "unity": "6000.0",
   "unityRelease": "0f1",
-  "version": "0.1.1"
+  "version": "0.1.2"
 }
