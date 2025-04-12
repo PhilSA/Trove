@@ -279,3 +279,5 @@ public static void StateMachineFixedUpdate(
     }
 }
 ``` 
+
+> Note: you could also use this concept of adding new polymorphic methods to states in order implement advanced state transition logic, where a state may need to "ask" another state if it's ready to transition, before actually transitioning. In this case, you can add a new `CanTransition()` polymorphic function to states.
