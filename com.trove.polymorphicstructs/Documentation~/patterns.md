@@ -15,7 +15,7 @@ Consider a use case where a single entity can change behaviour very often. Two t
 * Use structural changes to remove the current behaviour component and add a new one on the entity.
 * Une enableable components to enable the new behaviour component and disable the previous one.
 
-There are cases where these will be the best solution for the job, but there are also cases where they won't. There is a certain point at the structural changes will be too costly (for the first approach), or at which the jobs overhead will be too costly (for the second approach). In these cases, polymorphic structs can be a better approach.
+There are cases where these will be the best solution for the job, but there are also cases where they won't. There is a certain point where the structural changes will be too costly (for the first approach), or at which the jobs overhead will be too costly (for the second approach). In these cases, polymorphic structs can be a better approach.
 
 You would simply create a polymorphic `MyBehaviour` component, that can take many forms. When you want to change the behaviour, simply assign a new polymorphic struct sub-type to it, and the behaviour will change. This avoids both the cost of structural changes and the overhead of many jobs iterating enableable components.
 
