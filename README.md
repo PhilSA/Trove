@@ -25,7 +25,7 @@ Instructions:
 * Click **Save** or **Apply**.
 * Open `Window/Package Manager`.
 * Click `+` and select `Add package by name...`.
-* Enter package name and version, then click `Add`.
+* Enter package name (and optionally version, if you don't just want the latest), then click `Add`.
 
 ----------------------------
 
