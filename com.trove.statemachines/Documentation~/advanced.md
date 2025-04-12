@@ -349,3 +349,7 @@ This coroutine can be modeled as this state machine:
 * Start with a `RotateTowardsTarget` state. In its `Update()`, it performs the `RotateTowardsTarget()` logic, and if it detects that it has reached the target rotation, it triggers a transition to the next state `WaitState`.
 * `WaitState` is a simple timer state that triggers a transition to the next state once the 1s timer is reached. It transitions to `DoActionState`.
 * `DoActionState` performs the action in its `OnStateEnter()`, and then ends the state machine by setting the `CurrentStateHandle` to `default` in the `stateMachine`. It doesn't need any `Update()` logic.
+
+You can even model complex tween-style "coroutines" as state machines. A tween that is setup to first move to a position, and then once that position tween is completer, start a scale up tween, is a state machine of:
+* `MoveToPositionTweenState`: once reached targed, transition to `ScaleUpState`
+* `ScaleUpState`
