@@ -515,3 +515,7 @@ StateMachineUtilities.TrySetState<CubeSMState, CubeSMGlobalStateUpdateData, Cube
 ```
 
 Now you can press Play. You should see that the cube first moves for 1s, then starts rotating for 2s, but as it is rotating (and ONLY as it is rotating), its scale changes between 3 different states. This is because the sub state machine whose initial state is our first Scale state only updates within the `CubeSMRotationState` state's update. Once our first scale state transitions to the second scale state, this second scale state becomes our sub state machine's "current state", so it keeps updating only within the `CubeSMRotationState` state's update.
+
+These state machines are very efficient. In fact, tests have shown that they outperform a similar state machine implemented with enableable component states (and one job per state) by a large margin. Try spawning 100,000 of these or more to get an idea.
+
+![](./Images/manycubes.gif)

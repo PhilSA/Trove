@@ -46,7 +46,12 @@ public struct CubeSMState : IBufferElementData, IPoolObject, IState<CubeSMGlobal
 /// </summary>
 [PolymorphicStructInterface]
 public interface ICubeSMState : IState<CubeSMGlobalStateUpdateData, CubeSMEntityStateUpdateData>
-{ }
+{
+}
+
+
+
+
 
 /// <summary>
 /// This is an example state
@@ -162,6 +167,12 @@ public struct CubeSMScaleState : ICubeSMState
             StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StatesBuffer, ref globalData, 
                 ref entityData, TargetState);
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void FixedUpdate(ref StateMachine stateMachine, ref CubeSMGlobalStateUpdateData globalData,
+        ref CubeSMEntityStateUpdateData entityData)
+    {
     }
 }
 #endregion

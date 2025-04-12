@@ -1,46 +1,218 @@
 
-# How it Works
+# Advanced
 
-In order to explain how all of this works, we will go through a hands-on example of creating a state machine that moves, rotates, and scales a cube.
-
-
-## The state machine template
-
-Your starting point for creating state machines is to create one from the State Machine template. You can do so with `Right Click in Project window > Create > Trove > StateMachines > New State Machine`.
-
-Here are the main pieces of the template, assuming the we name the new file "**CubeSM**":
-
-> Note: Trove State Machines relies on functionality provided by the [Trove Polymorphic Structs](https://github.com/PhilSA/Trove/blob/main/com.trove.polymorphicstructs/README.md) package, for generating polymorphic structs.
-
-* `CubeSMState`: This is the main struct that represents a state of your state machine. It can be stored in a `DynamicBuffer`, and encompasses the code-generated `PolyCubeSMState` polymorphic struct, which allows it to take on the form of any of the various state types of this state machine.
-* `ICubeSMState`: This is the polymorphic interface that represents the common methods that the states of your state machine should have. 
-* `CubeSMStateA` and `CubeSMStateB`: These are example implementations of specific states of the state machine. They both implement the `ICubeSMState` interface, but they can contain different data.
-* `CubeSMGlobalStateUpdateData`: Represents the "global" data (data not belonging to the entity of the state machine) that state updates should have access to. This is passed as parameter to the `ICubeSMState` interface methods.
-* `CubeSMEntityStateUpdateData`: Represents the entity data (data belonging to the entity of the state machine) that state updates should have access to. This is passed as parameter to the `ICubeSMState` interface methods.
-* `ExampleCubeSMSystem`: An example of a system that updates state machines on entities. It schedules an `IJobEntity` that iterates entities that have a `StateMachine` and a `DynamicBuffer<CubeSMState>`, and calls `StateMachineUtilities.Update()` on those.
-* `CubeSMAuthoring`: An example of an authoring component that sets up a state machine on an entity, using `StateMachineUtilities`. 
-
-The next step you should take is to reorganize these into more manageable files. Most importantly, `CubeSMAuthoring` must be moved to a file that has this exact name, since it is a `MonoBehaviour`. But a recommended setup would be:
-* "**CubeSMAuthoring.cs**": your state machine authoring (`CubeSMAuthoring`).
-* "**ExampleCubeSMSystem.cs**": your state machine update system (`ExampleCubeSMSystem`).
-* "**CubeSMStateMachine.cs**": the interfaces, components, and update datas that define your state machine: 
-    * `ICubeSMState`, `CubeSMState`, `CubeSMGlobalStateUpdateData`, `CubeSMEntityStateUpdateData`
-* A "CubeSMStates" folder containing a file for each of the individual CubeSM states: `CubeSMStateA`, `CubeSMStateB`, etc...
+**Table of Contents**
+* [Netcode](#netcode)
+* [State inheritance and composition](#state-inheritance-and-composition)
+* [Multiple state updates](#multiple-state-updates)
 
 
-## Getting a basic state machine working in a scene
+## Netcode
 
-Create a new cube GameObject in a SubScene, and put a `CubeSMAuthoring` component on it. If you look at the resulting entity in the Entities Hierarchy window, you'll see the entity has a `StateMachine` component and a `DynamicBuffer<CubeSMState>`.
+State machines can be made compatible with netcode and prediction. Simply create ghost variants for the `StateMachine` component and your `DynamicBuffer<MyState>`, and make sure all fields are ghost fields. Note however that since `MyState` will be a polymorphic struct, you must follow the guidance on [netcode for polymorphic structs](https://github.com/PhilSA/Trove/blob/main/com.trove.polymorphicstructs/Documentation~/netcode.md).
+
+Then make your state update system run in the prediction system group, and you're good to go.
 
 
-#### The states buffer acts like a pool where states keep an unchanging index
+## State inheritance and composition
 
-You'll notice there are 8 buffer elements in the `DynamicBuffer<CubeSMState>`, even though the `CubeSMAuthoring` baking code currently only creates 2 states. This is because the states dynamic buffer acts as a "pool" of states where once we add a state at a certain index, it is guaranteed to always remain at that index, no matter how many other states we remove. This characteristic is what enables us to always keep a reliable "reference" to a specific state, using the `StateHandle` struct outputted when creating states. Elements in the `DynamicBuffer<CubeSMState>` buffer can therefore represent a "free available slot" in which to store a state. Not all elements of the buffer are necessarily valid states. You can check if a state element actually exists with the `Trove.Pool.Exists()` method.
+Some patterns can facilitate code re-use across states.
 
-> Note: because the `DynamicBuffer<CubeSMState>` is managed by the Trove Pool utility, it is very important that you never manually add, remove, clear, get, or set elements in it directly. Always go through the various `StateMachineUtilities` instead:
-* `StateMachineUtilities.CreateState`
-* `StateMachineUtilities.TryDestroyState`
-* `StateMachineUtilities.TryGetState`
-* `StateMachineUtilities.TrySetState`
+#### State inheritance
 
-#### 
+You can mimmick a `StateA` inheriting from a `StateB` by making `StateA` store a `StateB` field, and calling all of `StateB`'s state functions:
+```cs
+[PolymorphicStruct] 
+public struct StateB : IMySMState
+{
+    public float Timer;
+    
+    public void OnStateEnter(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        Timer = 0f;
+    } 
+
+    public void OnStateExit(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        Timer += globalData.DeltaTime;
+    }
+}
+
+[PolymorphicStruct] 
+public struct StateA : IMySMState
+{
+    public StateB StateB; // HERE: StateB is stored in StateA, giving StateA the "Timer" functionality of StateB as well.
+    
+    public void OnStateEnter(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        StateB.OnStateEnter(ref stateMachine, ref globalData, ref entityData);
+    } 
+
+    public void OnStateExit(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        StateB.OnStateExit(ref stateMachine, ref globalData, ref entityData);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        StateB.Update(ref stateMachine, ref globalData, ref entityData);
+    }
+}
+```
+
+You can create chains of inheritance this way. For example you could create a `StateC` that `StateB` "inherits" from just like `StateA` "inherits" from `StateB`. `StateA` would then inherit both from `StateB` and `StateC`.
+
+#### State Composition
+
+You may also choose to handle code reuse across states by composition rather than inheritance. You could create several reusable state "Modules" that implement all the state functions, and add several modules to your states:
+```cs
+[PolymorphicStruct] 
+public struct StateA : IMySMState
+{
+    public TimerModule TimerModule;
+    public MovePositionModule MovePositionModule;
+    
+    public void OnStateEnter(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        TimerModule.OnStateEnter(ref stateMachine, ref globalData, ref entityData);
+        MovePositionModule.OnStateEnter(ref stateMachine, ref globalData, ref entityData);
+    } 
+
+    public void OnStateExit(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        TimerModule.OnStateExit(ref stateMachine, ref globalData, ref entityData);
+        MovePositionModule.OnStateExit(ref stateMachine, ref globalData, ref entityData);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        TimerModule.Update(ref stateMachine, ref globalData, ref entityData);
+        MovePositionModule.Update(ref stateMachine, ref globalData, ref entityData);
+    }
+}
+
+[PolymorphicStruct] 
+public struct StateB : IMySMState
+{
+    public TimerModule TimerModule;
+    
+    public void OnStateEnter(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        TimerModule.OnStateEnter(ref stateMachine, ref globalData, ref entityData);
+    } 
+
+    public void OnStateExit(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        TimerModule.OnStateExit(ref stateMachine, ref globalData, ref entityData);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        TimerModule.Update(ref stateMachine, ref globalData, ref entityData);
+    }
+}
+```
+
+
+## Multiple state updates
+
+It's possible to require multiple different state "Update()" functions for your state machine. For example, states might need to do a certain thing on regular update, and something else on fixed update. There are 2 main ways you could choose to handle this.
+
+#### Update Id
+Add a `public int UpdateId;` field to your state machine's `GlobalStateUpdateData` struct. This represents what type of update is requested. In regular update, your system calling the state update would set this to `0`, and in fixed update it would set it to `1`, etc... Then in your state updates, simply do a different thing based on if the `UpdateId` is `0` or `1`, with a `switch` statement for example.
+
+#### New polymorphic update method
+Add a `FixedUpdate()` to your polymorphic state interface (it should be named `IMySMState` if you named your state machine file `MySM` when creating it from the template):
+```cs
+[PolymorphicStructInterface]
+public interface IMySMState : IState<MySMGlobalStateUpdateData, MySMEntityStateUpdateData>
+{
+    public void FixedUpdate(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData);
+}
+```
+
+Then make your states implement it:
+```cs
+[PolymorphicStruct] 
+public struct MySMStateA : IMySMState
+{
+    public void OnStateEnter(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    { } 
+
+    public void OnStateExit(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    { }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    { }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void FixedUpdate(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+    }
+}
+```
+
+Then make your encompassing state buffer element call it on the polymorphic struct:
+```cs
+[InternalBufferCapacity(8)] // TODO: tweak internal capacity
+public struct MySMState : IBufferElementData, IPoolObject, IState<MySMGlobalStateUpdateData, MySMEntityStateUpdateData>
+{
+    // Required for VersionedPool handling. Determines if the state exists in the states pool.
+    public int Version { get; set; }
+    // This is the generated polymorphic state struct, based on the IMySMStateMachineState polymorphic interface
+    public PolyMySMState State;
+
+    public void OnStateEnter(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData,
+        ref MySMEntityStateUpdateData entityData)
+    {
+        State.OnStateEnter(ref stateMachine, ref globalData, ref entityData);
+    }
+
+    public void OnStateExit(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData,
+        ref MySMEntityStateUpdateData entityData)
+    {
+        State.OnStateExit(ref stateMachine, ref globalData, ref entityData);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData,
+        ref MySMEntityStateUpdateData entityData)
+    {
+        State.Update(ref stateMachine, ref globalData, ref entityData);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void FixedUpdate(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData,
+        ref MySMEntityStateUpdateData entityData)
+    {
+        State.FixedUpdate(ref stateMachine, ref globalData, ref entityData);
+    }
+}
+```
+
+And finally, call your state machine `FixedUpdate` from a system/job with this static function:
+```cs        
+[MethodImpl(MethodImplOptions.AggressiveInlining)]
+public static void StateMachineFixedUpdate(
+    ref StateMachine stateMachine,
+    ref DynamicBuffer<MySMState> statesBuffer,
+    ref MySMGlobalStateUpdateData globalStateUpdateData,
+    ref MySMEntityStateUpdateData entityStateUpdateData)
+{
+    MySMState nullState = default;
+    ref MySMState currentState = ref Pool.TryGetObjectRef(ref statesBuffer, stateMachine.CurrentStateHandle.Handle, out bool success, ref nullState);
+    if (success)
+    {
+        currentState.FixedUpdate(ref stateMachine, ref globalStateUpdateData, ref entityStateUpdateData);
+    }
+}
+``` 
