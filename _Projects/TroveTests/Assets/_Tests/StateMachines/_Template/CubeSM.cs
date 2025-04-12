@@ -10,6 +10,11 @@ using UnityEngine;
 
 #region States
 
+
+
+
+
+
 /// <summary>
 /// This is the polymorphic state buffer element.
 /// </summary>

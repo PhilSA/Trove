@@ -22,8 +22,49 @@ You can create non-instant state transitions by turning the transition itself in
 * When`StateA` is ready to transition to `StateB`, it gets the `TransitionState` from its handle, sets a "from" and "to" state handle in it, and transitions to it.
 * Now `TransitionState` is the active state, and it remembers it's transitioning from `StateA` to `StateB`. It handles transition logic, and calls a transition to its "to" state when ready.
 
-Here's an example of a timed transition:
+Here's an example of a timed transition called from `StateA`:
 ```cs
+[PolymorphicStruct] 
+public struct StateA : IMySMState
+{
+    // (...)
+    public StateHandle SelfState;
+    public StateHandle TargetState;
+    public StateHandle TimedTransitionState;
+    
+    public void OnStateEnter(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        // (...)
+    } 
+
+    public void OnStateExit(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        // (...)
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ref StateMachine stateMachine, ref MySMGlobalStateUpdateData globalData, ref MySMEntityStateUpdateData entityData)
+    {
+        // (...)
+
+        // .....when ready to transition:
+        if(StateMachineUtilities.TryGetState<MySMState, MySMGlobalStateUpdateData, MySMEntityStateUpdateData>(ref entityData.StatesBuffer, TimedTransitionState, out MySMState timedTransitionState))
+        {   
+            // First, set some data in the TimedTransitionState:
+            timedTransitionState.State = new TimedStateTransition
+            {
+                Duration = 1f,
+                FromState = SelfState,
+                ToState = TargetState,
+            };
+            StateMachineUtilities.TrySetState<MySMState, MySMGlobalStateUpdateData, MySMEntityStateUpdateData>(ref entityData.StatesBuffer, TimedTransitionState, timedTransitionState);
+
+            // Then transition to the TimedStateTransition state
+            StateMachineUtilities.TryStateTransition(ref stateMachine, ref entityData.StatesBuffer, ref globalData, ref entityData, TimedTransitionState);
+        }
+    }
+}
+
 [PolymorphicStruct] 
 public struct TimedStateTransition : IMySMState
 {
@@ -52,16 +93,16 @@ public struct TimedStateTransition : IMySMState
         // a "StateBlendRatio" based on transition normalized time, store it in our "entityData", and call the "Update()" function of our "From" 
         // and "To" states. These updates can take the "StateBlendRatio" into account
         {
-            if(StateMachineUtilities.TryGetState(ref statesBuffer, FromState, out MySMState fromState) &&
-               StateMachineUtilities.TryGetState(ref statesBuffer, ToState, out MySMState toState))
+            if(StateMachineUtilities.TryGetState<MySMState, MySMGlobalStateUpdateData, MySMEntityStateUpdateData>(ref entityData.StatesBuffer, FromState, out MySMState fromState) &&
+               StateMachineUtilities.TryGetState<MySMState, MySMGlobalStateUpdateData, MySMEntityStateUpdateData>(ref entityData.StatesBuffer, ToState, out MySMState toState))
             {
                 entityData.StateBlendRatio = math.saturate(Timer / Duration);
-                fromState.Update(ref stateMachine, ref globalStateUpdateData, ref entityStateUpdateData);
+                fromState.Update(ref stateMachine, ref globalData, ref entityData);
                 entityData.StateBlendRatio = 1f - entityData.StateBlendRatio;
-                toState.Update(ref stateMachine, ref globalStateUpdateData, ref entityStateUpdateData);
+                toState.Update(ref stateMachine, ref globalData, ref entityData);
 
-                StateMachineUtilities.TrySetState(ref statesBuffer, FromState, fromState);
-                StateMachineUtilities.TrySetState(ref statesBuffer, ToState, toState);
+                StateMachineUtilities.TrySetState<MySMState, MySMGlobalStateUpdateData, MySMEntityStateUpdateData>(ref entityData.StatesBuffer, FromState, fromState);
+                StateMachineUtilities.TrySetState<MySMState, MySMGlobalStateUpdateData, MySMEntityStateUpdateData>(ref entityData.StatesBuffer, ToState, toState);
             }
         }
 
