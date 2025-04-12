@@ -17,7 +17,12 @@ Then make your state update system run in the prediction system group, and you'r
 
 ## Non-instant state transitions
 
-You can create non-instant state transitions by turning the transition itself into a state. Here's an example of a timed transition:
+You can create non-instant state transitions by turning the transition itself into a state. A transition from `StateA` to `StateB` could involve:
+* Creating a new `TransitionState`.
+* When`StateA` is ready to transition to `StateB`, it gets the `TransitionState` from its handle, sets a "from" and "to" state handle in it, and transitions to it.
+* Now `TransitionState` is the active state, and it remembers it's transitioning from `StateA` to `StateB`. It handles transition logic, and calls a transition to its "to" state when ready.
+
+Here's an example of a timed transition:
 ```cs
 [PolymorphicStruct] 
 public struct TimedStateTransition : IMySMState
