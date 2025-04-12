@@ -10,7 +10,7 @@
 * [Dynamic stat modifiers](#dynamic-stat-modifiers)
 * [Self-removing modifiers](#self-removing-modifiers)
 * [Complex modifiers stack](#complex-modifiers-stack)
-* [On-demand stats update](#stats-that-are-only-evaluared-on-demand)
+* [On-demand stats update](#on-demand-stats-update)
 
 
 ---
