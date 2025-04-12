@@ -1,6 +1,11 @@
 
 # Trove Utility AI
 
+## Installation
+
+Refer to [Trove Readme](https://github.com/PhilSA/Trove/blob/main/README.md#installing-the-packages) for installation instructions.
+
+
 ## Overview
 
 Trove Utility AI provides a flexible and efficient decision-making system for ECS.

@@ -1,6 +1,12 @@
 
 # Trove Common
 
+## Installation
+
+Refer to [Trove Readme](https://github.com/PhilSA/Trove/blob/main/README.md#installing-the-packages) for installation instructions.
+
+## Overview
+
 Trove Common provides various tools and utilities that may be used by other packages or projects.
 
 Most notably, it includes:

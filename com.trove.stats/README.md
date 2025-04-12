@@ -1,6 +1,13 @@
 
 # Trove Stats
 
+## Installation
+
+Refer to [Trove Readme](https://github.com/PhilSA/Trove/blob/main/README.md#installing-the-packages) for installation instructions.
+
+
+## Overview
+
 Trove Stats can be used to effortlessly setup gameplay mechanics such as RPG character/equipment stats, buffs, effects, roguelike-style modifiers, etc... 
 
 In practice, they are "numbers" that can depend on each-other (including across different entities), react to each-other's changes, and hold stacks of "modifers" that can change their values. 
