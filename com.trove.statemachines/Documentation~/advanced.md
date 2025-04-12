@@ -10,7 +10,7 @@
 
 ## Netcode
 
-State machines can be made compatible with netcode and prediction. Simply create ghost variants for the `StateMachine` component and your `DynamicBuffer<MyState>`, and make sure all fields are ghost fields. Note however that since `MyState` will be a polymorphic struct, you must follow the guidance on [netcode for polymorphic structs](https://github.com/PhilSA/Trove/blob/main/com.trove.polymorphicstructs/Documentation~/netcode.md).
+State machines can be made compatible with netcode and prediction. Simply create ghost variants for the `StateMachine` component and your `DynamicBuffer<MyState>`, and make sure all fields are ghost fields. Note however that since `MyState.State` will be a polymorphic struct, you must make your state polymorphic structs use the "Merged Fields" approach. See [netcode for polymorphic structs](https://github.com/PhilSA/Trove/blob/main/com.trove.polymorphicstructs/Documentation~/netcode.md) for more details.
 
 Then make your state update system run in the prediction system group, and you're good to go.
 
