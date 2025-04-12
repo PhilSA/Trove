@@ -4,6 +4,7 @@
 **Table of Contents**
 * [Polymorphic structs as a way to minimize buffer lookups](#polymorphic-structs-as-a-way-to-minimize-buffer-lookups)
 * [Polymorphic structs as a way to handle type-independent ordering](#polymorphic-structs-as-a-way-to-handle-type-independent-ordering)
+* [Polymorphic structs as a graph solving tool](#polymorphic-structs-as-a-graph-solving-tool)
 * [Entity and Blob fields restriction workaround](#entity-and-blob-fields-restriction-workaround)
 
 
@@ -17,6 +18,22 @@ For example, let's say an entity must support 3 different types of events (store
 ## Polymorphic structs as a way to handle type-independent ordering
 
 Imagine you need to implement an ordered events system, where events of many different types must be executed in the exact order they were added: `EventTypeA`, then `EventTypeB`, then `EventTypeA`, `EventTypeC`, then `EventTypeB`, etc.... Polymorphic structs can solve this problem easily and efficiently. Simply turn all your events into a polymorphic struct type, have a single buffer of those events, and add the polymorphic events in order.
+
+
+## Polymorphic structs as a graph solving tool
+
+Polymorphic structs can be used as a general graph-solving tool. Consider this graph:
+
+![](./Images/nodegraph.jpg)
+
+Let's say we need node A to receive a `float` input, and then this `float` value must receive a series of transformations while it flows through the other nodes, outputting different final values at nodes C, D, and E. This could be implemented as follows:
+* Create a `INode` polymorphic interface type representing your nodes, with a `NodeUpdate()` method. 
+    * For each type of node input your nodes will need, add a property to the `INode` interface for setting that input. Ex: `InputFloat {get;set;}`, `InputEntity {get;set;}`, etc....
+* For each node you'll have in the graph, create a poly struct implementing `INode`. Each node can have fields to remember the indexes of its next nodes to pass outputs to (you can have a `FixedList` of output nodes as well, if you need a variable amount of outputs).
+* With this, the whole graph transformation of our `float` input value would happen like this:
+    * On node A, call `nodaA.InputFloat = 5f;`, then `nodeA.NodeUpdate();`.
+    * In node A's `NodeUpdate()`, it does some transformation to the value of the `InputFloat` property, then for each output node index that it stored in its fields, calls `outputNode.InputFloat = transformedInput;`, and `outputNode.NodeUpdate()`.
+    * Each node in the graph will continue this chain reaction of transformation of inputs, until we reach nodes that have no output nodes (nodes C, D, and E in this example). At this point we can get the output values from these nodes, perhaps with a new `GetOutput()` polymorphic method for the nodes.
 
 
 ## Entity and Blob fields restriction workaround
@@ -53,3 +70,16 @@ myEncompassingStruct.PolyStruct.DoSomething(myEncompassingStruct.EntityA, in myE
 #### External storage
 
 Another alternative is to store Entities/Blobs in a DynamicBuffer alongside wherever your polymorphic struct is stored. You could, for example, have a buffer of several Entities, and your polymorphic structs simply store an index to an entity in that buffer. The buffer is then passed as parameter to the polymorphic functions, so the entities can be gotten from there.
+
+
+
+
+## Repurposing state machines as a general graph solving tool
+
+The states in Trove State Machine are essentially "nodes" that implement an interface, perform different actions, hold data, and that you can keep a reliable "handle" to. This means you can repurpose these state machines as just a general graph-solving tool.
+
+Consider this graph:
+
+![](./Images/nodegraph.jpg)
+
+Let's say we need
