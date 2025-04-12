@@ -23,7 +23,7 @@ In the "Samples" tab of the "Trove Stats" package in the Package Manager window,
 * `SampleStats`: A component holding example `StatHandle`s (a `StatHandle` holds a reference to a specific stat on a specific entity).
 * `SampleStatsAuthoring`: An authoring component for `SampleStats`.
 * `SampleStatModifier`: An example of a stats modifier and a modifiers stack, that can be extended and customized.
-* `SampleStatsWorldSystem`: A system that creates the `StatsWordlData` singleton, used for most stats operations.
+* `SampleStatsWorldSystem`: A system that creates the `StatsWorldData` singleton, used for most stats operations.
 * `SampleStatEventsSystem`: An example of how to process stat events.
 * `StatDestructionSystems`: An example of how to process stat entity destruction (see [Destroying stat entities](./how-it-works-basics.md#destroying-stat-entities)).
 
@@ -35,7 +35,7 @@ A `Stat` is a `DynamicBuffer` element containing a `BaseValue`, a `Value`, and s
 
 When created, stats are given a unique `StatHandle`, so they can be referenced later.
 
-#### Stat Modifiers
+#### Stat Modifiers and Observers
 Stat modifiers and the modifiers stack are defined in user code. The Trove Stats "Starter Content" sample includes a starter version of stat modifiers and modifiers stack. Stat modifiers are implemented as a single struct that can act as any of the various modifier types in your game, and the stat modifiers stack represents the accumulation of all modifier operations affecting a certain stat when that stat is being recalculated. 
 
 A stat modifier affects a specific stat on a specific entity, and is given a unique `StatModifierHandle` when added (so it can be removed later).
@@ -43,7 +43,7 @@ A stat modifier affects a specific stat on a specific entity, and is given a uni
 A stat modifier can also be an "observer" of other stats, meaning that when that stat changes, the modifier will know that it has to re-apply itself to the target stat. For example if a game wants to apply a bonus to the Strength stat based on the Dexterity stat: it would add a modifier to the Strength stat, and that modifier would be an observer of the Dexterity stat. Now when Dexterity changes, the modifier will tell the Strength stat that is has to recalculate its value and re-apply all of its modifiers (including the one that gives a bonus based on Dexterity).
 
 #### Stats Access
-In this package, you should never directly change the data in the `Stat`, `StatModifier`, `StatObserver` buffers directly. The data stored here must be handled by the various tools that the Stats package provides.
+**IMPORTANT: In this package, you should never directly change the data in the `Stat`, `StatModifier`, `StatObserver` buffers directly**. The data stored here must be handled by the various tools that the Stats package provides, and any change that doesn't go through the stats APIs could break things.
 * `StatsAccessor` is the main tool you must use for all stat changes: stat creation, stat value change, stat modifier addition/removal. Note that it cannot be used in parallel, as stat changes can affect multiple entities.
 * `StatsUtilities` can be used when you only need to read (not write) stats.
 
@@ -195,7 +195,7 @@ public partial struct ExampleAddModifiersJob : IJobEntity
 }
 ```
 
-Adding modifiers this way will automatically and instantly recompute any other stat values that depends on this stat.
+Adding modifiers this way will automatically and instantly recompute any other stat values that depend on this stat.
 
 -----
 

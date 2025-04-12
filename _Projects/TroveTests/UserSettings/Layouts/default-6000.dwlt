@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 1920
     height: 989
   m_ShowMode: 4
-  m_Title: Profiler
+  m_Title: Game
   m_RootView: {fileID: 8}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -41,15 +41,16 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 298
+    width: 348
     height: 428
   m_MinSize: {x: 202, y: 226}
   m_MaxSize: {x: 4002, y: 4026}
-  m_ActualView: {fileID: 17}
+  m_ActualView: {fileID: 18}
   m_Panes:
-  - {fileID: 17}
+  - {fileID: 18}
+  - {fileID: 13}
   m_Selected: 0
-  m_LastSelected: 0
+  m_LastSelected: 1
 --- !u!114 &3
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -67,14 +68,14 @@ MonoBehaviour:
   - {fileID: 4}
   m_Position:
     serializedVersion: 2
-    x: 1230
+    x: 1183
     y: 0
-    width: 298
+    width: 348
     height: 933
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 93
+  controlID: 94
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -93,13 +94,13 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 428
-    width: 298
+    width: 348
     height: 505
   m_MinSize: {x: 232, y: 276}
   m_MaxSize: {x: 10002, y: 10026}
-  m_ActualView: {fileID: 15}
+  m_ActualView: {fileID: 16}
   m_Panes:
-  - {fileID: 15}
+  - {fileID: 16}
   m_Selected: 0
   m_LastSelected: 0
 --- !u!114 &5
@@ -127,7 +128,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 131
+  controlID: 139
   draggingID: 0
 --- !u!114 &6
 MonoBehaviour:
@@ -139,23 +140,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 1
   m_Script: {fileID: 12006, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: TestRunnerWindow
+  m_Name: InspectorWindow
   m_EditorClassIdentifier: 
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 1528
+    x: 1531
     y: 0
-    width: 392
+    width: 389
     height: 933
-  m_MinSize: {x: 51, y: 76}
+  m_MinSize: {x: 276, y: 76}
   m_MaxSize: {x: 4001, y: 4026}
-  m_ActualView: {fileID: 14}
+  m_ActualView: {fileID: 17}
   m_Panes:
-  - {fileID: 16}
-  - {fileID: 14}
-  m_Selected: 1
-  m_LastSelected: 0
+  - {fileID: 17}
+  - {fileID: 15}
+  m_Selected: 0
+  m_LastSelected: 1
 --- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -173,13 +174,13 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 666
-    width: 1230
+    width: 1183
     height: 267
   m_MinSize: {x: 101, y: 126}
   m_MaxSize: {x: 4001, y: 4026}
-  m_ActualView: {fileID: 20}
+  m_ActualView: {fileID: 21}
   m_Panes:
-  - {fileID: 20}
+  - {fileID: 21}
   m_Selected: 0
   m_LastSelected: 0
 --- !u!114 &8
@@ -272,7 +273,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1230
+    width: 1183
     height: 933
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
@@ -289,25 +290,62 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 1
   m_Script: {fileID: 12006, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: ProfilerWindow
+  m_Name: SceneView
   m_EditorClassIdentifier: 
   m_Children: []
   m_Position:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1230
+    width: 1183
     height: 666
-  m_MinSize: {x: 901, y: 242}
+  m_MinSize: {x: 201, y: 226}
   m_MaxSize: {x: 4001, y: 4026}
-  m_ActualView: {fileID: 13}
+  m_ActualView: {fileID: 19}
   m_Panes:
-  - {fileID: 18}
   - {fileID: 19}
-  - {fileID: 13}
-  m_Selected: 2
+  - {fileID: 20}
+  - {fileID: 14}
+  m_Selected: 0
   m_LastSelected: 1
 --- !u!114 &13
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70ebb861d56146959cda8fcaf772f612, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_MinSize: {x: 200, y: 200}
+  m_MaxSize: {x: 4000, y: 4000}
+  m_TitleContent:
+    m_Text: Entities Hierarchy
+    m_Image: {fileID: 2800000, guid: 5d1b07a7ca97f05448f751a48ede9120, type: 3}
+    m_Tooltip: 
+    m_TextWithWhitespace: "Entities Hierarchy\u200B"
+  m_Pos:
+    serializedVersion: 2
+    x: -737
+    y: 79
+    width: 346
+    height: 402
+  m_SerializedDataModeController:
+    m_DataMode: 1
+    m_PreferredDataMode: 1
+    m_SupportedDataModes: 010000000200000003000000
+    isAutomatic: 1
+  m_ViewDataDictionary: {fileID: 0}
+  m_OverlayCanvas:
+    m_LastAppliedPresetName: Default
+    m_SaveData: []
+    m_ContainerData: []
+    m_OverlaysVisible: 1
+  m_EditorWindowInstanceKey: 50d4061b0316426da4d2e9207ea8fcec
+--- !u!114 &14
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -329,9 +367,9 @@ MonoBehaviour:
     m_TextWithWhitespace: "Profiler\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 0
-    y: 24
-    width: 1229
+    x: -1920
+    y: 79
+    width: 1182
     height: 640
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -377,7 +415,7 @@ MonoBehaviour:
         m_PaneScroll: {x: 0, y: 0}
         m_ViewType: 1
         updateViewLive: 0
-        m_CurrentFrameIndex: -1
+        m_CurrentFrameIndex: 50417
         m_HierarchyOverruledThreadFromSelection: 0
         m_ProfilerViewFilteringOptions: 1
         m_FrameDataHierarchyView:
@@ -1335,7 +1373,7 @@ MonoBehaviour:
       data:
         m_SortAscending: 0
         m_SortedColumn: -1
---- !u!114 &14
+--- !u!114 &15
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1357,8 +1395,8 @@ MonoBehaviour:
     m_TextWithWhitespace: "Test Runner\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 1529
-    y: 24
+    x: -392
+    y: 79
     width: 391
     height: 907
   m_SerializedDataModeController:
@@ -1373,7 +1411,7 @@ MonoBehaviour:
     m_ContainerData: []
     m_OverlaysVisible: 1
   m_Spl:
-    ID: 197
+    ID: 200
     splitterInitialOffset: 679
     currentActiveSplitter: -1
     realSizes:
@@ -1398,9 +1436,9 @@ MonoBehaviour:
     oldSplitSize: 0
   m_TestTypeToolbarIndex: 1
   m_TestListGUIs:
-  - m_Window: {fileID: 14}
+  - m_Window: {fileID: 15}
     runProgress:
-      RunGuid: f7fee09d-4f14-4474-bca9-040f5877e2e0
+      RunGuid: 640a48fe-c2e5-4953-949a-df31cf59f7b8
       ExecutionSettings:
         m_TargetPlatform: 0
         m_HasTargetPlatform: 0
@@ -1412,11 +1450,11 @@ MonoBehaviour:
           assemblyNames: []
         filters:
         - testMode: 2
-          testNames:
-          - Trove.Stats.Tests.StatsTests
+          testNames: []
           groupNames: []
           categoryNames: []
-          assemblyNames: []
+          assemblyNames:
+          - com.trove.stats.tests
         runSynchronously: 0
         playerHeartbeatTimeout: 600
         orderedTestNames: []
@@ -1482,9 +1520,9 @@ MonoBehaviour:
       availableCategories:
       - Uncategorized
     m_SelectedOption: 0
-  - m_Window: {fileID: 14}
+  - m_Window: {fileID: 15}
     runProgress:
-      RunGuid: f7fee09d-4f14-4474-bca9-040f5877e2e0
+      RunGuid: 640a48fe-c2e5-4953-949a-df31cf59f7b8
       ExecutionSettings:
         m_TargetPlatform: 0
         m_HasTargetPlatform: 0
@@ -1496,11 +1534,11 @@ MonoBehaviour:
           assemblyNames: []
         filters:
         - testMode: 2
-          testNames:
-          - Trove.Stats.Tests.StatsTests
+          testNames: []
           groupNames: []
           categoryNames: []
-          assemblyNames: []
+          assemblyNames:
+          - com.trove.stats.tests
         runSynchronously: 0
         playerHeartbeatTimeout: 600
         orderedTestNames: []
@@ -1546,7 +1584,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1071
+      parentId: 1069
       parentUniqueId: '[TroveTests][suite]'
     - id: 1014
       uniqueId: 'com.trove.common.tests.dll/[Trove][suite]'
@@ -1795,7 +1833,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1071
+      parentId: 1069
       parentUniqueId: '[TroveTests][suite]'
     - id: 1025
       uniqueId: 'com.trove.eventsystems.tests.dll/[Trove][suite]'
@@ -1991,7 +2029,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1071
+      parentId: 1069
       parentUniqueId: '[TroveTests][suite]'
     - id: 1031
       uniqueId: 'com.trove.polymorphicstructs.tests.dll/[Trove][suite]'
@@ -2088,7 +2126,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1071
+      parentId: 1069
       parentUniqueId: '[TroveTests][suite]'
     - id: 1046
       uniqueId: 'com.trove.stats.tests.dll/[Trove][suite]'
@@ -2159,7 +2197,7 @@ MonoBehaviour:
       name: AddRemoveModifierCases
       fullName: Trove.Stats.Tests.StatsTests.AddRemoveModifierCases
       resultStatus: 1
-      duration: 0.0030306
+      duration: 0.0444884
       messages: 
       output: 
       stacktrace: 
@@ -2176,7 +2214,7 @@ MonoBehaviour:
       name: BasicStatOperations
       fullName: Trove.Stats.Tests.StatsTests.BasicStatOperations
       resultStatus: 1
-      duration: 0.0009373
+      duration: 0.0057921
       messages: 
       output: 
       stacktrace: 
@@ -2193,7 +2231,7 @@ MonoBehaviour:
       name: ComplexTree
       fullName: Trove.Stats.Tests.StatsTests.ComplexTree
       resultStatus: 1
-      duration: 0.0014323
+      duration: 0.0107145
       messages: 
       output: 
       stacktrace: 
@@ -2210,7 +2248,7 @@ MonoBehaviour:
       name: CrossEntityStatModifiers
       fullName: Trove.Stats.Tests.StatsTests.CrossEntityStatModifiers
       resultStatus: 1
-      duration: 0.0064811
+      duration: 0.0186172
       messages: 
       output: 
       stacktrace: 
@@ -2227,7 +2265,7 @@ MonoBehaviour:
       name: DestroyObservedStat
       fullName: Trove.Stats.Tests.StatsTests.DestroyObservedStat
       resultStatus: 1
-      duration: 0.0009113
+      duration: 0.0021781
       messages: 
       output: 
       stacktrace: 
@@ -2244,7 +2282,7 @@ MonoBehaviour:
       name: InfiniteObserversLoopPrevention
       fullName: Trove.Stats.Tests.StatsTests.InfiniteObserversLoopPrevention
       resultStatus: 1
-      duration: 0.0007795
+      duration: 0.0069683
       messages: 
       output: 
       stacktrace: 
@@ -2261,7 +2299,7 @@ MonoBehaviour:
       name: InvalidStatOperations
       fullName: Trove.Stats.Tests.StatsTests.InvalidStatOperations
       resultStatus: 1
-      duration: 0.0006161
+      duration: 0.0031326
       messages: 
       output: 
       stacktrace: 
@@ -2278,7 +2316,7 @@ MonoBehaviour:
       name: SameEntityStatModifiers
       fullName: Trove.Stats.Tests.StatsTests.SameEntityStatModifiers
       resultStatus: 1
-      duration: 0.0008863
+      duration: 0.0106336
       messages: 
       output: 
       stacktrace: 
@@ -2295,7 +2333,7 @@ MonoBehaviour:
       name: StatEventsTest
       fullName: Trove.Stats.Tests.StatsTests.StatEventsTest
       resultStatus: 1
-      duration: 0.0010258
+      duration: 0.0025193
       messages: 
       output: 
       stacktrace: 
@@ -2312,7 +2350,7 @@ MonoBehaviour:
       name: StatWorldJobExceptionsTest
       fullName: Trove.Stats.Tests.StatsTests.StatWorldJobExceptionsTest
       resultStatus: 1
-      duration: 0.08543
+      duration: 0.0083724
       messages: 
       output: 
       stacktrace: 
@@ -2338,7 +2376,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1071
+      parentId: 1069
       parentUniqueId: '[TroveTests][suite]'
     - id: 1052
       uniqueId: 'com.trove.tweens.tests.dll/[Trove][suite]'
@@ -2435,7 +2473,7 @@ MonoBehaviour:
       description: 
       isSuite: 1
       categories: []
-      parentId: 1071
+      parentId: 1069
       parentUniqueId: '[TroveTests][suite]'
     - id: 1063
       uniqueId: 'com.trove.utilityai.tests.dll/[Trove][suite]'
@@ -2603,12 +2641,12 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1057
       parentUniqueId: 'com.trove.utilityai.tests.dll/Trove/UtilityAI/Tests/[com.trove.utilityai.tests][Trove.UtilityAI.Tests.ReasonerTests][suite]'
-    m_ResultText: StatsTests (10 tests) (0.000s)
+    m_ResultText: com.trove.stats.tests.dll (10 tests) (0.000s)
     m_ResultStacktrace: 
     m_TestListState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 388841d9
-      m_LastClickedID: -650016712
+      m_SelectedIDs: 35631e20
+      m_LastClickedID: 538862389
       m_ExpandedIDs: 393fb88f0133dfc5a40680c9388841d97e71fae0925af8e27e55e5e94ed5b90afc38c30c8367950e35631e208ebc8725495b662a48821f2e4536b541511b16450c196c63b95d5c76ffffff7f
       m_RenameOverlay:
         m_UserAcceptedRename: 0
@@ -2639,7 +2677,7 @@ MonoBehaviour:
     m_SelectedOption: 0
   - m_Window: {fileID: 0}
     runProgress:
-      RunGuid: f7fee09d-4f14-4474-bca9-040f5877e2e0
+      RunGuid: 640a48fe-c2e5-4953-949a-df31cf59f7b8
       ExecutionSettings:
         m_TargetPlatform: 0
         m_HasTargetPlatform: 0
@@ -2651,11 +2689,11 @@ MonoBehaviour:
           assemblyNames: []
         filters:
         - testMode: 2
-          testNames:
-          - Trove.Stats.Tests.StatsTests
+          testNames: []
           groupNames: []
           categoryNames: []
-          assemblyNames: []
+          assemblyNames:
+          - com.trove.stats.tests
         runSynchronously: 0
         playerHeartbeatTimeout: 600
         orderedTestNames: []
@@ -2704,7 +2742,7 @@ MonoBehaviour:
       selectedCategories: []
       availableCategories: []
     m_SelectedOption: 0
---- !u!114 &15
+--- !u!114 &16
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2728,7 +2766,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 1
     y: 452
-    width: 296
+    width: 346
     height: 479
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -2751,7 +2789,8 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SkipHidden: 0
     m_SearchArea: 1
-    m_Folders: []
+    m_Folders:
+    - Assets/_Tests/StateMachines/_Template
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -2769,7 +2808,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 3af30000
     m_LastClickedID: 62266
-    m_ExpandedIDs: 00000000d4a30000d6a30000d8a30000daa30000dca30000dea30000e0a30000e2a30000e4a30000e6a30000e8a30000eaa30000eca30000
+    m_ExpandedIDs: 000000004aa200004ca200004ea2000050a2000052a2000054a2000056a2000058a200005aa200005ca200005ea2000060a2000062a2000064a2000066a2000068a200006aa20000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -2795,10 +2834,10 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 479}
+    scrollPos: {x: 0, y: 60}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000d4a30000d6a30000d8a30000daa30000dca30000dea30000e0a30000e2a30000e4a30000e6a30000e8a30000eaa30000eca30000
+    m_ExpandedIDs: 000000004aa200004ca200004ea2000050a2000052a2000054a2000056a2000058a200005aa200005ca200005ea2000060a2000062a2000064a2000066a2000068a200006aa20000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -2856,7 +2895,7 @@ MonoBehaviour:
     m_GridSize: 16
   m_SkipHiddenPackages: 0
   m_DirectoriesAreaWidth: 99
---- !u!114 &16
+--- !u!114 &17
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2878,9 +2917,9 @@ MonoBehaviour:
     m_TextWithWhitespace: "Inspector\u200B"
   m_Pos:
     serializedVersion: 2
-    x: -388
-    y: 79
-    width: 387
+    x: 1532
+    y: 24
+    width: 388
     height: 907
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -2906,7 +2945,7 @@ MonoBehaviour:
   m_LockTracker:
     m_IsLocked: 0
   m_PreviewWindow: {fileID: 0}
---- !u!114 &17
+--- !u!114 &18
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2930,7 +2969,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 1
     y: 24
-    width: 296
+    width: 346
     height: 402
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -2948,7 +2987,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 2ac3fdffc4c4fdff1cc5fdffbac6fdff8ac7fdff28c9fdff16cafdffa8cbfdff06cefdffa0cffdff18d0fdffb2d1fdff0ad2fdffa8d3fdffaad6fdff48d8fdff36d9fdffc8dafdff28ddfdffb6defdff06dffdff98e0fdff6821feff0623feffa837feff4639feff163afeffb43bfeff6c40feff0a42feff6e44feff0c46feffdc46feff7a48feffa449feff3e4bfeff964bfeff344dfeff044efeff9e4ffefff64ffeff9451feff6452feff0254feffda55feff7857feff4858feffe659feff105bfeffae5cfeff7e5dfeff1c5ffeffec5ffeff8a61feff5a62fefff863feff2265feffc066feffe672feff8c74feff4c77fefff278feffaa7afeff507cfeffa67dfeff4c7ffeff2480feffca81feffaa84feff4886feff108bfeffb68cfefff08dfeff968ffeffec90feff9292feff6694feff0c96feff4298feffe899feffc09afeff669cfeffb0a0feff56a2feff2ea3feffd4a4feffa8a6feff4ea8feff36acfeffdcadfeffb0affeff56b1fefff2b9feff8ebbfeffaebffeff4cc1feffa4c1feff4ac3feff22c4feffbcc5feff14c6feffbec7feff96c8feff34cafeff8ccafeff32ccfeffeacdfeff88cffeffe0cffeff86d1feff5ed2feff04d4feffbcd5feff56d7feffaed7feff48d9feffa0d9feff3edbfeff96dbfeff3cddfefffaddfeffb4dffeff0ce0feffb2e1feff70e2feff26e4feff7ee4feff18e6feff70e6feff0ee8feff66e8feff0ceafeffdcecfeff82eefeff5aeffeff00f1feff56f2fefffcf3feffc4f8feff6afafeff42fbfeffe8fcfefff8fdfeff96fffeffeefffeff9401ffff6c02ffff0a04ffff6204ffff0806ffffe006ffff8608ffff5e09ffff040bffffdc0bffff820dffff4e11fffff412fffff018ffff961affff6e1bffff141dffff4e1efffff81fffffe638ffffb63affff803cffff
+      m_ExpandedIDs: f0a5ffff88a6fffff8a7ffffe0aaffffa6aeffff0ac4fffffec5ffffacd6ffffbcd6ffff16d7ffffc0f7ffff24fbffff92a0000066aa0000e0aa0000
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -2965,7 +3004,7 @@ MonoBehaviour:
         m_OriginalEventType: 11
         m_IsRenamingFilename: 0
         m_TrimLeadingAndTrailingWhitespace: 0
-        m_ClientGUIView: {fileID: 0}
+        m_ClientGUIView: {fileID: 2}
       m_SearchString: 
     m_ExpandedScenes: []
     m_CurrenRootInstanceID: 0
@@ -2973,7 +3012,7 @@ MonoBehaviour:
       m_IsLocked: 0
     m_CurrentSortingName: TransformSorting
   m_WindowGUID: 4c969a2b90040154d917609493e03593
---- !u!114 &18
+--- !u!114 &19
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2995,10 +3034,10 @@ MonoBehaviour:
     m_TextWithWhitespace: "Scene\u200B"
   m_Pos:
     serializedVersion: 2
-    x: -1920
-    y: 79
-    width: 1333
-    height: 610
+    x: 0
+    y: 24
+    width: 1182
+    height: 640
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -3488,7 +3527,7 @@ MonoBehaviour:
   m_LastSceneViewRotation: {x: 0, y: 0, z: 0, w: 0}
   m_LastSceneViewOrtho: 0
   m_Viewpoint:
-    m_SceneView: {fileID: 18}
+    m_SceneView: {fileID: 19}
     m_CameraOverscanSettings:
       m_Opacity: 50
       m_Scale: 1
@@ -3501,7 +3540,7 @@ MonoBehaviour:
     name: 
     section: 
   m_ViewIsLockedToObject: 0
---- !u!114 &19
+--- !u!114 &20
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3525,7 +3564,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: -1920
     y: 79
-    width: 1229
+    width: 1182
     height: 640
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -3544,7 +3583,7 @@ MonoBehaviour:
   m_ShowGizmos: 0
   m_TargetDisplay: 0
   m_ClearColor: {r: 0, g: 0, b: 0, a: 0}
-  m_TargetSize: {x: 1229, y: 619}
+  m_TargetSize: {x: 1182, y: 619}
   m_TextureFilterMode: 0
   m_TextureHideFlags: 61
   m_RenderIMGUI: 1
@@ -3559,8 +3598,8 @@ MonoBehaviour:
     m_VRangeLocked: 0
     hZoomLockedByDefault: 0
     vZoomLockedByDefault: 0
-    m_HBaseRangeMin: -614.5
-    m_HBaseRangeMax: 614.5
+    m_HBaseRangeMin: -591
+    m_HBaseRangeMax: 591
     m_VBaseRangeMin: -309.5
     m_VBaseRangeMax: 309.5
     m_HAllowExceedBaseRangeMin: 1
@@ -3580,30 +3619,30 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 1229
+      width: 1182
       height: 619
-    m_Scale: {x: 1.25, y: 1.25}
-    m_Translation: {x: 614.5, y: 309.49997}
+    m_Scale: {x: 1, y: 1}
+    m_Translation: {x: 591, y: 309.5}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -491.6
-      y: -247.59998
-      width: 983.2
-      height: 495.2
+      x: -591
+      y: -309.5
+      width: 1182
+      height: 619
     m_MinimalGUI: 1
   m_defaultScale: 1
-  m_LastWindowPixelSize: {x: 1229, y: 640}
+  m_LastWindowPixelSize: {x: 1182, y: 640}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000
   m_XRRenderMode: 0
   m_RenderTexture: {fileID: 0}
   m_showToolbar: 1
---- !u!114 &20
+--- !u!114 &21
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3627,7 +3666,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 690
-    width: 1229
+    width: 1182
     height: 241
   m_SerializedDataModeController:
     m_DataMode: 0

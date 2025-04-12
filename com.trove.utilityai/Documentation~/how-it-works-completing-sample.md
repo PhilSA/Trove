@@ -23,11 +23,11 @@ First, let's see how the restaurant could be implemented.
 
 Our restaurant will be represented as a singleton entity with two components on it: `Restaurant` and `RestaurantState`. 
 
-[Code: restaurant components](https://github.com/PhilSA/Trove/blob/main/_Projects/TroveTests/Assets/_Restaurant/Scripts/Restaurant.cs)
+[Code: restaurant components](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Projects/_Restaurant/Scripts/Restaurant.cs)
 
 The `RestaurantSystem` will only take care of adding new customers in line, in the `RestaurantState`:
 
-[Code: restaurant system](https://github.com/PhilSA/Trove/blob/main/_Projects/TroveTests/Assets/_Restaurant/Scripts/RestaurantSystem.cs)
+[Code: restaurant system](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Projects/_Restaurant/Scripts/RestaurantSystem.cs)
 
 
 ## The restaurant worker
@@ -59,21 +59,21 @@ The restaurant worker component (`RestaurantWorkerAI`) holds the following data:
 * Data about how fast the worker does certain things, or how much importance the worker gives to things lineup sizes or kitchen dirtiness
 * Stateful (changing) data about worker task progress, timers, etc...
 
-[Code: restaurant worker component](https://github.com/PhilSA/Trove/blob/main/_Projects/TroveTests/Assets/_Restaurant/Scripts/RestaurantWorkerAI.cs)
+[Code: restaurant worker component](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Projects/_Restaurant/Scripts/RestaurantWorkerAI.cs)
 
 
 ### Authoring
 
 Our worker authoring would be similar to what we covered in a previous section. The AI actions/considerations are set-up during baking:
 
-[Code: restaurant worker authoring](https://github.com/PhilSA/Trove/blob/main/_Projects/TroveTests/Assets/_Restaurant/Scripts/RestaurantWorkerAIAuthoring.cs)
+[Code: restaurant worker authoring](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Projects/_Restaurant/Scripts/RestaurantWorkerAIAuthoring.cs)
 
 
 ### System
 
 Finally, we have the restaurant worker system, where all the AI logic happens:
 
-[Code: restaurant worker system](https://github.com/PhilSA/Trove-Internal/blob/main/_Projects/TroveTests/Assets/_Restaurant/Scripts/RestaurantWorkerAISystem.cs)
+[Code: restaurant worker system](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Projects/_Restaurant/Scripts/RestaurantWorkerAISystem.cs)
 
 ## Conclusion
 

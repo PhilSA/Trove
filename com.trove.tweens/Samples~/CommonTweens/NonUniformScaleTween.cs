@@ -42,14 +42,14 @@ public partial struct NonUniformScaleTweenSystem : ISystem
     {
         public float DeltaTime;
 
-        void Execute(ref NonUniformScaleTween t, ref PostTransformScale scale)
+        void Execute(ref NonUniformScaleTween t, ref PostTransformMatrix scale)
         {
             t.Timer.Update(DeltaTime, out bool hasStartedPlaying, out bool hasStoppedPlaying, out bool hasChanged);
             if (hasChanged)
             {
                 float3 nonUnitofmScale = scale.Value.Scale();
                 t.Tweener.Update(t.Timer.GetNormalizedTime(), hasStartedPlaying, ref nonUnitofmScale);
-                scale.Value = float3x3.Scale(nonUnitofmScale);
+                scale.Value = float4x4.Scale(nonUnitofmScale);
             }
         }
     }

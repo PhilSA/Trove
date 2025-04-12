@@ -84,7 +84,7 @@ public struct CubeStatePosition : ICubeState
     public StateTransitionTimer TransitionTimer;
     public StateHandle NextState;
     public float PositionOffset;
-    public Entity TEsts;
+    
     public float3 StartPosition;
     public float3 RandomDirection;
     

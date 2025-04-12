@@ -27,11 +27,8 @@ namespace Trove
      *            The buffer must ONLY contain elements that were added/set using sublist APIs. You must also never
      *            change the data of sub-list interface properties in buffer elements.
      *
-     * Different types of sub-lists are available, each with their pros and cons.
      */
     
-    #region SubList
-
     public interface ISubListElement
     {
         public SubList.InternalElementData SubListData { get; set; }
@@ -39,10 +36,10 @@ namespace Trove
     
     /// <summary>
     /// 
-    /// Allows storing multiple growable lists in the same list/buffer.
+    /// Allows storing multiple growable lists in the same buffer.
     /// - Sub-list elements are contiguous in memory.
     /// - Sub-list element indexes can change when list grows
-    /// - Great sub-list element add and remove performance.
+    /// - Good sub-list element add and remove performance.
     /// - The encompassing buffer will grow whenever a new sub-list is created in the buffer, or when an existing
     ///   sub-list needs to reallocate because it grew past capacity.
     ///
@@ -55,6 +52,13 @@ namespace Trove
     ///   another indexes range that can accomodate the new capacity.
     /// - When resizing capacity like this, we first iterate the buffer in order to find an existing free range that
     ///   could accomodate the capacity. If an existing range is not found, we increase the buffer length to accomodate it.
+    ///
+    /// Usage:
+    /// - Create a SubList with SubList.Create(ref buffer);
+    /// - Store the created SubList anywhere (in a component, in a buffer element, in a native collection, etc...).
+    /// - Add/Remove/Get/Set elements to it using SubList static APIs.
+    /// - You can create any amount of SubLists in the same buffer. They will all live alongside eachother in that buffer.
+    /// 
     /// 
     /// </summary>
     public struct SubList
@@ -67,7 +71,7 @@ namespace Trove
 
         public struct InternalElementData
         {
-            public byte IsOccupied;
+            public byte IsAllocated;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -79,6 +83,10 @@ namespace Trove
             }
         }
 
+        /// <summary>
+        /// Note: sublists will still grow even with a "growFactor" lower than 1f. But they'll only grow enough to
+        /// accomodate what is added. This can be an interesting characteristic if buffer compactness is important.
+        /// </summary>
         public static SubList Create<T>(ref DynamicBuffer<T> buffer, int initialCapacity, float growFactor = 1.5f)
             where T : unmanaged, ISubListElement
         {
@@ -126,7 +134,7 @@ namespace Trove
                 SetCapacity(ref subList, ref buffer, newCapacity);
             }
 
-            element.SubListData = new InternalElementData { IsOccupied = 1 };
+            element.SubListData = new InternalElementData { IsAllocated = 1 };
             
             buffer[subList.ElementsStartIndex + subList.Length] = element;
             subList.Length = newLength;
@@ -210,7 +218,7 @@ namespace Trove
                 int indexInBuffer = subList.ElementsStartIndex + indexInSubList;
                 if (indexInBuffer < buffer.Length)
                 {
-                    element.SubListData = new InternalElementData { IsOccupied = 1 };
+                    element.SubListData = new InternalElementData { IsAllocated = 1 };
                     buffer[indexInBuffer] = element;
                     return true;
                 }
@@ -234,7 +242,7 @@ namespace Trove
                 for (int i = subList.ElementsStartIndex; i < subList.ElementsStartIndex + subList.Length; i++)
                 {
                     T iteratedElement = buffer[i];
-                    iteratedElement.SubListData = new InternalElementData { IsOccupied = 0 };
+                    iteratedElement.SubListData = new InternalElementData { IsAllocated = 0 };
                     buffer[i] = iteratedElement;
                 }
                 
@@ -244,7 +252,7 @@ namespace Trove
                 for (int i = 0; i < buffer.Length; i++)
                 {
                     T iteratedElement = buffer[i];
-                    if (iteratedElement.SubListData.IsOccupied == 0)
+                    if (iteratedElement.SubListData.IsAllocated == 0)
                     {
                         // Detect start of free range
                         if (freeRangeStart < 0)
@@ -299,7 +307,7 @@ namespace Trove
                 for (int i = freeRangeStart; i < freeRangeStart + newCapacity; i++)
                 {
                     T iteratedElement = buffer[i];
-                    iteratedElement.SubListData = new InternalElementData { IsOccupied = 1 };
+                    iteratedElement.SubListData = new InternalElementData { IsAllocated = 1 };
                     buffer[i] = iteratedElement;
                 }
                 
@@ -318,7 +326,7 @@ namespace Trove
                     // Mark the freed range as occupied
                     for (int i = subList.ElementsStartIndex + newCapacity; i < subList.ElementsStartIndex + subList.Capacity; i++)
                     {
-                        buffer[i] = new T { SubListData = new InternalElementData { IsOccupied = 0 }};
+                        buffer[i] = new T { SubListData = new InternalElementData { IsAllocated = 0 }};
                     }
                     
                     subList.Capacity = newCapacity;
@@ -347,7 +355,7 @@ namespace Trove
                 for (int i = subList.ElementsStartIndex + subList.Length; i < subList.ElementsStartIndex + newLength; i++)
                 {
                     T elem = buffer[i];
-                    elem = new T { SubListData = new InternalElementData { IsOccupied = 1 }};
+                    elem = new T { SubListData = new InternalElementData { IsAllocated = 1 }};
                     buffer[i] = elem;
                 }
                 
@@ -355,8 +363,6 @@ namespace Trove
             }
         }
     }
-
-    #endregion
 
     // #region PooledSubList
     //

@@ -242,13 +242,13 @@ namespace Trove.Tests
             for (int i = subList3.ElementsStartIndex; i < subList3.ElementsStartIndex + subList3.Length; i++)
             {
                 Assert.AreEqual(3, buffer[i].Value);
-                Assert.AreEqual(1, buffer[i].SubListData.IsOccupied);
+                Assert.AreEqual(1, buffer[i].SubListData.IsAllocated);
             }
             SubList.Resize(ref subList3, ref buffer, 5);
             for (int i = subList3.ElementsStartIndex; i < subList3.ElementsStartIndex + subList3.Length; i++)
             {
                 Assert.AreEqual(0, buffer[i].Value);
-                Assert.AreEqual(1, buffer[i].SubListData.IsOccupied);
+                Assert.AreEqual(1, buffer[i].SubListData.IsAllocated);
             }
             
             // 2 2 2 2 2 2 2 2 2 2 0 0 0 0 0 3 3 3 3 3 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 
@@ -260,11 +260,11 @@ namespace Trove.Tests
             {
                 if (i < subList3.ElementsStartIndex + subList3.Capacity)
                 {
-                    Assert.AreEqual(1, buffer[i].SubListData.IsOccupied);
+                    Assert.AreEqual(1, buffer[i].SubListData.IsAllocated);
                 }
                 else
                 {
-                    Assert.AreEqual(0, buffer[i].SubListData.IsOccupied);
+                    Assert.AreEqual(0, buffer[i].SubListData.IsAllocated);
                 }
             }
             
@@ -276,17 +276,17 @@ namespace Trove.Tests
             SubList.Dispose(ref subList1, ref buffer);
             for (int i = subList1.ElementsStartIndex; i < subList1.ElementsStartIndex + subList1.Length; i++)
             {
-                Assert.AreEqual(0, buffer[i].SubListData.IsOccupied);
+                Assert.AreEqual(0, buffer[i].SubListData.IsAllocated);
             }
             SubList.Dispose(ref subList2, ref buffer);
             for (int i = subList2.ElementsStartIndex; i < subList2.ElementsStartIndex + subList2.Length; i++)
             {
-                Assert.AreEqual(0, buffer[i].SubListData.IsOccupied);
+                Assert.AreEqual(0, buffer[i].SubListData.IsAllocated);
             }
             SubList.Dispose(ref subList3, ref buffer);
             for (int i = subList3.ElementsStartIndex; i < subList3.ElementsStartIndex + subList3.Length; i++)
             {
-                Assert.AreEqual(0, buffer[i].SubListData.IsOccupied);
+                Assert.AreEqual(0, buffer[i].SubListData.IsAllocated);
             }
             
             // Recreate

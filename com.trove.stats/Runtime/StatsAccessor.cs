@@ -418,7 +418,7 @@ namespace Trove.Stats
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void TryUpdateStatSingleEntity(
+        internal void TryUpdateStatAssumeSingleEntity(
             StatHandle statHandle, 
             ref DynamicBuffer<Stat> statsBuffer,
             ref DynamicBuffer<TStatModifier> statModifiersBuffer,
@@ -458,6 +458,8 @@ namespace Trove.Stats
                         ref statsWorldData);
                 }
             }
+            
+            Assert.IsTrue(statsWorldData._tmpGlobalUpdatedStatsList.Length == 0);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -681,7 +683,7 @@ namespace Trove.Stats
             return false;
         }
 
-        internal bool TryAddStatModifiersBatchSingleEntity(
+        internal bool TryAddStatModifiersBatchAssumeSingleEntity(
             StatHandle affectedStatHandle, 
             in UnsafeList<TStatModifier> modifiers, 
             ref StatsOwner affectStatsOwnerRef,
@@ -713,7 +715,7 @@ namespace Trove.Stats
                     statModifierHandles.Add(statModifierHandle);
                 }
                 
-                TryUpdateStatSingleEntity(
+                TryUpdateStatAssumeSingleEntity(
                     affectedStatHandle,
                     ref statsBufferOnAffectedStatEntity,
                     ref statModifiersBufferOnAffectedStatEntity,
@@ -851,12 +853,12 @@ namespace Trove.Stats
 
             if (modifierCanBeAdded)
             {
-                // Add modifier
+                // Add modifier by inserting it at the end of the stat's modifiers sub-list
                 {
                     // IMPORTANT: modifiers must be sorted in affected stat order
-                    int modifiersStartIndex = StatsUtilities.GetModifiersStartIndexForStat(in statsBufferOnAffectedStatEntity,
+                    int modifiersEndIndex = StatsUtilities.GetModifiersEndIndexForStat(in statsBufferOnAffectedStatEntity,
                         affectedStatHandle.Index);
-                    statModifiersBufferOnAffectedStatEntity.Insert(modifiersStartIndex, modifier);
+                    statModifiersBufferOnAffectedStatEntity.Insert(modifiersEndIndex, modifier);
                     
                     affectedStatRef.ModifiersCount++;
                 }
@@ -896,7 +898,7 @@ namespace Trove.Stats
                 {
                     if (isGuaranteedSingleEntity)
                     {
-                        TryUpdateStatSingleEntity(
+                        TryUpdateStatAssumeSingleEntity(
                             affectedStatHandle,
                             ref statsBufferOnAffectedStatEntity,
                             ref statModifiersBufferOnAffectedStatEntity,

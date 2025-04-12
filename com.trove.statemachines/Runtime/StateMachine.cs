@@ -22,6 +22,13 @@ namespace Trove.Statemachines
         public StateHandle InitialState;
         public StateHandle CurrentStateHandle;
         public byte HasInitialized;
+
+        public StateMachine(StateHandle initialState)
+        {
+            InitialState = initialState;
+            CurrentStateHandle = default;
+            HasInitialized = 0;
+        }
     }
     
     public struct StateHandle : IEquatable<StateHandle>

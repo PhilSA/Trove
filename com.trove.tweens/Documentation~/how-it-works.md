@@ -2,8 +2,7 @@
 [Home](../README.md)
 
 Note: some example code and scenes are available in the Trove test project:
-* [Scenes](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Tests/Scenes/Tweens)
-* [Scripts](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Tests/Scripts/Tweens)
+* [Folder](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Tests/Tweens)
 * [Unit Tests](https://github.com/PhilSA/Trove/tree/main/com.trove.tweens/Tests/Runtime)
 
 # How it works

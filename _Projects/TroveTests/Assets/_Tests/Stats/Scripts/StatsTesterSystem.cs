@@ -1,10 +1,14 @@
 
+using System;
 using Trove;
 using Trove.Stats;
+using Trove.Tweens;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
 
 public struct UpdatingStat : IComponentData
 { }

@@ -4,7 +4,8 @@
 # How it works
 
 Note: some example code and scenes are available in the Trove test project:
-* [Restaurant Example](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Restaurant)
+* [Restaurant Example](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Projects/_Restaurant)
+* [Stress Test](https://github.com/PhilSA/Trove/tree/main/_Projects/TroveTests/Assets/_Tests/UtilityAI)
 * [Unit Tests](https://github.com/PhilSA/Trove/tree/main/com.trove.utilityai/Tests/Runtime)
 
 ---

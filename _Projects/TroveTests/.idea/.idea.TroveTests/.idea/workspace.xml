@@ -7,8 +7,17 @@
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachine.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTesterSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/Scripts/StatsTesterSystem.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/Stats/Scenes/StatsTest/New Sub Scene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/Stats/Scenes/StatsTest/New Sub Scene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ProjectSettings/ShaderGraphSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/ShaderGraphSettings.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.eventsystems/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.eventsystems/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Runtime/PolymorphicStructsSourceGenerator.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/Runtime/PolymorphicStructsSourceGenerator.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/PolymorphicStructsGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/PolymorphicStructsGenerator.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/bin/Release/netstandard2.0/PolymorphicStructsSourceGenerator.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/bin/Release/netstandard2.0/PolymorphicStructsSourceGenerator.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Documentation~/how-it-works-basics.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Documentation~/how-it-works-basics.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,7 +37,7 @@
     <setting file="file://$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPoly.generated.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPolyMerged.generated.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6AC28F3E17FE520B93434DC8/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyCubeState.generated.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6AC28F3E17FE520B93434DC8/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyCubeState.generated.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/29/ef672424/Assert.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/59/a62945fb/UnsafeUtility.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/7a/798d7189/AtomicSafetyHandle.cs" root0="FORCE_HIGHLIGHTING" />
@@ -49,7 +58,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.5004965&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;dev/tmp1&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -125,6 +134,9 @@
       <workItem from="1744242492403" duration="10530000" />
       <workItem from="1744293542621" duration="25977000" />
       <workItem from="1744344955500" duration="996000" />
+      <workItem from="1744388542350" duration="651000" />
+      <workItem from="1744389214631" duration="99000" />
+      <workItem from="1744389342677" duration="882000" />
     </task>
     <servers />
   </component>
@@ -163,10 +175,10 @@
           <line>952</line>
           <properties documentPath="C:\Projects\Trove\com.trove.stats\Runtime\StatsAccessor.cs" containingFunctionPresentation="Method 'TryRemoveStatModifier'">
             <startOffsets>
-              <option value="48758" />
+              <option value="48812" />
             </startOffsets>
             <endOffsets>
-              <option value="49196" />
+              <option value="49250" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="79" />

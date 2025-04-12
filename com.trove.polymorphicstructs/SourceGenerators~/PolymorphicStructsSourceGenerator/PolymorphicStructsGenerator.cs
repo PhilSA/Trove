@@ -1118,7 +1118,6 @@ namespace PolymorphicStructsSourceGenerators
                         Type = LogMessage.MsgType.Error,
                         Message = $"PolymorphicStructs error: Properties are not supported in MergedFields polymorphic interfaces. (Interface {compiledData.PolyInterfaceModel.TypeName})",
                     });
-                    compiledData.PolyInterfaceModel.InterfacePropertyModels.Clear();
                 }
             }
 
@@ -1132,12 +1131,27 @@ namespace PolymorphicStructsSourceGenerators
                 });
             }
 
+
+            // validate polystructs
             for (int i = compiledData.PolyStructModels.Count - 1; i >= 0; i--)
             {
                 PolyStructModel polyStructModel = compiledData.PolyStructModels[i];
 
+                bool structIsValid = true;
+
+                // Prevent generics
+                if (((INamedTypeSymbol)polyStructModel.StructTypeSymbol).IsGenericType)
+                {
+                    logMessages.Add(new LogMessage
+                    {
+                        Type = LogMessage.MsgType.Error,
+                        Message = $"PolymorphicStructs error: generic polymorphic structs are not supported. (Struct {polyStructModel.StructModel.TypeName})",
+                    });
+                    structIsValid = false;
+                }
+
                 // Prevent entities and blobs
-                if (!compiledData.PolyInterfaceModel.AllowEntitiesAndBlobs)
+                if (structIsValid && !compiledData.PolyInterfaceModel.AllowEntitiesAndBlobs)
                 {
                     SymbolsToProcess.Clear();
                     SymbolsToProcess.Add(polyStructModel.StructTypeSymbol);
@@ -1153,34 +1167,28 @@ namespace PolymorphicStructsSourceGenerators
                                 !fieldSymbol.IsStatic &&
                                 !fieldSymbol.IsConst)
                             {
-                                bool structIsValid = true;
                                 ProcessPreventingStructInvalidFieldOrPropertyTypes(false, fieldSymbol.Type, logMessages, ref structIsValid);
                                 if (structIsValid && !symbolEqualityComparer.Equals(fieldSymbol.Type, processedTypeSymbol))
                                 {
                                     SymbolsToProcess.Add(fieldSymbol.Type);
                                 }
 
-                                if(!structIsValid)
+                                if (!structIsValid)
                                 {
                                     break;
                                 }
                             }
                         }
+
+                        if (!structIsValid)
+                        {
+                            break;
+                        }
                     }
                 }
 
-                // Prevent generics
-                if(((INamedTypeSymbol)polyStructModel.StructTypeSymbol).IsGenericType)
-                {
-                    logMessages.Add(new LogMessage
-                    {
-                        Type = LogMessage.MsgType.Error,
-                        Message = $"PolymorphicStructs error: generic polymorphic structs are not supported. (Struct {polyStructModel.StructModel.TypeName})",
-                    });
-                }
-
                 // Prevent properties in mergedFields structs
-                if (compiledData.PolyInterfaceModel.IsMergedFieldsStruct)
+                if (structIsValid && compiledData.PolyInterfaceModel.IsMergedFieldsStruct)
                 {
                     foreach (ISymbol memberSymbol in polyStructModel.StructTypeSymbol.GetMembers())
                     {
@@ -1192,6 +1200,7 @@ namespace PolymorphicStructsSourceGenerators
                                 Type = LogMessage.MsgType.Error,
                                 Message = $"PolymorphicStructs error: Properties are not supported in MergedFields polymorphic structs. (Property {polyStructModel.StructModel.TypeName}.{propertySymbol.Name})",
                             });
+                            structIsValid = false;
                         }
                     }
                 }

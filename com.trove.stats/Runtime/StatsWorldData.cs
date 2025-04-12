@@ -8,9 +8,9 @@ namespace Trove.Stats
         where TStatModifier : unmanaged, IStatsModifier<TStatModifierStack>
         where TStatModifierStack : unmanaged, IStatsModifierStack
     {
-        private NativeList<StatChangeEvent> _statChangeEventsList;
+        internal NativeList<StatChangeEvent> _statChangeEventsList;
         public NativeList<StatChangeEvent> StatChangeEventsList => _statChangeEventsList;
-        private NativeList<ModifierTriggerEvent<TStatModifier, TStatModifierStack>> _modifierTriggerEventsList;
+        internal NativeList<ModifierTriggerEvent<TStatModifier, TStatModifierStack>> _modifierTriggerEventsList;
         public NativeList<ModifierTriggerEvent<TStatModifier, TStatModifierStack>> ModifierTriggerEventsList => _modifierTriggerEventsList;
 
         internal NativeList<StatHandle> _tmpModifierObservedStatsList;

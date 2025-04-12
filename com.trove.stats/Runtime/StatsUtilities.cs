@@ -5,6 +5,7 @@ using Unity.Entities;
 using Unity.Assertions;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Trove.Stats
 {
@@ -227,9 +228,9 @@ namespace Trove.Stats
             if (observedStatHandle.Index < statsBufferOnObservedStat.Length)
             {
                 // IMPORTANT: observers must be sorted in affected stat order
-                int observersStartIndex = StatsUtilities.GetObserversStartIndexForStat(in statsBufferOnObservedStat,
+                int observersEndIndex = StatsUtilities.GetObserversEndIndexForStat(in statsBufferOnObservedStat,
                     observedStatHandle.Index);
-                statObserversBufferOnObservedStatEntity.Insert(observersStartIndex, new StatObserver { ObserverHandle = observerStatHandle });
+                statObserversBufferOnObservedStatEntity.Insert(observersEndIndex, new StatObserver { ObserverHandle = observerStatHandle });
                 
                 Stat observedStat = statsBufferOnObservedStat[observedStatHandle.Index];
                 observedStat.ObserversCount++;
@@ -409,6 +410,41 @@ namespace Trove.Stats
                                     ModifierID = modifier.Id,
                                 }
                             });
+                        }
+                    }
+                    
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Note: does not clear the supplied list
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryGetObserversOfStat(StatHandle statHandle,
+            ref BufferLookup<Stat> statsLookup, 
+            ref BufferLookup<StatObserver> statObserversLookup, 
+            ref NativeList<StatObserver> observers)
+        {
+            if (statsLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<Stat> statsBuffer) &&
+                statObserversLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<StatObserver> statObserversBuffer))
+            {
+                if (statHandle.Index < statsBuffer.Length)
+                {
+                    Stat stat = statsBuffer[statHandle.Index];
+
+                    if (stat.ObserversCount > 0)
+                    {
+                        int observersStartIndex =
+                            StatsUtilities.GetObserversStartIndexForStat(in statsBuffer, statHandle.Index);
+                        Assert.IsTrue(observersStartIndex + stat.ObserversCount <= statObserversBuffer.Length);
+
+                        for (int i = observersStartIndex; i < observersStartIndex + stat.ObserversCount; i++)
+                        {
+                            observers.Add(statObserversBuffer[i]);
                         }
                     }
                     
@@ -617,6 +653,12 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static int GetModifiersEndIndexForStat(in DynamicBuffer<Stat> statsBuffer, int statIndex)
+        {
+            return GetModifiersStartIndexForStat(in statsBuffer, statIndex) + statsBuffer[statIndex].ModifiersCount;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static int GetObserversStartIndexForStat(in DynamicBuffer<Stat> statsBuffer, int statIndex)
         {
             int observersStartIndex = 0;
@@ -628,16 +670,9 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void GetModifiersAndObserversStartIndexForStat(in DynamicBuffer<Stat> statsBuffer, int statIndex, 
-            out int modifiersStartIndex, out int observersStartIndex)
+        internal static int GetObserversEndIndexForStat(in DynamicBuffer<Stat> statsBuffer, int statIndex)
         {
-            modifiersStartIndex = 0;
-            observersStartIndex = 0;
-            for (int i = 0; i < statIndex; i++)
-            {
-                modifiersStartIndex += statsBuffer[i].ModifiersCount;
-                observersStartIndex += statsBuffer[i].ObserversCount;
-            }
+            return GetObserversStartIndexForStat(in statsBuffer, statIndex) + statsBuffer[statIndex].ObserversCount;
         }
     }
 }
