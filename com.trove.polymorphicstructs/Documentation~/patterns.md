@@ -71,15 +71,3 @@ myEncompassingStruct.PolyStruct.DoSomething(myEncompassingStruct.EntityA, in myE
 
 Another alternative is to store Entities/Blobs in a DynamicBuffer alongside wherever your polymorphic struct is stored. You could, for example, have a buffer of several Entities, and your polymorphic structs simply store an index to an entity in that buffer. The buffer is then passed as parameter to the polymorphic functions, so the entities can be gotten from there.
 
-
-
-
-## Repurposing state machines as a general graph solving tool
-
-The states in Trove State Machine are essentially "nodes" that implement an interface, perform different actions, hold data, and that you can keep a reliable "handle" to. This means you can repurpose these state machines as just a general graph-solving tool.
-
-Consider this graph:
-
-![](./Images/nodegraph.jpg)
-
-Let's say we need
