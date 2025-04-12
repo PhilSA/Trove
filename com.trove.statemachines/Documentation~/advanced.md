@@ -6,6 +6,7 @@
 * [Non-instant state transitions](#non-instant-state-transitions)
 * [State inheritance and composition](#state-inheritance-and-composition)
 * [Multiple state updates](#multiple-state-updates)
+* [State Machines as coroutines](#state-machines-as-coroutines)
 
 
 ## Netcode
@@ -322,3 +323,29 @@ public static void StateMachineFixedUpdate(
 ``` 
 
 > Note: you could also use this concept of adding new polymorphic methods to states in order implement advanced state transition logic, where a state may need to "ask" another state if it's ready to transition, before actually transitioning. In this case, you can add a new `CanTransition()` polymorphic function to states.
+
+
+## State machines as Coroutines
+
+A coroutine is, essentially, a state machine. It's a thing that updates, but the update logic goes through different "states" separated by `yeild` statements.
+
+For example, consider this Coroutine that makes something rotate towards a target, then wait 1s once it has started facing the target, then do some action:
+```cs
+IEnumerator ExampleCoroutine()
+{
+    while(!reachedTargetRotation)
+    {
+        RotateTowardsTarget();
+        yield return null;
+    }
+
+    yield return new WaitForSeconds(1f);
+
+    DoAction();    
+}
+```
+
+This coroutine can be modeled as this state machine:
+* Start with a `RotateTowardsTarget` state. In its `Update()`, it performs the `RotateTowardsTarget()` logic, and if it detects that it has reached the target rotation, it triggers a transition to the next state `WaitState`.
+* `WaitState` is a simple timer state that triggers a transition to the next state once the 1s timer is reached. It transitions to `DoActionState`.
+* `DoActionState` performs the action in its `OnStateEnter()`, and then ends the state machine by setting the `CurrentStateHandle` to `default` in the `stateMachine`. It doesn't need any `Update()` logic.
