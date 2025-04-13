@@ -15,4 +15,7 @@ This package provides an all-purpose, high-performance, high-versatility event s
 - Allows multiple event writers and multiple event readers.
 - Allows polymorphic ordered events when combined with Trove Polymorphic Structs.
 
-See [Quick Start](./Documentation~/quickstart.md)
+
+## Table of Contents
+[Why use events](./Documentation~/why-use-events.md)
+[How it works](./Documentation~/how-it-works.md)
