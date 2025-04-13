@@ -17,5 +17,5 @@ This package provides an all-purpose, high-performance, high-versatility event s
 
 
 ## Table of Contents
-[Why use events](./Documentation~/why-use-events.md)
-[How it works](./Documentation~/how-it-works.md)
+* [Why use events](./Documentation~/why-use-events.md)
+* [How it works](./Documentation~/how-it-works.md)
