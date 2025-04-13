@@ -48,6 +48,13 @@ Let's say we need node A to receive a `float` input, and then this `float` value
     * Each node in the graph will continue this chain reaction of transformation of inputs, until we reach nodes that have no output nodes (nodes C, D, and E in this example). At this point we can get the output values from these nodes, perhaps with a new `GetOutput()` polymorphic method for the nodes.
 
 
+## Minimizing data in Polymorphic Structs
+
+It is generally a good thing to try to minimize the amount of data contained as fields of polymorphic struct, for performance reasons. Especially if most polymorphic structs under the same polymorphic interface are small, except a few that are very large. Because in those cases, all structs will take on the max size of all structs, which will affect performance.
+
+For that reason, for larger structs, it can be a good idea to store some data outside of the struct itself, such as in another component/buffer on the entity, or even on another dedicated Entity just for that struct (in extreme cases).
+
+
 ## Entity and Blob fields restriction workaround
 
 If not using the [Merged Fields](./poly-struct-types.md/#merged-fields-struct) type of polymorphic structs, Entities and blob fields are not allowed in polymorphic structs. This is due to how ECS has special treatment for certain types of fields, and the union struct approach is incompatible with this special treatment. There are, however, alternatives to storing Entities in polymorphic structs.
