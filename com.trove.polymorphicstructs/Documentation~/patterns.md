@@ -6,6 +6,7 @@
 * [Polymorphic structs as a way to minimize buffer lookups](#polymorphic-structs-as-a-way-to-minimize-buffer-lookups)
 * [Polymorphic structs as a way to handle type-independent ordering](#polymorphic-structs-as-a-way-to-handle-type-independent-ordering)
 * [Polymorphic structs as a graph solving tool](#polymorphic-structs-as-a-graph-solving-tool)
+* [Minimizing data size in Polymorphic Structs](#minimizing-data-size-in-polymorphic-structs)
 * [Entity and Blob fields restriction workaround](#entity-and-blob-fields-restriction-workaround)
 
 
@@ -48,7 +49,7 @@ Let's say we need node A to receive a `float` input, and then this `float` value
     * Each node in the graph will continue this chain reaction of transformation of inputs, until we reach nodes that have no output nodes (nodes C, D, and E in this example). At this point we can get the output values from these nodes, perhaps with a new `GetOutput()` polymorphic method for the nodes.
 
 
-## Minimizing data in Polymorphic Structs
+## Minimizing data size in Polymorphic Structs
 
 It is generally a good thing to try to minimize the amount of data contained as fields of polymorphic struct, for performance reasons. Especially if most polymorphic structs under the same polymorphic interface are small, except a few that are very large. Because in those cases, all structs will take on the max size of all structs, which will affect performance.
 
