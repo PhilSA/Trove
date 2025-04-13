@@ -51,7 +51,7 @@ Let's say we need node A to receive a `float` input, and then this `float` value
 
 ## Minimizing data size in Polymorphic Structs
 
-It is generally a good thing to try to minimize the amount of data contained as fields of polymorphic struct, for performance reasons. Especially if most polymorphic structs under the same polymorphic interface are small, except a few that are very large. Because in those cases, all structs will take on the max size of all structs, which will affect performance.
+It is generally a good thing to try to minimize the amount of data contained as fields of polymorphic structs, for performance reasons. Especially if most polymorphic structs under the same polymorphic interface are small, except a few that are very large. Because in those cases, all structs will take on the max size of all structs, which will affect performance.
 
 For that reason, for larger structs, it can be a good idea to store some data outside of the struct itself, such as in another component/buffer on the entity, in some global HashMap, or even on another dedicated Entity just for that struct. Whether or not it's worth it will depend on how much cache space is wasted due to the size of the largest of the polymorphic structs of a certain type.
 
