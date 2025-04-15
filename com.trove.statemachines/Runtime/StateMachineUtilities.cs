@@ -181,7 +181,7 @@ namespace Trove.Statemachines
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
-            Pool.AddObject(ref statesBuffer, state, out Pool.ObjectHandle poolObjectHandle);
+            Pool.AddObject(ref statesBuffer, state, out PoolObjectHandle poolObjectHandle);
             stateHandle = new StateHandle
             {
                 Handle = poolObjectHandle,
