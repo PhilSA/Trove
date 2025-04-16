@@ -6,12 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachine.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/_Template/CubeSM.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/_Template/CubeSM.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/PoolTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/PoolTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/manifest.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Packages/packages-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/packages-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,6 +27,7 @@
     <setting file="file://$PROJECT_DIR$/Assets/_Tests/StateMachines/_Template/CubeSM.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/PoolTests.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../com.trove.spatialqueries/Runtime/SpatialQueryUtils.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPoly.generated.cs" root0="FORCE_HIGHLIGHTING" />
@@ -38,6 +37,7 @@
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/29/ef672424/Assert.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/59/a62945fb/UnsafeUtility.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/7a/798d7189/AtomicSafetyHandle.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/612ea0208cc847f49d539e6511ed3cd51df400/f3/25db68b3/Transform.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProjectColorInfo">{
@@ -95,15 +95,13 @@
       </option>
       <method v="2" />
     </configuration>
-    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" ignored-value-for-modified-check="10832">
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
       <option name="allowRunningInParallel" value="false" />
       <option name="listenPortForConnections" value="false" />
-      <option name="pid" value="10832" />
+      <option name="pid" />
       <option name="projectPathOnTarget" />
       <option name="runtimes">
-        <list>
-          <MonoRuntime />
-        </list>
+        <list />
       </option>
       <option name="selectedOptions">
         <list />
@@ -139,7 +137,8 @@
       <workItem from="1744468130778" duration="887000" />
       <workItem from="1744516131242" duration="1761000" />
       <workItem from="1744675674429" duration="9279000" />
-      <workItem from="1744768271970" duration="6857000" />
+      <workItem from="1744768271970" duration="8327000" />
+      <workItem from="1744803386626" duration="2319000" />
     </task>
     <servers />
   </component>
@@ -178,13 +177,26 @@
           <line>739</line>
           <properties documentPath="C:\Projects\Trove\com.trove.common\Runtime\Pool.cs" containingFunctionPresentation="Method 'Resize'">
             <startOffsets>
-              <option value="27630" />
+              <option value="27624" />
             </startOffsets>
             <endOffsets>
-              <option value="27679" />
+              <option value="27673" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="92" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs</url>
+          <line>736</line>
+          <properties documentPath="C:\Projects\Trove\com.trove.common\Runtime\Pool.cs" containingFunctionPresentation="Method 'Resize'">
+            <startOffsets>
+              <option value="27434" />
+            </startOffsets>
+            <endOffsets>
+              <option value="27477" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="93" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

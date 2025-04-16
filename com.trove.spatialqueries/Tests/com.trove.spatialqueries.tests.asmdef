@@ -1,0 +1,34 @@
+{
+    "name": "com.trove.spatialqueries.tests",
+    "rootNamespace": "",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "com.trove.spatialqueries",
+        "Unity.Entities",
+        "Unity.Collections",
+        "Unity.Burst",
+        "Unity.Mathematics",
+        "com.trove.common",
+        "com.trove.polymorphicstructs"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.trove.polymorphicstructs",
+            "expression": "",
+            "define": "HAS_TROVE_POLYMORPHICSTRUCTS"
+        }
+    ],
+    "noEngineReferences": false
+}
