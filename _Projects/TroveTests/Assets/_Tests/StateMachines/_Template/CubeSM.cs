@@ -19,7 +19,7 @@ using UnityEngine;
 /// This is the polymorphic state buffer element.
 /// </summary>
 [InternalBufferCapacity(8)] // TODO: tweak internal capacity
-public struct CubeSMState : IBufferElementData, IPoolObject, IState<CubeSMGlobalStateUpdateData, CubeSMEntityStateUpdateData>
+public struct CubeSMState : IBufferElementData, IPoolElement, IState<CubeSMGlobalStateUpdateData, CubeSMEntityStateUpdateData>
 {
     // Required for VersionedPool handling. Determines if the state exists in the states pool.
     public int Version { get; set; }

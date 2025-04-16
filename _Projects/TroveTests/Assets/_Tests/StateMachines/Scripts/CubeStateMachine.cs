@@ -11,7 +11,7 @@ using Unity.Transforms;
 /// This is the polymorphic state buffer element.
 /// </summary>
 [InternalBufferCapacity(8)] // TODO: tweak internal capacity
-public struct CubeState : IBufferElementData, IPoolObject, IState<CubeGlobalStateUpdateData, CubeEntityStateUpdateData>
+public struct CubeState : IBufferElementData, IPoolElement, IState<CubeGlobalStateUpdateData, CubeEntityStateUpdateData>
 {
     // Required for VersionedPool handling. Determines if the state exists in the states pool.
     public int Version { get; set; }

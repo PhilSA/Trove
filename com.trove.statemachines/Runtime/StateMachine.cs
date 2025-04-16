@@ -33,7 +33,7 @@ namespace Trove.Statemachines
     
     public struct StateHandle : IEquatable<StateHandle>
     {
-        public PoolObjectHandle Handle;
+        public PoolElementHandle Handle;
         
         public bool Exists()
         {

@@ -6,10 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/Stats.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/Stats.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachine.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/StateMachines/_Template/CubeSM.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/StateMachines/_Template/CubeSM.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/PoolTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/PoolTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -93,13 +95,15 @@
       </option>
       <method v="2" />
     </configuration>
-    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" ignored-value-for-modified-check="10832">
       <option name="allowRunningInParallel" value="false" />
       <option name="listenPortForConnections" value="false" />
-      <option name="pid" />
+      <option name="pid" value="10832" />
       <option name="projectPathOnTarget" />
       <option name="runtimes">
-        <list />
+        <list>
+          <MonoRuntime />
+        </list>
       </option>
       <option name="selectedOptions">
         <list />
@@ -135,7 +139,7 @@
       <workItem from="1744468130778" duration="887000" />
       <workItem from="1744516131242" duration="1761000" />
       <workItem from="1744675674429" duration="9279000" />
-      <workItem from="1744768271970" duration="1411000" />
+      <workItem from="1744768271970" duration="6857000" />
     </task>
     <servers />
   </component>
@@ -168,6 +172,19 @@
             </endOffsets>
           </properties>
           <option name="timeStamp" value="78" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs</url>
+          <line>739</line>
+          <properties documentPath="C:\Projects\Trove\com.trove.common\Runtime\Pool.cs" containingFunctionPresentation="Method 'Resize'">
+            <startOffsets>
+              <option value="27630" />
+            </startOffsets>
+            <endOffsets>
+              <option value="27679" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="92" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -8,19 +8,19 @@ using Unity.Assertions;
 
 namespace Trove
 {
-    public interface IPoolObject
+    public interface IPoolElement
     {
         public int Version { get; set; }
     }
     
-    public struct PoolObjectHandle : IEquatable<PoolObjectHandle>
+    public struct PoolElementHandle : IEquatable<PoolElementHandle>
     {
         public int Index;
         public int Version;
 
-        public static readonly PoolObjectHandle Null = default;
+        public static readonly PoolElementHandle Null = default;
         
-        public PoolObjectHandle(int index, int version)
+        public PoolElementHandle(int index, int version)
         {
             Index = index;
             Version = version;
@@ -31,14 +31,14 @@ namespace Trove
             return Version > 0 && Index >= 0;
         }
             
-        public bool Equals(PoolObjectHandle other)
+        public bool Equals(PoolElementHandle other)
         {
             return Index == other.Index && Version == other.Version;
         }
 
         public override bool Equals(object obj)
         {
-            return obj is PoolObjectHandle other && Equals(other);
+            return obj is PoolElementHandle other && Equals(other);
         }
 
         public override int GetHashCode()
@@ -46,12 +46,12 @@ namespace Trove
             return HashCode.Combine(Index, Version);
         }
 
-        public static bool operator ==(PoolObjectHandle left, PoolObjectHandle right)
+        public static bool operator ==(PoolElementHandle left, PoolElementHandle right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator !=(PoolObjectHandle left, PoolObjectHandle right)
+        public static bool operator !=(PoolElementHandle left, PoolElementHandle right)
         {
             return !left.Equals(right);
         }
@@ -65,26 +65,26 @@ namespace Trove
     public static class Pool
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Exists<T>(T poolObject)
-            where T : unmanaged, IPoolObject
+        internal static bool Exists<T>(T poolObject)
+            where T : unmanaged, IPoolElement
         {
             return poolObject.Version > 0;
         }
 
         #region DynamicBuffer
         public static void Init<T>(ref DynamicBuffer<T> poolBuffer, int initialCapacity)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             Resize(ref poolBuffer, initialCapacity);
         }
     
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Exists<T>(ref DynamicBuffer<T> poolBuffer, PoolObjectHandle poolObjectHandle)
-            where T : unmanaged, IPoolObject
+        public static bool Exists<T>(ref DynamicBuffer<T> poolBuffer, PoolElementHandle poolElementHandle)
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                return Exists(poolBuffer[poolObjectHandle.Index]);
+                return Exists(poolBuffer[poolElementHandle.Index]);
             }
 
             return false;
@@ -93,14 +93,14 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetObject<T>(
             ref DynamicBuffer<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle,
+            PoolElementHandle poolElementHandle,
             out T poolObject)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
                     poolObject = existingObject;
                     return true;
@@ -114,18 +114,18 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe ref T TryGetObjectRef<T>(
             ref DynamicBuffer<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle,
+            PoolElementHandle poolElementHandle,
             out bool success,
             ref T nullResult)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
                     ref T poolObject = 
-                        ref UnsafeUtility.ArrayElementAsRef<T>(poolBuffer.GetUnsafePtr(), poolObjectHandle.Index);
+                        ref UnsafeUtility.ArrayElementAsRef<T>(poolBuffer.GetUnsafePtr(), poolElementHandle.Index);
                     success = true;
                     return ref poolObject;
                 }
@@ -138,17 +138,17 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TrySetObject<T>(
             ref DynamicBuffer<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle,
+            PoolElementHandle poolElementHandle,
             T poolObject)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
-                    poolObject.Version = poolObjectHandle.Version;
-                    poolBuffer[poolObjectHandle.Index] = poolObject;
+                    poolObject.Version = poolElementHandle.Version;
+                    poolBuffer[poolElementHandle.Index] = poolObject;
                     return true;
                 }
             }
@@ -156,12 +156,12 @@ namespace Trove
             return false;
         }
 
-        public static void AddObject<T>(
+        public static void AddElement<T>(
             ref DynamicBuffer<T> poolBuffer,
             T newObject, 
-            out PoolObjectHandle poolObjectHandle,
+            out PoolElementHandle poolElementHandle,
             float growFactor = 1.5f)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             int addIndex = -1;
             for (int i = 0; i < poolBuffer.Length; i++)
@@ -185,7 +185,7 @@ namespace Trove
             newObject.Version = -existingObject.Version + 1; // flip version and increment
             poolBuffer[addIndex] = newObject;
             
-            poolObjectHandle = new PoolObjectHandle
+            poolElementHandle = new PoolElementHandle
             {
                 Index = addIndex,
                 Version = newObject.Version,
@@ -194,16 +194,16 @@ namespace Trove
 
         public static bool TryRemoveObject<T>(
             ref DynamicBuffer<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle)
-            where T : unmanaged, IPoolObject
+            PoolElementHandle poolElementHandle)
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
                     existingObject.Version = -existingObject.Version; // flip version
-                    poolBuffer[poolObjectHandle.Index] = existingObject;
+                    poolBuffer[poolElementHandle.Index] = existingObject;
 
                     return true;
                 }
@@ -216,7 +216,7 @@ namespace Trove
         /// Note: can only grow; not shrink
         /// </summary>
         public static void Resize<T>(ref DynamicBuffer<T> poolBuffer, int newSize)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             if (newSize > poolBuffer.Length)
             {
@@ -225,7 +225,7 @@ namespace Trove
         }
         
         public static void Trim<T>(ref DynamicBuffer<T> poolBuffer, bool trimCapacity = false)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             for (int i = poolBuffer.Length - 1; i >= 0; i--)
             {
@@ -237,6 +237,8 @@ namespace Trove
                     {
                         poolBuffer.Capacity = i + 1;
                     }
+
+                    return;
                 }
             }
         }
@@ -244,18 +246,18 @@ namespace Trove
         
         #region NativeList
         public static void Init<T>(ref NativeList<T> poolBuffer, int initialCapacity)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             Resize(ref poolBuffer, initialCapacity);
         }
     
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Exists<T>(ref NativeList<T> poolBuffer, PoolObjectHandle poolObjectHandle)
-            where T : unmanaged, IPoolObject
+        public static bool Exists<T>(ref NativeList<T> poolBuffer, PoolElementHandle poolElementHandle)
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                return Exists(poolBuffer[poolObjectHandle.Index]);
+                return Exists(poolBuffer[poolElementHandle.Index]);
             }
 
             return false;
@@ -264,14 +266,14 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetObject<T>(
             ref NativeList<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle,
+            PoolElementHandle poolElementHandle,
             out T poolObject)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
                     poolObject = existingObject;
                     return true;
@@ -285,16 +287,16 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe ref T TryGetObjectRef<T>(
             ref NativeList<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle,
+            PoolElementHandle poolElementHandle,
             out bool success,
             ref T nullResult)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
                 ref T existingObject = 
-                    ref UnsafeUtility.ArrayElementAsRef<T>(poolBuffer.GetUnsafePtr(), poolObjectHandle.Index);
-                if (existingObject.Version == poolObjectHandle.Version)
+                    ref UnsafeUtility.ArrayElementAsRef<T>(poolBuffer.GetUnsafePtr(), poolElementHandle.Index);
+                if (existingObject.Version == poolElementHandle.Version)
                 {
                     success = true;
                     return ref existingObject;
@@ -308,17 +310,17 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TrySetObject<T>(
             ref NativeList<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle,
+            PoolElementHandle poolElementHandle,
             T poolObject)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
-                    poolObject.Version = poolObjectHandle.Version;
-                    poolBuffer[poolObjectHandle.Index] = poolObject;
+                    poolObject.Version = poolElementHandle.Version;
+                    poolBuffer[poolElementHandle.Index] = poolObject;
                     return true;
                 }
             }
@@ -326,12 +328,12 @@ namespace Trove
             return false;
         }
 
-        public static void AddObject<T>(
+        public static void AddElement<T>(
             ref NativeList<T> poolBuffer,
             T newObject, 
-            out PoolObjectHandle poolObjectHandle,
+            out PoolElementHandle poolElementHandle,
             float growFactor = 1.5f)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             int addIndex = -1;
             for (int i = 0; i < poolBuffer.Length; i++)
@@ -355,7 +357,7 @@ namespace Trove
             newObject.Version = -existingObject.Version + 1; // flip version and increment
             poolBuffer[addIndex] = newObject;
             
-            poolObjectHandle = new PoolObjectHandle
+            poolElementHandle = new PoolElementHandle
             {
                 Index = addIndex,
                 Version = newObject.Version,
@@ -364,16 +366,16 @@ namespace Trove
 
         public static bool TryRemoveObject<T>(
             ref NativeList<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle)
-            where T : unmanaged, IPoolObject
+            PoolElementHandle poolElementHandle)
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
                     existingObject.Version = -existingObject.Version; // flip version
-                    poolBuffer[poolObjectHandle.Index] = existingObject;
+                    poolBuffer[poolElementHandle.Index] = existingObject;
 
                     return true;
                 }
@@ -386,7 +388,7 @@ namespace Trove
         /// Note: can only grow; not shrink
         /// </summary>
         public static void Resize<T>(ref NativeList<T> poolBuffer, int newSize)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             if (newSize > poolBuffer.Length)
             {
@@ -395,7 +397,7 @@ namespace Trove
         }
         
         public static void Trim<T>(ref NativeList<T> poolBuffer, bool trimCapacity = false)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             for (int i = poolBuffer.Length - 1; i >= 0; i--)
             {
@@ -407,6 +409,8 @@ namespace Trove
                     {
                         poolBuffer.SetCapacity(i + 1);
                     }
+
+                    return;
                 }
             }
         }
@@ -422,26 +426,26 @@ namespace Trove
     public static class FreeRangesPool
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Exists<T>(T poolObject)
-            where T : unmanaged, IPoolObject
+        internal static bool Exists<T>(T poolObject)
+            where T : unmanaged, IPoolElement
         {
             return poolObject.Version > 0;
         }
 
         #region DynamicBuffer
         public static void Init<T>(ref DynamicBuffer<T> poolBuffer, ref DynamicBuffer<IndexRange> freeRangesBuffer, int initialCapacity)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             Resize(ref poolBuffer, ref freeRangesBuffer, initialCapacity);
         }
     
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Exists<T>(ref DynamicBuffer<T> poolBuffer, PoolObjectHandle poolObjectHandle)
-            where T : unmanaged, IPoolObject
+        public static bool Exists<T>(ref DynamicBuffer<T> poolBuffer, PoolElementHandle poolElementHandle)
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                return Exists(poolBuffer[poolObjectHandle.Index]);
+                return Exists(poolBuffer[poolElementHandle.Index]);
             }
 
             return false;
@@ -450,14 +454,14 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetObject<T>(
             ref DynamicBuffer<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle,
+            PoolElementHandle poolElementHandle,
             out T poolObject)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
                     poolObject = existingObject;
                     return true;
@@ -471,18 +475,18 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe ref T TryGetObjectRef<T>(
             ref DynamicBuffer<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle,
+            PoolElementHandle poolElementHandle,
             out bool success,
             ref T nullResult)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
                     ref T poolObject = 
-                        ref UnsafeUtility.ArrayElementAsRef<T>(poolBuffer.GetUnsafePtr(), poolObjectHandle.Index);
+                        ref UnsafeUtility.ArrayElementAsRef<T>(poolBuffer.GetUnsafePtr(), poolElementHandle.Index);
                     success = true;
                     return ref poolObject;
                 }
@@ -495,17 +499,17 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TrySetObject<T>(
             ref DynamicBuffer<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle,
+            PoolElementHandle poolElementHandle,
             T poolObject)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
-                    poolObject.Version = poolObjectHandle.Version;
-                    poolBuffer[poolObjectHandle.Index] = poolObject;
+                    poolObject.Version = poolElementHandle.Version;
+                    poolBuffer[poolElementHandle.Index] = poolObject;
                     return true;
                 }
             }
@@ -513,13 +517,13 @@ namespace Trove
             return false;
         }
 
-        public static void AddObject<T>(
+        public static void AddElement<T>(
             ref DynamicBuffer<T> poolBuffer, 
             ref DynamicBuffer<IndexRange> freeRangesBuffer,
             T newObject, 
-            out PoolObjectHandle poolObjectHandle,
+            out PoolElementHandle poolElementHandle,
             float growFactor = 1.5f)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             int addIndex = -1;
             
@@ -572,7 +576,7 @@ namespace Trove
             newObject.Version = -existingObject.Version + 1; // Flip and increment version
             poolBuffer[addIndex] = newObject;
             
-            poolObjectHandle = new PoolObjectHandle
+            poolElementHandle = new PoolElementHandle
             {
                 Index = addIndex,
                 Version = newObject.Version,
@@ -582,14 +586,14 @@ namespace Trove
         public static bool TryRemoveObject<T>(
             ref DynamicBuffer<T> poolBuffer, 
             ref DynamicBuffer<IndexRange> freeRangesBuffer,
-            PoolObjectHandle poolObjectHandle)
-            where T : unmanaged, IPoolObject
+            PoolElementHandle poolElementHandle)
+            where T : unmanaged, IPoolElement
         {
-            int removedElementIndex = poolObjectHandle.Index;
-            if (poolObjectHandle.Exists() && removedElementIndex < poolBuffer.Length)
+            int removedElementIndex = poolElementHandle.Index;
+            if (poolElementHandle.Exists() && removedElementIndex < poolBuffer.Length)
             {
                 T existingObject = poolBuffer[removedElementIndex];
-                if (existingObject.Version == poolObjectHandle.Version)
+                if (existingObject.Version == poolElementHandle.Version)
                 {
                     // Clear element
                     existingObject.Version = -existingObject.Version; // flip version
@@ -631,7 +635,7 @@ namespace Trove
                             };
 
                             // Check for merge if prev range ends right before the new expanded iterated range
-                            CheckMergeWithPrevRange<T>(ref freeRangesBuffer, ref i, ref newIndexRange, newIndexRange.Start + newIndexRange.Length);
+                            CheckMergeWithPrevRange<T>(ref freeRangesBuffer, ref i, ref newIndexRange, newIndexRange.Start + newIndexRange.Length - 1);
                             
                             freeRangesBuffer[i] = newIndexRange;
 
@@ -639,9 +643,21 @@ namespace Trove
                             break;
                         }
                     }
-                    
-                    // TODO: what if the version check and the free range check disagree about the object being free?
-                    Assert.IsTrue(addedToFreeRanges);
+
+                    // If we haven't added to an existing range or in-between existing ranges, add new range at the end
+                    if (!addedToFreeRanges)
+                    {
+                        IndexRange newIndexRange = new IndexRange
+                        {
+                            Start = removedElementIndex,
+                            Length = 1,
+                        };
+                        
+                        int addIndex = freeRangesBuffer.Length;
+                        CheckMergeWithPrevRange<T>(ref freeRangesBuffer, ref addIndex, ref newIndexRange, newIndexRange.Start + newIndexRange.Length - 1);
+                        
+                        freeRangesBuffer.Add(newIndexRange);
+                    }
                     
                     return true;
                 }
@@ -655,7 +671,7 @@ namespace Trove
             ref int i,
             ref IndexRange currentIndexRange,
             int curentRangeLastIndex)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             // Check for merge if prev range ends right before the new expanded iterated range
             if (i > 0)
@@ -673,7 +689,7 @@ namespace Trove
         }
 
         public static void Resize<T>(ref DynamicBuffer<T> poolBuffer, ref DynamicBuffer<IndexRange> freeRangesBuffer, int newSize)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             int initialSize = poolBuffer.Length;
             
@@ -714,14 +730,17 @@ namespace Trove
             {
                 if (freeRangesBuffer.Length > 0)
                 {
-                    int newLastIndex = newSize - 1;
                     IndexRange lastFreeRange = freeRangesBuffer[freeRangesBuffer.Length - 1];
                     int lastFreeIndex = lastFreeRange.Start + lastFreeRange.Length - 1;
                 
-                    // If the last free index is at least greater than the new last index, we can trim
-                    if (lastFreeIndex >= newLastIndex)
+                    // If the last free index reaches the end of the buffer, there is potential for trimming
+                    if (lastFreeIndex == poolBuffer.Length - 1)
                     {
-                        // If the new last index is fully before this range, remove entire range
+                        // Determine a new size that can't go lower than the last allocated element
+                        newSize = math.max(lastFreeRange.Start, newSize);
+                        int newLastIndex = newSize - 1;
+                        
+                        // If the new last index is fully before the last range, remove entire range
                         if (newLastIndex < lastFreeRange.Start)
                         {
                             freeRangesBuffer.RemoveAt(freeRangesBuffer.Length - 1);
@@ -740,7 +759,7 @@ namespace Trove
         }
         
         public static void Trim<T>(ref DynamicBuffer<T> poolBuffer, ref DynamicBuffer<IndexRange> freeRangesBuffer, bool trimCapacity = false)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             Resize(ref poolBuffer, ref freeRangesBuffer, 1);
             
@@ -754,18 +773,18 @@ namespace Trove
 
         #region NativeList
         public static void Init<T>(ref NativeList<T> poolBuffer, ref NativeList<IndexRange> freeRangesBuffer, int initialCapacity)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             Resize(ref poolBuffer, ref freeRangesBuffer, initialCapacity);
         }
     
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Exists<T>(ref NativeList<T> poolBuffer, PoolObjectHandle poolObjectHandle)
-            where T : unmanaged, IPoolObject
+        public static bool Exists<T>(ref NativeList<T> poolBuffer, PoolElementHandle poolElementHandle)
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                return Exists(poolBuffer[poolObjectHandle.Index]);
+                return Exists(poolBuffer[poolElementHandle.Index]);
             }
 
             return false;
@@ -774,14 +793,14 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetObject<T>(
             ref NativeList<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle,
+            PoolElementHandle poolElementHandle,
             out T poolObject)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
                     poolObject = existingObject;
                     return true;
@@ -795,18 +814,18 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe ref T TryGetObjectRef<T>(
             ref NativeList<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle,
+            PoolElementHandle poolElementHandle,
             out bool success,
             ref T nullResult)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
                     ref T poolObject = 
-                        ref UnsafeUtility.ArrayElementAsRef<T>(poolBuffer.GetUnsafePtr(), poolObjectHandle.Index);
+                        ref UnsafeUtility.ArrayElementAsRef<T>(poolBuffer.GetUnsafePtr(), poolElementHandle.Index);
                     success = true;
                     return ref poolObject;
                 }
@@ -819,17 +838,17 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TrySetObject<T>(
             ref NativeList<T> poolBuffer,
-            PoolObjectHandle poolObjectHandle,
+            PoolElementHandle poolElementHandle,
             T poolObject)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
-            if (poolObjectHandle.Exists() && poolObjectHandle.Index < poolBuffer.Length)
+            if (poolElementHandle.Exists() && poolElementHandle.Index < poolBuffer.Length)
             {
-                T existingObject = poolBuffer[poolObjectHandle.Index];
-                if (existingObject.Version == poolObjectHandle.Version)
+                T existingObject = poolBuffer[poolElementHandle.Index];
+                if (existingObject.Version == poolElementHandle.Version)
                 {
-                    poolObject.Version = poolObjectHandle.Version;
-                    poolBuffer[poolObjectHandle.Index] = poolObject;
+                    poolObject.Version = poolElementHandle.Version;
+                    poolBuffer[poolElementHandle.Index] = poolObject;
                     return true;
                 }
             }
@@ -837,13 +856,13 @@ namespace Trove
             return false;
         }
 
-        public static void AddObject<T>(
+        public static void AddElement<T>(
             ref NativeList<T> poolBuffer, 
             ref NativeList<IndexRange> freeRangesBuffer,
             T newObject, 
-            out PoolObjectHandle poolObjectHandle,
+            out PoolElementHandle poolElementHandle,
             float growFactor = 1.5f)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             int addIndex = -1;
             
@@ -896,7 +915,7 @@ namespace Trove
             newObject.Version = -existingObject.Version + 1; // Flip and increment version
             poolBuffer[addIndex] = newObject;
             
-            poolObjectHandle = new PoolObjectHandle
+            poolElementHandle = new PoolElementHandle
             {
                 Index = addIndex,
                 Version = newObject.Version,
@@ -906,14 +925,14 @@ namespace Trove
         public static bool TryRemoveObject<T>(
             ref NativeList<T> poolBuffer, 
             ref NativeList<IndexRange> freeRangesBuffer,
-            PoolObjectHandle poolObjectHandle)
-            where T : unmanaged, IPoolObject
+            PoolElementHandle poolElementHandle)
+            where T : unmanaged, IPoolElement
         {
-            int removedElementIndex = poolObjectHandle.Index;
-            if (poolObjectHandle.Exists() && removedElementIndex < poolBuffer.Length)
+            int removedElementIndex = poolElementHandle.Index;
+            if (poolElementHandle.Exists() && removedElementIndex < poolBuffer.Length)
             {
                 T existingObject = poolBuffer[removedElementIndex];
-                if (existingObject.Version == poolObjectHandle.Version)
+                if (existingObject.Version == poolElementHandle.Version)
                 {
                     // Clear element
                     existingObject.Version = -existingObject.Version; // flip version
@@ -955,7 +974,7 @@ namespace Trove
                             };
 
                             // Check for merge if prev range ends right before the new expanded iterated range
-                            CheckMergeWithPrevRange<T>(ref freeRangesBuffer, ref i, ref newIndexRange, newIndexRange.Start + newIndexRange.Length);
+                            CheckMergeWithPrevRange<T>(ref freeRangesBuffer, ref i, ref newIndexRange, newIndexRange.Start + newIndexRange.Length - 1);
                             
                             freeRangesBuffer[i] = newIndexRange;
 
@@ -963,9 +982,21 @@ namespace Trove
                             break;
                         }
                     }
-                    
-                    // TODO: what if the version check and the free range check disagree about the object being free?
-                    Assert.IsTrue(addedToFreeRanges);
+
+                    // If we haven't added to an existing range or in-between existing ranges, add new range at the end
+                    if (!addedToFreeRanges)
+                    {
+                        IndexRange newIndexRange = new IndexRange
+                        {
+                            Start = removedElementIndex,
+                            Length = 1,
+                        };
+                        
+                        int addIndex = freeRangesBuffer.Length;
+                        CheckMergeWithPrevRange<T>(ref freeRangesBuffer, ref addIndex, ref newIndexRange, newIndexRange.Start + newIndexRange.Length - 1);
+                        
+                        freeRangesBuffer.Add(newIndexRange);
+                    }
                     
                     return true;
                 }
@@ -979,7 +1010,7 @@ namespace Trove
             ref int i,
             ref IndexRange currentIndexRange,
             int curentRangeLastIndex)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             // Check for merge if prev range ends right before the new expanded iterated range
             if (i > 0)
@@ -997,7 +1028,7 @@ namespace Trove
         }
 
         public static void Resize<T>(ref NativeList<T> poolBuffer, ref NativeList<IndexRange> freeRangesBuffer, int newSize)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             int initialSize = poolBuffer.Length;
             
@@ -1038,14 +1069,17 @@ namespace Trove
             {
                 if (freeRangesBuffer.Length > 0)
                 {
-                    int newLastIndex = newSize - 1;
                     IndexRange lastFreeRange = freeRangesBuffer[freeRangesBuffer.Length - 1];
                     int lastFreeIndex = lastFreeRange.Start + lastFreeRange.Length - 1;
                 
-                    // If the last free index is at least greater than the new last index, we can trim
-                    if (lastFreeIndex >= newLastIndex)
+                    // If the last free index reaches the end of the buffer, there is potential for trimming
+                    if (lastFreeIndex == poolBuffer.Length - 1)
                     {
-                        // If the new last index is fully before this range, remove entire range
+                        // Determine a new size that can't go lower than the last allocated element
+                        newSize = math.max(lastFreeRange.Start, newSize);
+                        int newLastIndex = newSize - 1;
+                        
+                        // If the new last index is fully before the last range, remove entire range
                         if (newLastIndex < lastFreeRange.Start)
                         {
                             freeRangesBuffer.RemoveAt(freeRangesBuffer.Length - 1);
@@ -1064,7 +1098,7 @@ namespace Trove
         }
         
         public static void Trim<T>(ref NativeList<T> poolBuffer, ref NativeList<IndexRange> freeRangesBuffer, bool trimCapacity = false)
-            where T : unmanaged, IPoolObject
+            where T : unmanaged, IPoolElement
         {
             Resize(ref poolBuffer, ref freeRangesBuffer, 1);
             

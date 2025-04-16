@@ -16,7 +16,7 @@ namespace Trove.Statemachines
             Entity entity,
             out StateMachine stateMachine,
             out DynamicBuffer<TState> statesBuffer)
-            where TState : unmanaged, IPoolObject, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
+            where TState : unmanaged, IPoolElement, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
@@ -28,7 +28,7 @@ namespace Trove.Statemachines
         public static void CreateStateMachineComponents<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
             EntityManager entityManager,
             Entity entity)
-            where TState : unmanaged, IPoolObject, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
+            where TState : unmanaged, IPoolElement, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
@@ -39,7 +39,7 @@ namespace Trove.Statemachines
         public static void CreateStateMachineComponents<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
             EntityCommandBuffer ecb,
             Entity entity)
-            where TState : unmanaged, IPoolObject, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
+            where TState : unmanaged, IPoolElement, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
@@ -51,7 +51,7 @@ namespace Trove.Statemachines
             EntityCommandBuffer.ParallelWriter ecb,
             int sortKey,
             Entity entity)
-            where TState : unmanaged, IPoolObject, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
+            where TState : unmanaged, IPoolElement, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
@@ -63,7 +63,7 @@ namespace Trove.Statemachines
             ref StateMachine stateMachine,
             ref DynamicBuffer<TState> statesBuffer,
             int statesInitialCapacity)
-            where TState : unmanaged, IPoolObject, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
+            where TState : unmanaged, IPoolElement, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
@@ -77,7 +77,7 @@ namespace Trove.Statemachines
             ref DynamicBuffer<TState> statesBuffer,
             ref TGlobalStateUpdateData globalStateUpdateData,
             ref TEntityStateUpdateData entityStateUpdateData)
-            where TState : unmanaged, IPoolObject, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
+            where TState : unmanaged, IPoolElement, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
@@ -112,7 +112,7 @@ namespace Trove.Statemachines
             ref TGlobalStateUpdateData globalStateUpdateData,
             ref TEntityStateUpdateData entityStateUpdateData,
             StateHandle newStateHandle)
-            where TState : unmanaged, IPoolObject, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
+            where TState : unmanaged, IPoolElement, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
@@ -141,7 +141,7 @@ namespace Trove.Statemachines
             ref DynamicBuffer<TState> statesBuffer, 
             StateHandle stateHandle,
             out TState state)
-            where TState : unmanaged, IPoolObject, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
+            where TState : unmanaged, IPoolElement, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
@@ -154,7 +154,7 @@ namespace Trove.Statemachines
             StateHandle stateHandle,
             out bool success,
             ref TState nullResult)
-            where TState : unmanaged, IPoolObject, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
+            where TState : unmanaged, IPoolElement, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
@@ -166,7 +166,7 @@ namespace Trove.Statemachines
             ref DynamicBuffer<TState> statesBuffer, 
             StateHandle stateHandle,
             TState state)
-            where TState : unmanaged, IPoolObject, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
+            where TState : unmanaged, IPoolElement, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
@@ -177,11 +177,11 @@ namespace Trove.Statemachines
             ref DynamicBuffer<TState> statesBuffer, 
             TState state, 
             out StateHandle stateHandle)
-            where TState : unmanaged, IPoolObject, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
+            where TState : unmanaged, IPoolElement, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
-            Pool.AddObject(ref statesBuffer, state, out PoolObjectHandle poolObjectHandle);
+            Pool.AddElement(ref statesBuffer, state, out PoolElementHandle poolObjectHandle);
             stateHandle = new StateHandle
             {
                 Handle = poolObjectHandle,
@@ -191,7 +191,7 @@ namespace Trove.Statemachines
         public static bool TryDestroyState<TState, TGlobalStateUpdateData, TEntityStateUpdateData>(
             ref DynamicBuffer<TState> statesBuffer,
             StateHandle stateHandle)
-            where TState : unmanaged, IPoolObject, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
+            where TState : unmanaged, IPoolElement, IState<TGlobalStateUpdateData, TEntityStateUpdateData>, IBufferElementData
             where TGlobalStateUpdateData : unmanaged 
             where TEntityStateUpdateData : unmanaged
         {
