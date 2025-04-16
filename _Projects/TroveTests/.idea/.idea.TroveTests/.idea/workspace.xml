@@ -5,16 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../../.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/manifest.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/packages-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/packages-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/FreeRangesPool.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/FreeRangesPool.cs.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/Stats.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/Stats.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsUtilities.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -139,7 +134,8 @@
       <workItem from="1744389342677" duration="22744000" />
       <workItem from="1744468130778" duration="887000" />
       <workItem from="1744516131242" duration="1761000" />
-      <workItem from="1744675674429" duration="8912000" />
+      <workItem from="1744675674429" duration="9279000" />
+      <workItem from="1744768271970" duration="1411000" />
     </task>
     <servers />
   </component>
@@ -172,19 +168,6 @@
             </endOffsets>
           </properties>
           <option name="timeStamp" value="78" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/../../com.trove.stats/Runtime/StatsAccessor.cs</url>
-          <line>954</line>
-          <properties documentPath="C:\Projects\Trove\com.trove.stats\Runtime\StatsAccessor.cs" containingFunctionPresentation="Method 'TryRemoveStatModifier'">
-            <startOffsets>
-              <option value="48933" />
-            </startOffsets>
-            <endOffsets>
-              <option value="49371" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="79" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

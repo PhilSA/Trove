@@ -37,7 +37,9 @@ namespace Trove.Stats
         public float BaseValue;
         public float Value;
 
+        public int ModifiersStartIndex;
         public int ModifiersCount;
+        public int ObserversStartIndex;
         public int ObserversCount;
         
         public byte ProduceChangeEvents;

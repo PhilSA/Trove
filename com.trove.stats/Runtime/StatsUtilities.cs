@@ -129,10 +129,7 @@ namespace Trove.Stats
             statsWorldData._modifiersStack.Reset();
             if (statRef.ModifiersCount > 0)
             {
-                int modifiersStartIndex = StatsUtilities.GetModifiersStartIndexForStat(in statsBuffer, statHandle.Index);
-                Assert.IsTrue(modifiersStartIndex + statRef.ModifiersCount <= statModifiersBuffer.Length);
-
-                for (int i = modifiersStartIndex; i < modifiersStartIndex + statRef.ModifiersCount; i++)
+                for (int i = statRef.ModifiersStartIndex; i < statRef.ModifiersStartIndex + statRef.ModifiersCount; i++)
                 {
                     ref TStatModifier modifierRef =
                         ref UnsafeUtility.ArrayElementAsRef<TStatModifier>(
@@ -180,10 +177,7 @@ namespace Trove.Stats
                 // Notify Observers (add to update list)
                 if (statRef.ObserversCount > 0)
                 {
-                    int observersStartIndex = StatsUtilities.GetObserversStartIndexForStat(in statsBuffer, statHandle.Index);
-                    Assert.IsTrue(observersStartIndex + statRef.ObserversCount <= statObserversBuffer.Length);
-                    
-                    for (int i = observersStartIndex; i < observersStartIndex + statRef.ObserversCount; i++)
+                    for (int i = statRef.ObserversStartIndex; i < statRef.ObserversStartIndex + statRef.ObserversCount; i++)
                     {
                         StatObserver observer = statObserversBuffer[i];
                         if (observer.ObserverHandle.Entity == statHandle.Entity)
@@ -208,16 +202,13 @@ namespace Trove.Stats
             in DynamicBuffer<StatObserver> statObserversBuffer,
             ref NativeList<StatObserver> statObserversList)
         {
-            int observersStartIndex = StatsUtilities.GetObserversStartIndexForStat(in statsBuffer, statHandle.Index);
-            Assert.IsTrue(observersStartIndex + stat.ObserversCount <= statObserversBuffer.Length);
-            
-            for (int i = observersStartIndex; i < observersStartIndex + stat.ObserversCount; i++)
+            for (int i = stat.ObserversStartIndex; i < stat.ObserversStartIndex + stat.ObserversCount; i++)
             {
                 statObserversList.Add(statObserversBuffer[i]);
             }
         }
 
-        internal static void AddStatAsObserverOfOtherStat(
+        internal static unsafe void AddStatAsObserverOfOtherStat(
             StatHandle observerStatHandle, 
             StatHandle observedStatHandle,
             ref DynamicBuffer<Stat> statsBufferOnObservedStat,
@@ -227,14 +218,20 @@ namespace Trove.Stats
 
             if (observedStatHandle.Index < statsBufferOnObservedStat.Length)
             {
-                // IMPORTANT: observers must be sorted in affected stat order
-                int observersEndIndex = StatsUtilities.GetObserversEndIndexForStat(in statsBufferOnObservedStat,
-                    observedStatHandle.Index);
-                statObserversBufferOnObservedStatEntity.Insert(observersEndIndex, new StatObserver { ObserverHandle = observerStatHandle });
-                
                 Stat observedStat = statsBufferOnObservedStat[observedStatHandle.Index];
+                // IMPORTANT: observers must be sorted in affected stat order
+                int observersEndIndex = observedStat.ObserversStartIndex + observedStat.ObserversCount;
+                statObserversBufferOnObservedStatEntity.Insert(observersEndIndex, new StatObserver { ObserverHandle = observerStatHandle });
                 observedStat.ObserversCount++;
                 statsBufferOnObservedStat[observedStatHandle.Index] = observedStat;
+                
+                // update next stat start indexes
+                for (int n = observedStatHandle.Index + 1; n < statsBufferOnObservedStat.Length; n++)
+                {
+                    ref Stat nextStatRef = ref UnsafeUtility.ArrayElementAsRef<Stat>(
+                        statsBufferOnObservedStat.GetUnsafePtr(), n);
+                    nextStatRef.ObserversStartIndex++;
+                }
             }
         }
 
@@ -394,11 +391,7 @@ namespace Trove.Stats
 
                     if (stat.ModifiersCount > 0)
                     {
-                        int modifiersStartIndex =
-                            StatsUtilities.GetModifiersStartIndexForStat(in statsBuffer, statHandle.Index);
-                        Assert.IsTrue(modifiersStartIndex + stat.ModifiersCount <= statModifiersBuffer.Length);
-
-                        for (int i = modifiersStartIndex; i < modifiersStartIndex + stat.ModifiersCount; i++)
+                        for (int i = stat.ModifiersStartIndex; i < stat.ModifiersStartIndex + stat.ModifiersCount; i++)
                         {
                             TStatModifier modifier = statModifiersBuffer[i];
                             modifiers.Add(new StatModifierAndModifierHandle<TStatModifier, TStatModifierStack>()
@@ -438,11 +431,7 @@ namespace Trove.Stats
 
                     if (stat.ObserversCount > 0)
                     {
-                        int observersStartIndex =
-                            StatsUtilities.GetObserversStartIndexForStat(in statsBuffer, statHandle.Index);
-                        Assert.IsTrue(observersStartIndex + stat.ObserversCount <= statObserversBuffer.Length);
-
-                        for (int i = observersStartIndex; i < observersStartIndex + stat.ObserversCount; i++)
+                        for (int i = stat.ObserversStartIndex; i < stat.ObserversStartIndex + stat.ObserversCount; i++)
                         {
                             observers.Add(statObserversBuffer[i]);
                         }
@@ -639,40 +628,6 @@ namespace Trove.Stats
             {
                 dependsOnEntities.Add(tmpObserverStatHandles[i].Entity);
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int GetModifiersStartIndexForStat(in DynamicBuffer<Stat> statsBuffer, int statIndex)
-        {
-            int modifiersStartIndex = 0;
-            for (int i = 0; i < statIndex; i++)
-            {
-                modifiersStartIndex += statsBuffer[i].ModifiersCount;
-            }
-            return modifiersStartIndex;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int GetModifiersEndIndexForStat(in DynamicBuffer<Stat> statsBuffer, int statIndex)
-        {
-            return GetModifiersStartIndexForStat(in statsBuffer, statIndex) + statsBuffer[statIndex].ModifiersCount;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int GetObserversStartIndexForStat(in DynamicBuffer<Stat> statsBuffer, int statIndex)
-        {
-            int observersStartIndex = 0;
-            for (int i = 0; i < statIndex; i++)
-            {
-                observersStartIndex += statsBuffer[i].ObserversCount;
-            }
-            return observersStartIndex;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int GetObserversEndIndexForStat(in DynamicBuffer<Stat> statsBuffer, int statIndex)
-        {
-            return GetObserversStartIndexForStat(in statsBuffer, statIndex) + statsBuffer[statIndex].ObserversCount;
         }
     }
 }

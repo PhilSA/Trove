@@ -728,7 +728,7 @@ namespace Trove.Stats
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool TryAddStatModifier(
+        internal unsafe bool TryAddStatModifier(
             StatHandle affectedStatHandle,
             TStatModifier modifier,
             ref StatsOwner affectStatsOwnerRef,
@@ -856,11 +856,17 @@ namespace Trove.Stats
                 // Add modifier by inserting it at the end of the stat's modifiers sub-list
                 {
                     // IMPORTANT: modifiers must be sorted in affected stat order
-                    int modifiersEndIndex = StatsUtilities.GetModifiersEndIndexForStat(in statsBufferOnAffectedStatEntity,
-                        affectedStatHandle.Index);
-                    statModifiersBufferOnAffectedStatEntity.Insert(modifiersEndIndex, modifier);
+                    statModifiersBufferOnAffectedStatEntity.Insert(affectedStatRef.ModifiersStartIndex + affectedStatRef.ModifiersCount, modifier);
                     
                     affectedStatRef.ModifiersCount++;
+                    
+                    // update next stat start indexes
+                    for (int n = affectedStatHandle.Index + 1; n < statsBufferOnAffectedStatEntity.Length; n++)
+                    {
+                        ref Stat nextStatRef = ref UnsafeUtility.ArrayElementAsRef<Stat>(
+                            statsBufferOnAffectedStatEntity.GetUnsafePtr(), n);
+                        nextStatRef.ModifiersStartIndex++;
+                    }
                 }
 
                 // Add affected stat as observer of all observed stats
@@ -929,11 +935,7 @@ namespace Trove.Stats
             {
                 if (affectedStat.ModifiersCount > 0)
                 {
-                    int modifiersStartIndex =
-                        StatsUtilities.GetModifiersStartIndexForStat(in statsBuffer, modifierHandle.AffectedStatHandle.Index);
-                    Assert.IsTrue(modifiersStartIndex + affectedStat.ModifiersCount <= statModifiersBuffer.Length);
-
-                    for (int i = modifiersStartIndex; i < modifiersStartIndex + affectedStat.ModifiersCount; i++)
+                    for (int i = affectedStat.ModifiersStartIndex; i < affectedStat.ModifiersStartIndex + affectedStat.ModifiersCount; i++)
                     {
                         TStatModifier modifier = statModifiersBuffer[i];
                         if (modifier.Id == modifierHandle.ModifierID)
@@ -963,12 +965,7 @@ namespace Trove.Stats
 
                 if (affectedStatRef.ModifiersCount > 0)
                 {
-                    int modifiersStartIndex =
-                        StatsUtilities.GetModifiersStartIndexForStat(in statsBufferOnAffectedStatEntity,
-                            modifierHandle.AffectedStatHandle.Index);
-                    Assert.IsTrue(modifiersStartIndex + affectedStatRef.ModifiersCount <= statModifiersBufferOnAffectedStatEntity.Length);
-
-                    for (int i = modifiersStartIndex; i < modifiersStartIndex + affectedStatRef.ModifiersCount; i++)
+                    for (int i = affectedStatRef.ModifiersStartIndex; i < affectedStatRef.ModifiersStartIndex + affectedStatRef.ModifiersCount; i++)
                     {
                         TStatModifier modifier = statModifiersBufferOnAffectedStatEntity[i];
                         if (modifier.Id == modifierHandle.ModifierID)
@@ -979,6 +976,14 @@ namespace Trove.Stats
                             // Update count
                             affectedStatRef.ModifiersCount--;
                             Assert.IsTrue(affectedStatRef.ModifiersCount >= 0);
+                            
+                            // Update start indexes of next stats
+                            for (int n = modifierHandle.AffectedStatHandle.Index + 1; n < statsBufferOnAffectedStatEntity.Length; n++)
+                            {
+                                ref Stat nextStatRef = ref UnsafeUtility.ArrayElementAsRef<Stat>(
+                                    statsBufferOnAffectedStatEntity.GetUnsafePtr(), n);
+                                nextStatRef.ModifiersStartIndex--;
+                            }
 
                             // Remove the modifier's affected stat as an observer of the modifier's observed stats
                             {
@@ -1003,12 +1008,7 @@ namespace Trove.Stats
 
                                         if (observedStatRef.ObserversCount > 0)
                                         {
-                                            int observersStartIndex =
-                                                StatsUtilities.GetObserversStartIndexForStat(in statsBufferOnObservedStatEntity,
-                                                    observedStatHandle.Index);
-                                            Assert.IsTrue(observersStartIndex + observedStatRef.ObserversCount <= statObserversBufferOnObservedStatEntity.Length);
-
-                                            for (int o = observersStartIndex; o < observersStartIndex + observedStatRef.ObserversCount; o++)
+                                            for (int o = observedStatRef.ObserversStartIndex; o < observedStatRef.ObserversStartIndex + observedStatRef.ObserversCount; o++)
                                             {
                                                 StatObserver observerOfObservedStat = statObserversBufferOnObservedStatEntity[o];
                                                 if (observerOfObservedStat.ObserverHandle == modifierHandle.AffectedStatHandle)
@@ -1019,6 +1019,14 @@ namespace Trove.Stats
                                                     // Update counts
                                                     observedStatRef.ObserversCount--;
                                                     Assert.IsTrue(observedStatRef.ObserversCount >= 0);
+                            
+                                                    // Update start indexes of next stats
+                                                    for (int n = observedStatHandle.Index + 1; n < statsBufferOnObservedStatEntity.Length; n++)
+                                                    {
+                                                        ref Stat nextStatRef = ref UnsafeUtility.ArrayElementAsRef<Stat>(
+                                                            statsBufferOnObservedStatEntity.GetUnsafePtr(), n);
+                                                        nextStatRef.ObserversStartIndex--;
+                                                    }
                                                     
                                                     // Break so we don't remove all observer instances of this stat
                                                     break;
@@ -1049,13 +1057,9 @@ namespace Trove.Stats
             if (getStatSuccess &&
                 _statModifiersLookup.TryGetBuffer(statHandle.Entity, out DynamicBuffer<TStatModifier> statModifiersBuffer))
             {
-                int modifiersStartIndex =
-                    StatsUtilities.GetModifiersStartIndexForStat(in statsBuffer, statHandle.Index);
-                Assert.IsTrue(modifiersStartIndex + statRef.ModifiersCount <= statModifiersBuffer.Length);
-
                 while(statRef.ModifiersCount > 0)
                 {
-                    TStatModifier modifier = statModifiersBuffer[modifiersStartIndex];
+                    TStatModifier modifier = statModifiersBuffer[statRef.ModifiersStartIndex];
                     TryRemoveStatModifier(new StatModifierHandle
                         {
                             ModifierID = modifier.Id,
