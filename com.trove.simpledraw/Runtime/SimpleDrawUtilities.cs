@@ -163,32 +163,42 @@ namespace Trove.SimpleDraw
             // Configure the single draw command to draw kNumInstances instances
             // starting from offset 0 in the array, using the batch, material and mesh
             // IDs registered in the Start() method. It doesn't set any special flags.
-            drawCommands->drawCommands[0].visibleOffset = 0;
-            drawCommands->drawCommands[0].visibleCount = (uint)numInstances;
-            drawCommands->drawCommands[0].batchID = batchData.BatchId;
-            drawCommands->drawCommands[0].materialID = batchData.MaterialID;
-            drawCommands->drawCommands[0].meshID = batchData.MeshID;
-            drawCommands->drawCommands[0].submeshIndex = 0;
-            drawCommands->drawCommands[0].splitVisibilityMask = 0xff;
-            drawCommands->drawCommands[0].flags = 0;
-            drawCommands->drawCommands[0].sortingPosition = 0;
-            
+            drawCommands->drawCommands[0] = new BatchDrawCommand
+            {
+                flags = 0,
+                batchID = batchData.BatchId,
+                materialID = batchData.MaterialID,
+                meshID = batchData.MeshID,
+                submeshIndex = 0,
+                
+                sortingPosition = 0,
+                visibleCount = (uint)numInstances,
+                visibleOffset = 0,
+                splitVisibilityMask = 0xff,
+                lightmapIndex = 0,
+            };
+
             // Configure the single draw range to cover the single draw command which
             // is at offset 0.
-            drawCommands->drawRanges[0].drawCommandsType = BatchDrawCommandType.Direct;
-            drawCommands->drawRanges[0].drawCommandsBegin = 0;
-            drawCommands->drawRanges[0].drawCommandsCount = 1;
-
-            // This example doesn't care about shadows or motion vectors, so it leaves everything
-            // at the default zero values, except the renderingLayerMask which it sets to all ones
-            // so Unity renders the instances regardless of mask settings.
-            drawCommands->drawRanges[0].filterSettings = new BatchFilterSettings { renderingLayerMask = 0xffffffff, };
-
+            drawCommands->drawRanges[0] = new BatchDrawRange
+            {
+                drawCommandsType = BatchDrawCommandType.Direct,
+                drawCommandsBegin = 0,
+                drawCommandsCount = 1,
+                
+                // This example doesn't care about shadows or motion vectors, so it leaves everything
+                // at the default zero values, except the renderingLayerMask which it sets to all ones
+                // so Unity renders the instances regardless of mask settings.
+                filterSettings = new BatchFilterSettings { renderingLayerMask = 0xffffffff, },
+            };
+            
             // Finally, write the actual visible instance indices to the array. In a more complicated
             // implementation, this output would depend on what is visible, but this example
             // assumes that everything is visible.
             for (int i = 0; i < numInstances; ++i)
+            {
                 drawCommands->visibleInstances[i] = i;
+            }
         }
     }
 }
