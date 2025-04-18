@@ -5,22 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../../README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Data/Rendering/UniversalRenderPipelineGlobalSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Data/Rendering/UniversalRenderPipelineGlobalSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/SpatialQueries/Scripts/SpatialQueryTesterAuthoring.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/SpatialQueries/Scripts/SpatialQueryTesterAuthoring.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/SpatialQueries/Scripts/SpatialQueryTesterSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/SpatialQueries/Scripts/SpatialQueryTesterSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/manifest.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/packages-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/packages-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/GraphicsSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/GraphicsSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/URPProjectSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/URPProjectSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/SimpleDraw/Scenes/SimpleDrawTest.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/SimpleDraw/Scenes/SimpleDrawTest.unity" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.common/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.common/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.spatialqueries/Runtime/SpatialQueryUtils.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.spatialqueries/Runtime/SpatialQueryUtils.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.spatialqueries/Tests/SpatialQueriesTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.spatialqueries/Tests/SpatialQueriesTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.spatialqueries/Tests/com.trove.spatialqueries.tests.asmdef" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.spatialqueries/Tests/com.trove.spatialqueries.tests.asmdef" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawSystem.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawUtilities.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,22 +57,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Attach to Unity Editor.Attach to Unity Editor.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "XThreadsFramesViewSplitterKey": "0.5004965",
-    "git-widget-placeholder": "main",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "editor.reader.mode",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Attach to Unity Editor.Attach to Unity Editor.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.5004965&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev/dev&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;editor.reader.mode&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.0.43f1\Editor\Unity.exe" />
@@ -113,15 +103,13 @@
       </option>
       <method v="2" />
     </configuration>
-    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" ignored-value-for-modified-check="9608">
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
       <option name="allowRunningInParallel" value="false" />
       <option name="listenPortForConnections" value="false" />
-      <option name="pid" value="9608" />
+      <option name="pid" />
       <option name="projectPathOnTarget" />
       <option name="runtimes">
-        <list>
-          <MonoRuntime />
-        </list>
+        <list />
       </option>
       <option name="selectedOptions">
         <list />
@@ -161,7 +149,8 @@
       <workItem from="1744803386626" duration="3667000" />
       <workItem from="1744892433390" duration="3391000" />
       <workItem from="1744900061434" duration="2361000" />
-      <workItem from="1744916394831" duration="13220000" />
+      <workItem from="1744916394831" duration="13584000" />
+      <workItem from="1744977293192" duration="5098000" />
     </task>
     <servers />
   </component>
