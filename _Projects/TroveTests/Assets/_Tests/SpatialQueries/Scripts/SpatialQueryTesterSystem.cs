@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using AABB = Trove.SpatialQueries.AABB;
+using AABB = Trove.AABB;
 
 public struct SpatialQueryTester : IComponentData
 {

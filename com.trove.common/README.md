@@ -17,6 +17,7 @@ Most notably, it includes:
 * `BitUtilities`: utilities for setting/getting bits in bytes or ints.
 * `ByteArrayUtilities`: utilities for reading and writing various types to byte arrays.
 * `PolymorphicObjectUtilities`: utilities for reading and writing `IPolymorphicObject`s to byte arrays.
+* `InstanceHandle`: Serves as a better-performing but baking-incompatible alternative to `UnityObjectRef`.
 * `EasingUtilities`: utilities for easing functions (tweening curves).
 * `TransformUtilities`: utilities for getting/setting the world transform of entities (including child entities).
 * `ParametricCurve`: a completely unmanaged curve represented by choice of several functions and parameters.

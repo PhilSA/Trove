@@ -26,6 +26,15 @@
         "com.trove.common": "0.3.2"
       }
     },
+    "com.trove.simpledraw": {
+      "version": "file:C:/Projects/Trove/com.trove.simpledraw",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.unity.entities": "1.3.10",
+        "com.trove.common": "0.3.2"
+      }
+    },
     "com.trove.spatialqueries": {
       "version": "file:C:/Projects/Trove/com.trove.spatialqueries",
       "depth": 0,

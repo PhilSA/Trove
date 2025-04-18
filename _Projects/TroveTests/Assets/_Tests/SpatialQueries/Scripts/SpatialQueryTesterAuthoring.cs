@@ -2,13 +2,15 @@ using Unity.Entities;
 using UnityEngine;
 using Trove.SpatialQueries;
 using Unity.Mathematics;
+using AABB = Trove.AABB;
 
 class SpatialQueryTesterAuthoring : MonoBehaviour
 {
     public GameObject BVHCubePrefab;
 
     public int SpawnCount = 100;
-    public CenteredAABB SpawnArea = new CenteredAABB { Center = float3.zero, Extents = new float3(50f) };
+    public float3 SpawnAreaCenter = float3.zero;
+    public float3 SpawnAreaExtents = new float3(50f);
 }
 
 class SpatialQueryTesterAuthoringBaker : Baker<SpatialQueryTesterAuthoring>
@@ -21,7 +23,7 @@ class SpatialQueryTesterAuthoringBaker : Baker<SpatialQueryTesterAuthoring>
             BVHCubePrefab = GetEntity(authoring.BVHCubePrefab, TransformUsageFlags.None),
             
             SpawnCount = authoring.SpawnCount,
-            SpawnArea = authoring.SpawnArea.ToAABB(),
+            SpawnArea = AABB.FromCenterExtents(authoring.SpawnAreaCenter, authoring.SpawnAreaExtents),
         });
     }
 }

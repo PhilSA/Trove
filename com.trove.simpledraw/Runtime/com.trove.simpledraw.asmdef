@@ -1,11 +1,9 @@
 {
-    "name": "com.trove.spatialqueries.tests",
+    "name": "com.trove.simpledraw",
     "rootNamespace": "",
     "references": [
-        "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner",
-        "com.trove.spatialqueries",
         "Unity.Entities",
+        "Unity.Entities.Hybrid",
         "Unity.Collections",
         "Unity.Burst",
         "Unity.Mathematics",
@@ -14,13 +12,10 @@
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
-    "overrideReferences": true,
-    "precompiledReferences": [
-        "nunit.framework.dll"
-    ],
+    "overrideReferences": false,
+    "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
-    ],
+    "defineConstraints": [],
+    "versionDefines": [],
     "noEngineReferences": false
 }

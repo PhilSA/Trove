@@ -5,10 +5,10 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 
-namespace Trove.SpatialQueries.Tests
+namespace Trove.SimpleDraw.Tests
 {
     [TestFixture]
-    public class SpatialQueriesTests
+    public class SimpleDrawTests
     {
         [SetUp]
         public void SetUp()

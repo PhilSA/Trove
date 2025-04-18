@@ -1,10 +1,10 @@
 {
-    "name": "com.trove.spatialqueries.tests",
+    "name": "com.trove.simpledraw.tests",
     "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "com.trove.spatialqueries",
+        "com.trove.simpledraw",
         "Unity.Entities",
         "Unity.Collections",
         "Unity.Burst",

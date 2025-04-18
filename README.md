@@ -31,7 +31,7 @@ The packages are hosted on [OpenUPM](https://openupm.com/). You can install them
 
 | **Name** |  **Package** | **Description** | **Documentation** |
 | :--- | :--- | :--- | :--- |
-| **Common** | [com.trove.common](https://openupm.com/packages/com.trove.common/) | Trove Common provides various tools and utilities that may be used by other packages or projects. | [Documentation](./com.trove.common/README.md) |
+| **Common** | [com.trove.common](https://openupm.com/packages/com.trove.common/) | Trove Common provides various tools and utilities that may be used by other Trove packages, or by any project in general. | [Documentation](./com.trove.common/README.md) |
 | **Event Systems** | [com.trove.eventsystems](https://openupm.com/packages/com.trove.eventsystems/) | Trove Event Systems provides various types of event systems to facilitate deferred logic. | [Documentation](./com.trove.eventsystems/README.md) |
 | **Polymorphic Structs** | [com.trove.polymorphicstructs](https://openupm.com/packages/com.trove.polymorphicstructs/) | Trove Polymorphic Structs provides a codegen tool for polymorphic behaviour in burstable unmanaged code. They can be used to solve a variety of problems that are not so obvious to solve in ECS, such as: ordered events where order can't be determined by type, state machines without structural changes or large jobs overhead, etc... | [Documentation](./com.trove.polymorphicstructs/README.md) |
 | **State Machines** | [com.trove.statemachines](https://openupm.com/packages/com.trove.statemachines/) | Trove State Machines provides templates for state machines in DOTS | [Documentation](./com.trove.statemachines/README.md) |
