@@ -9,6 +9,8 @@
       <change beforePath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/DebugDrawUnlitLineURPShader.shadergraph" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/DebugDrawUnlitLineURPShader.shadergraph" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/ProceduralLines.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/ProceduralLines.hlsl" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -158,7 +160,7 @@
       <workItem from="1744916394831" duration="13584000" />
       <workItem from="1744977293192" duration="10111000" />
       <workItem from="1745082655310" duration="22581000" />
-      <workItem from="1745159548616" duration="4408000" />
+      <workItem from="1745159548616" duration="7343000" />
     </task>
     <servers />
   </component>

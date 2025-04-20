@@ -20,6 +20,7 @@ namespace Trove.DebugDraw
         internal static int ObjectToWorldPropertyId;
         internal static int WorldToObjectPropertyId;
         internal static int PositionsPropertyId;
+        internal static int ColorsPropertyId;
         internal static int NormalsPropertyId;
         internal static int TangentsPropertyId;
         internal static int BaseIndexPropertyId;
@@ -51,6 +52,7 @@ namespace Trove.DebugDraw
             ObjectToWorldPropertyId = Shader.PropertyToID("unity_ObjectToWorld");
             WorldToObjectPropertyId = Shader.PropertyToID("unity_WorldToObject");
             PositionsPropertyId = Shader.PropertyToID("_Positions");
+            ColorsPropertyId = Shader.PropertyToID("_Colors");
             NormalsPropertyId = Shader.PropertyToID("_Normals");
             TangentsPropertyId = Shader.PropertyToID("_Tangents"); 
             BaseIndexPropertyId = Shader.PropertyToID("_BaseIndex");
@@ -69,6 +71,7 @@ namespace Trove.DebugDraw
     {
         internal BatchRendererGroup BRG;
         internal GraphicsBuffer PositionsGraphicsBuffer;
+        internal GraphicsBuffer ColorsGraphicsBuffer;
         internal GraphicsBuffer LinesGraphicsBuffer;
         internal GraphicsBuffer TrisGraphicsBuffer;
         internal GraphicsBuffer BoxesGraphicsBuffer;
@@ -86,7 +89,7 @@ namespace Trove.DebugDraw
         }
 
         // TODO; 
-        private const int kNumInstances = 8;
+        private const int kNumLines = 100;
 
         public void OnStartRunning(ref SystemState state)
         {
@@ -119,15 +122,15 @@ namespace Trove.DebugDraw
 
             // TODO: combine all graphicsBuffers into one, and use offsets
             // Init graphics buffers
-            int instanceBufferFloat4sLength = 4 + (kNumInstances * (3 + 3 + 1));
-            int instanceBufferBytesLength = instanceBufferFloat4sLength * 16;
+            int instanceBufferFloat4sLength = 4 + (3 + 3);
+            int instanceBufferBytesLength = instanceBufferFloat4sLength * DebugDrawUtilities.kSizeOfFloat4;
             data.LinesGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Raw, 
-                instanceBufferBytesLength * 2, 
+                instanceBufferBytesLength, 
                 4);
             data.TrisGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Raw,
-                instanceBufferBytesLength * 3,
+                instanceBufferBytesLength,
                 4);
             data.BoxesGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Raw,
@@ -135,7 +138,11 @@ namespace Trove.DebugDraw
                 4);
             data.PositionsGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Structured,
-                kNumInstances, // TODO: lines + tris count
+                kNumLines * 2, // TODO: lines + tris count
+                4 * 4);
+            data.ColorsGraphicsBuffer = new GraphicsBuffer(
+                GraphicsBuffer.Target.Structured,
+                kNumLines * 2, // TODO: lines + tris count
                 4 * 4);
              
             // Create batches
@@ -143,8 +150,9 @@ namespace Trove.DebugDraw
                 data.BRG, 
                 data.LinesGraphicsBuffer, 
                 data.PositionsGraphicsBuffer,
+                data.ColorsGraphicsBuffer,
                 ref singleton.UnlitLinesBatch.BatchId,
-                kNumInstances);
+                kNumLines);
             // DebugDrawUtilities.CreateDrawMeshBatch(
             //     data.BRG, 
             //     data.BoxesGraphicsBuffer, 
@@ -163,6 +171,7 @@ namespace Trove.DebugDraw
                 // else
                 {
                     Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.PositionsPropertyId, data.PositionsGraphicsBuffer);
+                    Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.ColorsPropertyId, data.ColorsGraphicsBuffer);
                     // Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.NormalsPropertyId, _gpuNormals);
                     // Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.TangentsPropertyId, _gpuTangents);
                 }
@@ -236,11 +245,11 @@ namespace Trove.DebugDraw
             drawCommands->drawRanges = (BatchDrawRange*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawRange>(),
                 alignment, Allocator.TempJob);
             drawCommands->visibleInstances =
-                (int*)UnsafeUtility.Malloc(kNumInstances * sizeof(int), alignment, Allocator.TempJob);
+                (int*)UnsafeUtility.Malloc(kNumLines * sizeof(int), alignment, Allocator.TempJob);
             
             return new DebugDrawCullingJob
             {
-                NumInstances = kNumInstances,
+                NumInstances = kNumLines,
                 
                 LinesBatchData = singleton.UnlitLinesBatch,
                 MeshBatchData = singleton.UnlitBoxMeshBatch,
