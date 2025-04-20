@@ -178,33 +178,32 @@ namespace Trove.DebugDraw
             
             Singleton singleton = SystemAPI.GetSingleton<Singleton>();
             
-            // UnsafeUtility.Malloc() requires an alignment, so use the largest integer type's alignment
-            // which is a reasonable default.
-            int alignment = UnsafeUtility.AlignOf<long>();
-
-            // Acquire a pointer to the BatchCullingOutputDrawCommands struct so you can easily
-            // modify it directly.
+            // Allocate draw commands
             BatchCullingOutputDrawCommands* drawCommands = (BatchCullingOutputDrawCommands*)cullingOutput.drawCommands.GetUnsafePtr();
+            {
+                int alignment = UnsafeUtility.AlignOf<long>();
+                
+                drawCommands->drawCommandPickingInstanceIDs = null;
+                drawCommands->drawCommandCount = 0;
+                drawCommands->proceduralDrawCommandCount = 1;
+                drawCommands->drawRangeCount = 1;
+                drawCommands->visibleInstanceCount = 1;
+                drawCommands->instanceSortingPositions = null;
+                drawCommands->instanceSortingPositionFloatCount = 0;
 
-            // Allocate memory for the output arrays. In a more complicated implementation, you would calculate
-            // the amount of memory to allocate dynamically based on what is visible.
-            // This example assumes that all of the instances are visible and thus allocates
-            // memory for each of them. The necessary allocations are as follows:
-            // - a single draw command (which draws kNumInstances instances)
-            // - a single draw range (which covers our single draw command)
-            // - kNumInstances visible instance indices.
-            // You must always allocate the arrays using Allocator.TempJob.
-            drawCommands->drawCommands =
-                (BatchDrawCommand*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawCommand>(), alignment,
-                    Allocator.TempJob);
-            drawCommands->proceduralDrawCommands =
-                (BatchDrawCommandProcedural*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawCommandProcedural>(), alignment,
-                    Allocator.TempJob);
-            drawCommands->drawRanges = (BatchDrawRange*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawRange>(),
-                alignment, Allocator.TempJob);
-            drawCommands->visibleInstances =
-                (int*)UnsafeUtility.Malloc(1 * sizeof(int), alignment, Allocator.TempJob);
-            
+                drawCommands->proceduralDrawCommands =
+                    (BatchDrawCommandProcedural*)UnsafeUtility.Malloc(
+                        UnsafeUtility.SizeOf<BatchDrawCommandProcedural>() * drawCommands->proceduralDrawCommandCount,
+                        alignment, Allocator.TempJob);
+                drawCommands->drawRanges =
+                    (BatchDrawRange*)UnsafeUtility.Malloc(
+                        UnsafeUtility.SizeOf<BatchDrawRange>() * drawCommands->drawRangeCount,
+                        alignment, Allocator.TempJob);
+                drawCommands->visibleInstances =
+                    (int*)UnsafeUtility.Malloc(sizeof(int) * 1,
+                        alignment, Allocator.TempJob);
+            }
+
             return new DebugDrawCullingJob
             {
                 NumLines = kNumLines,
@@ -232,16 +231,6 @@ namespace Trove.DebugDraw
 
         public void Execute()
         { 
-            DrawCommands->drawCommandPickingInstanceIDs = null;
-
-            DrawCommands->drawCommandCount = 0;
-            DrawCommands->proceduralDrawCommandCount = 1;
-            DrawCommands->drawRangeCount = 1;
-            DrawCommands->visibleInstanceCount = NumLines;
-            
-            // This example doesn't use depth sorting, so it leaves instanceSortingPositions as null.
-            DrawCommands->instanceSortingPositions = null;
-            DrawCommands->instanceSortingPositionFloatCount = 0;
 
             DebugDrawUtilities.DrawLinesCommand(
                 DrawCommands, 

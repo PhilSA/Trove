@@ -5,21 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Models.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Models/Resources.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Models/Resources/DebugBox.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Models/Resources/DebugBox.fbx.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Models/Resources/DebugCylinder.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Models/Resources/DebugCylinder.fbx.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Models/Resources/DebugSphere.fbx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Models/Resources/DebugSphere.fbx.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/DebugDrawUnlitURPShader.shadergraph" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/DebugDrawUnlitURPShader.shadergraph.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
