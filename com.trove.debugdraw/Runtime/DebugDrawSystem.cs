@@ -202,6 +202,8 @@ namespace Trove.DebugDraw
                 drawCommands->visibleInstances =
                     (int*)UnsafeUtility.Malloc(sizeof(int) * 1,
                         alignment, Allocator.TempJob);
+
+                drawCommands->visibleInstances[0] = 0;
             }
 
             return new DebugDrawCullingJob
@@ -237,8 +239,6 @@ namespace Trove.DebugDraw
                 UserContext, 
                 LinesBatchData, 
                 NumLines);
-
-            DrawCommands->visibleInstances[0] = 0;
         }
     }
 }
