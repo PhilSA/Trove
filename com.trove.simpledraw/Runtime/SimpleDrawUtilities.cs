@@ -181,9 +181,9 @@ namespace Trove.SimpleDraw
             NativeArray<float4> positions = new NativeArray<float4>(numInstances * 2, Allocator.Temp);
             for (int i = 0; i < numInstances; i++)
             {
-                positions[i] = new float4(random.NextFloat3(-3f, 0f), 1);
-                positions[i + 1] = new float4(random.NextFloat3(0f, 3f), 1);
-            }
+                positions[(i * 2)] = new float4(i, 0f, 0f, 0f);
+                positions[(i * 2) + 1] = new float4(i, 1f, 0f, 0f);
+            } 
             positionsBuffer.SetData(positions);
 
             // TODO: recycle all those arrays instead of realloc?

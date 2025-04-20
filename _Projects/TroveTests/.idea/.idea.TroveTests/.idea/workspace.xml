@@ -5,13 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/ColorUtilities.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../com.trove.common/Runtime/ColorUtilities.cs.meta" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawSystem.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawUtilities.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.tweens/Runtime/TweenUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.tweens/Runtime/TweenUtilities.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -161,7 +157,7 @@
       <workItem from="1744900061434" duration="2361000" />
       <workItem from="1744916394831" duration="13584000" />
       <workItem from="1744977293192" duration="10111000" />
-      <workItem from="1745082655310" duration="21652000" />
+      <workItem from="1745082655310" duration="22330000" />
     </task>
     <servers />
   </component>

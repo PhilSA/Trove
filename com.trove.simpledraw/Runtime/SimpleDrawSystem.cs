@@ -86,7 +86,7 @@ namespace Trove.SimpleDraw
         }
 
         // TODO; 
-        private const int kNumInstances = 3;
+        private const int kNumInstances = 4;
 
         public void OnStartRunning(ref SystemState state)
         {
