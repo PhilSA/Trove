@@ -13,7 +13,7 @@ namespace Trove.DebugDraw
 {
     internal static class DebugDrawSystemManagedDataStore
     {
-        internal static Dictionary<World, DebugDrawSystemManagedData> DataMap;
+        internal static Dictionary<ulong, DebugDrawSystemManagedData> DataMap;
 
         internal static int ColorPropertyId;
         internal static int ObjectToWorldPropertyId;
@@ -28,28 +28,35 @@ namespace Trove.DebugDraw
         internal static Material DebugDrawUnlitTriMaterial;
         internal static Material DebugDrawUnlitMaterial;
 
+        private static bool _hasInitialized;
+
         internal const string DebugDrawUnlitLineMaterialName = "DebugDrawUnlitLineURP";
         internal const string DebugDrawUnlitTriMaterialName = "DebugDrawUnlitTriURP";
         internal const string DebugDrawUnlitMaterialName = "DebugDrawUnlitURP";
 
         internal static void Initialize()
         {
-            DataMap = new Dictionary<World, DebugDrawSystemManagedData>();
-            
-            // Shader properties
-            ColorPropertyId = Shader.PropertyToID("_Color");
-            ObjectToWorldPropertyId = Shader.PropertyToID("unity_ObjectToWorld");
-            WorldToObjectPropertyId = Shader.PropertyToID("unity_WorldToObject");
-            PositionsPropertyId = Shader.PropertyToID("_Positions");
-            ColorsPropertyId = Shader.PropertyToID("_Colors");
-            NormalsPropertyId = Shader.PropertyToID("_Normals");
-            TangentsPropertyId = Shader.PropertyToID("_Tangents"); 
-            BaseIndexPropertyId = Shader.PropertyToID("_BaseIndex");
+            if (!_hasInitialized)
+            {
+                DataMap = new Dictionary<ulong, DebugDrawSystemManagedData>();
 
-            // Materials
-            DebugDrawUnlitLineMaterial = Resources.Load<Material>(DebugDrawUnlitLineMaterialName);
-            DebugDrawUnlitTriMaterial = Resources.Load<Material>(DebugDrawUnlitTriMaterialName);
-            DebugDrawUnlitMaterial = Resources.Load<Material>(DebugDrawUnlitMaterialName);
+                // Shader properties
+                ColorPropertyId = Shader.PropertyToID("_Color");
+                ObjectToWorldPropertyId = Shader.PropertyToID("unity_ObjectToWorld");
+                WorldToObjectPropertyId = Shader.PropertyToID("unity_WorldToObject");
+                PositionsPropertyId = Shader.PropertyToID("_Positions");
+                ColorsPropertyId = Shader.PropertyToID("_Colors");
+                NormalsPropertyId = Shader.PropertyToID("_Normals");
+                TangentsPropertyId = Shader.PropertyToID("_Tangents");
+                BaseIndexPropertyId = Shader.PropertyToID("_BaseIndex");
+
+                // Materials
+                DebugDrawUnlitLineMaterial = Resources.Load<Material>(DebugDrawUnlitLineMaterialName);
+                DebugDrawUnlitTriMaterial = Resources.Load<Material>(DebugDrawUnlitTriMaterialName);
+                DebugDrawUnlitMaterial = Resources.Load<Material>(DebugDrawUnlitMaterialName);
+                
+                _hasInitialized = true;
+            }
         }
     }
 
@@ -59,6 +66,14 @@ namespace Trove.DebugDraw
         internal GraphicsBuffer PositionsGraphicsBuffer;
         internal GraphicsBuffer ColorsGraphicsBuffer;
         internal GraphicsBuffer InstancesGraphicsBuffer;
+
+        internal void Dispose()
+        {
+            BRG.Dispose();
+            PositionsGraphicsBuffer.Dispose();
+            ColorsGraphicsBuffer.Dispose();
+            InstancesGraphicsBuffer.Dispose();
+        }
     }
 
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
@@ -70,22 +85,27 @@ namespace Trove.DebugDraw
             internal DebugDrawProceduralLinesBatch UnlitLinesBatch;
         }
 
+        private ulong WorldSequenceNumber;
+        
         // TODO; 
-        private const int kNumLines = 10000000;
-
+        private const int kNumLines = 1000;
+        
         public void OnStartRunning(ref SystemState state)
         {
+            WorldSequenceNumber = state.WorldUnmanaged.SequenceNumber;
             DebugDrawSystemManagedDataStore.Initialize();
             
             Singleton singleton = new Singleton();
             
-            if (DebugDrawSystemManagedDataStore.DataMap.TryGetValue(state.World, out DebugDrawSystemManagedData data))
+            if (DebugDrawSystemManagedDataStore.DataMap.TryGetValue(WorldSequenceNumber, out DebugDrawSystemManagedData data))
             {
+                // Dispose old data
+                data.Dispose();
             }
             else
             {
                 data = new DebugDrawSystemManagedData();
-                DebugDrawSystemManagedDataStore.DataMap.Add(state.World, data);
+                DebugDrawSystemManagedDataStore.DataMap.Add(WorldSequenceNumber, data);
             } 
 
             data.BRG = new BatchRendererGroup(this.OnPerformCulling, IntPtr.Zero);
@@ -107,10 +127,12 @@ namespace Trove.DebugDraw
                 4);
             data.PositionsGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Structured,
+                GraphicsBuffer.UsageFlags.LockBufferForWrite,
                 kNumLines * 2, // TODO: lines + tris count
                 4 * 4);
             data.ColorsGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Structured,
+                GraphicsBuffer.UsageFlags.LockBufferForWrite,
                 kNumLines * 2, // TODO: lines + tris count
                 4 * 4);
              
@@ -122,25 +144,8 @@ namespace Trove.DebugDraw
                 data.ColorsGraphicsBuffer,
                 ref singleton.UnlitLinesBatch.BatchId,
                 kNumLines);
-            
-            // Set procedural data
-            {
-                // TODO:
-                // if (UseConstantBuffer)
-                // {
-                //     Shader.SetGlobalConstantBuffer(positionsID, _gpuPositions, 0, positions.Length * 4 * 4);
-                //     Shader.SetGlobalConstantBuffer(normalsID, _gpuNormals, 0, positions.Length * 4 * 4);
-                //     Shader.SetGlobalConstantBuffer(tangentsID, _gpuTangents, 0, positions.Length * 4 * 4);
-                // }
-                // else
-                {
-                    Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.PositionsPropertyId, data.PositionsGraphicsBuffer);
-                    Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.ColorsPropertyId, data.ColorsGraphicsBuffer);
-                }
-                DebugDrawSystemManagedDataStore.DebugDrawUnlitLineMaterial.SetInt(DebugDrawSystemManagedDataStore.BaseIndexPropertyId, 0);
-            }
 
-            DebugDrawSystemManagedDataStore.DataMap[state.World] = data;
+            DebugDrawSystemManagedDataStore.DataMap[WorldSequenceNumber] = data;
             
             // Create singleton
             Entity singletonEntity = state.EntityManager.CreateEntity();
@@ -149,96 +154,121 @@ namespace Trove.DebugDraw
 
         public void OnStopRunning(ref SystemState state)
         { 
-            if (DebugDrawSystemManagedDataStore.DataMap.TryGetValue(state.World, out DebugDrawSystemManagedData data))
+            if (DebugDrawSystemManagedDataStore.DataMap.TryGetValue(WorldSequenceNumber, out DebugDrawSystemManagedData data))
             {
                 if (SystemAPI.TryGetSingleton(out Singleton singleton))
                 {
                     data.BRG.UnregisterMaterial(singleton.UnlitLinesBatch.MaterialID);
                 }
 
-                data.BRG.Dispose();
-                data.InstancesGraphicsBuffer.Dispose();
-                data.PositionsGraphicsBuffer.Dispose();
-                data.ColorsGraphicsBuffer.Dispose();
+                data.Dispose();
             }
         }
 
-        [BurstCompile]
         public void OnUpdate(ref SystemState state)
-        { }
+        {
+            if (SystemAPI.HasSingleton<Singleton>() &&
+                DebugDrawSystemManagedDataStore.DataMap.TryGetValue(WorldSequenceNumber,
+                    out DebugDrawSystemManagedData data))
+            {
+                // TODO: double buffering
+                {
+                    // Set procedural data
+                    {
+                        // TODO:
+                        // if (UseConstantBuffer)
+                        // {
+                        //     Shader.SetGlobalConstantBuffer(positionsID, _gpuPositions, 0, positions.Length * 4 * 4);
+                        //     Shader.SetGlobalConstantBuffer(normalsID, _gpuNormals, 0, positions.Length * 4 * 4);
+                        //     Shader.SetGlobalConstantBuffer(tangentsID, _gpuTangents, 0, positions.Length * 4 * 4);
+                        // }
+                        // else
+                        {
+                            Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.PositionsPropertyId,
+                                data.PositionsGraphicsBuffer);
+                            Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.ColorsPropertyId,
+                                data.ColorsGraphicsBuffer);
+                        }
+                        DebugDrawSystemManagedDataStore.DebugDrawUnlitLineMaterial.SetInt(
+                            DebugDrawSystemManagedDataStore.BaseIndexPropertyId, 0);
+                    }
+                }
+
+                JobHandle job = new UpdateBuffersJob
+                {
+                    DeltaTime = 0.01f,
+                    PositionsBuffer = data.PositionsGraphicsBuffer.LockBufferForWrite<float4>(0, kNumLines * 2),
+                }.Schedule(default);
+                job.Complete(); 
+                
+                data.PositionsGraphicsBuffer.UnlockBufferAfterWrite<float4>(kNumLines * 2);
+                //data.ColorsGraphicsBuffer.UnlockBufferAfterWrite<float4>(kNumLines * 2);
+            }
+        }
 
         public JobHandle OnPerformCulling(
             BatchRendererGroup rendererGroup,
             BatchCullingContext cullingContext,
-            BatchCullingOutput cullingOutput, 
+            BatchCullingOutput cullingOutput,
             IntPtr userContext)
         {
-            if (!SystemAPI.HasSingleton<Singleton>())
-                return default;
-            
-            Singleton singleton = SystemAPI.GetSingleton<Singleton>();
-            
-            // Allocate draw commands
-            BatchCullingOutputDrawCommands* drawCommands = (BatchCullingOutputDrawCommands*)cullingOutput.drawCommands.GetUnsafePtr();
+            if (SystemAPI.HasSingleton<Singleton>())
             {
-                int alignment = UnsafeUtility.AlignOf<long>();
-                
-                drawCommands->drawCommandPickingInstanceIDs = null;
-                drawCommands->drawCommandCount = 0;
-                drawCommands->proceduralDrawCommandCount = 1;
-                drawCommands->drawRangeCount = 1;
-                drawCommands->visibleInstanceCount = 1;
-                drawCommands->instanceSortingPositions = null;
-                drawCommands->instanceSortingPositionFloatCount = 0;
+                Singleton singleton = SystemAPI.GetSingleton<Singleton>();
 
-                drawCommands->proceduralDrawCommands =
-                    (BatchDrawCommandProcedural*)UnsafeUtility.Malloc(
-                        UnsafeUtility.SizeOf<BatchDrawCommandProcedural>() * drawCommands->proceduralDrawCommandCount,
-                        alignment, Allocator.TempJob);
-                drawCommands->drawRanges =
-                    (BatchDrawRange*)UnsafeUtility.Malloc(
-                        UnsafeUtility.SizeOf<BatchDrawRange>() * drawCommands->drawRangeCount,
-                        alignment, Allocator.TempJob);
-                drawCommands->visibleInstances =
-                    (int*)UnsafeUtility.Malloc(sizeof(int) * 1,
-                        alignment, Allocator.TempJob);
+                // Allocate draw commands
+                BatchCullingOutputDrawCommands* drawCommands =
+                    (BatchCullingOutputDrawCommands*)cullingOutput.drawCommands.GetUnsafePtr();
+                {
+                    int alignment = UnsafeUtility.AlignOf<long>();
 
-                drawCommands->visibleInstances[0] = 0;
+                    drawCommands->drawCommandPickingInstanceIDs = null;
+                    drawCommands->drawCommandCount = 0;
+                    drawCommands->proceduralDrawCommandCount = 1;
+                    drawCommands->drawRangeCount = 1;
+                    drawCommands->visibleInstanceCount = 1;
+                    drawCommands->instanceSortingPositions = null;
+                    drawCommands->instanceSortingPositionFloatCount = 0;
+
+                    drawCommands->proceduralDrawCommands =
+                        (BatchDrawCommandProcedural*)UnsafeUtility.Malloc(
+                            UnsafeUtility.SizeOf<BatchDrawCommandProcedural>() *
+                            drawCommands->proceduralDrawCommandCount,
+                            alignment, Allocator.TempJob);
+                    drawCommands->drawRanges =
+                        (BatchDrawRange*)UnsafeUtility.Malloc(
+                            UnsafeUtility.SizeOf<BatchDrawRange>() * drawCommands->drawRangeCount,
+                            alignment, Allocator.TempJob);
+                    drawCommands->visibleInstances =
+                        (int*)UnsafeUtility.Malloc(sizeof(int) * 1,
+                            alignment, Allocator.TempJob);
+
+                    drawCommands->visibleInstances[0] = 0;
+                }
+
+                DebugDrawUtilities.DrawLinesCommand(
+                    drawCommands, 
+                    userContext, 
+                    singleton.UnlitLinesBatch, 
+                    kNumLines);
             }
 
-            return new DebugDrawCullingJob
-            {
-                NumLines = kNumLines,
-                
-                LinesBatchData = singleton.UnlitLinesBatch,
-                
-                DrawCommands = drawCommands,
-                UserContext = userContext,
-            }.Schedule(default);
+            return default;
         }
     }
 
     [BurstCompile]
-    internal unsafe struct DebugDrawCullingJob : IJob
+    internal unsafe struct UpdateBuffersJob : IJob
     {
-        public int NumLines;
-        
-        public DebugDrawProceduralLinesBatch LinesBatchData;
-
-        [NativeDisableUnsafePtrRestriction] 
-        public BatchCullingOutputDrawCommands* DrawCommands;
-        
-        [NativeDisableUnsafePtrRestriction]
-        public IntPtr UserContext;
+        public float DeltaTime;
+        public NativeArray<float4> PositionsBuffer;
 
         public void Execute()
-        { 
-
-            DebugDrawUtilities.DrawLinesCommand(
-                DrawCommands, 
-                UserContext, 
-                LinesBatchData, 
-                NumLines);
+        {
+            for (int i = 0; i < PositionsBuffer.Length; i++)
+            {
+                PositionsBuffer[i] = PositionsBuffer[i] + new float4(DeltaTime);
+            }
         }
     }
 }
