@@ -63,14 +63,16 @@ namespace Trove.DebugDraw
     internal class DebugDrawSystemManagedData
     {
         internal BatchRendererGroup BRG;
-        internal GraphicsBuffer PositionsGraphicsBuffer;
+        internal GraphicsBuffer Positions1GraphicsBuffer;
+        internal GraphicsBuffer Positions2GraphicsBuffer;
         internal GraphicsBuffer ColorsGraphicsBuffer;
         internal GraphicsBuffer InstancesGraphicsBuffer;
 
         internal void Dispose()
         {
             BRG.Dispose();
-            PositionsGraphicsBuffer.Dispose();
+            Positions1GraphicsBuffer.Dispose();
+            Positions2GraphicsBuffer.Dispose();
             ColorsGraphicsBuffer.Dispose();
             InstancesGraphicsBuffer.Dispose();
         }
@@ -82,13 +84,14 @@ namespace Trove.DebugDraw
     {
         internal struct Singleton : IComponentData
         {
+            internal int UsedBuffers;
             internal DebugDrawProceduralLinesBatch UnlitLinesBatch;
         }
 
         private ulong WorldSequenceNumber;
         
         // TODO; 
-        private const int kNumLines = 1000;
+        private const int kNumLines = 1000000;
         
         public void OnStartRunning(ref SystemState state)
         {
@@ -125,7 +128,12 @@ namespace Trove.DebugDraw
                 GraphicsBuffer.Target.Raw, 
                 instanceBufferBytesLength, 
                 4);
-            data.PositionsGraphicsBuffer = new GraphicsBuffer(
+            data.Positions1GraphicsBuffer = new GraphicsBuffer(
+                GraphicsBuffer.Target.Structured,
+                GraphicsBuffer.UsageFlags.LockBufferForWrite,
+                kNumLines * 2, // TODO: lines + tris count
+                4 * 4);
+            data.Positions2GraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Structured,
                 GraphicsBuffer.UsageFlags.LockBufferForWrite,
                 kNumLines * 2, // TODO: lines + tris count
@@ -140,7 +148,7 @@ namespace Trove.DebugDraw
             DebugDrawUtilities.CreateDrawLinesBatch(
                 data.BRG, 
                 data.InstancesGraphicsBuffer, 
-                data.PositionsGraphicsBuffer,
+                data.Positions1GraphicsBuffer,
                 data.ColorsGraphicsBuffer,
                 ref singleton.UnlitLinesBatch.BatchId,
                 kNumLines);
@@ -171,9 +179,25 @@ namespace Trove.DebugDraw
                 DebugDrawSystemManagedDataStore.DataMap.TryGetValue(WorldSequenceNumber,
                     out DebugDrawSystemManagedData data))
             {
+                ref Singleton singleton = ref SystemAPI.GetSingletonRW<Singleton>().ValueRW;
+                
+                GraphicsBuffer readPositionsBuffer = data.Positions1GraphicsBuffer;
+                GraphicsBuffer writePositionsBuffer = data.Positions2GraphicsBuffer;
+                switch (singleton.UsedBuffers)
+                {
+                    case 0:
+                        readPositionsBuffer = data.Positions1GraphicsBuffer;
+                        writePositionsBuffer = data.Positions2GraphicsBuffer;
+                        break;
+                    case 1:
+                        readPositionsBuffer = data.Positions2GraphicsBuffer;
+                        writePositionsBuffer = data.Positions1GraphicsBuffer;
+                        break;
+                }
+                
                 // TODO: double buffering
                 {
-                    // Set procedural data
+                    // Set procedural data 
                     {
                         // TODO:
                         // if (UseConstantBuffer)
@@ -185,7 +209,7 @@ namespace Trove.DebugDraw
                         // else
                         {
                             Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.PositionsPropertyId,
-                                data.PositionsGraphicsBuffer);
+                                readPositionsBuffer);
                             Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.ColorsPropertyId,
                                 data.ColorsGraphicsBuffer);
                         }
@@ -194,15 +218,17 @@ namespace Trove.DebugDraw
                     }
                 }
 
-                JobHandle job = new UpdateBuffersJob
-                {
-                    DeltaTime = 0.01f,
-                    PositionsBuffer = data.PositionsGraphicsBuffer.LockBufferForWrite<float4>(0, kNumLines * 2),
-                }.Schedule(default);
-                job.Complete(); 
+                 JobHandle job = new UpdateBuffersJob
+                 {
+                     ElapsedTime = (float)SystemAPI.Time.ElapsedTime,
+                     PositionsBuffer = writePositionsBuffer.LockBufferForWrite<float4>(0, kNumLines * 2),
+                 }.Schedule(default);
+                 job.Complete(); 
                 
-                data.PositionsGraphicsBuffer.UnlockBufferAfterWrite<float4>(kNumLines * 2);
-                //data.ColorsGraphicsBuffer.UnlockBufferAfterWrite<float4>(kNumLines * 2);
+                writePositionsBuffer.UnlockBufferAfterWrite<float4>(kNumLines * 2);
+
+                singleton.UsedBuffers++;
+                singleton.UsedBuffers = singleton.UsedBuffers % 2;
             }
         }
 
@@ -258,17 +284,27 @@ namespace Trove.DebugDraw
     }
 
     [BurstCompile]
-    internal unsafe struct UpdateBuffersJob : IJob
+    internal struct UpdateBuffersJob : IJob
     {
-        public float DeltaTime;
+        public float ElapsedTime;
         public NativeArray<float4> PositionsBuffer;
 
         public void Execute()
         {
-            for (int i = 0; i < PositionsBuffer.Length; i++)
+            int numLines = PositionsBuffer.Length / 2;
+            int resolution = (int)math.ceil(math.pow(numLines, 1f/3f));
+            float spacing = 2f;
+            for (int i = 0; i < numLines; i++)
             {
-                PositionsBuffer[i] = PositionsBuffer[i] + new float4(DeltaTime);
-            }
+                float xStart = (i % resolution) * spacing;
+                float zStart = ((i / resolution) % resolution) * spacing;
+                float yStart = (i / (resolution * resolution)) * spacing;
+
+                xStart += ElapsedTime;
+                
+                PositionsBuffer[(i*2)] = new float4(xStart, yStart, zStart, 0f);
+                PositionsBuffer[(i*2)+1] = new float4(xStart, yStart + 1f, zStart, 0f);
+            } 
         }
     }
 }
