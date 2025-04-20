@@ -6,7 +6,6 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -29,20 +28,10 @@ namespace Trove.DebugDraw
         internal static Material DebugDrawUnlitTriMaterial;
         internal static Material DebugDrawUnlitMaterial;
 
-        internal static Mesh SimpleBoxMesh;
-        internal static Mesh SimpleSphereMesh;
-        internal static Mesh SimpleCylinderMesh;
-
         internal const string DebugDrawUnlitLineMaterialName = "DebugDrawUnlitLineURP";
         internal const string DebugDrawUnlitTriMaterialName = "DebugDrawUnlitTriURP";
         internal const string DebugDrawUnlitMaterialName = "DebugDrawUnlitURP";
 
-        internal const string SimpleBoxName = "DebugBox";
-
-#if UNITY_EDITOR
-        [InitializeOnLoadMethod]
-#endif
-        [RuntimeInitializeOnLoadMethod]
         internal static void Initialize()
         {
             DataMap = new Dictionary<World, DebugDrawSystemManagedData>();
@@ -61,9 +50,6 @@ namespace Trove.DebugDraw
             DebugDrawUnlitLineMaterial = Resources.Load<Material>(DebugDrawUnlitLineMaterialName);
             DebugDrawUnlitTriMaterial = Resources.Load<Material>(DebugDrawUnlitTriMaterialName);
             DebugDrawUnlitMaterial = Resources.Load<Material>(DebugDrawUnlitMaterialName);
-
-            // Meshes
-            SimpleBoxMesh = Resources.Load<Mesh>(SimpleBoxName);
         }
     }
 
@@ -72,9 +58,7 @@ namespace Trove.DebugDraw
         internal BatchRendererGroup BRG;
         internal GraphicsBuffer PositionsGraphicsBuffer;
         internal GraphicsBuffer ColorsGraphicsBuffer;
-        internal GraphicsBuffer LinesGraphicsBuffer;
-        internal GraphicsBuffer TrisGraphicsBuffer;
-        internal GraphicsBuffer BoxesGraphicsBuffer;
+        internal GraphicsBuffer InstancesGraphicsBuffer;
     }
 
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
@@ -84,15 +68,15 @@ namespace Trove.DebugDraw
         internal struct Singleton : IComponentData
         {
             internal DebugDrawProceduralLinesBatch UnlitLinesBatch;
-            internal DebugDrawProceduralLinesBatch UnlitTrisBatch;
-            internal DebugDrawMeshBatch UnlitBoxMeshBatch;
         }
 
         // TODO; 
-        private const int kNumLines = 100;
+        private const int kNumLines = 10000000;
 
         public void OnStartRunning(ref SystemState state)
         {
+            DebugDrawSystemManagedDataStore.Initialize();
+            
             Singleton singleton = new Singleton();
             
             if (DebugDrawSystemManagedDataStore.DataMap.TryGetValue(state.World, out DebugDrawSystemManagedData data))
@@ -111,30 +95,15 @@ namespace Trove.DebugDraw
                 singleton.UnlitLinesBatch = new DebugDrawProceduralLinesBatch(
                     default,
                     data.BRG.RegisterMaterial(DebugDrawSystemManagedDataStore.DebugDrawUnlitLineMaterial));
-                singleton.UnlitTrisBatch = new DebugDrawProceduralLinesBatch(
-                    default, 
-                    data.BRG.RegisterMaterial(DebugDrawSystemManagedDataStore.DebugDrawUnlitTriMaterial));
-                singleton.UnlitBoxMeshBatch = new DebugDrawMeshBatch(
-                    default,
-                    data.BRG.RegisterMaterial(DebugDrawSystemManagedDataStore.DebugDrawUnlitMaterial),
-                    data.BRG.RegisterMesh(DebugDrawSystemManagedDataStore.SimpleBoxMesh));
             }
 
             // TODO: combine all graphicsBuffers into one, and use offsets
             // Init graphics buffers
             int instanceBufferFloat4sLength = 4 + (3 + 3);
             int instanceBufferBytesLength = instanceBufferFloat4sLength * DebugDrawUtilities.kSizeOfFloat4;
-            data.LinesGraphicsBuffer = new GraphicsBuffer(
+            data.InstancesGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Raw, 
                 instanceBufferBytesLength, 
-                4);
-            data.TrisGraphicsBuffer = new GraphicsBuffer(
-                GraphicsBuffer.Target.Raw,
-                instanceBufferBytesLength,
-                4);
-            data.BoxesGraphicsBuffer = new GraphicsBuffer(
-                GraphicsBuffer.Target.Raw,
-                instanceBufferBytesLength,
                 4);
             data.PositionsGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Structured,
@@ -148,16 +117,11 @@ namespace Trove.DebugDraw
             // Create batches
             DebugDrawUtilities.CreateDrawLinesBatch(
                 data.BRG, 
-                data.LinesGraphicsBuffer, 
+                data.InstancesGraphicsBuffer, 
                 data.PositionsGraphicsBuffer,
                 data.ColorsGraphicsBuffer,
                 ref singleton.UnlitLinesBatch.BatchId,
                 kNumLines);
-            // DebugDrawUtilities.CreateDrawMeshBatch(
-            //     data.BRG, 
-            //     data.BoxesGraphicsBuffer, 
-            //     ref singleton.UnlitBoxMeshBatch.BatchId, 
-            //     kNumInstances);
             
             // Set procedural data
             {
@@ -172,8 +136,6 @@ namespace Trove.DebugDraw
                 {
                     Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.PositionsPropertyId, data.PositionsGraphicsBuffer);
                     Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.ColorsPropertyId, data.ColorsGraphicsBuffer);
-                    // Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.NormalsPropertyId, _gpuNormals);
-                    // Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.TangentsPropertyId, _gpuTangents);
                 }
                 DebugDrawSystemManagedDataStore.DebugDrawUnlitLineMaterial.SetInt(DebugDrawSystemManagedDataStore.BaseIndexPropertyId, 0);
             }
@@ -192,16 +154,12 @@ namespace Trove.DebugDraw
                 if (SystemAPI.TryGetSingleton(out Singleton singleton))
                 {
                     data.BRG.UnregisterMaterial(singleton.UnlitLinesBatch.MaterialID);
-                    data.BRG.UnregisterMaterial(singleton.UnlitTrisBatch.MaterialID);
-                    data.BRG.UnregisterMaterial(singleton.UnlitBoxMeshBatch.MaterialID);
-                    data.BRG.UnregisterMesh(singleton.UnlitBoxMeshBatch.MeshID);
                 }
 
                 data.BRG.Dispose();
-                data.LinesGraphicsBuffer.Dispose();
+                data.InstancesGraphicsBuffer.Dispose();
                 data.PositionsGraphicsBuffer.Dispose();
-                data.TrisGraphicsBuffer.Dispose();
-                data.BoxesGraphicsBuffer.Dispose();
+                data.ColorsGraphicsBuffer.Dispose();
             }
         }
 
@@ -245,14 +203,13 @@ namespace Trove.DebugDraw
             drawCommands->drawRanges = (BatchDrawRange*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawRange>(),
                 alignment, Allocator.TempJob);
             drawCommands->visibleInstances =
-                (int*)UnsafeUtility.Malloc(kNumLines * sizeof(int), alignment, Allocator.TempJob);
+                (int*)UnsafeUtility.Malloc(1 * sizeof(int), alignment, Allocator.TempJob);
             
             return new DebugDrawCullingJob
             {
-                NumInstances = kNumLines,
+                NumLines = kNumLines,
                 
                 LinesBatchData = singleton.UnlitLinesBatch,
-                MeshBatchData = singleton.UnlitBoxMeshBatch,
                 
                 DrawCommands = drawCommands,
                 UserContext = userContext,
@@ -263,10 +220,9 @@ namespace Trove.DebugDraw
     [BurstCompile]
     internal unsafe struct DebugDrawCullingJob : IJob
     {
-        public int NumInstances;
+        public int NumLines;
         
         public DebugDrawProceduralLinesBatch LinesBatchData;
-        public DebugDrawMeshBatch MeshBatchData;
 
         [NativeDisableUnsafePtrRestriction] 
         public BatchCullingOutputDrawCommands* DrawCommands;
@@ -278,12 +234,12 @@ namespace Trove.DebugDraw
         { 
             DrawCommands->drawCommandPickingInstanceIDs = null;
 
-            DrawCommands->drawCommandCount = 1;
-            DrawCommands->proceduralDrawCommandCount = 0;
+            DrawCommands->drawCommandCount = 0;
+            DrawCommands->proceduralDrawCommandCount = 1;
             DrawCommands->drawRangeCount = 1;
-            DrawCommands->visibleInstanceCount = NumInstances;
+            DrawCommands->visibleInstanceCount = NumLines;
             
-            // This example doens't use depth sorting, so it leaves instanceSortingPositions as null.
+            // This example doesn't use depth sorting, so it leaves instanceSortingPositions as null.
             DrawCommands->instanceSortingPositions = null;
             DrawCommands->instanceSortingPositionFloatCount = 0;
 
@@ -291,20 +247,9 @@ namespace Trove.DebugDraw
                 DrawCommands, 
                 UserContext, 
                 LinesBatchData, 
-                NumInstances);
-            // DebugDrawUtilities.DrawMeshCommand(
-            //     DrawCommands, 
-            //     UserContext, 
-            //     MeshBatchData, 
-            //     NumInstances);
+                NumLines);
 
-            // Finally, write the actual visible instance indices to the array. In a more complicated
-            // implementation, this output would depend on what is visible, but this example
-            // assumes that everything is visible.
-            for (int i = 0; i < NumInstances; ++i)
-            {
-                DrawCommands->visibleInstances[i] = i;
-            }
+            DrawCommands->visibleInstances[0] = 0;
         }
     }
 }
