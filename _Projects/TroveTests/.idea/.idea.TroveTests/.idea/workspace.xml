@@ -5,9 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawUtilities.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,7 +64,7 @@
     &quot;Attach to Unity Editor.Attach to Unity Editor.executor&quot;: &quot;Debug&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.5004965&quot;,
+    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.53503186&quot;,
     &quot;git-widget-placeholder&quot;: &quot;dev/dev&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
@@ -107,15 +105,13 @@
       </option>
       <method v="2" />
     </configuration>
-    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" ignored-value-for-modified-check="29228">
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
       <option name="allowRunningInParallel" value="false" />
       <option name="listenPortForConnections" value="false" />
-      <option name="pid" value="29228" />
+      <option name="pid" />
       <option name="projectPathOnTarget" />
       <option name="runtimes">
-        <list>
-          <MonoRuntime />
-        </list>
+        <list />
       </option>
       <option name="selectedOptions">
         <list />
@@ -157,7 +153,7 @@
       <workItem from="1744900061434" duration="2361000" />
       <workItem from="1744916394831" duration="13584000" />
       <workItem from="1744977293192" duration="10111000" />
-      <workItem from="1745082655310" duration="22330000" />
+      <workItem from="1745082655310" duration="22581000" />
     </task>
     <servers />
   </component>

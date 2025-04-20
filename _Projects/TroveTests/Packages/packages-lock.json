@@ -8,6 +8,15 @@
         "com.unity.entities": "1.3.10"
       }
     },
+    "com.trove.debugdraw": {
+      "version": "file:C:/Projects/Trove/com.trove.debugdraw",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.unity.entities": "1.3.10",
+        "com.trove.common": "0.3.2"
+      }
+    },
     "com.trove.eventsystems": {
       "version": "file:../../../com.trove.eventsystems",
       "depth": 0,
@@ -19,15 +28,6 @@
     },
     "com.trove.polymorphicstructs": {
       "version": "file:../../../com.trove.polymorphicstructs",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {
-        "com.unity.entities": "1.3.10",
-        "com.trove.common": "0.3.2"
-      }
-    },
-    "com.trove.simpledraw": {
-      "version": "file:C:/Projects/Trove/com.trove.simpledraw",
       "depth": 0,
       "source": "local",
       "dependencies": {
