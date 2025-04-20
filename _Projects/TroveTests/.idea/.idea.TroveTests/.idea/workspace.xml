@@ -6,14 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/SimpleDraw/Scenes/SimpleDrawTest.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/SimpleDraw/Scenes/SimpleDrawTest.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/Materials/Resources/SimpleDrawLineURP.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/Materials/Resources/SimpleDrawLineURP.mat.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/Shaders/SimpleDrawLineURPShader.shadergraph" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/Shaders/SimpleDrawLineURPShader.shadergraph.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawSystem.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawUtilities.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -162,7 +154,7 @@
       <workItem from="1744900061434" duration="2361000" />
       <workItem from="1744916394831" duration="13584000" />
       <workItem from="1744977293192" duration="10111000" />
-      <workItem from="1745082655310" duration="10431000" />
+      <workItem from="1745082655310" duration="12325000" />
     </task>
     <servers />
   </component>

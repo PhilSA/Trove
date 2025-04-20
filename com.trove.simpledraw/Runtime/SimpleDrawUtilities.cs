@@ -344,7 +344,7 @@ namespace Trove.SimpleDraw
             // IDs registered in the Start() method. It doesn't set any special flags.
             drawCommands->proceduralDrawCommands[0] = new BatchDrawCommandProcedural
             {
-                flags = 0,
+                flags = BatchDrawCommandFlags.None,
                 batchID = linesBatchData.BatchId,
                 materialID = linesBatchData.MaterialID,
                 
@@ -356,8 +356,8 @@ namespace Trove.SimpleDraw
                 
                 topology = MeshTopology.Lines,
                 baseVertex = 0,
-                elementCount = (uint)(numInstances * 2), 
-                indexBufferHandle = linesBatchData.PositionsBufferHandle,
+                elementCount = (uint)(numInstances), 
+                indexBufferHandle = default,
                 indexOffsetBytes = 0,
             };
 
@@ -388,7 +388,7 @@ namespace Trove.SimpleDraw
             // IDs registered in the Start() method. It doesn't set any special flags.
             drawCommands->proceduralDrawCommands[0] = new BatchDrawCommandProcedural
             {
-                flags = 0,
+                flags = BatchDrawCommandFlags.None,
                 batchID = linesBatchData.BatchId,
                 materialID = linesBatchData.MaterialID,
                 
@@ -431,7 +431,7 @@ namespace Trove.SimpleDraw
             // IDs registered in the Start() method. It doesn't set any special flags.
             drawCommands->drawCommands[0] = new BatchDrawCommand
             {
-                flags = 0,
+                flags = BatchDrawCommandFlags.None,
                 batchID = batchData.BatchId,
                 materialID = batchData.MaterialID,
                 meshID = batchData.MeshID,
