@@ -86,7 +86,7 @@ namespace Trove.DebugDraw
         }
 
         // TODO; 
-        private const int kNumInstances = 3;
+        private const int kNumInstances = 10;
 
         public void OnStartRunning(ref SystemState state)
         {
@@ -107,28 +107,27 @@ namespace Trove.DebugDraw
             {
                 singleton.UnlitLinesBatch = new DebugDrawProceduralLinesBatch(
                     default,
-                    data.BRG.RegisterMaterial(DebugDrawSystemManagedDataStore.DebugDrawUnlitLineMaterial), 
-                    default);
+                    data.BRG.RegisterMaterial(DebugDrawSystemManagedDataStore.DebugDrawUnlitLineMaterial));
                 singleton.UnlitTrisBatch = new DebugDrawProceduralLinesBatch(
                     default, 
-                    data.BRG.RegisterMaterial(DebugDrawSystemManagedDataStore.DebugDrawUnlitTriMaterial), 
-                    default);
+                    data.BRG.RegisterMaterial(DebugDrawSystemManagedDataStore.DebugDrawUnlitTriMaterial));
                 singleton.UnlitBoxMeshBatch = new DebugDrawMeshBatch(
                     default,
                     data.BRG.RegisterMaterial(DebugDrawSystemManagedDataStore.DebugDrawUnlitMaterial),
                     data.BRG.RegisterMesh(DebugDrawSystemManagedDataStore.SimpleBoxMesh));
             }
 
+            // TODO: combine all graphicsBuffers into one, and use offsets
             // Init graphics buffers
             int instanceBufferFloat4sLength = 4 + (kNumInstances * (3 + 3 + 1));
             int instanceBufferBytesLength = instanceBufferFloat4sLength * 16;
             data.LinesGraphicsBuffer = new GraphicsBuffer(
-                GraphicsBuffer.Target.Raw,
-                instanceBufferBytesLength, 
+                GraphicsBuffer.Target.Raw, 
+                instanceBufferBytesLength * 2, 
                 4);
             data.TrisGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Raw,
-                instanceBufferBytesLength,
+                instanceBufferBytesLength * 3,
                 4);
             data.BoxesGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Raw,
@@ -136,7 +135,7 @@ namespace Trove.DebugDraw
                 4);
             data.PositionsGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Structured,
-                kNumInstances * 2, // TODO: lines + tris count
+                kNumInstances, // TODO: lines + tris count
                 4 * 4);
              
             // Create batches
@@ -151,18 +150,6 @@ namespace Trove.DebugDraw
             //     data.BoxesGraphicsBuffer, 
             //     ref singleton.UnlitBoxMeshBatch.BatchId, 
             //     kNumInstances);
-
-            singleton.UnlitLinesBatch.PositionsBufferHandle = data.PositionsGraphicsBuffer.bufferHandle;
-            singleton.UnlitTrisBatch.PositionsBufferHandle = data.PositionsGraphicsBuffer.bufferHandle;
-
-            DebugDrawSystemManagedDataStore.DataMap[state.World] = data;
-            
-            // Create singleton
-            Entity singletonEntity = state.EntityManager.CreateEntity();
-            state.EntityManager.AddComponentData(singletonEntity, singleton);
-            
-             
-            
             
             // Set procedural data
             {
@@ -181,6 +168,12 @@ namespace Trove.DebugDraw
                 }
                 DebugDrawSystemManagedDataStore.DebugDrawUnlitLineMaterial.SetInt(DebugDrawSystemManagedDataStore.BaseIndexPropertyId, 0);
             }
+
+            DebugDrawSystemManagedDataStore.DataMap[state.World] = data;
+            
+            // Create singleton
+            Entity singletonEntity = state.EntityManager.CreateEntity();
+            state.EntityManager.AddComponentData(singletonEntity, singleton);
         }
 
         public void OnStopRunning(ref SystemState state)

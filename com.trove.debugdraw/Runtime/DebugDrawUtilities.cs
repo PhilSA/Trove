@@ -14,13 +14,11 @@ namespace Trove.DebugDraw
     {
         internal BatchID BatchId;
         internal BatchMaterialID MaterialID;
-        internal GraphicsBufferHandle PositionsBufferHandle;
 
-        public DebugDrawProceduralLinesBatch(BatchID batchId, BatchMaterialID materialId, GraphicsBufferHandle positionsBufferHandle)
+        public DebugDrawProceduralLinesBatch(BatchID batchId, BatchMaterialID materialId)
         {
             BatchId = batchId;
             MaterialID = materialId;
-            PositionsBufferHandle = positionsBufferHandle;
         }
     }
     
@@ -120,7 +118,7 @@ namespace Trove.DebugDraw
             int numInstances)
         {
             Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex(0); // TODO:
-            
+
             int objectToWorldFloat4sCount = numInstances * 3;
             int worldToObjectFloat4sCount = numInstances * 3;
             int colorFloat4sCount = numInstances;
@@ -137,12 +135,11 @@ namespace Trove.DebugDraw
             int objectToWorldsStart = 4;
             int worldToObjectsStart = objectToWorldsStart + objectToWorldFloat4sCount;
             int colorsStart = worldToObjectsStart + worldToObjectFloat4sCount;
+            float4x4 trs = float4x4.identity; // todo
+            float4x3 packedTrs = ToPackedMatrix(trs);
+            float4x3 packedTrsInv = ToPackedMatrix(math.inverse(trs));
             for (int i = 0; i < numInstances; i++)
             {
-                float4x4 trs = float4x4.Translate(random.NextFloat3(new float3(5f))); // todo
-                float4x3 packedTrs = ToPackedMatrix(trs);
-                float4x3 packedTrsInv = ToPackedMatrix(math.inverse(trs));
-                
                 // ObjectToWorlds
                 int writeIndex = objectToWorldsStart + i;
                 instances[writeIndex] = packedTrs.c0;
@@ -157,8 +154,7 @@ namespace Trove.DebugDraw
                 
                 // Colors
                 writeIndex = colorsStart + i;
-                Color color = Color.HSVToRGB(random.NextFloat(1f), 1f, 1f);
-                instances[writeIndex] = color.ToFloat4();
+                instances[writeIndex] = Color.HSVToRGB(random.NextFloat(1f), 1f, 1f).ToFloat4();
             }
             instancesBuffer.SetData(instances);
             
@@ -169,20 +165,27 @@ namespace Trove.DebugDraw
             // 0x00000000 metadata value and loads from the start of the buffer. The start of the buffer is
             // a zero matrix so this sort of load is guaranteed to return zero, which is a reasonable default value.
             NativeArray<MetadataValue> metadatas = new NativeArray<MetadataValue>(3, Allocator.Temp);
-            metadatas[0] = CreateMetadataValue(DebugDrawSystemManagedDataStore.ObjectToWorldPropertyId, objectToWorldsStart * 16, true);
-            metadatas[1] = CreateMetadataValue(DebugDrawSystemManagedDataStore.WorldToObjectPropertyId, worldToObjectsStart * 16, true);
-            metadatas[2] = CreateMetadataValue(DebugDrawSystemManagedDataStore.ColorPropertyId, colorsStart * 16, true);
+            metadatas[0] = CreateMetadataValue(DebugDrawSystemManagedDataStore.ObjectToWorldPropertyId, objectToWorldsStart * kSizeOfFloat4, true);
+            metadatas[1] = CreateMetadataValue(DebugDrawSystemManagedDataStore.WorldToObjectPropertyId, worldToObjectsStart * kSizeOfFloat4, true);
+            metadatas[2] = CreateMetadataValue(DebugDrawSystemManagedDataStore.ColorPropertyId, colorsStart * kSizeOfFloat4, true);
 
             // Finally, create a batch for the instances and make the batch use the GraphicsBuffer with the
             // instance data as well as the metadata values that specify where the properties are.
             batchID = brg.AddBatch(metadatas, instancesBuffer.bufferHandle);
             
             // Index buffer
-            NativeArray<float4> positions = new NativeArray<float4>(numInstances * 2, Allocator.Temp);
+            NativeArray<float4> positions = new NativeArray<float4>(numInstances, Allocator.Temp);
             for (int i = 0; i < numInstances; i++)
             {
-                positions[(i * 2)] = new float4(i, 0f, 0f, 0f);
-                positions[(i * 2) + 1] = new float4(i, 1f, 0f, 0f);
+                int lineIndex = i / 2;
+                if (i % 2 == 0)
+                {
+                    positions[i] = new float4(lineIndex, 0f, 0f, 0f);
+                }
+                else
+                {
+                    positions[i] = new float4(lineIndex, 2f, 0f, 0f);
+                }
             } 
             positionsBuffer.SetData(positions);
 
@@ -311,9 +314,9 @@ namespace Trove.DebugDraw
             // 0x00000000 metadata value and loads from the start of the buffer. The start of the buffer is
             // a zero matrix so this sort of load is guaranteed to return zero, which is a reasonable default value.
             NativeArray<MetadataValue> metadatas = new NativeArray<MetadataValue>(3, Allocator.Temp);
-            metadatas[0] = CreateMetadataValue(DebugDrawSystemManagedDataStore.ObjectToWorldPropertyId, objectToWorldsStart * 16, true);
-            metadatas[1] = CreateMetadataValue(DebugDrawSystemManagedDataStore.WorldToObjectPropertyId, worldToObjectsStart * 16, true);
-            metadatas[2] = CreateMetadataValue(DebugDrawSystemManagedDataStore.ColorPropertyId, colorsStart * 16, true);
+            metadatas[0] = CreateMetadataValue(DebugDrawSystemManagedDataStore.ObjectToWorldPropertyId, objectToWorldsStart * kSizeOfFloat4, true);
+            metadatas[1] = CreateMetadataValue(DebugDrawSystemManagedDataStore.WorldToObjectPropertyId, worldToObjectsStart * kSizeOfFloat4, true);
+            metadatas[2] = CreateMetadataValue(DebugDrawSystemManagedDataStore.ColorPropertyId, colorsStart * kSizeOfFloat4, true);
 
             // Finally, create a batch for the instances and make the batch use the GraphicsBuffer with the
             // instance data as well as the metadata values that specify where the properties are.

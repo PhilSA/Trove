@@ -5,7 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.simpledraw/Runtime/SimpleDrawSystem.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -154,6 +157,7 @@
       <workItem from="1744916394831" duration="13584000" />
       <workItem from="1744977293192" duration="10111000" />
       <workItem from="1745082655310" duration="22581000" />
+      <workItem from="1745159548616" duration="1589000" />
     </task>
     <servers />
   </component>
