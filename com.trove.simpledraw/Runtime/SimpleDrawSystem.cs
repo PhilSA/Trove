@@ -37,8 +37,6 @@ namespace Trove.SimpleDraw
         internal const string SimpleDrawUnlitMaterialName = "SimpleDrawUnlitURP";
 
         internal const string SimpleBoxName = "SimpleBox";
-        internal const string SimpleSphereName = "SimpleSphere";
-        internal const string SimpleCylinderName = "SimpleCylinder";
 
 #if UNITY_EDITOR
         [InitializeOnLoadMethod]
@@ -51,7 +49,7 @@ namespace Trove.SimpleDraw
             // Shader properties
             ColorPropertyId = Shader.PropertyToID("_Color");
             ObjectToWorldPropertyId = Shader.PropertyToID("unity_ObjectToWorld");
-            WorldToObjectPropertyId = Shader.PropertyToID("unity_WorldToObject");int positionsID = Shader.PropertyToID("_Positions");
+            WorldToObjectPropertyId = Shader.PropertyToID("unity_WorldToObject");
             PositionsPropertyId = Shader.PropertyToID("_Positions");
             NormalsPropertyId = Shader.PropertyToID("_Normals");
             TangentsPropertyId = Shader.PropertyToID("_Tangents");
@@ -64,8 +62,6 @@ namespace Trove.SimpleDraw
 
             // Meshes
             SimpleBoxMesh = Resources.Load<Mesh>(SimpleBoxName);
-            SimpleSphereMesh = Resources.Load<Mesh>(SimpleSphereName);
-            SimpleCylinderMesh = Resources.Load<Mesh>(SimpleCylinderName);
         }
     }
 
@@ -86,10 +82,7 @@ namespace Trove.SimpleDraw
         {
             internal SimpleDrawProceduralLinesBatch UnlitLinesBatch;
             internal SimpleDrawProceduralLinesBatch UnlitTrisBatch;
-            
             internal SimpleDrawMeshBatch UnlitBoxMeshBatch;
-            internal SimpleDrawMeshBatch UnlitSphereMeshBatch;
-            internal SimpleDrawMeshBatch UnlitCylinderMeshBatch;
         }
 
         // TODO; 
@@ -112,35 +105,52 @@ namespace Trove.SimpleDraw
             
             // Register batch resources ids
             {
-                BatchMaterialID unlitLineMaterialID = data.BRG.RegisterMaterial(SimpleDrawSystemManagedDataStore.SimpleDrawUnlitLineMaterial);
-                BatchMaterialID unlitTriMaterialID = data.BRG.RegisterMaterial(SimpleDrawSystemManagedDataStore.SimpleDrawUnlitTriMaterial);
-                BatchMaterialID unlitMaterialID = data.BRG.RegisterMaterial(SimpleDrawSystemManagedDataStore.SimpleDrawUnlitMaterial);
-                BatchMeshID boxMeshID = data.BRG.RegisterMesh(SimpleDrawSystemManagedDataStore.SimpleBoxMesh);
-                BatchMeshID sphereMeshID = data.BRG.RegisterMesh(SimpleDrawSystemManagedDataStore.SimpleSphereMesh);
-                BatchMeshID cylinderMeshID = data.BRG.RegisterMesh(SimpleDrawSystemManagedDataStore.SimpleCylinderMesh);
-
-                singleton.UnlitLinesBatch = new SimpleDrawProceduralLinesBatch(default, unlitLineMaterialID, default);
-                singleton.UnlitTrisBatch = new SimpleDrawProceduralLinesBatch(default, unlitTriMaterialID, default);
-                
-                singleton.UnlitBoxMeshBatch = new SimpleDrawMeshBatch(default, unlitMaterialID, boxMeshID);
-                singleton.UnlitSphereMeshBatch = new SimpleDrawMeshBatch(default, unlitMaterialID, sphereMeshID);
-                singleton.UnlitCylinderMeshBatch = new SimpleDrawMeshBatch(default, unlitMaterialID, cylinderMeshID);
+                singleton.UnlitLinesBatch = new SimpleDrawProceduralLinesBatch(
+                    default,
+                    data.BRG.RegisterMaterial(SimpleDrawSystemManagedDataStore.SimpleDrawUnlitLineMaterial), 
+                    default);
+                singleton.UnlitTrisBatch = new SimpleDrawProceduralLinesBatch(
+                    default, 
+                    data.BRG.RegisterMaterial(SimpleDrawSystemManagedDataStore.SimpleDrawUnlitTriMaterial), 
+                    default);
+                singleton.UnlitBoxMeshBatch = new SimpleDrawMeshBatch(
+                    default,
+                    data.BRG.RegisterMaterial(SimpleDrawSystemManagedDataStore.SimpleDrawUnlitMaterial),
+                    data.BRG.RegisterMesh(SimpleDrawSystemManagedDataStore.SimpleBoxMesh));
             }
 
             // Init graphics buffers
-            data.LinesGraphicsBuffer = SimpleDrawUtilities.CreateDrawLinesGraphicsBuffer(kNumInstances);
-            data.PositionsGraphicsBuffer = SimpleDrawUtilities.CreateIndexGraphicsBuffer(kNumInstances * 2);
-            data.TrisGraphicsBuffer = SimpleDrawUtilities.CreateDrawTrisGraphicsBuffer(kNumInstances);
-            data.BoxesGraphicsBuffer = SimpleDrawUtilities.CreateDrawMeshGraphicsBuffer(kNumInstances);
-            
+            int instanceBufferFloat4sLength = 4 + (kNumInstances * (3 + 3 + 1));
+            int instanceBufferBytesLength = instanceBufferFloat4sLength * 16;
+            data.LinesGraphicsBuffer = new GraphicsBuffer(
+                GraphicsBuffer.Target.Raw,
+                instanceBufferBytesLength, 
+                4);
+            data.TrisGraphicsBuffer = new GraphicsBuffer(
+                GraphicsBuffer.Target.Raw,
+                instanceBufferBytesLength,
+                4);
+            data.BoxesGraphicsBuffer = new GraphicsBuffer(
+                GraphicsBuffer.Target.Raw,
+                instanceBufferBytesLength,
+                4);
+            data.PositionsGraphicsBuffer = new GraphicsBuffer(
+                GraphicsBuffer.Target.Structured,
+                kNumInstances * 2, // TODO: lines + tris count
+                4 * 4);
+             
             // Create batches
-            SimpleDrawUtilities.CreateDrawLinesBatch(
+            // SimpleDrawUtilities.CreateDrawLinesBatch(
+            //     data.BRG, 
+            //     data.LinesGraphicsBuffer, 
+            //     data.PositionsGraphicsBuffer,
+            //     ref singleton.UnlitLinesBatch.BatchId,
+            //     kNumInstances);
+            SimpleDrawUtilities.CreateDrawMeshBatch(
                 data.BRG, 
-                data.LinesGraphicsBuffer, 
-                data.PositionsGraphicsBuffer,
-                ref singleton.UnlitLinesBatch.BatchId,
+                data.BoxesGraphicsBuffer, 
+                ref singleton.UnlitBoxMeshBatch.BatchId, 
                 kNumInstances);
-            //SimpleDrawUtilities.CreateDrawMeshBatch(data.BRG, data.BoxesGraphicsBuffer, ref singleton.UnlitBoxMeshBatch.BatchId);
 
             singleton.UnlitLinesBatch.PositionsBufferHandle = data.PositionsGraphicsBuffer.bufferHandle;
             singleton.UnlitTrisBatch.PositionsBufferHandle = data.PositionsGraphicsBuffer.bufferHandle;
@@ -177,7 +187,18 @@ namespace Trove.SimpleDraw
         { 
             if (SimpleDrawSystemManagedDataStore.DataMap.TryGetValue(state.World, out SimpleDrawSystemManagedData data))
             {
+                if (SystemAPI.TryGetSingleton(out Singleton singleton))
+                {
+                    data.BRG.UnregisterMaterial(singleton.UnlitLinesBatch.MaterialID);
+                    data.BRG.UnregisterMaterial(singleton.UnlitTrisBatch.MaterialID);
+                    data.BRG.UnregisterMaterial(singleton.UnlitBoxMeshBatch.MaterialID);
+                    data.BRG.UnregisterMesh(singleton.UnlitBoxMeshBatch.MeshID);
+                }
+
                 data.BRG.Dispose();
+                data.LinesGraphicsBuffer.Dispose();
+                data.PositionsGraphicsBuffer.Dispose();
+                data.TrisGraphicsBuffer.Dispose();
                 data.BoxesGraphicsBuffer.Dispose();
             }
         }
@@ -189,17 +210,13 @@ namespace Trove.SimpleDraw
         public JobHandle OnPerformCulling(
             BatchRendererGroup rendererGroup,
             BatchCullingContext cullingContext,
-            BatchCullingOutput cullingOutput,
+            BatchCullingOutput cullingOutput, 
             IntPtr userContext)
         {
+            if (!SystemAPI.HasSingleton<Singleton>())
+                return default;
+            Debug.Log("DRAW");
             Singleton singleton = SystemAPI.GetSingleton<Singleton>();
-            // SimpleDrawUtilities.DrawMeshCommand(
-            //     cullingContext, 
-            //     cullingOutput, 
-            //     userContext, 
-            //     singleton.UnlitBoxBatch, 
-            //     kNumInstances);
-            // return new JobHandle();
             
             // UnsafeUtility.Malloc() requires an alignment, so use the largest integer type's alignment
             // which is a reasonable default.
@@ -259,8 +276,8 @@ namespace Trove.SimpleDraw
         { 
             DrawCommands->drawCommandPickingInstanceIDs = null;
 
-            DrawCommands->drawCommandCount = 0;
-            DrawCommands->proceduralDrawCommandCount = 1;
+            DrawCommands->drawCommandCount = 1;
+            DrawCommands->proceduralDrawCommandCount = 0;
             DrawCommands->drawRangeCount = 1;
             DrawCommands->visibleInstanceCount = NumInstances;
             
@@ -268,15 +285,15 @@ namespace Trove.SimpleDraw
             DrawCommands->instanceSortingPositions = null;
             DrawCommands->instanceSortingPositionFloatCount = 0;
 
-            // SimpleDrawUtilities.DrawMeshCommand(
+            // SimpleDrawUtilities.DrawLinesCommand(
             //     DrawCommands, 
             //     UserContext, 
-            //     MeshBatchData, 
+            //     LinesBatchData, 
             //     NumInstances);
-            SimpleDrawUtilities.DrawLinesCommand(
+            SimpleDrawUtilities.DrawMeshCommand(
                 DrawCommands, 
                 UserContext, 
-                LinesBatchData, 
+                MeshBatchData, 
                 NumInstances);
 
             // Finally, write the actual visible instance indices to the array. In a more complicated

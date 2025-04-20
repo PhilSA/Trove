@@ -6,16 +6,6 @@ namespace Trove.Tweens
 {
     public static unsafe class TweenUtilities
     {
-        public static UnityEngine.Color ToColor(this float4 vec)
-        {
-            return new UnityEngine.Color(vec.x, vec.y, vec.z, vec.w);
-        }
-
-        public static float4 ToFloat4(this UnityEngine.Color color)
-        {
-            return new float4(color.r, color.g, color.b, color.a);
-        }
-
         public static void PlaySequence(bool reset, ref sbyte state, ref TweenTimer timer1, ref TweenTimer timer2)
         {
             int timersCount = 2;

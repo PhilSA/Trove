@@ -63,18 +63,17 @@ namespace Trove.SimpleDraw
         internal const int kExtraBytes = kSizeOfMatrix * 2;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3x4 ToPackedMatrix(float4x4 mat)
+        internal static float4x3 ToPackedMatrix(float4x4 mat)
         {
-            return new float3x4
+            return new float4x3
             {
-                c0 = mat.c0.xyz,
-                c1 = mat.c1.xyz,
-                c2 = mat.c2.xyz,
-                c3 = mat.c3.xyz,
+                c0 = new float4(mat.c0.x, mat.c0.y, mat.c0.z, mat.c1.x),
+                c1 = new float4(mat.c1.y, mat.c1.z, mat.c2.x, mat.c2.y),
+                c2 = new float4(mat.c2.z, mat.c3.x, mat.c3.y, mat.c3.z),
             };
         }
 
-        public static int GetIntsCountForAccomodatingBytesCount(int bytesPerInstance, int numInstances, int extraBytes = 0)
+        internal static int GetIntsCountForAccomodatingBytesCount(int bytesPerInstance, int numInstances, int extraBytes = 0)
         {
             // Round byte counts to int multiples
             bytesPerInstance = (bytesPerInstance + sizeof(int) - 1) / sizeof(int) * sizeof(int);
@@ -82,28 +81,18 @@ namespace Trove.SimpleDraw
             int totalBytes = bytesPerInstance * numInstances + extraBytes;
             return totalBytes / sizeof(int);
         }
-        
-        public static unsafe GraphicsBuffer CreateIndexGraphicsBuffer(int numIndexes)
+
+        internal static MetadataValue CreateMetadataValue(int nameID, int gpuAddress, bool isOverridden)
         {
-            int bytesPerInstance = kSizeOfFloat4; // position float4
-            
-            return new GraphicsBuffer(
-                GraphicsBuffer.Target.Raw,
-                GetIntsCountForAccomodatingBytesCount(bytesPerInstance, numIndexes, kExtraBytes),
-                sizeof(int));
+            const uint kIsOverriddenBit = 0x80000000;
+            return new MetadataValue
+            {
+                NameID = nameID,
+                Value = (uint)gpuAddress | (isOverridden ? kIsOverriddenBit : 0),
+            };
         }
         
-        public static unsafe GraphicsBuffer CreateDrawLinesGraphicsBuffer(int numInstances)
-        {
-            int bytesPerInstance = kSizeOfFloat4; // color float4
-            
-            return new GraphicsBuffer(
-                GraphicsBuffer.Target.Raw,
-                GetIntsCountForAccomodatingBytesCount(bytesPerInstance, numInstances, kExtraBytes),
-                sizeof(int));
-        }
-        
-        public static unsafe GraphicsBuffer CreateDrawTrisGraphicsBuffer(int numInstances)
+        internal static unsafe GraphicsBuffer CreateDrawTrisGraphicsBuffer(int numInstances)
         {
             int bytesPerInstance = kSizeOfFloat4; // color float4
             
@@ -113,7 +102,7 @@ namespace Trove.SimpleDraw
                 sizeof(int));
         }
         
-        public static GraphicsBuffer CreateDrawMeshGraphicsBuffer(int numInstances)
+        internal static GraphicsBuffer CreateDrawMeshGraphicsBuffer(int numInstances)
         {
             int bytesPerInstance = (kSizeOfPackedMatrix * 2) + kSizeOfFloat4;
             
@@ -125,64 +114,81 @@ namespace Trove.SimpleDraw
         
         internal static void CreateDrawLinesBatch(
             BatchRendererGroup brg, 
-            GraphicsBuffer graphicsBuffer, 
-            GraphicsBuffer indexBuffer, 
+            GraphicsBuffer instancesBuffer, 
+            GraphicsBuffer positionsBuffer, 
             ref BatchID batchID,
             int numInstances)
         {
-            // Index buffer
-            // -------------------------------------------
-            // Create transform matrices for three example instances.
-            NativeArray<float3> vertices = new NativeArray<float3>(numInstances * 2, Allocator.Temp);
-            vertices[0] = new float3(-2f, 1f, 0f);
-            vertices[1] = new float3(0f, 1f, 0f);
-            vertices[2] = new float3(2f, 1f, 0f);
-            vertices[3] = new float3(-2f, 1f, 2f);
-            vertices[4] = new float3(0f, 1f, 2f);
-            vertices[5] = new float3(2f, 1f, 2f);
-            indexBuffer.SetData(vertices);
+            Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex(0); // TODO:
             
+            int objectToWorldFloat4sCount = numInstances * 3;
+            int worldToObjectFloat4sCount = numInstances * 3;
+            int colorFloat4sCount = numInstances;
+            int totalFloat4sCount = 4 + (objectToWorldFloat4sCount + worldToObjectFloat4sCount + colorFloat4sCount);
+            NativeArray<float4> instances = new NativeArray<float4>(totalFloat4sCount, Allocator.Temp);
             
-            // Batch buffer
-            // -------------------------------------------
+            // Zero matrix
+            instances[0] = float4.zero;
+            instances[1] = float4.zero;
+            instances[2] = float4.zero;
+            instances[3] = float4.zero;
             
-            // Place a zero matrix at the start of the instance data buffer, so loads from address 0 return zero.
-            NativeArray<float4x4> zeroMatrix = new NativeArray<float4x4>(1, Allocator.Temp);
-            zeroMatrix[0] = float4x4.zero;
-
-            // Make all instances have unique colors.
-            NativeArray<float4> colors = new NativeArray<float4>(numInstances, Allocator.Temp);
-            colors[0] = new float4(1f, 0f, 0f, 1f);
-            colors[1] = new float4(0f, 1f, 0f, 1f);
-            colors[2] = new float4(0f, 0f, 1f, 1f);
-
-            // Calculates start addresses for the different instanced properties. unity_ObjectToWorld starts
-            // at address 96 instead of 64, because the computeBufferStartIndex parameter of SetData
-            // is expressed as source array elements, so it is easier to work in multiples of sizeof(PackedMatrix).
-            uint byteAddressColor = kSizeOfPackedMatrix * 2;
-
-            // Upload the instance data to the GraphicsBuffer so the shader can load them.
-            graphicsBuffer.SetData(zeroMatrix, 0, 0, 1);
-            graphicsBuffer.SetData(colors, 0, (int)(byteAddressColor / kSizeOfFloat4), colors.Length);
-
+            // Instance data
+            int objectToWorldsStart = 4;
+            int worldToObjectsStart = objectToWorldsStart + objectToWorldFloat4sCount;
+            int colorsStart = worldToObjectsStart + worldToObjectFloat4sCount;
+            for (int i = 0; i < numInstances; i++)
+            {
+                float4x4 trs = float4x4.Translate(random.NextFloat3(new float3(5f))); // todo
+                float4x3 packedTrs = ToPackedMatrix(trs);
+                float4x3 packedTrsInv = ToPackedMatrix(math.inverse(trs));
+                
+                // ObjectToWorlds
+                int writeIndex = objectToWorldsStart + i;
+                instances[writeIndex] = packedTrs.c0;
+                instances[writeIndex + 1] = packedTrs.c1;
+                instances[writeIndex + 2] = packedTrs.c2;
+                
+                // WorldToObjects
+                writeIndex = worldToObjectsStart + i;
+                instances[writeIndex] = packedTrsInv.c0;
+                instances[writeIndex + 1] = packedTrsInv.c1;
+                instances[writeIndex + 2] = packedTrsInv.c2;
+                
+                // Colors
+                writeIndex = colorsStart + i;
+                Color color = Color.HSVToRGB(random.NextFloat(1f), 1f, 1f);
+                instances[writeIndex] = color.ToFloat4();
+            }
+            instancesBuffer.SetData(instances);
+            
             // Set up metadata values to point to the instance data. Set the most significant bit 0x80000000 in each
             // which instructs the shader that the data is an array with one value per instance, indexed by the instance index.
             // Any metadata values that the shader uses that are not set here will be 0. When a value of 0 is used with
             // UNITY_ACCESS_DOTS_INSTANCED_PROP (i.e. without a default), the shader interprets the
             // 0x00000000 metadata value and loads from the start of the buffer. The start of the buffer is
             // a zero matrix so this sort of load is guaranteed to return zero, which is a reasonable default value.
-            NativeArray<MetadataValue> metadatas = new NativeArray<MetadataValue>(1, Allocator.TempJob);
-            metadatas[0] = new MetadataValue
-                { NameID = SimpleDrawSystemManagedDataStore.ColorPropertyId, Value = 0x80000000 | byteAddressColor, };
+            NativeArray<MetadataValue> metadatas = new NativeArray<MetadataValue>(3, Allocator.Temp);
+            metadatas[0] = CreateMetadataValue(SimpleDrawSystemManagedDataStore.ObjectToWorldPropertyId, objectToWorldsStart * 16, true);
+            metadatas[1] = CreateMetadataValue(SimpleDrawSystemManagedDataStore.WorldToObjectPropertyId, worldToObjectsStart * 16, true);
+            metadatas[2] = CreateMetadataValue(SimpleDrawSystemManagedDataStore.ColorPropertyId, colorsStart * 16, true);
 
             // Finally, create a batch for the instances and make the batch use the GraphicsBuffer with the
             // instance data as well as the metadata values that specify where the properties are.
-            batchID = brg.AddBatch(metadatas, graphicsBuffer.bufferHandle);
+            batchID = brg.AddBatch(metadatas, instancesBuffer.bufferHandle);
+            
+            // Index buffer
+            NativeArray<float4> positions = new NativeArray<float4>(numInstances * 2, Allocator.Temp);
+            for (int i = 0; i < numInstances; i++)
+            {
+                positions[i] = new float4(random.NextFloat3(-3f, 0f), 1);
+                positions[i + 1] = new float4(random.NextFloat3(0f, 3f), 1);
+            }
+            positionsBuffer.SetData(positions);
 
             // TODO: recycle all those arrays instead of realloc?
-            zeroMatrix.Dispose();
-            vertices.Dispose();
-            colors.Dispose();
+            instances.Dispose();
+            positions.Dispose();
         }
         
         internal static void CreateDrawTrisBatch(
@@ -195,16 +201,16 @@ namespace Trove.SimpleDraw
             // Index buffer
             // -------------------------------------------
             // Create transform matrices for three example instances.
-            NativeArray<float3> vertices = new NativeArray<float3>(numInstances * 3, Allocator.Temp);
-            vertices[0] = new float3(-2f, 1f, 0f);
-            vertices[1] = new float3(0f, 1f, 0f);
-            vertices[2] = new float3(2f, 1f, 0f);
-            vertices[3] = new float3(-2f, 1f, 2f);
-            vertices[4] = new float3(0f, 1f, 2f);
-            vertices[5] = new float3(2f, 1f, 2f);
-            vertices[6] = new float3(-2f, 1f, 4f);
-            vertices[7] = new float3(0f, 1f, 4f);
-            vertices[8] = new float3(2f, 1f, 4f);
+            NativeArray<float4> vertices = new NativeArray<float4>(numInstances * 3, Allocator.Temp);
+            vertices[0] = new float4(-2f, 1f, 0f, 1f);
+            vertices[1] = new float4(0f, 1f, 0f, 1f);
+            vertices[2] = new float4(2f, 1f, 0f, 1f);
+            vertices[3] = new float4(-2f, 1f, 2f, 1f);
+            vertices[4] = new float4(0f, 1f, 2f, 1f);
+            vertices[5] = new float4(2f, 1f, 2f, 1f);
+            vertices[6] = new float4(-2f, 1f, 4f, 1f);
+            vertices[7] = new float4(0f, 1f, 4f, 1f);
+            vertices[8] = new float4(2f, 1f, 4f, 1f);
             indexBuffer.SetData(vertices);
             
             
@@ -224,11 +230,11 @@ namespace Trove.SimpleDraw
             // Calculates start addresses for the different instanced properties. unity_ObjectToWorld starts
             // at address 96 instead of 64, because the computeBufferStartIndex parameter of SetData
             // is expressed as source array elements, so it is easier to work in multiples of sizeof(PackedMatrix).
-            uint byteAddressColor = kSizeOfPackedMatrix * 2;
+            int byteAddressColor = kSizeOfPackedMatrix * 2;
 
             // Upload the instance data to the GraphicsBuffer so the shader can load them.
             graphicsBuffer.SetData(zeroMatrix, 0, 0, 1);
-            graphicsBuffer.SetData(colors, 0, (int)(byteAddressColor / kSizeOfFloat4), colors.Length);
+            graphicsBuffer.SetData(colors, 0, (byteAddressColor / kSizeOfFloat4), colors.Length);
 
             // Set up metadata values to point to the instance data. Set the most significant bit 0x80000000 in each
             // which instructs the shader that the data is an array with one value per instance, indexed by the instance index.
@@ -237,8 +243,7 @@ namespace Trove.SimpleDraw
             // 0x00000000 metadata value and loads from the start of the buffer. The start of the buffer is
             // a zero matrix so this sort of load is guaranteed to return zero, which is a reasonable default value.
             NativeArray<MetadataValue> metadatas = new NativeArray<MetadataValue>(1, Allocator.TempJob);
-            metadatas[0] = new MetadataValue
-                { NameID = SimpleDrawSystemManagedDataStore.ColorPropertyId, Value = 0x80000000 | byteAddressColor, };
+            metadatas[0] = CreateMetadataValue(SimpleDrawSystemManagedDataStore.ColorPropertyId, byteAddressColor, true);
 
             // Finally, create a batch for the instances and make the batch use the GraphicsBuffer with the
             // instance data as well as the metadata values that specify where the properties are.
@@ -252,85 +257,70 @@ namespace Trove.SimpleDraw
         
         internal static void CreateDrawMeshBatch(
             BatchRendererGroup brg, 
-            GraphicsBuffer graphicsBuffer, 
+            GraphicsBuffer instancesBuffer, 
             ref BatchID batchID,
             int numInstances)
         {
-            // Place a zero matrix at the start of the instance data buffer, so loads from address 0 return zero.
-            NativeArray<float4x4> zeroMatrix = new NativeArray<float4x4>(1, Allocator.Temp);
-            zeroMatrix[0] = float4x4.zero;
-
-            // Create transform matrices for three example instances.
-            NativeArray<float4x4> matrices = new NativeArray<float4x4>(numInstances, Allocator.Temp);
-            matrices[0] = float4x4.Translate(new float3(-2f, 1f, 0f));
-            matrices[1] = float4x4.Translate(new float3(0f, 1f, 0f));
-            matrices[2] = float4x4.Translate(new float3(2f, 1f, 0f));
-
-            // Convert the transform matrices into the packed format that the shader expects.
-            NativeArray<float3x4> objectToWorlds = new NativeArray<float3x4>(numInstances, Allocator.Temp);
-            objectToWorlds[0] = SimpleDrawUtilities.ToPackedMatrix(matrices[0]);
-            objectToWorlds[1] = SimpleDrawUtilities.ToPackedMatrix(matrices[1]);
-            objectToWorlds[2] = SimpleDrawUtilities.ToPackedMatrix(matrices[2]);
-
-            // Also create packed inverse matrices.
-            NativeArray<float3x4> worldToObjects = new NativeArray<float3x4>(numInstances, Allocator.Temp);
-            worldToObjects[0] = SimpleDrawUtilities.ToPackedMatrix(math.inverse(matrices[0]));
-            worldToObjects[1] = SimpleDrawUtilities.ToPackedMatrix(math.inverse(matrices[1]));
-            worldToObjects[2] = SimpleDrawUtilities.ToPackedMatrix(math.inverse(matrices[2]));
-
-            // Make all instances have unique colors.
-            NativeArray<float4> colors = new NativeArray<float4>(numInstances, Allocator.Temp);
-            colors[0] = new float4(1f, 0f, 0f, 1f);
-            colors[1] = new float4(0f, 1f, 0f, 1f);
-            colors[2] = new float4(0f, 0f, 1f, 1f);
-
-            // In this simple example, the instance data is placed into the buffer like this:
-            // Offset | Description
-            //      0 | 64 bytes of zeroes, so loads from address 0 return zeroes
-            //     64 | 32 uninitialized bytes to make working with SetData easier, otherwise unnecessary
-            //     96 | unity_ObjectToWorld, three packed float3x4 matrices
-            //    240 | unity_WorldToObject, three packed float3x4 matrices
-            //    384 | _BaseColor, three float4s
-
-            // Calculates start addresses for the different instanced properties. unity_ObjectToWorld starts
-            // at address 96 instead of 64, because the computeBufferStartIndex parameter of SetData
-            // is expressed as source array elements, so it is easier to work in multiples of sizeof(PackedMatrix).
-            uint byteAddressObjectToWorld = kSizeOfPackedMatrix * 2;
-            uint byteAddressWorldToObject = byteAddressObjectToWorld + (uint)(kSizeOfPackedMatrix * numInstances);
-            uint byteAddressColor = byteAddressWorldToObject + (uint)(kSizeOfPackedMatrix * numInstances);
-
-            // Upload the instance data to the GraphicsBuffer so the shader can load them.
-            graphicsBuffer.SetData(zeroMatrix, 0, 0, 1);
-            graphicsBuffer.SetData(objectToWorlds, 0, (int)(byteAddressObjectToWorld / kSizeOfPackedMatrix),
-                objectToWorlds.Length);
-            graphicsBuffer.SetData(worldToObjects, 0, (int)(byteAddressWorldToObject / kSizeOfPackedMatrix),
-                worldToObjects.Length);
-            graphicsBuffer.SetData(colors, 0, (int)(byteAddressColor / kSizeOfFloat4), colors.Length);
-
+            Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex(0); // TODO:
+            
+            int objectToWorldFloat4sCount = numInstances * 3;
+            int worldToObjectFloat4sCount = numInstances * 3;
+            int colorFloat4sCount = numInstances;
+            int totalFloat4sCount = 4 + (objectToWorldFloat4sCount + worldToObjectFloat4sCount + colorFloat4sCount);
+            NativeArray<float4> instances = new NativeArray<float4>(totalFloat4sCount, Allocator.Temp);
+            
+            // Zero matrix
+            instances[0] = float4.zero;
+            instances[1] = float4.zero;
+            instances[2] = float4.zero;
+            instances[3] = float4.zero;
+            
+            // Instance data
+            int objectToWorldsStart = 4;
+            int worldToObjectsStart = objectToWorldsStart + objectToWorldFloat4sCount;
+            int colorsStart = worldToObjectsStart + worldToObjectFloat4sCount;
+            for (int i = 0; i < numInstances; i++)
+            {
+                float4x4 trs = float4x4.Translate(random.NextFloat3(new float3(5f))); // todo
+                float4x3 packedTrs = ToPackedMatrix(trs);
+                float4x3 packedTrsInv = ToPackedMatrix(math.inverse(trs));
+                
+                // ObjectToWorlds
+                int writeIndex = objectToWorldsStart + i;
+                instances[writeIndex] = packedTrs.c0;
+                instances[writeIndex + 1] = packedTrs.c1;
+                instances[writeIndex + 2] = packedTrs.c2;
+                
+                // WorldToObjects
+                writeIndex = worldToObjectsStart + i;
+                instances[writeIndex] = packedTrsInv.c0;
+                instances[writeIndex + 1] = packedTrsInv.c1;
+                instances[writeIndex + 2] = packedTrsInv.c2;
+                
+                // Colors
+                writeIndex = colorsStart + i;
+                Color color = Color.HSVToRGB(random.NextFloat(1f), 1f, 1f);
+                instances[writeIndex] = color.ToFloat4();
+            }
+            instancesBuffer.SetData(instances);
+            
             // Set up metadata values to point to the instance data. Set the most significant bit 0x80000000 in each
             // which instructs the shader that the data is an array with one value per instance, indexed by the instance index.
             // Any metadata values that the shader uses that are not set here will be 0. When a value of 0 is used with
             // UNITY_ACCESS_DOTS_INSTANCED_PROP (i.e. without a default), the shader interprets the
             // 0x00000000 metadata value and loads from the start of the buffer. The start of the buffer is
             // a zero matrix so this sort of load is guaranteed to return zero, which is a reasonable default value.
-            NativeArray<MetadataValue> metadatas = new NativeArray<MetadataValue>(3, Allocator.TempJob);
-            metadatas[0] = new MetadataValue
-                { NameID = SimpleDrawSystemManagedDataStore.ObjectToWorldPropertyId, Value = 0x80000000 | byteAddressObjectToWorld, };
-            metadatas[1] = new MetadataValue
-                { NameID = SimpleDrawSystemManagedDataStore.WorldToObjectPropertyId, Value = 0x80000000 | byteAddressWorldToObject, };
-            metadatas[2] = new MetadataValue
-                { NameID = SimpleDrawSystemManagedDataStore.ColorPropertyId, Value = 0x80000000 | byteAddressColor, };
+            NativeArray<MetadataValue> metadatas = new NativeArray<MetadataValue>(3, Allocator.Temp);
+            metadatas[0] = CreateMetadataValue(SimpleDrawSystemManagedDataStore.ObjectToWorldPropertyId, objectToWorldsStart * 16, true);
+            metadatas[1] = CreateMetadataValue(SimpleDrawSystemManagedDataStore.WorldToObjectPropertyId, worldToObjectsStart * 16, true);
+            metadatas[2] = CreateMetadataValue(SimpleDrawSystemManagedDataStore.ColorPropertyId, colorsStart * 16, true);
 
             // Finally, create a batch for the instances and make the batch use the GraphicsBuffer with the
             // instance data as well as the metadata values that specify where the properties are.
-            batchID = brg.AddBatch(metadatas, graphicsBuffer.bufferHandle);
+            batchID = brg.AddBatch(metadatas, instancesBuffer.bufferHandle);
 
             // TODO: recycle all those arrays instead of realloc?
-            zeroMatrix.Dispose();
-            matrices.Dispose();
-            objectToWorlds.Dispose();
-            worldToObjects.Dispose();
-            colors.Dispose();
+            instances.Dispose();
         }
 
         internal static unsafe void DrawLinesCommand(
