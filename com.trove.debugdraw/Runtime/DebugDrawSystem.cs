@@ -180,7 +180,8 @@ namespace Trove.DebugDraw
                     out DebugDrawSystemManagedData data))
             {
                 ref Singleton singleton = ref SystemAPI.GetSingletonRW<Singleton>().ValueRW;
-                
+
+                // Double buffering
                 GraphicsBuffer readPositionsBuffer = data.Positions1GraphicsBuffer;
                 GraphicsBuffer writePositionsBuffer = data.Positions2GraphicsBuffer;
                 switch (singleton.UsedBuffers)
@@ -194,38 +195,32 @@ namespace Trove.DebugDraw
                         writePositionsBuffer = data.Positions1GraphicsBuffer;
                         break;
                 }
-                
-                // TODO: double buffering
-                {
-                    // Set procedural data 
-                    {
-                        // TODO:
-                        // if (UseConstantBuffer)
-                        // {
-                        //     Shader.SetGlobalConstantBuffer(positionsID, _gpuPositions, 0, positions.Length * 4 * 4);
-                        //     Shader.SetGlobalConstantBuffer(normalsID, _gpuNormals, 0, positions.Length * 4 * 4);
-                        //     Shader.SetGlobalConstantBuffer(tangentsID, _gpuTangents, 0, positions.Length * 4 * 4);
-                        // }
-                        // else
-                        {
-                            Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.PositionsPropertyId,
-                                readPositionsBuffer);
-                            Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.ColorsPropertyId,
-                                data.ColorsGraphicsBuffer);
-                        }
-                        DebugDrawSystemManagedDataStore.DebugDrawUnlitLineMaterial.SetInt(
-                            DebugDrawSystemManagedDataStore.BaseIndexPropertyId, 0);
-                    }
-                }
 
-                 JobHandle job = new UpdateBuffersJob
-                 {
-                     ElapsedTime = (float)SystemAPI.Time.ElapsedTime,
-                     PositionsBuffer = writePositionsBuffer.LockBufferForWrite<float4>(0, kNumLines * 2),
-                 }.Schedule(default);
-                 job.Complete(); 
-                
+                JobHandle job = new UpdateBuffersJob
+                {
+                    ElapsedTime = (float)SystemAPI.Time.ElapsedTime,
+                    PositionsBuffer = writePositionsBuffer.LockBufferForWrite<float4>(0, kNumLines * 2),
+                }.Schedule(default);
+                job.Complete();
+
                 writePositionsBuffer.UnlockBufferAfterWrite<float4>(kNumLines * 2);
+
+                // TODO: gles
+                // if (UseConstantBuffer)
+                // {
+                //     Shader.SetGlobalConstantBuffer(positionsID, _gpuPositions, 0, positions.Length * 4 * 4);
+                //     Shader.SetGlobalConstantBuffer(normalsID, _gpuNormals, 0, positions.Length * 4 * 4);
+                //     Shader.SetGlobalConstantBuffer(tangentsID, _gpuTangents, 0, positions.Length * 4 * 4);
+                // }
+                // else
+                {
+                    Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.PositionsPropertyId,
+                        writePositionsBuffer);
+                    Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.ColorsPropertyId,
+                        data.ColorsGraphicsBuffer);
+                }
+                DebugDrawSystemManagedDataStore.DebugDrawUnlitLineMaterial.SetInt(
+                    DebugDrawSystemManagedDataStore.BaseIndexPropertyId, 0);
 
                 singleton.UsedBuffers++;
                 singleton.UsedBuffers = singleton.UsedBuffers % 2;
