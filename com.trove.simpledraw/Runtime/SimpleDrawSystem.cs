@@ -140,17 +140,17 @@ namespace Trove.SimpleDraw
                 4 * 4);
              
             // Create batches
-            // SimpleDrawUtilities.CreateDrawLinesBatch(
-            //     data.BRG, 
-            //     data.LinesGraphicsBuffer, 
-            //     data.PositionsGraphicsBuffer,
-            //     ref singleton.UnlitLinesBatch.BatchId,
-            //     kNumInstances);
-            SimpleDrawUtilities.CreateDrawMeshBatch(
+            SimpleDrawUtilities.CreateDrawLinesBatch(
                 data.BRG, 
-                data.BoxesGraphicsBuffer, 
-                ref singleton.UnlitBoxMeshBatch.BatchId, 
+                data.LinesGraphicsBuffer, 
+                data.PositionsGraphicsBuffer,
+                ref singleton.UnlitLinesBatch.BatchId,
                 kNumInstances);
+            // SimpleDrawUtilities.CreateDrawMeshBatch(
+            //     data.BRG, 
+            //     data.BoxesGraphicsBuffer, 
+            //     ref singleton.UnlitBoxMeshBatch.BatchId, 
+            //     kNumInstances);
 
             singleton.UnlitLinesBatch.PositionsBufferHandle = data.PositionsGraphicsBuffer.bufferHandle;
             singleton.UnlitTrisBatch.PositionsBufferHandle = data.PositionsGraphicsBuffer.bufferHandle;
@@ -215,7 +215,7 @@ namespace Trove.SimpleDraw
         {
             if (!SystemAPI.HasSingleton<Singleton>())
                 return default;
-            Debug.Log("DRAW");
+            
             Singleton singleton = SystemAPI.GetSingleton<Singleton>();
             
             // UnsafeUtility.Malloc() requires an alignment, so use the largest integer type's alignment
@@ -285,16 +285,16 @@ namespace Trove.SimpleDraw
             DrawCommands->instanceSortingPositions = null;
             DrawCommands->instanceSortingPositionFloatCount = 0;
 
-            // SimpleDrawUtilities.DrawLinesCommand(
-            //     DrawCommands, 
-            //     UserContext, 
-            //     LinesBatchData, 
-            //     NumInstances);
-            SimpleDrawUtilities.DrawMeshCommand(
+            SimpleDrawUtilities.DrawLinesCommand(
                 DrawCommands, 
                 UserContext, 
-                MeshBatchData, 
+                LinesBatchData, 
                 NumInstances);
+            // SimpleDrawUtilities.DrawMeshCommand(
+            //     DrawCommands, 
+            //     UserContext, 
+            //     MeshBatchData, 
+            //     NumInstances);
 
             // Finally, write the actual visible instance indices to the array. In a more complicated
             // implementation, this output would depend on what is visible, but this example
