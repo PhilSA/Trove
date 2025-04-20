@@ -86,7 +86,7 @@ namespace Trove.DebugDraw
         }
 
         // TODO; 
-        private const int kNumInstances = 10;
+        private const int kNumInstances = 8;
 
         public void OnStartRunning(ref SystemState state)
         {

@@ -6,7 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" afterDir="false" />
     </list>
@@ -36,6 +36,7 @@
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6AC28F3E17FE520B93434DC8/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyCubeState.generated.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/1e74f08236fb4c1791a523c0bf197e6c1df600/a0/3b9d6f4e/BatchDrawCommand.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/1e74f08236fb4c1791a523c0bf197e6c1df600/a4/810cb831/BatchCullingOutput.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/1e74f08236fb4c1791a523c0bf197e6c1df600/b5/e2015854/GraphicsBuffer.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/1e74f08236fb4c1791a523c0bf197e6c1df600/c1/a45080a3/BatchDrawCommandProcedural.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/1e74f08236fb4c1791a523c0bf197e6c1df600/d2/5e41f617/BatchCullingOutputDrawCommands.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/314938d17f3848e8ac683e11b27f62ee46ae00/1c/ab200b44/Exception.cs" root0="FORCE_HIGHLIGHTING" />
@@ -157,7 +158,7 @@
       <workItem from="1744916394831" duration="13584000" />
       <workItem from="1744977293192" duration="10111000" />
       <workItem from="1745082655310" duration="22581000" />
-      <workItem from="1745159548616" duration="1589000" />
+      <workItem from="1745159548616" duration="4408000" />
     </task>
     <servers />
   </component>

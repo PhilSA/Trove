@@ -59,6 +59,7 @@ namespace Trove.DebugDraw
         internal const int kSizeOfFloat3 = sizeof(float) * 3;
         internal const int kSizeOfFloat4 = sizeof(float) * 4;
         internal const int kExtraBytes = kSizeOfMatrix * 2;
+        internal const uint kIsOverriddenBit = 0x80000000;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static float4x3 ToPackedMatrix(float4x4 mat)
@@ -80,13 +81,12 @@ namespace Trove.DebugDraw
             return totalBytes / sizeof(int);
         }
 
-        internal static MetadataValue CreateMetadataValue(int nameID, int gpuAddress, bool isOverridden)
+        internal static MetadataValue CreateMetadataValue(int propertyID, int byteAddress, bool isOverridden)
         {
-            const uint kIsOverriddenBit = 0x80000000;
             return new MetadataValue
             {
-                NameID = nameID,
-                Value = (uint)gpuAddress | (isOverridden ? kIsOverriddenBit : 0),
+                NameID = propertyID,
+                Value = (uint)byteAddress | (isOverridden ? kIsOverriddenBit : 0),
             };
         }
         
@@ -132,31 +132,35 @@ namespace Trove.DebugDraw
             instances[3] = float4.zero;
             
             // Instance data
+            float4 tmpColor = default; // TODO:
             int objectToWorldsStart = 4;
             int worldToObjectsStart = objectToWorldsStart + objectToWorldFloat4sCount;
             int colorsStart = worldToObjectsStart + worldToObjectFloat4sCount;
-            float4x4 trs = float4x4.identity; // todo
+            float4x4 trs = float4x4.identity; 
             float4x3 packedTrs = ToPackedMatrix(trs);
             float4x3 packedTrsInv = ToPackedMatrix(math.inverse(trs));
-            for (int i = 0; i < numInstances; i++)
+            for (int i = 0; i < numInstances; i++) 
             {
                 // ObjectToWorlds
-                int writeIndex = objectToWorldsStart + i;
-                instances[writeIndex] = packedTrs.c0;
-                instances[writeIndex + 1] = packedTrs.c1;
-                instances[writeIndex + 2] = packedTrs.c2;
+                instances[objectToWorldsStart + i] = packedTrs.c0;
+                instances[objectToWorldsStart + i + 1] = packedTrs.c1;
+                instances[objectToWorldsStart + i + 2] = packedTrs.c2;
                 
                 // WorldToObjects
-                writeIndex = worldToObjectsStart + i;
-                instances[writeIndex] = packedTrsInv.c0;
-                instances[writeIndex + 1] = packedTrsInv.c1;
-                instances[writeIndex + 2] = packedTrsInv.c2;
+                instances[worldToObjectsStart + i] = packedTrsInv.c0;
+                instances[worldToObjectsStart + i + 1] = packedTrsInv.c1;
+                instances[worldToObjectsStart + i + 2] = packedTrsInv.c2;
                 
-                // Colors
-                writeIndex = colorsStart + i;
-                instances[writeIndex] = Color.HSVToRGB(random.NextFloat(1f), 1f, 1f).ToFloat4();
+                // Colors 
+                if (i % 2 == 0)
+                { 
+                    int lineIndex = i / 2;
+                    tmpColor = Color.HSVToRGB((lineIndex % 20) / 20f, 1f, 1f).ToFloat4();
+                }
+                instances[colorsStart + i] = tmpColor;
+                Debug.Log($"Set color {i} to {tmpColor}");
             }
-            instancesBuffer.SetData(instances);
+            instancesBuffer.SetData(instances, 0, 0, instances.Length);
             
             // Set up metadata values to point to the instance data. Set the most significant bit 0x80000000 in each
             // which instructs the shader that the data is an array with one value per instance, indexed by the instance index.
@@ -177,8 +181,8 @@ namespace Trove.DebugDraw
             NativeArray<float4> positions = new NativeArray<float4>(numInstances, Allocator.Temp);
             for (int i = 0; i < numInstances; i++)
             {
-                int lineIndex = i / 2;
-                if (i % 2 == 0)
+                int lineIndex = i / 2; 
+                if (i % 2 == 0) 
                 {
                     positions[i] = new float4(lineIndex, 0f, 0f, 0f);
                 }
@@ -187,7 +191,7 @@ namespace Trove.DebugDraw
                     positions[i] = new float4(lineIndex, 2f, 0f, 0f);
                 }
             } 
-            positionsBuffer.SetData(positions);
+            positionsBuffer.SetData(positions, 0, 0, positions.Length);
 
             // TODO: recycle all those arrays instead of realloc?
             instances.Dispose();
@@ -289,21 +293,18 @@ namespace Trove.DebugDraw
                 float4x3 packedTrsInv = ToPackedMatrix(math.inverse(trs));
                 
                 // ObjectToWorlds
-                int writeIndex = objectToWorldsStart + i;
-                instances[writeIndex] = packedTrs.c0;
-                instances[writeIndex + 1] = packedTrs.c1;
-                instances[writeIndex + 2] = packedTrs.c2;
+                instances[objectToWorldsStart + i] = packedTrs.c0;
+                instances[objectToWorldsStart + i + 1] = packedTrs.c1;
+                instances[objectToWorldsStart + i + 2] = packedTrs.c2;
                 
                 // WorldToObjects
-                writeIndex = worldToObjectsStart + i;
-                instances[writeIndex] = packedTrsInv.c0;
-                instances[writeIndex + 1] = packedTrsInv.c1;
-                instances[writeIndex + 2] = packedTrsInv.c2;
+                instances[worldToObjectsStart + i] = packedTrsInv.c0;
+                instances[worldToObjectsStart + i + 1] = packedTrsInv.c1;
+                instances[worldToObjectsStart + i + 2] = packedTrsInv.c2;
                 
                 // Colors
-                writeIndex = colorsStart + i;
                 Color color = Color.HSVToRGB(random.NextFloat(1f), 1f, 1f);
-                instances[writeIndex] = color.ToFloat4();
+                instances[colorsStart + i] = color.ToFloat4();
             }
             instancesBuffer.SetData(instances);
             
