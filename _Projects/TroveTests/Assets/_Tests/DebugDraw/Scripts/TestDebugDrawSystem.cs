@@ -6,6 +6,7 @@ using Unity.Mathematics;
 public struct TestDebugDraw : IComponentData
 {
     public int LinesCount;
+    public int TrianglesCount;
     public bool Update;
     public bool UseLegacyDebugLine;
 }
@@ -37,18 +38,31 @@ partial struct TestDebugDrawSystem : ISystem
         {
             ref DebugDrawSingleton debugDrawSingleton = ref SystemAPI.GetSingletonRW<DebugDrawSingleton>().ValueRW;
             _debugDrawGroup = debugDrawSingleton.AllocateDebugDrawGroup();
-
-            int resolution = (int)math.ceil(math.pow(testDebugDraw.LinesCount, 1f/3f));
+            
             float spacing = 2f;
+
+            int linesResolution = (int)math.ceil(math.pow(testDebugDraw.LinesCount, 1f/3f));
             for (int i = 0; i < testDebugDraw.LinesCount; i++)
             {
-                float xStart = (i % resolution) * spacing;
-                float zStart = ((i / resolution) % resolution) * spacing;
-                float yStart = (i / (resolution * resolution)) * spacing;
+                float xStart = (i % linesResolution) * spacing;
+                float zStart = ((i / linesResolution) % linesResolution) * spacing;
+                float yStart = (i / (linesResolution * linesResolution)) * spacing;
                 float3 start = new float3(xStart, yStart, zStart);
                 
                 UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f)) % 1f, 1f, 1f);
                 _debugDrawGroup.AddLine(start, start + math.up(), tmpColor);
+            }
+
+            int trisResolution = (int)math.ceil(math.pow(testDebugDraw.TrianglesCount, 1f/3f));
+            for (int i = 0; i < testDebugDraw.TrianglesCount; i++)
+            {
+                float xStart = (i % trisResolution) * spacing;
+                float zStart = ((i / trisResolution) % trisResolution) * spacing;
+                float yStart = (i / (trisResolution * trisResolution)) * spacing;
+                float3 start = new float3(-xStart, -yStart, -zStart);
+                
+                UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f)) % 1f, 1f, 1f);
+                _debugDrawGroup.AddTriangle(start, start + math.up(), start + math.right(), tmpColor);
             }
         }
 
@@ -56,16 +70,16 @@ partial struct TestDebugDrawSystem : ISystem
         {
             _debugDrawGroup.Clear();
             
-            int resolution = (int)math.ceil(math.pow(testDebugDraw.LinesCount, 1f/3f));
             float spacing = 2f;
-
+            
+            int linesResolution = (int)math.ceil(math.pow(testDebugDraw.LinesCount, 1f/3f));
             if (testDebugDraw.UseLegacyDebugLine)
             {
                 for (int i = 0; i < testDebugDraw.LinesCount; i++)
                 {
-                    float xStart = (i % resolution) * spacing;
-                    float zStart = ((i / resolution) % resolution) * spacing;
-                    float yStart = (i / (resolution * resolution)) * spacing;
+                    float xStart = (i % linesResolution) * spacing;
+                    float zStart = ((i / linesResolution) % linesResolution) * spacing;
+                    float yStart = (i / (linesResolution * linesResolution)) * spacing;
                     float3 start = new float3(xStart, yStart, zStart) + elapsedTime;
                 
                     UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f) + elapsedTime) % 1f, 1f, 1f);
@@ -76,14 +90,26 @@ partial struct TestDebugDrawSystem : ISystem
             {
                 for (int i = 0; i < testDebugDraw.LinesCount; i++)
                 {
-                    float xStart = (i % resolution) * spacing;
-                    float zStart = ((i / resolution) % resolution) * spacing;
-                    float yStart = (i / (resolution * resolution)) * spacing;
+                    float xStart = (i % linesResolution) * spacing;
+                    float zStart = ((i / linesResolution) % linesResolution) * spacing;
+                    float yStart = (i / (linesResolution * linesResolution)) * spacing;
                     float3 start = new float3(xStart, yStart, zStart) + elapsedTime;
                 
                     UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f) + elapsedTime) % 1f, 1f, 1f);
                     _debugDrawGroup.AddLine(start, start + math.up(), tmpColor);
                 }
+            }
+
+            int trisResolution = (int)math.ceil(math.pow(testDebugDraw.TrianglesCount, 1f/3f));
+            for (int i = 0; i < testDebugDraw.TrianglesCount; i++)
+            {
+                float xStart = (i % trisResolution) * spacing;
+                float zStart = ((i / trisResolution) % trisResolution) * spacing;
+                float yStart = (i / (trisResolution * trisResolution)) * spacing;
+                float3 start = new float3(-xStart, -yStart, -zStart) + elapsedTime;
+                
+                UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f) + elapsedTime) % 1f, 1f, 1f);
+                _debugDrawGroup.AddTriangle(start, start + math.up(), start + math.right(), tmpColor);
             }
         }
     }

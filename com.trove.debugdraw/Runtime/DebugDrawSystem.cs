@@ -16,24 +16,17 @@ namespace Trove.DebugDraw
     {
         internal static Dictionary<ulong, DebugDrawSystemManagedData> DataMap;
 
-        internal static int ColorPropertyId;
         internal static int ObjectToWorldPropertyId;
         internal static int WorldToObjectPropertyId;
-        internal static int PositionsPropertyId;
-        internal static int ColorsPropertyId;
-        internal static int NormalsPropertyId;
-        internal static int TangentsPropertyId;
-        internal static int BaseIndexPropertyId;
+        internal static int LinePositionsPropertyId;
+        internal static int LineColorsPropertyId;
+        internal static int TrianglePositionsPropertyId;
+        internal static int TriangleColorsPropertyId;
 
         internal static Material DebugDrawUnlitLineMaterial;
         internal static Material DebugDrawUnlitTriMaterial;
-        internal static Material DebugDrawUnlitMaterial;
 
         private static bool _hasInitialized;
-
-        internal const string DebugDrawUnlitLineMaterialName = "DebugDrawUnlitLineURP";
-        internal const string DebugDrawUnlitTriMaterialName = "DebugDrawUnlitTriURP";
-        internal const string DebugDrawUnlitMaterialName = "DebugDrawUnlitURP";
 
         internal static void Initialize()
         {
@@ -42,20 +35,17 @@ namespace Trove.DebugDraw
                 DataMap = new Dictionary<ulong, DebugDrawSystemManagedData>();
 
                 // Shader properties
-                ColorPropertyId = Shader.PropertyToID("_Color");
                 ObjectToWorldPropertyId = Shader.PropertyToID("unity_ObjectToWorld");
                 WorldToObjectPropertyId = Shader.PropertyToID("unity_WorldToObject");
-                PositionsPropertyId = Shader.PropertyToID("_Positions");
-                ColorsPropertyId = Shader.PropertyToID("_Colors");
-                NormalsPropertyId = Shader.PropertyToID("_Normals");
-                TangentsPropertyId = Shader.PropertyToID("_Tangents");
-                BaseIndexPropertyId = Shader.PropertyToID("_BaseIndex");
+                LinePositionsPropertyId = Shader.PropertyToID("_LinePositions");
+                LineColorsPropertyId = Shader.PropertyToID("_LineColors");
+                TrianglePositionsPropertyId = Shader.PropertyToID("_TrianglePositions");
+                TriangleColorsPropertyId = Shader.PropertyToID("_TriangleColors");
 
                 // Materials
-                DebugDrawUnlitLineMaterial = Resources.Load<Material>(DebugDrawUnlitLineMaterialName);
-                DebugDrawUnlitTriMaterial = Resources.Load<Material>(DebugDrawUnlitTriMaterialName);
-                DebugDrawUnlitMaterial = Resources.Load<Material>(DebugDrawUnlitMaterialName);
-                
+                DebugDrawUnlitLineMaterial = Resources.Load<Material>("DebugDrawUnlitLine");
+                DebugDrawUnlitTriMaterial = Resources.Load<Material>("DebugDrawUnlitTri");
+
                 _hasInitialized = true;
             }
         }
@@ -64,31 +54,49 @@ namespace Trove.DebugDraw
     internal class DebugDrawSystemManagedData
     {
         internal BatchRendererGroup BRG;
-        internal GraphicsBuffer Positions1GraphicsBuffer;
-        internal GraphicsBuffer Positions2GraphicsBuffer;
-        internal GraphicsBuffer Colors1GraphicsBuffer;
-        internal GraphicsBuffer Colors2GraphicsBuffer;
-        internal GraphicsBuffer InstancesGraphicsBuffer;
+
+        internal GraphicsBuffer LinePositions1GraphicsBuffer;
+        internal GraphicsBuffer LinePositions2GraphicsBuffer;
+        internal GraphicsBuffer LineColors1GraphicsBuffer;
+        internal GraphicsBuffer LineColors2GraphicsBuffer;
+
+        internal GraphicsBuffer TrianglePositions1GraphicsBuffer;
+        internal GraphicsBuffer TrianglePositions2GraphicsBuffer;
+        internal GraphicsBuffer TriangleColors1GraphicsBuffer;
+        internal GraphicsBuffer TriangleColors2GraphicsBuffer;
+
+        internal GraphicsBuffer LineInstancesGraphicsBuffer;
+        internal GraphicsBuffer TriangleInstancesGraphicsBuffer;
 
         internal void Dispose()
         {
             BRG.Dispose();
-            Positions1GraphicsBuffer.Dispose();
-            Positions2GraphicsBuffer.Dispose();
-            Colors1GraphicsBuffer.Dispose();
-            Colors2GraphicsBuffer.Dispose();
-            InstancesGraphicsBuffer.Dispose();
+
+            LinePositions1GraphicsBuffer.Dispose();
+            LinePositions2GraphicsBuffer.Dispose();
+            LineColors1GraphicsBuffer.Dispose();
+            LineColors2GraphicsBuffer.Dispose();
+
+            TrianglePositions1GraphicsBuffer.Dispose();
+            TrianglePositions2GraphicsBuffer.Dispose();
+            TriangleColors1GraphicsBuffer.Dispose();
+            TriangleColors2GraphicsBuffer.Dispose();
+
+            LineInstancesGraphicsBuffer.Dispose();
+            TriangleInstancesGraphicsBuffer.Dispose();
         }
     }
-    
+
     public unsafe struct DebugDrawSingleton : IComponentData
     {
         internal int UsedBuffers;
-        internal DebugDrawProceduralLinesBatch UnlitLinesBatch;
+        internal DebugDrawProceduralBatch LinesBatch;
+        internal DebugDrawProceduralBatch TrisBatch;
 
         internal UnsafeList<DebugDrawGroup> DebugDrawGroups;
         internal int TotalLineElementsCount;
-        
+        internal int TotalTriangleElementsCount;
+
         internal int* PreventInJobsPtr;
 
         public DebugDrawGroup AllocateDebugDrawGroup(int initialCapacity = 16)
@@ -97,7 +105,9 @@ namespace Trove.DebugDraw
             newGroup.IsDirty = new NativeReference<bool>(Allocator.Persistent);
             newGroup.LinePositions = new NativeList<float4>(initialCapacity, Allocator.Persistent);
             newGroup.LineColors = new NativeList<float4>(initialCapacity, Allocator.Persistent);
-                
+            newGroup.TrianglePositions = new NativeList<float4>(initialCapacity, Allocator.Persistent);
+            newGroup.TriangleColors = new NativeList<float4>(initialCapacity, Allocator.Persistent);
+
             DebugDrawGroups.Add(newGroup);
             return newGroup;
         }
@@ -107,19 +117,17 @@ namespace Trove.DebugDraw
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public unsafe partial struct DebugDrawSystem : ISystem, ISystemStartStop
     {
-
         private ulong WorldSequenceNumber;
-        
-        
+
         public void OnStartRunning(ref SystemState state)
         {
             WorldSequenceNumber = state.WorldUnmanaged.SequenceNumber;
             DebugDrawSystemManagedDataStore.Initialize();
-            
+
             DebugDrawSingleton debugDrawSingleton = new DebugDrawSingleton();
-            
+
             debugDrawSingleton.DebugDrawGroups = new UnsafeList<DebugDrawGroup>(16, Allocator.Persistent);
-            
+
             if (DebugDrawSystemManagedDataStore.DataMap.TryGetValue(WorldSequenceNumber, out DebugDrawSystemManagedData data))
             {
                 // Dispose old data
@@ -129,61 +137,93 @@ namespace Trove.DebugDraw
             {
                 data = new DebugDrawSystemManagedData();
                 DebugDrawSystemManagedDataStore.DataMap.Add(WorldSequenceNumber, data);
-            } 
-
-            data.BRG = new BatchRendererGroup(this.OnPerformCulling, IntPtr.Zero);
-            
-            // Register batch resources ids
-            {
-                debugDrawSingleton.UnlitLinesBatch = new DebugDrawProceduralLinesBatch(
-                    default,
-                    data.BRG.RegisterMaterial(DebugDrawSystemManagedDataStore.DebugDrawUnlitLineMaterial));
             }
 
-            // TODO: combine all graphicsBuffers into one, and use offsets
+            data.BRG = new BatchRendererGroup(this.OnPerformCulling, IntPtr.Zero);
+
+            // Register batch resources ids
+            {
+                debugDrawSingleton.LinesBatch = new DebugDrawProceduralBatch(
+                    default,
+                    data.BRG.RegisterMaterial(DebugDrawSystemManagedDataStore.DebugDrawUnlitLineMaterial));
+                debugDrawSingleton.TrisBatch = new DebugDrawProceduralBatch(
+                    default,
+                    data.BRG.RegisterMaterial(DebugDrawSystemManagedDataStore.DebugDrawUnlitTriMaterial));
+            }
+
             // Init graphics buffers
             int instanceBufferFloat4sLength = 4 + (3 + 3);
             int instanceBufferBytesLength = instanceBufferFloat4sLength * DebugDrawUtilities.kSizeOfFloat4;
-            data.InstancesGraphicsBuffer = new GraphicsBuffer(
-                GraphicsBuffer.Target.Raw, 
-                instanceBufferBytesLength, 
+            data.LineInstancesGraphicsBuffer = new GraphicsBuffer(
+                GraphicsBuffer.Target.Raw,
+                instanceBufferBytesLength,
                 4);
-            data.Positions1GraphicsBuffer = new GraphicsBuffer(
+            data.TriangleInstancesGraphicsBuffer = new GraphicsBuffer(
+                GraphicsBuffer.Target.Raw,
+                instanceBufferBytesLength,
+                4);
+
+            data.LinePositions1GraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Structured,
                 GraphicsBuffer.UsageFlags.LockBufferForWrite,
-                1024, // TODO: lines + tris count
+                1024,
                 4 * 4);
-            data.Positions2GraphicsBuffer = new GraphicsBuffer(
+            data.LinePositions2GraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Structured,
                 GraphicsBuffer.UsageFlags.LockBufferForWrite,
-                1024, // TODO: lines + tris count
+                1024,
                 4 * 4);
-            data.Colors1GraphicsBuffer = new GraphicsBuffer(
+            data.LineColors1GraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Structured,
                 GraphicsBuffer.UsageFlags.LockBufferForWrite,
-                1024, // TODO: lines + tris count
+                1024,
                 4 * 4);
-            data.Colors2GraphicsBuffer = new GraphicsBuffer(
+            data.LineColors2GraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Structured,
                 GraphicsBuffer.UsageFlags.LockBufferForWrite,
-                1024, // TODO: lines + tris count
+                1024,
                 4 * 4);
-            
+
+            data.TrianglePositions1GraphicsBuffer = new GraphicsBuffer(
+                GraphicsBuffer.Target.Structured,
+                GraphicsBuffer.UsageFlags.LockBufferForWrite,
+                1200,
+                4 * 4);
+            data.TrianglePositions2GraphicsBuffer = new GraphicsBuffer(
+                GraphicsBuffer.Target.Structured,
+                GraphicsBuffer.UsageFlags.LockBufferForWrite,
+                1200,
+                4 * 4);
+            data.TriangleColors1GraphicsBuffer = new GraphicsBuffer(
+                GraphicsBuffer.Target.Structured,
+                GraphicsBuffer.UsageFlags.LockBufferForWrite,
+                1200,
+                4 * 4);
+            data.TriangleColors2GraphicsBuffer = new GraphicsBuffer(
+                GraphicsBuffer.Target.Structured,
+                GraphicsBuffer.UsageFlags.LockBufferForWrite,
+                1200,
+                4 * 4);
+
             // Create batches
             DebugDrawUtilities.CreateDebugDrawBatch(
-                data.BRG, 
-                data.InstancesGraphicsBuffer, 
-                ref debugDrawSingleton.UnlitLinesBatch.BatchId);
+                data.BRG,
+                data.LineInstancesGraphicsBuffer,
+                ref debugDrawSingleton.LinesBatch.BatchId);
+            DebugDrawUtilities.CreateDebugDrawBatch(
+                data.BRG,
+                data.TriangleInstancesGraphicsBuffer,
+                ref debugDrawSingleton.TrisBatch.BatchId);
 
             DebugDrawSystemManagedDataStore.DataMap[WorldSequenceNumber] = data;
-            
+
             // Create singleton
             Entity singletonEntity = state.EntityManager.CreateEntity();
             state.EntityManager.AddComponentData(singletonEntity, debugDrawSingleton);
         }
 
         public void OnStopRunning(ref SystemState state)
-        { 
+        {
             if (DebugDrawSystemManagedDataStore.DataMap.TryGetValue(WorldSequenceNumber, out DebugDrawSystemManagedData data))
             {
                 if (SystemAPI.TryGetSingleton(out DebugDrawSingleton singleton))
@@ -195,8 +235,10 @@ namespace Trove.DebugDraw
                     }
 
                     singleton.DebugDrawGroups.Dispose();
-                    
-                    data.BRG.UnregisterMaterial(singleton.UnlitLinesBatch.MaterialID);
+
+                    data.BRG.UnregisterMaterial(singleton.LinesBatch.MaterialID);
+                    data.BRG.UnregisterMaterial(singleton.TrisBatch.MaterialID);
+                    data.BRG.Dispose();
                 }
 
                 data.Dispose();
@@ -210,7 +252,7 @@ namespace Trove.DebugDraw
                     out DebugDrawSystemManagedData data))
             {
                 ref DebugDrawSingleton debugDrawSingleton = ref SystemAPI.GetSingletonRW<DebugDrawSingleton>().ValueRW;
-                
+
                 // Check groups
                 bool mustUpdateGPUData = false;
                 debugDrawSingleton.TotalLineElementsCount = 0;
@@ -223,8 +265,9 @@ namespace Trove.DebugDraw
                         mustUpdateGPUData = true;
                         group.IsDirty.Value = false;
                     }
-                        
-                    if (!group.LinePositions.IsCreated || !group.LineColors.IsCreated)
+
+                    if (!group.LinePositions.IsCreated || !group.LineColors.IsCreated ||
+                        !group.TrianglePositions.IsCreated || !group.TriangleColors.IsCreated)
                     {
                         mustUpdateGPUData = true;
                         debugDrawSingleton.DebugDrawGroups.RemoveAtSwapBack(i);
@@ -232,73 +275,108 @@ namespace Trove.DebugDraw
                     else
                     {
                         debugDrawSingleton.TotalLineElementsCount += group.LinePositions.Length;
+                        debugDrawSingleton.TotalTriangleElementsCount += group.TrianglePositions.Length;
                     }
                 }
 
                 // Reallocate graphics buffers to accomodate new length if greater than existing
-                if (debugDrawSingleton.TotalLineElementsCount > data.Positions1GraphicsBuffer.count)
+                if (debugDrawSingleton.TotalLineElementsCount > data.LinePositions1GraphicsBuffer.count)
                 {
-                    data.Positions1GraphicsBuffer.Dispose();
-                    data.Positions2GraphicsBuffer.Dispose();
-                    data.Colors1GraphicsBuffer.Dispose();
-                    data.Colors2GraphicsBuffer.Dispose();
-                    
-                    data.Positions1GraphicsBuffer = new GraphicsBuffer(
+                    data.LinePositions1GraphicsBuffer.Dispose();
+                    data.LinePositions2GraphicsBuffer.Dispose();
+                    data.LineColors1GraphicsBuffer.Dispose();
+                    data.LineColors2GraphicsBuffer.Dispose();
+
+                    data.LinePositions1GraphicsBuffer = new GraphicsBuffer(
                         GraphicsBuffer.Target.Structured,
                         GraphicsBuffer.UsageFlags.LockBufferForWrite,
-                        debugDrawSingleton.TotalLineElementsCount, 
+                        debugDrawSingleton.TotalLineElementsCount,
                         4 * 4);
-                    data.Positions2GraphicsBuffer = new GraphicsBuffer(
+                    data.LinePositions2GraphicsBuffer = new GraphicsBuffer(
                         GraphicsBuffer.Target.Structured,
                         GraphicsBuffer.UsageFlags.LockBufferForWrite,
-                        debugDrawSingleton.TotalLineElementsCount, 
+                        debugDrawSingleton.TotalLineElementsCount,
                         4 * 4);
-                    data.Colors1GraphicsBuffer = new GraphicsBuffer(
+                    data.LineColors1GraphicsBuffer = new GraphicsBuffer(
                         GraphicsBuffer.Target.Structured,
                         GraphicsBuffer.UsageFlags.LockBufferForWrite,
-                        debugDrawSingleton.TotalLineElementsCount, 
+                        debugDrawSingleton.TotalLineElementsCount,
                         4 * 4);
-                    data.Colors2GraphicsBuffer = new GraphicsBuffer(
+                    data.LineColors2GraphicsBuffer = new GraphicsBuffer(
                         GraphicsBuffer.Target.Structured,
                         GraphicsBuffer.UsageFlags.LockBufferForWrite,
-                        debugDrawSingleton.TotalLineElementsCount, 
+                        debugDrawSingleton.TotalLineElementsCount,
+                        4 * 4);
+                }
+                if (debugDrawSingleton.TotalTriangleElementsCount > data.TrianglePositions1GraphicsBuffer.count)
+                {
+                    data.TrianglePositions1GraphicsBuffer.Dispose();
+                    data.TrianglePositions2GraphicsBuffer.Dispose();
+                    data.TriangleColors1GraphicsBuffer.Dispose();
+                    data.TriangleColors2GraphicsBuffer.Dispose();
+
+                    data.TrianglePositions1GraphicsBuffer = new GraphicsBuffer(
+                        GraphicsBuffer.Target.Structured,
+                        GraphicsBuffer.UsageFlags.LockBufferForWrite,
+                        debugDrawSingleton.TotalTriangleElementsCount,
+                        4 * 4);
+                    data.TrianglePositions2GraphicsBuffer = new GraphicsBuffer(
+                        GraphicsBuffer.Target.Structured,
+                        GraphicsBuffer.UsageFlags.LockBufferForWrite,
+                        debugDrawSingleton.TotalTriangleElementsCount,
+                        4 * 4);
+                    data.TriangleColors1GraphicsBuffer = new GraphicsBuffer(
+                        GraphicsBuffer.Target.Structured,
+                        GraphicsBuffer.UsageFlags.LockBufferForWrite,
+                        debugDrawSingleton.TotalTriangleElementsCount,
+                        4 * 4);
+                    data.TriangleColors2GraphicsBuffer = new GraphicsBuffer(
+                        GraphicsBuffer.Target.Structured,
+                        GraphicsBuffer.UsageFlags.LockBufferForWrite,
+                        debugDrawSingleton.TotalTriangleElementsCount,
                         4 * 4);
                 }
 
                 // GPU buffer update job
-                if(mustUpdateGPUData)
+                if (mustUpdateGPUData)
                 {
                     // Double buffering
-                    GraphicsBuffer readPositionsBuffer = data.Positions1GraphicsBuffer;
-                    GraphicsBuffer writePositionsBuffer = data.Positions2GraphicsBuffer;
-                    GraphicsBuffer readColorsBuffer = data.Colors1GraphicsBuffer;
-                    GraphicsBuffer writeColorsBuffer = data.Colors2GraphicsBuffer;
+                    GraphicsBuffer writeLinePositionsBuffer = data.LinePositions2GraphicsBuffer;
+                    GraphicsBuffer writeLineColorsBuffer = data.LineColors2GraphicsBuffer;
+                    GraphicsBuffer writeTrianglePositionsBuffer = data.TrianglePositions2GraphicsBuffer;
+                    GraphicsBuffer writeTriangleColorsBuffer = data.TriangleColors2GraphicsBuffer;
                     switch (debugDrawSingleton.UsedBuffers)
                     {
                         case 0:
-                            readPositionsBuffer = data.Positions1GraphicsBuffer;
-                            writePositionsBuffer = data.Positions2GraphicsBuffer;
-                            readColorsBuffer = data.Colors1GraphicsBuffer;
-                            writeColorsBuffer = data.Colors2GraphicsBuffer;
+                            writeLinePositionsBuffer = data.LinePositions2GraphicsBuffer;
+                            writeLineColorsBuffer = data.LineColors2GraphicsBuffer;
+                            writeTrianglePositionsBuffer = data.TrianglePositions2GraphicsBuffer;
+                            writeTriangleColorsBuffer = data.TriangleColors2GraphicsBuffer;
                             break;
                         case 1:
-                            readPositionsBuffer = data.Positions2GraphicsBuffer;
-                            writePositionsBuffer = data.Positions1GraphicsBuffer;
-                            readColorsBuffer = data.Colors2GraphicsBuffer;
-                            writeColorsBuffer = data.Colors1GraphicsBuffer;
+                            writeLinePositionsBuffer = data.LinePositions1GraphicsBuffer;
+                            writeLineColorsBuffer = data.LineColors1GraphicsBuffer;
+                            writeTrianglePositionsBuffer = data.TrianglePositions1GraphicsBuffer;
+                            writeTriangleColorsBuffer = data.TriangleColors1GraphicsBuffer;
                             break;
                     }
-                    
+
                     JobHandle job = new UpdateBuffersJob
                     {
                         DebugDrawGroups = debugDrawSingleton.DebugDrawGroups,
-                        PositionsBuffer = writePositionsBuffer.LockBufferForWrite<float4>(0, writePositionsBuffer.count),
-                        ColorsBuffer = writeColorsBuffer.LockBufferForWrite<float4>(0, writeColorsBuffer.count),
+
+                        LinePositionsBuffer = writeLinePositionsBuffer.LockBufferForWrite<float4>(0, writeLinePositionsBuffer.count),
+                        LineColorsBuffer = writeLineColorsBuffer.LockBufferForWrite<float4>(0, writeLineColorsBuffer.count),
+
+                        TrianglePositionsBuffer = writeTrianglePositionsBuffer.LockBufferForWrite<float4>(0, writeTrianglePositionsBuffer.count),
+                        TriangleColorsBuffer = writeTriangleColorsBuffer.LockBufferForWrite<float4>(0, writeTriangleColorsBuffer.count),
                     }.Schedule(default);
                     job.Complete();
 
-                    writePositionsBuffer.UnlockBufferAfterWrite<float4>(writePositionsBuffer.count);
-                    writeColorsBuffer.UnlockBufferAfterWrite<float4>(writeColorsBuffer.count);
+                    writeLinePositionsBuffer.UnlockBufferAfterWrite<float4>(writeLinePositionsBuffer.count);
+                    writeLineColorsBuffer.UnlockBufferAfterWrite<float4>(writeLineColorsBuffer.count);
+                    writeTrianglePositionsBuffer.UnlockBufferAfterWrite<float4>(writeTrianglePositionsBuffer.count);
+                    writeTriangleColorsBuffer.UnlockBufferAfterWrite<float4>(writeTriangleColorsBuffer.count);
 
                     // TODO: gles
                     // if (UseConstantBuffer) 
@@ -309,14 +387,16 @@ namespace Trove.DebugDraw
                     // }
                     // else
                     {
-                        Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.PositionsPropertyId,
-                            writePositionsBuffer);
-                        Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.ColorsPropertyId,
-                            writeColorsBuffer);
+                        Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.LinePositionsPropertyId,
+                            writeLinePositionsBuffer);
+                        Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.LineColorsPropertyId,
+                            writeLineColorsBuffer);
+                        Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.TrianglePositionsPropertyId,
+                            writeTrianglePositionsBuffer);
+                        Shader.SetGlobalBuffer(DebugDrawSystemManagedDataStore.TriangleColorsPropertyId,
+                            writeTriangleColorsBuffer);
                     }
-                    DebugDrawSystemManagedDataStore.DebugDrawUnlitLineMaterial.SetInt(
-                        DebugDrawSystemManagedDataStore.BaseIndexPropertyId, 0);
-                
+
                     debugDrawSingleton.UsedBuffers++;
                     debugDrawSingleton.UsedBuffers = debugDrawSingleton.UsedBuffers % 2;
                 }
@@ -341,7 +421,7 @@ namespace Trove.DebugDraw
 
                     drawCommands->drawCommandPickingInstanceIDs = null;
                     drawCommands->drawCommandCount = 0;
-                    drawCommands->proceduralDrawCommandCount = 1;
+                    drawCommands->proceduralDrawCommandCount = 2;
                     drawCommands->drawRangeCount = 1;
                     drawCommands->visibleInstanceCount = 1;
                     drawCommands->instanceSortingPositions = null;
@@ -363,36 +443,52 @@ namespace Trove.DebugDraw
                     drawCommands->visibleInstances[0] = 0;
                 }
 
-                // Configure the single draw command to draw kNumInstances instances
-                // starting from offset 0 in the array, using the batch, material and mesh
-                // IDs registered in the Start() method. It doesn't set any special flags.
+                // Lines
                 drawCommands->proceduralDrawCommands[0] = new BatchDrawCommandProcedural
                 {
                     flags = BatchDrawCommandFlags.None,
-                    batchID = debugDrawSingleton.UnlitLinesBatch.BatchId,
-                    materialID = debugDrawSingleton.UnlitLinesBatch.MaterialID,
-                
+                    batchID = debugDrawSingleton.LinesBatch.BatchId,
+                    materialID = debugDrawSingleton.LinesBatch.MaterialID,
+
                     sortingPosition = 0,
                     visibleCount = 1,
                     visibleOffset = 0,
                     splitVisibilityMask = 0xff,
                     lightmapIndex = 0,
-                
+
                     topology = MeshTopology.Lines,
                     baseVertex = 0,
-                    elementCount = (uint)(debugDrawSingleton.TotalLineElementsCount), 
+                    elementCount = (uint)(debugDrawSingleton.TotalLineElementsCount),
                     indexBufferHandle = default,
                     indexOffsetBytes = 0,
                 };
 
-                // Configure the single draw range to cover the single draw command which
-                // is at offset 0.
+                // Tris
+                drawCommands->proceduralDrawCommands[1] = new BatchDrawCommandProcedural
+                {
+                    flags = BatchDrawCommandFlags.None,
+                    batchID = debugDrawSingleton.TrisBatch.BatchId,
+                    materialID = debugDrawSingleton.TrisBatch.MaterialID,
+
+                    sortingPosition = 0,
+                    visibleCount = 1,
+                    visibleOffset = 0,
+                    splitVisibilityMask = 0xff,
+                    lightmapIndex = 0,
+
+                    topology = MeshTopology.Triangles,
+                    baseVertex = 0,
+                    elementCount = (uint)(debugDrawSingleton.TotalTriangleElementsCount),
+                    indexBufferHandle = default,
+                    indexOffsetBytes = 0,
+                };
+
                 drawCommands->drawRanges[0] = new BatchDrawRange
                 {
                     drawCommandsType = BatchDrawCommandType.Procedural,
                     drawCommandsBegin = 0,
-                    drawCommandsCount = 1,
-                
+                    drawCommandsCount = 2,
+
                     // Render everything, no shadows or motion vectors
                     filterSettings = new BatchFilterSettings { renderingLayerMask = 0xffffffff, },
                 };
@@ -407,28 +503,44 @@ namespace Trove.DebugDraw
     {
         [ReadOnly]
         public UnsafeList<DebugDrawGroup> DebugDrawGroups;
-        
+
         [NativeDisableParallelForRestriction]
-        public NativeArray<float4> PositionsBuffer;
+        public NativeArray<float4> LinePositionsBuffer;
         [NativeDisableParallelForRestriction]
-        public NativeArray<float4> ColorsBuffer;
+        public NativeArray<float4> LineColorsBuffer;
+
+        [NativeDisableParallelForRestriction]
+        public NativeArray<float4> TrianglePositionsBuffer;
+        [NativeDisableParallelForRestriction]
+        public NativeArray<float4> TriangleColorsBuffer;
 
         public void Execute()
         {
-            int writeIndex = 0;
+            int linesWriteIndex = 0;
+            int trianglesWriteIndex = 0;
             for (int i = 0; i < DebugDrawGroups.Length; i++)
             {
                 DebugDrawGroup group = DebugDrawGroups[i];
-                
+
                 void* src = group.LinePositions.GetUnsafePtr();
-                void* dst = (byte*)PositionsBuffer.GetUnsafePtr() + (long)(writeIndex * DebugDrawUtilities.kSizeOfFloat4);
+                void* dst = (byte*)LinePositionsBuffer.GetUnsafePtr() + (long)(linesWriteIndex * DebugDrawUtilities.kSizeOfFloat4);
                 UnsafeUtility.MemCpy(dst, src, DebugDrawUtilities.kSizeOfFloat4 * group.LinePositions.Length);
-                
+
                 src = group.LineColors.GetUnsafePtr();
-                dst = (byte*)ColorsBuffer.GetUnsafePtr() + (long)(writeIndex * DebugDrawUtilities.kSizeOfFloat4);
+                dst = (byte*)LineColorsBuffer.GetUnsafePtr() + (long)(linesWriteIndex * DebugDrawUtilities.kSizeOfFloat4);
                 UnsafeUtility.MemCpy(dst, src, DebugDrawUtilities.kSizeOfFloat4 * group.LinePositions.Length);
-                
-                writeIndex += group.LinePositions.Length;
+
+                linesWriteIndex += group.LinePositions.Length;
+
+                src = group.TrianglePositions.GetUnsafePtr();
+                dst = (byte*)TrianglePositionsBuffer.GetUnsafePtr() + (long)(trianglesWriteIndex * DebugDrawUtilities.kSizeOfFloat4);
+                UnsafeUtility.MemCpy(dst, src, DebugDrawUtilities.kSizeOfFloat4 * group.TrianglePositions.Length);
+
+                src = group.TriangleColors.GetUnsafePtr();
+                dst = (byte*)TriangleColorsBuffer.GetUnsafePtr() + (long)(trianglesWriteIndex * DebugDrawUtilities.kSizeOfFloat4);
+                UnsafeUtility.MemCpy(dst, src, DebugDrawUtilities.kSizeOfFloat4 * group.TrianglePositions.Length);
+
+                trianglesWriteIndex += group.TrianglePositions.Length;
             }
         }
     }

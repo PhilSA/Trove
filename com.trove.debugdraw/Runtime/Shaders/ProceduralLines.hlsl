@@ -1,30 +1,30 @@
-#ifndef PROCEDURAL_CUSTOM
-#define PROCEDURAL_CUSTOM
+#ifndef PROCEDURAL_LINES
+#define PROCEDURAL_LINES
 
 #ifdef UNITY_DOTS_INSTANCING_UNIFORM_BUFFER
 
-CBUFFER_START(_Positions)
-    float4 Positions[1024];
+CBUFFER_START(_LinePositions)
+    float4 LinePositions[1024];
 CBUFFER_END
-CBUFFER_START(_Colors)
-    float4 Colors[1024];
+CBUFFER_START(_LineColors)
+    float4 LineColors[1024];
 CBUFFER_END
 
-void ProceduralCustom_float(int VertexID, int BaseIndex, out float3 Position, out float4 Color)
+void GetData_float(int VertexID, out float3 Position, out float4 Color)
 {
-    Position = Positions[VertexID + BaseIndex].xyz;
-    Color = Colors[VertexID + BaseIndex].xyz;
+    Position = LinePositions[VertexID].xyz;
+    Color = LineColors[VertexID].xyz;
 }
 
 #else
 
-StructuredBuffer<float4> _Positions;
-StructuredBuffer<float4> _Colors;
+StructuredBuffer<float4> _LinePositions;
+StructuredBuffer<float4> _LineColors;
 
-void ProceduralCustom_float(int VertexID, int BaseIndex, out float3 Position, out float4 Color)
+void GetData_float(int VertexID, out float3 Position, out float4 Color)
 {
-    Position = _Positions[VertexID + BaseIndex].xyz;
-    Color = _Colors[VertexID + BaseIndex];
+    Position = _LinePositions[VertexID].xyz;
+    Color = _LineColors[VertexID];
 }
 
 #endif

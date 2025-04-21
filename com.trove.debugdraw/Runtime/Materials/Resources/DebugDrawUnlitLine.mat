@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: DebugDrawUnlitLineURP
+  m_Name: DebugDrawUnlitLine
   m_Shader: {fileID: -6465566751694194690, guid: 0bd6e8fed7fb7d1499b56649d8035374,
     type: 3}
   m_Parent: {fileID: 0}

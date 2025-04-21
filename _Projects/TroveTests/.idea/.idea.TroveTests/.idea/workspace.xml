@@ -6,10 +6,24 @@
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Prefabs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest.unity" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest/New Sub Scene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest/New Sub Scene.unity" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawAuthoring.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawAuthoring.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDraw.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDraw.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Materials/Resources/DebugDrawUnlitLineURP.mat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Materials/Resources/DebugDrawUnlitLineURP.mat.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/DebugDrawUnlitLineURPShader.shadergraph" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/DebugDrawUnlitLineURPShader.shadergraph.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/DebugDrawUnlitTriURPShader.shadergraph" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/DebugDrawUnlitTriURPShader.shadergraph.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/ProceduralLines.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/ProceduralLines.hlsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/ProceduralTris.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/ProceduralTris.hlsl" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -117,15 +131,13 @@
       </option>
       <method v="2" />
     </configuration>
-    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" ignored-value-for-modified-check="23524">
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
       <option name="allowRunningInParallel" value="false" />
       <option name="listenPortForConnections" value="false" />
-      <option name="pid" value="23524" />
+      <option name="pid" />
       <option name="projectPathOnTarget" />
       <option name="runtimes">
-        <list>
-          <MonoRuntime />
-        </list>
+        <list />
       </option>
       <option name="selectedOptions">
         <list />
@@ -170,7 +182,9 @@
       <workItem from="1745082655310" duration="22581000" />
       <workItem from="1745159548616" duration="7343000" />
       <workItem from="1745168264183" duration="595000" />
-      <workItem from="1745198692109" duration="1875000" />
+      <workItem from="1745198692109" duration="3592000" />
+      <workItem from="1745207604115" duration="3000" />
+      <workItem from="1745210347503" duration="1464000" />
     </task>
     <servers />
   </component>
@@ -229,32 +243,6 @@
             </endOffsets>
           </properties>
           <option name="timeStamp" value="93" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs</url>
-          <line>298</line>
-          <properties documentPath="C:\Projects\Trove\com.trove.debugdraw\Runtime\DebugDrawSystem.cs" containingFunctionPresentation="Method 'OnUpdate'">
-            <startOffsets>
-              <option value="13297" />
-            </startOffsets>
-            <endOffsets>
-              <option value="13377" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="98" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs</url>
-          <line>267</line>
-          <properties documentPath="C:\Projects\Trove\com.trove.debugdraw\Runtime\DebugDrawSystem.cs" containingFunctionPresentation="Method 'OnUpdate'">
-            <startOffsets>
-              <option value="11498" />
-            </startOffsets>
-            <endOffsets>
-              <option value="11519" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="105" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

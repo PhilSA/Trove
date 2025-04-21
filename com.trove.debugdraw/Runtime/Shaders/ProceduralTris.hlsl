@@ -1,38 +1,30 @@
-#ifndef PROCEDURAL_CUSTOM
-#define PROCEDURAL_CUSTOM
+#ifndef PROCEDURAL_TRIANGLES
+#define PROCEDURAL_TRIANGLES
 
 #ifdef UNITY_DOTS_INSTANCING_UNIFORM_BUFFER
 
-CBUFFER_START(_Positions)
-    float4 Positions[1024];
+CBUFFER_START(_TrianglePositions)
+    float4 TrianglePositions[1024];
+CBUFFER_END
+CBUFFER_START(_TriangleColors)
+    float4 TriangleColors[1024];
 CBUFFER_END
 
-CBUFFER_START(_Normals)
-    float4 Normals[1024];
-CBUFFER_END
-
-CBUFFER_START(_Tangents)
-    float4 Tangents[1024];
-CBUFFER_END
-
-void ProceduralCustom_float(int VertexID, int BaseIndex, out float3 Position, out float3 Normal, out float3 Tangent)
+void GetData_float(int VertexID, out float3 Position, out float4 Color)
 {
-    Position = Positions[VertexID + BaseIndex].xyz;
-    Normal = Normals[VertexID + BaseIndex].xyz;
-    Tangent = Tangents[VertexID + BaseIndex].xyz;
+    Position = TrianglePositions[VertexID].xyz;
+    Color = TriangleColors[VertexID].xyz;
 }
 
 #else
 
-StructuredBuffer<float4> _Positions;
-StructuredBuffer<float4> _Normals;
-StructuredBuffer<float4> _Tangents;
+StructuredBuffer<float4> _TrianglePositions;
+StructuredBuffer<float4> _TriangleColors;
 
-void ProceduralCustom_float(int VertexID, int BaseIndex, out float3 Position, out float3 Normal, out float3 Tangent)
+void GetData_float(int VertexID, out float3 Position, out float4 Color)
 {
-    Position = _Positions[VertexID + BaseIndex].xyz;
-    Normal = _Normals[VertexID + BaseIndex].xyz;
-    Tangent = _Tangents[VertexID + BaseIndex].xyz;
+    Position = _TrianglePositions[VertexID].xyz;
+    Color = _TriangleColors[VertexID];
 }
 
 #endif

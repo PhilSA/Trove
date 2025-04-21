@@ -10,12 +10,12 @@ using UnityEngine.Rendering;
 
 namespace Trove.DebugDraw
 {
-    internal struct DebugDrawProceduralLinesBatch
+    internal struct DebugDrawProceduralBatch
     {
         internal BatchID BatchId;
         internal BatchMaterialID MaterialID;
 
-        public DebugDrawProceduralLinesBatch(BatchID batchId, BatchMaterialID materialId)
+        public DebugDrawProceduralBatch(BatchID batchId, BatchMaterialID materialId)
         {
             BatchId = batchId;
             MaterialID = materialId;
@@ -116,18 +116,10 @@ namespace Trove.DebugDraw
             instancesBuffer.SetData(instances, 0, 0, instances.Length);
             instances.Dispose();
             
-            // Set up metadata values to point to the instance data. Set the most significant bit 0x80000000 in each
-            // which instructs the shader that the data is an array with one value per instance, indexed by the instance index.
-            // Any metadata values that the shader uses that are not set here will be 0. When a value of 0 is used with
-            // UNITY_ACCESS_DOTS_INSTANCED_PROP (i.e. without a default), the shader interprets the
-            // 0x00000000 metadata value and loads from the start of the buffer. The start of the buffer is
-            // a zero matrix so this sort of load is guaranteed to return zero, which is a reasonable default value.
             NativeArray<MetadataValue> metadatas = new NativeArray<MetadataValue>(2, Allocator.Temp);
             metadatas[0] = CreateMetadataValue(DebugDrawSystemManagedDataStore.ObjectToWorldPropertyId, objectToWorldsStart * kSizeOfFloat4, true);
             metadatas[1] = CreateMetadataValue(DebugDrawSystemManagedDataStore.WorldToObjectPropertyId, worldToObjectsStart * kSizeOfFloat4, true);
 
-            // Finally, create a batch for the instances and make the batch use the GraphicsBuffer with the
-            // instance data as well as the metadata values that specify where the properties are.
             batchID = brg.AddBatch(metadatas, instancesBuffer.bufferHandle);
         }
     }
