@@ -21,12 +21,6 @@ partial struct TestDebugDrawSystem : ISystem
         state.RequireForUpdate<DebugDrawSingleton>();
         state.RequireForUpdate<TestDebugDraw>();
     }
-    
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    {
-        
-    }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)

@@ -256,6 +256,7 @@ namespace Trove.DebugDraw
                 // Check groups
                 bool mustUpdateGPUData = false;
                 debugDrawSingleton.TotalLineElementsCount = 0;
+                debugDrawSingleton.TotalTriangleElementsCount = 0;
                 for (int i = debugDrawSingleton.DebugDrawGroups.Length - 1; i >= 0; i--)
                 {
                     DebugDrawGroup group = debugDrawSingleton.DebugDrawGroups[i];
@@ -423,7 +424,7 @@ namespace Trove.DebugDraw
                     drawCommands->drawCommandCount = 0;
                     drawCommands->proceduralDrawCommandCount = 2;
                     drawCommands->drawRangeCount = 1;
-                    drawCommands->visibleInstanceCount = 1;
+                    drawCommands->visibleInstanceCount = 2;
                     drawCommands->instanceSortingPositions = null;
                     drawCommands->instanceSortingPositionFloatCount = 0;
 
@@ -437,10 +438,11 @@ namespace Trove.DebugDraw
                             UnsafeUtility.SizeOf<BatchDrawRange>() * drawCommands->drawRangeCount,
                             alignment, Allocator.TempJob);
                     drawCommands->visibleInstances =
-                        (int*)UnsafeUtility.Malloc(sizeof(int) * 1,
+                        (int*)UnsafeUtility.Malloc(sizeof(int) * drawCommands->visibleInstanceCount,
                             alignment, Allocator.TempJob);
 
                     drawCommands->visibleInstances[0] = 0;
+                    drawCommands->visibleInstances[1] = 1;
                 }
 
                 // Lines
@@ -528,7 +530,7 @@ namespace Trove.DebugDraw
 
                 src = group.LineColors.GetUnsafePtr();
                 dst = (byte*)LineColorsBuffer.GetUnsafePtr() + (long)(linesWriteIndex * DebugDrawUtilities.kSizeOfFloat4);
-                UnsafeUtility.MemCpy(dst, src, DebugDrawUtilities.kSizeOfFloat4 * group.LinePositions.Length);
+                UnsafeUtility.MemCpy(dst, src, DebugDrawUtilities.kSizeOfFloat4 * group.LineColors.Length);
 
                 linesWriteIndex += group.LinePositions.Length;
 
@@ -538,7 +540,7 @@ namespace Trove.DebugDraw
 
                 src = group.TriangleColors.GetUnsafePtr();
                 dst = (byte*)TriangleColorsBuffer.GetUnsafePtr() + (long)(trianglesWriteIndex * DebugDrawUtilities.kSizeOfFloat4);
-                UnsafeUtility.MemCpy(dst, src, DebugDrawUtilities.kSizeOfFloat4 * group.TrianglePositions.Length);
+                UnsafeUtility.MemCpy(dst, src, DebugDrawUtilities.kSizeOfFloat4 * group.TriangleColors.Length);
 
                 trianglesWriteIndex += group.TrianglePositions.Length;
             }

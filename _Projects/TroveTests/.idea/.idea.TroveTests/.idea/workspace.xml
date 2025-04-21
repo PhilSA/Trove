@@ -6,24 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Prefabs.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest/New Sub Scene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest/New Sub Scene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawAuthoring.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawAuthoring.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/EditorUserSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDraw.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDraw.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Materials/Resources/DebugDrawUnlitLineURP.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Materials/Resources/DebugDrawUnlitLineURP.mat.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/DebugDrawUnlitLineURPShader.shadergraph" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/DebugDrawUnlitLineURPShader.shadergraph.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/DebugDrawUnlitTriURPShader.shadergraph" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/DebugDrawUnlitTriURPShader.shadergraph.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/ProceduralLines.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/ProceduralLines.hlsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/ProceduralTris.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/Shaders/ProceduralTris.hlsl" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -184,7 +168,7 @@
       <workItem from="1745168264183" duration="595000" />
       <workItem from="1745198692109" duration="3592000" />
       <workItem from="1745207604115" duration="3000" />
-      <workItem from="1745210347503" duration="1464000" />
+      <workItem from="1745210347503" duration="2232000" />
     </task>
     <servers />
   </component>
