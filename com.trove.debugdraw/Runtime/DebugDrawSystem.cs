@@ -221,6 +221,7 @@ namespace Trove.DebugDraw
                     if (group.IsDirty.Value)
                     {
                         mustUpdateGPUData = true;
+                        group.IsDirty.Value = false;
                     }
                         
                     if (!group.LinePositions.IsCreated || !group.LineColors.IsCreated)

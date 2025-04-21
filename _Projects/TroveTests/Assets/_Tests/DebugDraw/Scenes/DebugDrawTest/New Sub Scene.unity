@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LinesCount: 1000000
-  Update: 1
+  Update: 0
   UseLegacyDebugLine: 0
 --- !u!4 &1916906349
 Transform:
