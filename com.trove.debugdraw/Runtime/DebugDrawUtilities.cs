@@ -80,13 +80,10 @@ namespace Trove.DebugDraw
                 sizeof(int));
         }
         
-        internal static void CreateDrawLinesBatch(
+        internal static void CreateDebugDrawBatch(
             BatchRendererGroup brg, 
             GraphicsBuffer instancesBuffer, 
-            GraphicsBuffer positionsBuffer, 
-            GraphicsBuffer colorsBuffer, 
-            ref BatchID batchID,
-            int numLines)
+            ref BatchID batchID)
         {
             int objectToWorldFloat4sCount = 3;
             int worldToObjectFloat4sCount = 3;
@@ -117,6 +114,7 @@ namespace Trove.DebugDraw
             instances[worldToObjectsStart + 2] = packedTrsInv.c2;
             
             instancesBuffer.SetData(instances, 0, 0, instances.Length);
+            instances.Dispose();
             
             // Set up metadata values to point to the instance data. Set the most significant bit 0x80000000 in each
             // which instructs the shader that the data is an array with one value per instance, indexed by the instance index.
@@ -131,75 +129,6 @@ namespace Trove.DebugDraw
             // Finally, create a batch for the instances and make the batch use the GraphicsBuffer with the
             // instance data as well as the metadata values that specify where the properties are.
             batchID = brg.AddBatch(metadatas, instancesBuffer.bufferHandle);
-            
-            // Index buffer
-            NativeArray<float4> positions = new NativeArray<float4>(numLines * 2, Allocator.Temp);
-            NativeArray<float4> colors = new NativeArray<float4>(numLines * 2, Allocator.Temp);
-            int resolution = (int)math.ceil(math.pow(numLines, 1f/3f));
-            float spacing = 2f;
-            for (int i = 0; i < numLines; i++)
-            {
-                float xStart = (i % resolution) * spacing;
-                float zStart = ((i / resolution) % resolution) * spacing;
-                float yStart = (i / (resolution * resolution)) * spacing;
-                
-                positions[(i*2)] = new float4(xStart, yStart, zStart, 0f);
-                positions[(i*2)+1] = new float4(xStart, yStart + 1f, zStart, 0f);
-                
-                float4 tmpColor = Color.HSVToRGB((i % 20) / 20f, 1f, 1f).ToFloat4();
-                colors[(i*2)] = tmpColor;
-                colors[(i*2)+1] = tmpColor;
-            } 
-            positionsBuffer.SetData(positions, 0, 0, positions.Length);
-            colorsBuffer.SetData(colors, 0, 0, colors.Length);
-
-            // TODO: recycle all those arrays instead of realloc?
-            instances.Dispose();
-            positions.Dispose();
-            colors.Dispose();
-        }
-
-        internal static unsafe void DrawLinesCommand(
-            BatchCullingOutputDrawCommands* drawCommands,
-            IntPtr userContext,
-            DebugDrawProceduralLinesBatch linesBatchData,
-            int numLines) 
-        {
-            // Configure the single draw command to draw kNumInstances instances
-            // starting from offset 0 in the array, using the batch, material and mesh
-            // IDs registered in the Start() method. It doesn't set any special flags.
-            drawCommands->proceduralDrawCommands[0] = new BatchDrawCommandProcedural
-            {
-                flags = BatchDrawCommandFlags.None,
-                batchID = linesBatchData.BatchId,
-                materialID = linesBatchData.MaterialID,
-                
-                sortingPosition = 0,
-                visibleCount = 1,
-                visibleOffset = 0,
-                splitVisibilityMask = 0xff,
-                lightmapIndex = 0,
-                
-                topology = MeshTopology.Lines,
-                baseVertex = 0,
-                elementCount = (uint)(numLines * 2), 
-                indexBufferHandle = default,
-                indexOffsetBytes = 0,
-            };
-
-            // Configure the single draw range to cover the single draw command which
-            // is at offset 0.
-            drawCommands->drawRanges[0] = new BatchDrawRange
-            {
-                drawCommandsType = BatchDrawCommandType.Procedural,
-                drawCommandsBegin = 0,
-                drawCommandsCount = 1,
-                
-                // This example doesn't care about shadows or motion vectors, so it leaves everything
-                // at the default zero values, except the renderingLayerMask which it sets to all ones
-                // so Unity renders the instances regardless of mask settings.
-                filterSettings = new BatchFilterSettings { renderingLayerMask = 0xffffffff, },
-            };
         }
     }
 }

@@ -5,7 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest/New Sub Scene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest/New Sub Scene.unity" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,11 +22,14 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawAuthoring.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawSystem.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/_Tests/StateMachines/Scripts/CubeStateMachineAuthoring.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/_Tests/StateMachines/_Template/CubeSM.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.common/Runtime/ColorUtilities.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.common/Runtime/Pool.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.common/Tests/Runtime/PoolTests.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDraw.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.spatialqueries/Runtime/SpatialQueryUtils.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachine.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../com.trove.statemachines/Runtime/StateMachineUtilities.cs" root0="FORCE_HIGHLIGHTING" />
@@ -31,6 +37,10 @@
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6139D48420B2EAF697B413CF/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyMyTestPolyMerged.generated.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6AC28F3E17FE520B93434DC8/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyCubeSMState.generated.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/Temp/SourceGeneratedDocuments/6AC28F3E17FE520B93434DC8/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerators.PolymorphicStructsGenerator/PolyCubeState.generated.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/1e74f08236fb4c1791a523c0bf197e6c1df600/32/1672feb2/GraphicsBufferHandle.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/1e74f08236fb4c1791a523c0bf197e6c1df600/33/440abb16/JobHandle.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/1e74f08236fb4c1791a523c0bf197e6c1df600/8f/8a4f5aeb/NativeArray`1.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/1e74f08236fb4c1791a523c0bf197e6c1df600/98/b90a75e3/UnsafeUtility.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/1e74f08236fb4c1791a523c0bf197e6c1df600/a0/3b9d6f4e/BatchDrawCommand.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/1e74f08236fb4c1791a523c0bf197e6c1df600/a4/810cb831/BatchCullingOutput.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/1e74f08236fb4c1791a523c0bf197e6c1df600/b5/e2015854/GraphicsBuffer.cs" root0="SKIP_HIGHLIGHTING" />
@@ -106,13 +116,15 @@
       </option>
       <method v="2" />
     </configuration>
-    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" ignored-value-for-modified-check="23524">
       <option name="allowRunningInParallel" value="false" />
       <option name="listenPortForConnections" value="false" />
-      <option name="pid" />
+      <option name="pid" value="23524" />
       <option name="projectPathOnTarget" />
       <option name="runtimes">
-        <list />
+        <list>
+          <MonoRuntime />
+        </list>
       </option>
       <option name="selectedOptions">
         <list />
@@ -157,6 +169,7 @@
       <workItem from="1745082655310" duration="22581000" />
       <workItem from="1745159548616" duration="7343000" />
       <workItem from="1745168264183" duration="595000" />
+      <workItem from="1745198692109" duration="737000" />
     </task>
     <servers />
   </component>
@@ -215,6 +228,32 @@
             </endOffsets>
           </properties>
           <option name="timeStamp" value="93" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs</url>
+          <line>297</line>
+          <properties documentPath="C:\Projects\Trove\com.trove.debugdraw\Runtime\DebugDrawSystem.cs" containingFunctionPresentation="Method 'OnUpdate'">
+            <startOffsets>
+              <option value="13211" />
+            </startOffsets>
+            <endOffsets>
+              <option value="13291" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="98" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs</url>
+          <line>219</line>
+          <properties documentPath="C:\Projects\Trove\com.trove.debugdraw\Runtime\DebugDrawSystem.cs" containingFunctionPresentation="Method 'OnUpdate'">
+            <startOffsets>
+              <option value="9083" />
+            </startOffsets>
+            <endOffsets>
+              <option value="9101" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="99" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
