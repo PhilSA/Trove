@@ -7,8 +7,9 @@
     <list default="true" id="f8d9f42f-5ee9-420c-a3cb-1dc4b0c21f8c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TroveTests/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest/New Sub Scene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scenes/DebugDrawTest/New Sub Scene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawUtilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawAuthoring.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawAuthoring.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Tests/DebugDraw/Scripts/TestDebugDrawSystem.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../com.trove.debugdraw/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../com.trove.debugdraw/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -169,7 +170,7 @@
       <workItem from="1745082655310" duration="22581000" />
       <workItem from="1745159548616" duration="7343000" />
       <workItem from="1745168264183" duration="595000" />
-      <workItem from="1745198692109" duration="737000" />
+      <workItem from="1745198692109" duration="1875000" />
     </task>
     <servers />
   </component>
@@ -231,29 +232,29 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs</url>
-          <line>297</line>
+          <line>298</line>
           <properties documentPath="C:\Projects\Trove\com.trove.debugdraw\Runtime\DebugDrawSystem.cs" containingFunctionPresentation="Method 'OnUpdate'">
             <startOffsets>
-              <option value="13211" />
+              <option value="13297" />
             </startOffsets>
             <endOffsets>
-              <option value="13291" />
+              <option value="13377" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="98" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/../../com.trove.debugdraw/Runtime/DebugDrawSystem.cs</url>
-          <line>219</line>
+          <line>267</line>
           <properties documentPath="C:\Projects\Trove\com.trove.debugdraw\Runtime\DebugDrawSystem.cs" containingFunctionPresentation="Method 'OnUpdate'">
             <startOffsets>
-              <option value="9083" />
+              <option value="11498" />
             </startOffsets>
             <endOffsets>
-              <option value="9101" />
+              <option value="11519" />
             </endOffsets>
           </properties>
-          <option name="timeStamp" value="99" />
+          <option name="timeStamp" value="105" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

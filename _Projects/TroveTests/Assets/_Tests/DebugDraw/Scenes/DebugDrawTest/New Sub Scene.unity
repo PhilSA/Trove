@@ -148,7 +148,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e53e38669b1b4841901ca156d9711a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  LinesCount: 10000
+  LinesCount: 1000000
+  Update: 1
+  UseLegacyDebugLine: 0
 --- !u!4 &1916906349
 Transform:
   m_ObjectHideFlags: 0

@@ -4,6 +4,8 @@ using UnityEngine;
 class TestDebugDrawAuthoring : MonoBehaviour
 {
     public int LinesCount = 10000;
+    public bool Update;
+    public bool UseLegacyDebugLine;
 }
 
 class TestDebugDrawAuthoringBaker : Baker<TestDebugDrawAuthoring>
@@ -14,6 +16,8 @@ class TestDebugDrawAuthoringBaker : Baker<TestDebugDrawAuthoring>
         AddComponent(entity, new TestDebugDraw
         {
             LinesCount = authoring.LinesCount,
+            Update = authoring.Update,
+            UseLegacyDebugLine = authoring.UseLegacyDebugLine
         });
     }
 }

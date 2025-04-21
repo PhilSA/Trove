@@ -6,6 +6,8 @@ using Unity.Mathematics;
 public struct TestDebugDraw : IComponentData
 {
     public int LinesCount;
+    public bool Update;
+    public bool UseLegacyDebugLine;
 }
 
 partial struct TestDebugDrawSystem : ISystem
@@ -45,8 +47,43 @@ partial struct TestDebugDrawSystem : ISystem
                 float yStart = (i / (resolution * resolution)) * spacing;
                 float3 start = new float3(xStart, yStart, zStart);
                 
-                UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f) + elapsedTime) % 1f, 1f, 1f);
+                UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f)) % 1f, 1f, 1f);
                 _debugDrawGroup.AddLine(start, start + math.up(), tmpColor);
+            }
+        }
+
+        if (testDebugDraw.Update)
+        {
+            _debugDrawGroup.Clear();
+            
+            int resolution = (int)math.ceil(math.pow(testDebugDraw.LinesCount, 1f/3f));
+            float spacing = 2f;
+
+            if (testDebugDraw.UseLegacyDebugLine)
+            {
+                for (int i = 0; i < testDebugDraw.LinesCount; i++)
+                {
+                    float xStart = (i % resolution) * spacing;
+                    float zStart = ((i / resolution) % resolution) * spacing;
+                    float yStart = (i / (resolution * resolution)) * spacing;
+                    float3 start = new float3(xStart, yStart, zStart) + elapsedTime;
+                
+                    UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f) + elapsedTime) % 1f, 1f, 1f);
+                    UnityEngine.Debug.DrawLine(start, start + math.up(), tmpColor);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < testDebugDraw.LinesCount; i++)
+                {
+                    float xStart = (i % resolution) * spacing;
+                    float zStart = ((i / resolution) % resolution) * spacing;
+                    float yStart = (i / (resolution * resolution)) * spacing;
+                    float3 start = new float3(xStart, yStart, zStart) + elapsedTime;
+                
+                    UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f) + elapsedTime) % 1f, 1f, 1f);
+                    _debugDrawGroup.AddLine(start, start + math.up(), tmpColor);
+                }
             }
         }
     }
