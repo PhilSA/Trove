@@ -8,6 +8,7 @@ class TestDebugDrawAuthoring : MonoBehaviour
     public bool Update;
     public bool UseLegacyDebugLine;
     public float TimeSpeed = 1f;
+    public float ColorAlpha = 1f;
 }
 
 class TestDebugDrawAuthoringBaker : Baker<TestDebugDrawAuthoring>
@@ -22,6 +23,7 @@ class TestDebugDrawAuthoringBaker : Baker<TestDebugDrawAuthoring>
             Update = authoring.Update,
             UseLegacyDebugLine = authoring.UseLegacyDebugLine,
             TimeSpeed = authoring.TimeSpeed,
+            ColorAlpha = authoring.ColorAlpha,
         });
     }
 }

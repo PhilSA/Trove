@@ -10,6 +10,7 @@ public struct TestDebugDraw : IComponentData
     public bool Update;
     public bool UseLegacyDebugLine;
     public float TimeSpeed;
+    public float ColorAlpha;
 }
 
 partial struct TestDebugDrawSystem : ISystem
@@ -47,6 +48,7 @@ partial struct TestDebugDrawSystem : ISystem
                 float3 start = new float3(xStart, yStart, zStart);
                 
                 UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f)) % 1f, 1f, 1f);
+                tmpColor.a = testDebugDraw.ColorAlpha;
                 _debugDrawGroup.AddLine(start, start + math.up(), tmpColor);
             }
 
@@ -59,6 +61,7 @@ partial struct TestDebugDrawSystem : ISystem
                 float3 start = new float3(-xStart, -yStart, -zStart);
                 
                 UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f)) % 1f, 1f, 1f);
+                tmpColor.a = testDebugDraw.ColorAlpha;
                 _debugDrawGroup.AddTriangle(start, start + math.up(), start + math.right(), tmpColor);
             }
         }
@@ -80,6 +83,7 @@ partial struct TestDebugDrawSystem : ISystem
                     float3 start = new float3(xStart, yStart, zStart) + elapsedTime;
                 
                     UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f) + elapsedTime) % 1f, 1f, 1f);
+                    tmpColor.a = testDebugDraw.ColorAlpha;
                     UnityEngine.Debug.DrawLine(start, start + math.up(), tmpColor);
                 }
             }
@@ -93,6 +97,7 @@ partial struct TestDebugDrawSystem : ISystem
                     float3 start = new float3(xStart, yStart, zStart) + elapsedTime;
                 
                     UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f) + elapsedTime) % 1f, 1f, 1f);
+                    tmpColor.a = testDebugDraw.ColorAlpha;
                     _debugDrawGroup.AddLine(start, start + math.up(), tmpColor);
                 }
             }
@@ -106,6 +111,7 @@ partial struct TestDebugDrawSystem : ISystem
                 float3 start = new float3(-xStart, -yStart, -zStart) + elapsedTime;
                 
                 UnityEngine.Color tmpColor = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f) + elapsedTime) % 1f, 1f, 1f);
+                tmpColor.a = testDebugDraw.ColorAlpha;
                 _debugDrawGroup.AddTriangle(start, start + math.up(), start + math.right(), tmpColor);
             }
         }

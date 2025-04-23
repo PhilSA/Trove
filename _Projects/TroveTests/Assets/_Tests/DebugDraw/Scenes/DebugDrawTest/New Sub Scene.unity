@@ -153,6 +153,7 @@ MonoBehaviour:
   Update: 1
   UseLegacyDebugLine: 0
   TimeSpeed: 0.5
+  ColorAlpha: 0.5
 --- !u!4 &1916906349
 Transform:
   m_ObjectHideFlags: 0
