@@ -42,15 +42,13 @@ namespace Trove.DebugDraw
             };
         }
 
-        internal static int GetIntsCountForAccomodatingBytesCount(int bytesPerInstance, int numInstances, int extraBytes = 0)
+        internal static int GetRawDebugGraphicsBufferSizeForCount(int objectCount)
         {
-            // Round byte counts to int multiples
-            bytesPerInstance = (bytesPerInstance + sizeof(int) - 1) / sizeof(int) * sizeof(int);
-            extraBytes = (extraBytes + sizeof(int) - 1) / sizeof(int) * sizeof(int);
-            int totalBytes = bytesPerInstance * numInstances + extraBytes;
-            return totalBytes / sizeof(int);
+            // For Raw gBuffers, size is in ints
+            int float4sCount = 4 + (objectCount * (3 + 3 + 1));
+            return float4sCount * 4;
         }
-
+        
         internal static MetadataValue CreateMetadataValue(int propertyID, int byteAddress, bool isOverridden)
         {
             return new MetadataValue
@@ -58,26 +56,6 @@ namespace Trove.DebugDraw
                 NameID = propertyID,
                 Value = (uint)byteAddress | (isOverridden ? kIsOverriddenBit : 0),
             };
-        }
-        
-        internal static unsafe GraphicsBuffer CreateDrawTrisGraphicsBuffer(int numInstances)
-        {
-            int bytesPerInstance = kSizeOfFloat4; // color float4
-            
-            return new GraphicsBuffer(
-                GraphicsBuffer.Target.Raw,
-                GetIntsCountForAccomodatingBytesCount(bytesPerInstance, numInstances, kExtraBytes),
-                sizeof(int));
-        }
-        
-        internal static GraphicsBuffer CreateDrawMeshGraphicsBuffer(int numInstances)
-        {
-            int bytesPerInstance = (kSizeOfPackedMatrix * 2) + kSizeOfFloat4;
-            
-            return new GraphicsBuffer(
-                GraphicsBuffer.Target.Raw,
-                GetIntsCountForAccomodatingBytesCount(bytesPerInstance, numInstances, kExtraBytes),
-                sizeof(int));
         }
         
         internal static void CreateDebugDrawBatch(

@@ -3,6 +3,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Trove.DebugDraw
 {
@@ -10,21 +11,30 @@ namespace Trove.DebugDraw
     {
         internal NativeReference<bool> IsDirty;
 
-        internal NativeList<float4> LinePositions;
+        internal NativeList<float4x3> LineOtWs;
+        internal NativeList<float4x3> LineWtOs;
         internal NativeList<float4> LineColors;
 
-        internal NativeList<float4> TrianglePositions;
+        internal NativeList<float4x3> TriangleOtWs;
+        internal NativeList<float4x3> TriangleWtOs;
         internal NativeList<float4> TriangleColors;
 
-        public bool IsCreated => LinePositions.IsCreated;
+        public bool IsCreated => LineOtWs.IsCreated;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddLine(float3 start, float3 end, UnityEngine.Color color)
         {
             IsDirty.Value = true;
 
-            LinePositions.Add(new float4(start, 0f));
-            LinePositions.Add(new float4(end, 0f));
+            float4x4 mat = float4x4.Translate(start);
+            float4x4 invMat = math.inverse(mat);
+            LineOtWs.Add(DebugDrawUtilities.ToPackedMatrix(mat));
+            LineWtOs.Add(DebugDrawUtilities.ToPackedMatrix(invMat));
+
+            mat = float4x4.Translate(end);
+            invMat = math.inverse(mat);
+            LineOtWs.Add(DebugDrawUtilities.ToPackedMatrix(mat));
+            LineWtOs.Add(DebugDrawUtilities.ToPackedMatrix(invMat));
 
             float4 colorFloat = color.ToFloat4();
             LineColors.Add(colorFloat);
@@ -36,8 +46,15 @@ namespace Trove.DebugDraw
         {
             IsDirty.Value = true;
 
-            LinePositions.Add(new float4(start, 0f));
-            LinePositions.Add(new float4(end, 0f));
+            float4x4 mat = float4x4.Translate(start);
+            float4x4 invMat = math.inverse(mat);
+            LineOtWs.Add(DebugDrawUtilities.ToPackedMatrix(mat));
+            LineWtOs.Add(DebugDrawUtilities.ToPackedMatrix(invMat));
+
+            mat = float4x4.Translate(end);
+            invMat = math.inverse(mat);
+            LineOtWs.Add(DebugDrawUtilities.ToPackedMatrix(mat));
+            LineWtOs.Add(DebugDrawUtilities.ToPackedMatrix(invMat));
 
             LineColors.Add(colorStart.ToFloat4());
             LineColors.Add(colorEnd.ToFloat4());
@@ -48,9 +65,20 @@ namespace Trove.DebugDraw
         {
             IsDirty.Value = true;
 
-            TrianglePositions.Add(new float4(v0, 0f));
-            TrianglePositions.Add(new float4(v1, 0f));
-            TrianglePositions.Add(new float4(v2, 0f));
+            float4x4 mat = float4x4.Translate(v0);
+            float4x4 invMat = math.inverse(mat);
+            LineOtWs.Add(DebugDrawUtilities.ToPackedMatrix(mat));
+            LineWtOs.Add(DebugDrawUtilities.ToPackedMatrix(invMat));
+
+            mat = float4x4.Translate(v1);
+            invMat = math.inverse(mat);
+            LineOtWs.Add(DebugDrawUtilities.ToPackedMatrix(mat));
+            LineWtOs.Add(DebugDrawUtilities.ToPackedMatrix(invMat));
+
+            mat = float4x4.Translate(v2);
+            invMat = math.inverse(mat);
+            LineOtWs.Add(DebugDrawUtilities.ToPackedMatrix(mat));
+            LineWtOs.Add(DebugDrawUtilities.ToPackedMatrix(invMat));
 
             float4 colorFloat = color.ToFloat4();
             TriangleColors.Add(colorFloat);
@@ -63,18 +91,25 @@ namespace Trove.DebugDraw
         {
             IsDirty.Value = true;
 
-            LinePositions.Clear();
+            LineOtWs.Clear();
+            LineWtOs.Clear();
             LineColors.Clear();
 
-            TrianglePositions.Clear();
+            TriangleOtWs.Clear();
+            TriangleWtOs.Clear();
             TriangleColors.Clear();
         }
 
         public void Dispose(JobHandle dep = default)
         {
-            if (LinePositions.IsCreated)
+            if (LineOtWs.IsCreated)
             {
-                LinePositions.Dispose(dep);
+                LineOtWs.Dispose(dep);
+            }
+
+            if (LineWtOs.IsCreated)
+            {
+                LineWtOs.Dispose(dep);
             }
 
             if (LineColors.IsCreated)
@@ -82,9 +117,14 @@ namespace Trove.DebugDraw
                 LineColors.Dispose(dep);
             }
 
-            if (TrianglePositions.IsCreated)
+            if (TriangleOtWs.IsCreated)
             {
-                TrianglePositions.Dispose(dep);
+                TriangleOtWs.Dispose(dep);
+            }
+
+            if (TriangleWtOs.IsCreated)
+            {
+                TriangleWtOs.Dispose(dep);
             }
 
             if (TriangleColors.IsCreated)
