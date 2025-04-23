@@ -153,14 +153,14 @@ namespace Trove.DebugDraw
 
             // Init graphics buffers
             int instanceBufferFloat4sLength = 4 + (3 + 3);
-            int instanceBufferBytesLength = instanceBufferFloat4sLength * DebugDrawUtilities.kSizeOfFloat4;
+            int instanceBufferIntsLength = instanceBufferFloat4sLength * 4;
             data.LineInstancesGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Raw,
-                instanceBufferBytesLength,
+                instanceBufferIntsLength,
                 4);
             data.TriangleInstancesGraphicsBuffer = new GraphicsBuffer(
                 GraphicsBuffer.Target.Raw,
-                instanceBufferBytesLength,
+                instanceBufferIntsLength,
                 4);
 
             data.LinePositions1GraphicsBuffer = new GraphicsBuffer(
