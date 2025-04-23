@@ -7,6 +7,7 @@ class TestDebugDrawAuthoring : MonoBehaviour
     public int TrianglesCount = 10000;
     public bool Update;
     public bool UseLegacyDebugLine;
+    public float TimeSpeed = 1f;
 }
 
 class TestDebugDrawAuthoringBaker : Baker<TestDebugDrawAuthoring>
@@ -19,7 +20,8 @@ class TestDebugDrawAuthoringBaker : Baker<TestDebugDrawAuthoring>
             LinesCount = authoring.LinesCount,
             TrianglesCount = authoring.TrianglesCount,
             Update = authoring.Update,
-            UseLegacyDebugLine = authoring.UseLegacyDebugLine
+            UseLegacyDebugLine = authoring.UseLegacyDebugLine,
+            TimeSpeed = authoring.TimeSpeed,
         });
     }
 }

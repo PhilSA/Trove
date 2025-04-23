@@ -9,6 +9,7 @@ public struct TestDebugDraw : IComponentData
     public int TrianglesCount;
     public bool Update;
     public bool UseLegacyDebugLine;
+    public float TimeSpeed;
 }
 
 partial struct TestDebugDrawSystem : ISystem
@@ -28,11 +29,13 @@ partial struct TestDebugDrawSystem : ISystem
         float elapsedTime = (float)SystemAPI.Time.ElapsedTime;
         ref TestDebugDraw testDebugDraw = ref SystemAPI.GetSingletonRW<TestDebugDraw>().ValueRW;
         
+        elapsedTime *= testDebugDraw.TimeSpeed;
+        
         if (!_debugDrawGroup.IsCreated)
         {
             ref DebugDrawSingleton debugDrawSingleton = ref SystemAPI.GetSingletonRW<DebugDrawSingleton>().ValueRW;
             _debugDrawGroup = debugDrawSingleton.AllocateDebugDrawGroup();
-            
+
             float spacing = 2f;
 
             int linesResolution = (int)math.ceil(math.pow(testDebugDraw.LinesCount, 1f/3f));
