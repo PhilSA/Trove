@@ -24,5 +24,4 @@ namespace Trove.DebugDraw.Tests
         {
         }
     }
-#endregion
 }

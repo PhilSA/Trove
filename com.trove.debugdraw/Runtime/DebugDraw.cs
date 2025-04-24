@@ -327,19 +327,30 @@ namespace Trove.DebugDraw
             {
                 float3 verticalStart = center + topHemiCenterOffset + hemiCenterToTop;
                 quaternion verticalRingRotation = math.mul(rotation, quaternion.AxisAngle(math.up(), r * ringAnglesRadians));
+                float3 hemiCenter = center + topHemiCenterOffset;
                 
                 for (int s = 1; s <= quarterRingSegments * 4; s++)
                 {
                     quaternion verticalSegmentRotation = quaternion.AxisAngle(math.right(), s * segmentAnglesRadians);
                     quaternion verticalRotation = math.mul(verticalRingRotation, verticalSegmentRotation);
+
+                    float3 verticalEnd = hemiCenter + math.mul(verticalRotation, localHemiCenterToTop);
+                    DrawLine(verticalStart, verticalEnd, color);
+                    verticalStart = verticalEnd;
                     
-                    float3 hemiCenter = center + topHemiCenterOffset;
                     int phase = s / quarterRingSegments;
-                    if(phase == 1 || phase == 2)
+                    if(phase == 1)
                     {
                         hemiCenter = center - topHemiCenterOffset;
+                    }
+                    else if (phase == 3)
+                    {
+                        hemiCenter = center + topHemiCenterOffset;
+                    }
                         
-                        // Handle straight line of capsule body
+                    // Handle straight line of capsule body
+                    if (phase == 1 || phase == 3)
+                    {
                         if (s % quarterRingSegments == 0)
                         {
                             float3 straightVerticalEnd = hemiCenter + math.mul(verticalRotation, localHemiCenterToTop);
@@ -347,10 +358,6 @@ namespace Trove.DebugDraw
                             verticalStart = straightVerticalEnd;
                         }
                     }
-
-                    float3 verticalEnd = hemiCenter + math.mul(verticalRotation, localHemiCenterToTop);
-                    DrawLine(verticalStart, verticalEnd, color);
-                    verticalStart = verticalEnd;
                 }
             }
             
