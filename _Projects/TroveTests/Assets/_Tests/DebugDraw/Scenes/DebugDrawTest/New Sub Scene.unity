@@ -148,9 +148,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e53e38669b1b4841901ca156d9711a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Shape: 11
-  DrawCount: 5
-  Update: 0
+  Shape: 9
+  DrawCount: 20000
+  Update: 1
   UseLegacyDebugLine: 0
   TimeSpeed: 0.5
   ColorAlphaLine: 1
