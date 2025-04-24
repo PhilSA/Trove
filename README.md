@@ -38,3 +38,9 @@ The packages are hosted on [OpenUPM](https://openupm.com/). You can install them
 | **Stats** | [com.trove.stats](https://openupm.com/packages/com.trove.stats/) | Trove Stats allows you to define identifiable "numbers" (stats) on entities, and add/remove "rules" (modifiers) that affect the evaluation of these numbers' values. This tool can be used to effortlessly setup gameplay mechanics such as RPG character/equipment stats, buffs, effects, roguelike-style stackable powerups and synergies, etc... | [Documentation](./com.trove.stats/README.md) |
 | **Utility AI** | [com.trove.utilityai](https://openupm.com/packages/com.trove.utilityai/) | Trove Utility AI provides a flexible and efficient decision-making system for ECS. | [Documentation](./com.trove.utilityai/README.md) |
 | **Tweens** | [com.trove.tweens](https://openupm.com/packages/com.trove.tweens/) | Trove Tweens is a simple tweening tool that allows you to create your own highly-efficient custom tweens. | [Documentation](./com.trove.tweens/README.md) |
+| **Debug Draw** | [com.trove.debugdraw](https://openupm.com/packages/com.trove.debugdraw/) | Trove Debug Draw is a GPU-persistent burst-compatible debug line/mesh drawer. | [Documentation](./com.trove.debugdraw/README.md) |
+
+
+
+
+

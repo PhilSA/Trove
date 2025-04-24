@@ -39,7 +39,6 @@ partial struct TestDebugDrawSystem : ISystem
 {
     private DebugDrawGroup _debugDrawGroup;
     
-    [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<DebugDrawSingleton>();
@@ -58,7 +57,7 @@ partial struct TestDebugDrawSystem : ISystem
         {
             ref DebugDrawSingleton debugDrawSingleton = ref SystemAPI.GetSingletonRW<DebugDrawSingleton>().ValueRW;
             _debugDrawGroup = debugDrawSingleton.AllocateDebugDrawGroup();
-
+            
             Draw(ref testDebugDraw, elapsedTime);
         }
 

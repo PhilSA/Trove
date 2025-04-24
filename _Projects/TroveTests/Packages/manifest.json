@@ -1,9 +1,9 @@
 {
   "dependencies": {
     "com.trove.common": "file:../../../com.trove.common",
+    "com.trove.debugdraw": "file:C:/Projects/Trove/com.trove.debugdraw",
     "com.trove.eventsystems": "file:../../../com.trove.eventsystems",
     "com.trove.polymorphicstructs": "file:../../../com.trove.polymorphicstructs",
-    "com.trove.debugdraw": "file:C:/Projects/Trove/com.trove.debugdraw",
     "com.trove.spatialqueries": "file:C:/Projects/Trove/com.trove.spatialqueries",
     "com.trove.statemachines": "file:C:/Projects/Trove/com.trove.statemachines",
     "com.trove.stats": "file:../../../com.trove.stats",
@@ -17,6 +17,7 @@
     "com.unity.ide.rider": "3.0.36",
     "com.unity.ide.visualstudio": "2.0.23",
     "com.unity.multiplayer.center": "1.0.0",
+    "com.unity.render-pipelines.high-definition": "17.0.4",
     "com.unity.render-pipelines.universal": "17.0.4",
     "com.unity.test-framework": "1.5.1",
     "com.unity.timeline": "1.8.8",
