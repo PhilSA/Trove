@@ -56,18 +56,23 @@ namespace Trove.EventSystems
         public void OnDestroy(ref SystemState state)
         {
             // Dispose streams
-            if (_eventStreamsReference.GetUnsafePtr()->IsCreated)
+            if (_eventStreamsReference.IsCreated)
             {
-                UnsafeList<NativeStream> eventStreams = _eventStreamsReference.Value;
-                for (int i = 0; i < eventStreams.Length; i++)
+                if (_eventStreamsReference.GetUnsafePtr()->IsCreated)
                 {
-                    if (eventStreams[i].IsCreated)
+                    UnsafeList<NativeStream> eventStreams = _eventStreamsReference.Value;
+                    for (int i = 0; i < eventStreams.Length; i++)
                     {
-                        eventStreams[i].Dispose();
+                        if (eventStreams[i].IsCreated)
+                        {
+                            eventStreams[i].Dispose();
+                        }
                     }
+
+                    _eventStreamsReference.GetUnsafePtr()->Dispose();
                 }
 
-                _eventStreamsReference.GetUnsafePtr()->Dispose();
+                _eventStreamsReference.Dispose();
             }
         }
 

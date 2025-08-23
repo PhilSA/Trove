@@ -46,33 +46,42 @@ namespace Trove.EventSystems
         public void OnDestroy(ref SystemState state)
         {
             // Dispose queues
-            if (_eventQueuesReference.GetUnsafePtr()->IsCreated)
+            if (_eventQueuesReference.IsCreated)
             {
-                UnsafeList<NativeQueue<E>> eventQueues = _eventQueuesReference.Value;
-                for (int i = 0; i < eventQueues.Length; i++)
+                if (_eventQueuesReference.GetUnsafePtr()->IsCreated)
                 {
-                    if (eventQueues[i].IsCreated)
+                    UnsafeList<NativeQueue<E>> eventQueues = _eventQueuesReference.Value;
+                    for (int i = 0; i < eventQueues.Length; i++)
                     {
-                        eventQueues[i].Dispose();
+                        if (eventQueues[i].IsCreated)
+                        {
+                            eventQueues[i].Dispose();
+                        }
                     }
-                }
 
-                _eventQueuesReference.GetUnsafePtr()->Dispose();
+                    _eventQueuesReference.GetUnsafePtr()->Dispose();
+                }
+                _eventQueuesReference.Dispose();
             }
-            
+
             // Dispose streams
-            if (_eventStreamsReference.GetUnsafePtr()->IsCreated)
+            if (_eventStreamsReference.IsCreated)
             {
-                UnsafeList<NativeStream> eventStreams = _eventStreamsReference.Value;
-                for (int i = 0; i < eventStreams.Length; i++)
+                if (_eventStreamsReference.GetUnsafePtr()->IsCreated)
                 {
-                    if (eventStreams[i].IsCreated)
+                    UnsafeList<NativeStream> eventStreams = _eventStreamsReference.Value;
+                    for (int i = 0; i < eventStreams.Length; i++)
                     {
-                        eventStreams[i].Dispose();
+                        if (eventStreams[i].IsCreated)
+                        {
+                            eventStreams[i].Dispose();
+                        }
                     }
+
+                    _eventStreamsReference.GetUnsafePtr()->Dispose();
                 }
 
-                _eventStreamsReference.GetUnsafePtr()->Dispose();
+                _eventStreamsReference.Dispose();
             }
 
             if (_eventList.IsCreated)
@@ -114,7 +123,7 @@ namespace Trove.EventSystems
             state.Dependency = singletonRW.ValueRW.StreamEventsManager.ScheduleClearWriterCollections(state.Dependency);
         }
     }
-
+    
     [BurstCompile]
     public struct EventTransferQueueToListJob<E> : IJob
         where E : unmanaged // The event struct
