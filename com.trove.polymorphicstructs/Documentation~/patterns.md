@@ -4,6 +4,7 @@
 **Table of Contents**
 * [Polymorphic structs as a way to minimize structural changes or job counts](#polymorphic-structs-as-a-way-to-minimize-structural-changes-or-job-counts)
 * [Polymorphic structs as a way to minimize buffer lookups](#polymorphic-structs-as-a-way-to-minimize-buffer-lookups)
+* [Polymorphic structs as a way to minimize archetype sizes](#polymorphic-structs-as-a-way-to-minimize-archetype-sizes)
 * [Polymorphic structs as a way to handle type-independent ordering](#polymorphic-structs-as-a-way-to-handle-type-independent-ordering)
 * [Polymorphic structs as a graph solving tool](#polymorphic-structs-as-a-graph-solving-tool)
 * [Minimizing data size in Polymorphic Structs](#minimizing-data-size-in-polymorphic-structs)
@@ -26,6 +27,11 @@ You would simply create a polymorphic `MyBehaviour` component, that can take man
 Consider a use case where you need to access 3 dynamic buffers on an entity via `BufferLookup`s. In a case like this, Polymorphic structs can offer a way to reduce this to 1 lookup (if it makes sense for the use case).
 
 For example, let's say an entity must support 3 different types of events (stored in dynamic buffers on that entity and processed by a system): `DynamicBuffer<EventA>`, `DynamicBuffer<EventB>`, `DynamicBuffer<EventC>`. If something needs to add all 3 types of events on that entity, it will need to do 3 different buffer lookups in order to get all the event buffers. With Polymorphic structs, `EventA`, `EventB`, `EventC` could be turned into one single polymorphic `Event` type, stored in only one dynamic buffer. With this change, only one buffer lookup would be required for adding any amount of different types of events.
+
+
+## Polymorphic structs as a way to minimize archetype sizes
+
+Imagine an AI entity that can have many different kinds of "behaviour modules" assigned to it. There are 20 different types of behaviour modules, and there can be several of each type of module. One way to implement this would be to add 20 dynamic buffers to your entity, one for each module type. However, even with an internal capacity of zero, this will bloat your archetype size due to the buffer header of each dynamic buffer, which must be stored in the chunk. With polymorphic structs, you could instead have just one dynamic buffer of modules, and add all modules of different types to this buffer. You're only paying the archetype size cost of one buffer instead of 20.
 
 
 ## Polymorphic structs as a way to handle type-independent ordering
@@ -62,7 +68,7 @@ If not using the [Merged Fields](./poly-struct-types.md/#merged-fields-struct) t
 
 #### Encompassing struct
 
-The simplest alternative is to simply create a regular struct that encompasses the generated polymorphic struct:
+The simplest alternative is to simply create a regular struct that encompasses the generated polymorphic struct. This encompassing struct will hold all the Entity/Blob fields you may need:
 ```cs
 public struct MyEncompassingStruct // This is the regular "encompassing struct"
 {
