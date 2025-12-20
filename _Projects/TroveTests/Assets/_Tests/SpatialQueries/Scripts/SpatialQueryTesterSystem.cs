@@ -134,26 +134,6 @@ partial struct SpatialQueryTesterSystem : ISystem
                 _debugDrawGroup.Clear();
                 state.Dependency.Complete();
 
-                // if (debugger.DebugMortonCurve)
-                // {
-                //     _bvh.GetNodes(out UnsafeList<BVHNode> nodes, 
-                //         out UnsafeList<NodeLevelData> levelStartIndexesAndCounts);
-                //
-                //     if (levelStartIndexesAndCounts.Length > 0)
-                //     {
-                //         NodeLevelData leafNodesData = levelStartIndexesAndCounts[0];
-                //
-                //         for (int i = leafNodesData.StartIndex; 
-                //              i < math.min(debugger.MortonCurveDebugIterations, leafNodesData.StartIndex + leafNodesData.Count - 1); 
-                //              i++)
-                //         {
-                //             BVHNode node = nodes[i];
-                //             BVHNode nextNode = nodes[i + 1];
-                //             _debugDrawGroup.DrawLine(node.AABB.GetCenter(), nextNode.AABB.GetCenter(), UnityEngine.Color.yellow);
-                //         }
-                //     }
-                // }
-
                 if (debugger.DebugBoundingBoxes)
                 {
                     _bvh.GetNodes(out NativeList<BVHHierarchyNode> hierarchyNodes, out NativeList<BVHLeafNode> leafNodes);

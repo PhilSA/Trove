@@ -34,9 +34,6 @@ public struct BVHDebugger : IComponentData
     public float QueryLength;
     public float3 QueryExtents;
     
-    public bool DebugMortonCurve;
-    public int MortonCurveDebugIterations;
-    
     public bool DebugBoundingBoxes;
     public int BoundingBoxDebugLevel;
     
@@ -49,9 +46,6 @@ class BVHDebuggerBehaviour : MonoBehaviour
     public bool QueryEnabled;
     public float3 QueryExtents;
     public float QueryLength;
-    
-    public bool DebugMortonCurve;
-    public int MortonCurveDebugIterations = int.MaxValue;
     
     public bool DebugBoundingBoxes;
     public int BoundingBoxDebugLevel;
@@ -78,9 +72,6 @@ class BVHDebuggerBehaviour : MonoBehaviour
             QueryDirection = transform.forward,
             QueryExtents = QueryExtents,
             QueryLength = QueryLength,
-            
-            DebugMortonCurve = DebugMortonCurve,
-            MortonCurveDebugIterations = MortonCurveDebugIterations,
             
             DebugBoundingBoxes = DebugBoundingBoxes,
             BoundingBoxDebugLevel = BoundingBoxDebugLevel,
