@@ -10,13 +10,13 @@ using UnityEngine;
 
 namespace Trove.SpatialQueries
 {
-    public struct BVHLeafNode 
+    public struct BVHLeafNode
     {
         public AABB AABB;
         public int NodeDataIndex;
     }
-    
-    public struct BVHHierarchyNode 
+
+    public struct BVHHierarchyNode
     {
         public AABB AABB;
         public int LeftIndex;
@@ -30,7 +30,7 @@ namespace Trove.SpatialQueries
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => LeftIndex = value;
         }
-            
+
         public int ChildrenLength
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -44,10 +44,10 @@ namespace Trove.SpatialQueries
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void OnBeginQuery();
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddNode(in TNodeData node);
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasFoundResults();
     }
@@ -95,7 +95,7 @@ namespace Trove.SpatialQueries
         internal NativeList<BVHHierarchyNode> HierarchyNodes;
         internal NativeList<TNodeData> LeafNodeDatas;
         internal NativeReference<AABB> SceneAABB;
-        
+
         public static BVH<TNodeData> Create(Allocator allocator, int initialElementsCapacity)
         {
             BVH<TNodeData> bvh = new BVH<TNodeData>();
@@ -115,7 +115,7 @@ namespace Trove.SpatialQueries
             {
                 LeafNodes.Dispose(jobHandle);
             }
-            
+
             if (HierarchyNodes.IsCreated)
             {
                 HierarchyNodes.Dispose(jobHandle);
@@ -130,6 +130,12 @@ namespace Trove.SpatialQueries
             {
                 SceneAABB.Dispose(jobHandle);
             }
+        }
+
+        public void GetNodes(out NativeList<BVHHierarchyNode> hierarchyNodes, out NativeList<BVHLeafNode> leafNodes)
+        {
+            hierarchyNodes = HierarchyNodes;
+            leafNodes = LeafNodes;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -164,36 +170,36 @@ namespace Trove.SpatialQueries
             LeafNodeDatas[atIndex] = nodeData;
         }
 
-        public unsafe bool QueryAABB<TCollector>(in AABB aabb, ref TCollector collector) 
+        public unsafe bool QueryAABB<TCollector>(in AABB aabb, ref TCollector collector)
             where TCollector : unmanaged, IBVHQueryCollector<TNodeData>
         {
             collector.OnBeginQuery();
-        
+
             if (HierarchyNodes.Length < 1)
             {
                 return false;
             }
-        
+
             UnsafeList<BVHLeafNode> leafNodes = *LeafNodes.GetUnsafeList();
             UnsafeList<BVHHierarchyNode> hierarchyNodes = *HierarchyNodes.GetUnsafeList();
             UnsafeList<TNodeData> leafNodeDatas = *LeafNodeDatas.GetUnsafeList();
-        
+
             QueryAABBRecursive(0, aabb, leafNodes, hierarchyNodes, leafNodeDatas, ref collector);
-        
+
             return collector.HasFoundResults();
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void QueryAABBRecursive<TCollector>(int nodeIndex, in AABB aabb, UnsafeList<BVHLeafNode> leafNodes, 
+        internal void QueryAABBRecursive<TCollector>(int nodeIndex, in AABB aabb, UnsafeList<BVHLeafNode> leafNodes,
             UnsafeList<BVHHierarchyNode> hierarchyNodes, UnsafeList<TNodeData> leafNodeDatas, ref TCollector collector)
             where TCollector : unmanaged, IBVHQueryCollector<TNodeData>
         {
             BVHHierarchyNode hierarchyNode = hierarchyNodes[nodeIndex];
-        
+
             // Early out if no overlap
             if (!aabb.OverlapsAABB(hierarchyNode.AABB))
                 return;
-            
+
             if (hierarchyNode.ContainsLeafNodes == 1)
             {
                 // Query leaf nodes
@@ -220,32 +226,32 @@ namespace Trove.SpatialQueries
             where TCollector : unmanaged, IBVHQueryCollector<TNodeData>
         {
             collector.OnBeginQuery();
-        
+
             if (HierarchyNodes.Length < 1)
             {
                 return false;
             }
-        
+
             UnsafeList<BVHLeafNode> leafNodes = *LeafNodes.GetUnsafeList();
             UnsafeList<BVHHierarchyNode> hierarchyNodes = *HierarchyNodes.GetUnsafeList();
             UnsafeList<TNodeData> leafNodeDatas = *LeafNodeDatas.GetUnsafeList();
-        
+
             QuerySphereRecursive(0, position, radius * radius, leafNodes, hierarchyNodes, leafNodeDatas, ref collector);
-        
+
             return collector.HasFoundResults();
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void QuerySphereRecursive<TCollector>(int nodeIndex, in float3 position, float radiusSq, UnsafeList<BVHLeafNode> leafNodes, 
+        internal void QuerySphereRecursive<TCollector>(int nodeIndex, in float3 position, float radiusSq, UnsafeList<BVHLeafNode> leafNodes,
             UnsafeList<BVHHierarchyNode> hierarchyNodes, UnsafeList<TNodeData> leafNodeDatas, ref TCollector collector)
             where TCollector : unmanaged, IBVHQueryCollector<TNodeData>
         {
             BVHHierarchyNode hierarchyNode = hierarchyNodes[nodeIndex];
-        
+
             // Early out if no overlap
             if (!hierarchyNode.AABB.OverlapsSphere(position, radiusSq))
                 return;
-            
+
             if (hierarchyNode.ContainsLeafNodes == 1)
             {
                 // Query leaf nodes
@@ -273,34 +279,34 @@ namespace Trove.SpatialQueries
             where TCollector : unmanaged, IBVHQueryCollector<TNodeData>
         {
             collector.OnBeginQuery();
-        
+
             if (HierarchyNodes.Length < 1)
             {
                 return false;
             }
-        
+
             UnsafeList<BVHLeafNode> leafNodes = *LeafNodes.GetUnsafeList();
             UnsafeList<BVHHierarchyNode> hierarchyNodes = *HierarchyNodes.GetUnsafeList();
             UnsafeList<TNodeData> leafNodeDatas = *LeafNodeDatas.GetUnsafeList();
-            
-            QueryRayRecursive(0, rayOrigin, rayDirectionNormalized, rayLength, leafNodes, hierarchyNodes, 
+
+            QueryRayRecursive(0, rayOrigin, rayDirectionNormalized, rayLength, leafNodes, hierarchyNodes,
                 leafNodeDatas, ref collector);
-        
+
             return collector.HasFoundResults();
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void QueryRayRecursive<TCollector>(int nodeIndex, in float3 rayOrigin, in float3 rayDirectionNormalized,
-            float rayLength, UnsafeList<BVHLeafNode> leafNodes, UnsafeList<BVHHierarchyNode> hierarchyNodes, 
+            float rayLength, UnsafeList<BVHLeafNode> leafNodes, UnsafeList<BVHHierarchyNode> hierarchyNodes,
             UnsafeList<TNodeData> leafNodeDatas, ref TCollector collector)
             where TCollector : unmanaged, IBVHQueryCollector<TNodeData>
         {
             BVHHierarchyNode hierarchyNode = hierarchyNodes[nodeIndex];
-        
+
             // Early out if no intersection
             if (!hierarchyNode.AABB.IntersectsRay(rayOrigin, rayDirectionNormalized, rayLength))
                 return;
-        
+
             if (hierarchyNode.ContainsLeafNodes == 1)
             {
                 // Query leaf nodes
@@ -318,13 +324,13 @@ namespace Trove.SpatialQueries
             else
             {
                 // Internal node - recurse to children
-                QueryRayRecursive(hierarchyNode.LeftIndex, rayOrigin, rayDirectionNormalized, rayLength, leafNodes, hierarchyNodes, 
+                QueryRayRecursive(hierarchyNode.LeftIndex, rayOrigin, rayDirectionNormalized, rayLength, leafNodes, hierarchyNodes,
                     leafNodeDatas, ref collector);
-                QueryRayRecursive(hierarchyNode.RightIndex, rayOrigin, rayDirectionNormalized, rayLength, leafNodes, hierarchyNodes, 
+                QueryRayRecursive(hierarchyNode.RightIndex, rayOrigin, rayDirectionNormalized, rayLength, leafNodes, hierarchyNodes,
                     leafNodeDatas, ref collector);
             }
         }
-        
+
         public JobHandle ScheduleClearJob(JobHandle dep)
         {
             dep = new BVHClearJob
@@ -512,64 +518,62 @@ namespace Trove.SpatialQueries
             public float Position;
             public float Cost;
         }
-        
+
         public NativeReference<AABB> SceneAABB;
         public NativeList<BVHLeafNode> LeafNodes;
         public NativeList<BVHHierarchyNode> HierarchyNodes;
-        
+
         public UnsafeList<BVHLeafNode> LeafNodesUnsafe;
 
-        private const int LeavesPerNode = 4;
+        private const int LeavesPerNode = 4; 
         private const int MaxDepth = 30;
         private const int NbBins = 16;
         private const float TraversalCost = 1f;
         private const float IntersectCost = 1.5f;
-        
+
         public void Execute()
         {
             HierarchyNodes.Clear();
             LeafNodesUnsafe = *LeafNodes.GetUnsafeList();
-            
+
             BVHHierarchyNode root = new BVHHierarchyNode
             {
                 AABB = SceneAABB.Value,
                 ChildrenStartIndex = 0,
                 ChildrenLength = LeafNodesUnsafe.Length,
             };
-            
+
             int depth = 0;
-            BuildRecursive(ref root, ref depth, -1, false);
+            BuildRecursive(root, depth, -1, false);
         }
 
-        private void BuildRecursive(ref BVHHierarchyNode node, ref int depth, int parentIndex, bool isLeft)
-        {
+        private void BuildRecursive(BVHHierarchyNode node, int depth, int parentIndex, bool isLeftChild)
+        { 
             // Add to hierarchy if few enough children, or if exceed depth limit
             if (node.ChildrenLength < LeavesPerNode || depth >= MaxDepth)
             {
-                AddNodeToHierarchy(ref node, parentIndex, isLeft, true, out _);
+                AddNodeToHierarchy(ref node, parentIndex, isLeftChild, true, out _);
                 return;
             }
-            
-            // Alternate src and dst nodes
-            bool isEvenDepthLevel = depth % 2 == 0;
-            
+
             FindSplit(in node, out SplitInfo split);
 
             // If no split, add to hierarchy
-            if (split.Axis == 1) 
+            if (split.Axis == -1)
             {
-                AddNodeToHierarchy(ref node, parentIndex, isLeft, true, out _);
+                AddNodeToHierarchy(ref node, parentIndex, isLeftChild, true, out _);
                 return;
             }
 
             // If the split would be less efficient than no split, add to hierarchy
-            float leafCost = node.ChildrenLength * IntersectCost;
-            if (split.Cost >= leafCost)
-            {
-                AddNodeToHierarchy(ref node, parentIndex, isLeft, true, out _); 
-                return;
-            }
-            
+            // float leafCost = node.ChildrenLength * IntersectCost;
+            // if (split.Cost >= leafCost)
+            // {
+            //     Debug.Log("C");
+            //     AddNodeToHierarchy(ref node, parentIndex, isLeftChild, true, out _);
+            //     return;
+            // }
+
             BVHHierarchyNode leftNode = new BVHHierarchyNode
             {
                 AABB = AABB.GetEmpty(),
@@ -578,22 +582,21 @@ namespace Trove.SpatialQueries
             };
             BVHHierarchyNode rightNode = new BVHHierarchyNode
             {
-                AABB = SceneAABB.Value,
+                AABB = AABB.GetEmpty(),
                 ChildrenStartIndex = -1, // we don't know yet
                 ChildrenLength = 0,
             };
-            
-            // Write partitioned children in the dst buffer in their respective ranges
+
+            // Reorder children in the buffer range so that it contains all left children, then all right children
             {
-                int nodesLength = node.ChildrenStartIndex + node.ChildrenLength;
                 for (int leftNodeIndex = node.ChildrenStartIndex;
                      leftNodeIndex < node.ChildrenStartIndex + node.ChildrenLength;
                      leftNodeIndex++)
                 {
                     BVHLeafNode childFromLeft = LeafNodesUnsafe[leftNodeIndex];
-                    float centerOnAxis = childFromLeft.AABB.GetCenter()[split.Axis];
+                    float centerOnAxisChlidFromLeft = childFromLeft.AABB.GetCenter()[split.Axis];
 
-                    if (centerOnAxis < split.Position)
+                    if (centerOnAxisChlidFromLeft < split.Position)
                     {
                         leftNode.AABB.Include(childFromLeft.AABB);
                         leftNode.ChildrenLength++;
@@ -602,11 +605,13 @@ namespace Trove.SpatialQueries
                     {
                         // If node goes on the right, iterate nodes from the right until we find one that goes left.
                         // Then swap them
-                        for (int rightNodeIndex = nodesLength - 1 - rightNode.ChildrenLength; rightNodeIndex >= 0; rightNodeIndex--)
+                        for (int rightNodeIndex = node.ChildrenStartIndex + node.ChildrenLength - 1 - rightNode.ChildrenLength;
+                             rightNodeIndex >= leftNodeIndex; rightNodeIndex--)
                         {
                             BVHLeafNode childFromRight = LeafNodesUnsafe[rightNodeIndex];
+                            float centerOnAxisChlidFromRight = childFromRight.AABB.GetCenter()[split.Axis];
 
-                            if (centerOnAxis >= split.Position)
+                            if (centerOnAxisChlidFromRight >= split.Position)
                             {
                                 rightNode.AABB.Include(childFromRight.AABB);
                                 rightNode.ChildrenLength++;
@@ -617,13 +622,18 @@ namespace Trove.SpatialQueries
                                 BVHLeafNode tmpNode = childFromRight;
                                 LeafNodesUnsafe[rightNodeIndex] = childFromLeft;
                                 LeafNodesUnsafe[leftNodeIndex] = tmpNode;
-                                
+
                                 leftNode.AABB.Include(childFromRight.AABB);
                                 leftNode.ChildrenLength++;
-                                
+
                                 rightNode.AABB.Include(childFromLeft.AABB);
                                 rightNode.ChildrenLength++;
 
+                                break;
+                            }
+
+                            if (rightNodeIndex == leftNodeIndex)
+                            {
                                 break;
                             }
                         }
@@ -633,13 +643,13 @@ namespace Trove.SpatialQueries
                 // Patch right node start index
                 rightNode.ChildrenStartIndex = leftNode.ChildrenStartIndex + leftNode.ChildrenLength;
             }
-            
+
             // Add node to hierarchy
-            AddNodeToHierarchy(ref node, parentIndex, isLeft,  false, out int addedIndex);
-            
+            AddNodeToHierarchy(ref node, parentIndex, isLeftChild, false, out int addedIndex);
+
             depth++;
-            BuildRecursive(ref leftNode, ref depth, addedIndex, true);
-            BuildRecursive(ref rightNode, ref depth, addedIndex, false);
+            BuildRecursive(leftNode, depth, addedIndex, true);
+            BuildRecursive(rightNode, depth, addedIndex, false);
         }
 
         // Find the best split on the best axis to separate the children
@@ -654,7 +664,7 @@ namespace Trove.SpatialQueries
             Span<AABBAndCount> bins = stackalloc AABBAndCount[NbBins];
             Span<AABBAndCount> leftBinSums = stackalloc AABBAndCount[NbBins - 1];
             Span<AABBAndCount> rightBinSums = stackalloc AABBAndCount[NbBins - 1];
-            
+
             // For x, y, z axis
             for (int axis = 0; axis < 3; axis++)
             {
@@ -663,15 +673,15 @@ namespace Trove.SpatialQueries
                 {
                     bins[i] = default;
                 }
-                
+
                 // Init bins
                 float parentMinOnAxis = parent.AABB.Min[axis];
                 float parentMaxOnAxis = parent.AABB.Max[axis];
                 float binValueRange = (parentMaxOnAxis - parentMinOnAxis) / bins.Length;
-                
-                if(binValueRange <= 0f)
+
+                if (binValueRange <= 0f)
                     continue;
-                
+
                 // Compute children counts and AABBs for bins
                 for (int nodeIndex = parent.ChildrenStartIndex; nodeIndex < parent.ChildrenStartIndex + parent.ChildrenLength; nodeIndex++)
                 {
@@ -682,7 +692,7 @@ namespace Trove.SpatialQueries
                     bins[binIndex].Count++;
                     bins[binIndex].AABB.Include(childAABB);
                 }
-                
+
                 // Compute info about bins to the left of the end of each bin
                 AABBAndCount cummulativeAABBAndCount = new AABBAndCount
                 {
@@ -695,7 +705,7 @@ namespace Trove.SpatialQueries
                     cummulativeAABBAndCount.AABB.Include(bins[i].AABB);
                     leftBinSums[i] = cummulativeAABBAndCount;
                 }
-                
+
                 // Compute info about bins to the right of the end of each bin
                 cummulativeAABBAndCount = new AABBAndCount
                 {
@@ -704,8 +714,8 @@ namespace Trove.SpatialQueries
                 };
                 for (int i = bins.Length - 2; i >= 0; i--)
                 {
-                    cummulativeAABBAndCount.Count += bins[i+1].Count;
-                    cummulativeAABBAndCount.AABB.Include(bins[i+1].AABB);
+                    cummulativeAABBAndCount.Count += bins[i + 1].Count;
+                    cummulativeAABBAndCount.AABB.Include(bins[i + 1].AABB);
                     rightBinSums[i] = cummulativeAABBAndCount;
                 }
 
@@ -715,10 +725,10 @@ namespace Trove.SpatialQueries
                 {
                     AABBAndCount leftBinSum = leftBinSums[i];
                     AABBAndCount rightBinSum = rightBinSums[i];
-                    
+
                     if (leftBinSum.Count == 0 || rightBinSum.Count == 0)
                         continue;
-                    
+
                     // Calculate the cost of separating at that bin. Basically, the best split is the split that
                     // generates the best ratio of surface area to node count of the left and right children AABBs.
                     // In other words, a high cost would be if we have very few nodes in a very large AABB.
@@ -761,7 +771,7 @@ namespace Trove.SpatialQueries
                     parent.RightIndex = addedIndex;
                 }
             }
-            
+
             node.ContainsLeafNodes = containsLeafNodes ? (byte)1 : (byte)0;
             HierarchyNodes.Add(node);
         }

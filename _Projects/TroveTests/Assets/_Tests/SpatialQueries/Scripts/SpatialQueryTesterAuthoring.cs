@@ -2,6 +2,7 @@ using Unity.Entities;
 using UnityEngine;
 using Trove.SpatialQueries;
 using Unity.Mathematics;
+using UnityEditor;
 using UnityEngine.Serialization;
 using AABB = Trove.AABB;
 

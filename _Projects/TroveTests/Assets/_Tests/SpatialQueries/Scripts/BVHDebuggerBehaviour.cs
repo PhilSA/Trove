@@ -1,6 +1,30 @@
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+#if UNITY_EDITOR
+[CustomEditor(typeof(BVHDebuggerBehaviour))]
+public class BVHDebuggerBehaviourEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+
+        BVHDebuggerBehaviour authoring = (target as BVHDebuggerBehaviour);
+        if (GUILayout.Button("+ Bounding Box Level"))
+        {
+            authoring.BoundingBoxDebugLevel++;
+        }
+        if (GUILayout.Button("- Bounding Box Level"))
+        {
+            authoring.BoundingBoxDebugLevel--;
+        }
+    }
+}
+#endif
 
 public struct BVHDebugger : IComponentData
 {

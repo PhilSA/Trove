@@ -118,11 +118,11 @@ partial struct SpatialQueryTesterSystem : ISystem
 
             // ---------------------------------------------------------------
             
-            // state.Dependency = new QueryBVHJob()
-            // {
-            //     QueryScale = tester.QueryScale,
-            //     BVH = _bvh,
-            // }.ScheduleParallel(state.Dependency);
+            state.Dependency = new QueryBVHJob()
+            {
+                QueryScale = tester.QueryScale,
+                BVH = _bvh,
+            }.ScheduleParallel(state.Dependency);
 
             // ---------------------------------------------------------------
             
@@ -154,28 +154,75 @@ partial struct SpatialQueryTesterSystem : ISystem
                 //     }
                 // }
 
-                // if (debugger.DebugBoundingBoxes)
-                // {
-                //     _bvh.GetNodes(out UnsafeList<BVHNode> nodes, 
-                //         out UnsafeList<NodeLevelData> levelStartIndexesAndCounts);
-                //
-                //     if (debugger.BoundingBoxDebugLevel >= 0 && levelStartIndexesAndCounts.Length > debugger.BoundingBoxDebugLevel)
-                //     {
-                //         NodeLevelData levelNodesData = levelStartIndexesAndCounts[debugger.BoundingBoxDebugLevel];
-                //         for (int i = levelNodesData.StartIndex; i < levelNodesData.StartIndex + levelNodesData.Count; i++)
-                //         {
-                //             BVHNode node = nodes[i];
-                //             if (node.IsValid())
-                //             {
-                //                 _debugDrawGroup.DrawWireBox(
-                //                     node.AABB.GetCenter(),
-                //                     quaternion.identity,
-                //                     node.AABB.GetExtents(),
-                //                     UnityEngine.Color.green);
-                //             }
-                //         }
-                //     }
-                // }
+                if (debugger.DebugBoundingBoxes)
+                {
+                    _bvh.GetNodes(out NativeList<BVHHierarchyNode> hierarchyNodes, out NativeList<BVHLeafNode> leafNodes);
+
+                    if (hierarchyNodes.Length > 0)
+                    {
+                        Unity.Mathematics.Random random = Unity.Mathematics.Random.CreateFromIndex(0);
+                        NativeList<int> nodesStack = new NativeList<int>(1000, Allocator.Temp);
+                        NativeList<int> nodeDepths = new NativeList<int>(hierarchyNodes.Length, Allocator.Temp);
+                        NativeList<UnityEngine.Color> colorForDepth = new NativeList<UnityEngine.Color>(hierarchyNodes.Length, Allocator.Temp);
+                        
+                        colorForDepth.Resize(30, NativeArrayOptions.ClearMemory);
+                        colorForDepth[0] = new UnityEngine.Color(1f, 1f, 1f, 1f);
+                        for (int i = 1; i < colorForDepth.Length; i++)
+                        {
+                            colorForDepth[i] = Color.HSVToRGB(random.NextFloat(0f, 1f), 1f, 1f);
+                        }
+                        
+                        nodeDepths.Resize(hierarchyNodes.Length, NativeArrayOptions.ClearMemory);
+                        nodeDepths[0] = 0;
+                        for (int i = 0; i < hierarchyNodes.Length; i++)
+                        {
+                            BVHHierarchyNode node = hierarchyNodes[i];
+                            int selfDepth = nodeDepths[i];
+                            
+                            // Write depth of children
+                            if (node.ContainsLeafNodes == 0)
+                            {
+                                nodeDepths[node.LeftIndex] = selfDepth + 1;
+                                nodeDepths[node.RightIndex] = selfDepth + 1;
+                            }
+                        }
+
+                        nodesStack.Add(0);
+                        
+                        for (int i = 0; i <= math.min(nodesStack.Length - 1, debugger.BoundingBoxDebugLevel); i++)
+                        {
+                            int nodeIndex = nodesStack[i];
+                            BVHHierarchyNode node = hierarchyNodes[nodeIndex];
+                            int nodeDepth = nodeDepths[nodeIndex];
+                            UnityEngine.Color color = colorForDepth[nodeDepth];
+                                
+                            if (i == debugger.BoundingBoxDebugLevel)
+                            {
+                                color.a = 0.1f;
+                                _debugDrawGroup.DrawBox(
+                                    node.AABB.GetCenter(),
+                                    quaternion.identity,
+                                    node.AABB.GetExtents(),
+                                    color);
+                            }
+
+                            color.a = 1f;
+                            _debugDrawGroup.DrawWireBox(
+                                node.AABB.GetCenter(),
+                                quaternion.identity,
+                                node.AABB.GetExtents(),
+                                color);
+
+                            if (node.ContainsLeafNodes == 0)
+                            {
+                                nodesStack.Add(node.LeftIndex);
+                                nodesStack.Add(node.RightIndex);
+                            }
+                        }
+                        
+                        nodesStack.Dispose();
+                    }
+                }
 
                 if (debugger.QueryEnabled)
                 {
