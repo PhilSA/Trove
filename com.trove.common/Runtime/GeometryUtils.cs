@@ -173,6 +173,13 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float CalculateSurfaceArea()
+        {
+            float3 size = Max - Min;
+            return 2f * ((size.x * size.y) + (size.y * size.z) + (size.z * size.x));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IntersectsRay(float3 rayOrigin, float3 rayDirectionNormalized, float rayLength)
         {
             float tMin = 0.0f;

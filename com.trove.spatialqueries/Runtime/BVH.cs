@@ -1197,4 +1197,270 @@ namespace Trove.SpatialQueries
             }
         }
     }
+
+    [BurstCompile]
+    public unsafe struct BVHBuildTopDownJob : IJob
+    {
+        public struct MyNode
+        {
+            public AABB AABB;
+            public int LeftIndex;
+            public int RightIndex;
+            public byte IsLeaf;
+
+            public int ChildrenStartIndex
+            {
+                get => LeftIndex;
+                set => LeftIndex = value;
+            }
+            
+            public int ChildrenLength
+            {
+                get => RightIndex;
+                set => RightIndex = value;
+            }
+        }
+
+        public struct AABBAndCount
+        {
+            public AABB AABB;
+            public int Count;
+        }
+
+        public struct SplitInfo
+        {
+            public int Axis;
+            public float Position;
+            public float Cost;
+        }
+        
+        public NativeReference<AABB> SceneAABB;
+        public NativeReference<int> HierarchyDepth;
+        public NativeList<MyNode> NodesA;
+        public NativeList<MyNode> NodesB;
+        public NativeList<MyNode> HierarchyNodes;
+
+        private const int LeavesPerNode = 4;
+        private const int MaxDepth = 30;
+        private const int NbBins = 16;
+        private const float TraversalCost = 1f;
+        private const float IntersectCost = 1.5f;
+        
+        public void Execute()
+        {
+            NodesB.Resize(NodesA.Length, NativeArrayOptions.ClearMemory);
+            HierarchyNodes.Clear();
+            
+            MyNode root = new MyNode
+            {
+                AABB = SceneAABB.Value,
+                ChildrenStartIndex = 0,
+                ChildrenLength = NodesA.Length,
+            };
+            
+            ref int depth = ref *HierarchyDepth.GetUnsafePtr();
+            BuildRecursive(in root, ref depth, -1, false);
+        }
+
+        private void AddNodeToHierarchy(in MyNode node, int parentIndex, bool isLeft, out int addedIndex)
+        {
+            if (parentIndex >= 0)
+            {
+                ref MyNode parent =
+                    ref UnsafeUtility.ArrayElementAsRef<MyNode>(HierarchyNodes.GetUnsafePtr(), parentIndex);
+                if (isLeft)
+                {
+                    parent.LeftIndex = HierarchyNodes.Length;
+                }
+                else
+                {
+                    parent.RightIndex = HierarchyNodes.Length;
+                }
+            }
+
+            HierarchyNodes.Add(node);
+            addedIndex = HierarchyNodes.Length;
+        }
+
+        private void BuildRecursive(in MyNode node, ref int depth, int parentIndex, bool isLeft)
+        {
+            // Add to hierarchy if few enough children, or if exceed depth limit
+            if (node.ChildrenLength < LeavesPerNode || depth >= MaxDepth)
+            {
+                AddNodeToHierarchy(in node, parentIndex, isLeft, out _);
+                return;
+            }
+            
+            // Alternate src and dst nodes
+            bool isEvenDepthLevel = depth % 2 == 0;
+            NativeList<MyNode> srcNodes = isEvenDepthLevel ? NodesA : NodesB;
+            NativeList<MyNode> dstNodes = isEvenDepthLevel ? NodesB : NodesA;
+            
+            FindSplit(in node, out SplitInfo split, srcNodes);
+
+            // If no split, add to hierarchy
+            if (split.Axis == 1) 
+            {
+                AddNodeToHierarchy(in node, parentIndex, isLeft, out _);
+                return;
+            }
+
+            // If the split would be less efficient than no split, add to hierarchy
+            float leafCost = node.ChildrenLength * IntersectCost;
+            if (split.Cost >= leafCost)
+            {
+                AddNodeToHierarchy(in node, parentIndex, isLeft, out _); 
+                return;
+            }
+            
+            MyNode leftNode = new MyNode
+            {
+                AABB = AABB.GetEmpty(),
+                ChildrenStartIndex = node.ChildrenStartIndex,
+                ChildrenLength = 0,
+            };
+            MyNode rightNode = new MyNode
+            {
+                AABB = SceneAABB.Value,
+                ChildrenStartIndex = -1, // we don't know yet
+                ChildrenLength = 0,
+            };
+            
+            // Write partitioned children in the dst buffer in their respective ranges
+            int leftWriteIndex = 0;
+            int rightWriteIndex = dstNodes.Length - 1;
+            for (int nodeIndex = node.ChildrenStartIndex; nodeIndex < node.ChildrenStartIndex + node.ChildrenLength; nodeIndex++)
+            {
+                MyNode child = srcNodes[nodeIndex];
+                float centerOnAxis = child.AABB.GetCenter()[split.Axis];
+
+                if (centerOnAxis < split.Position)
+                {
+                    dstNodes[leftWriteIndex] = child;
+                    leftWriteIndex++;
+                    leftNode.AABB.Include(child.AABB);
+                    leftNode.ChildrenLength++;
+                }
+                else
+                {
+                    dstNodes[rightWriteIndex] = child;
+                    rightWriteIndex--;
+                    rightNode.AABB.Include(child.AABB);
+                    rightNode.ChildrenLength++;
+                }
+            }
+            
+            // Patch right node start index
+            rightNode.ChildrenStartIndex = leftNode.ChildrenStartIndex + leftNode.ChildrenLength;
+            
+            // Add node to hierarchy
+            AddNodeToHierarchy(in node, parentIndex, isLeft, out int addedIndex);
+            
+            depth++;
+            BuildRecursive(in leftNode, ref depth, addedIndex, true);
+            BuildRecursive(in rightNode, ref depth, addedIndex, false);
+        }
+
+        // Find the best split on the best axis to separate the children
+        private void FindSplit(in MyNode parent, out SplitInfo bestSplit, NativeList<MyNode> srcNodes)
+        {
+            bestSplit = new SplitInfo
+            {
+                Cost = float.PositiveInfinity,
+                Axis = -1, // invalid
+            };
+
+            Span<AABBAndCount> bins = stackalloc AABBAndCount[NbBins];
+            Span<AABBAndCount> leftBinSums = stackalloc AABBAndCount[NbBins - 1];
+            Span<AABBAndCount> rightBinSums = stackalloc AABBAndCount[NbBins - 1];
+            
+            // For x, y, z axis
+            for (int axis = 0; axis < 3; axis++)
+            {
+                // Clear bins
+                for (int i = 0; i < bins.Length; i++)
+                {
+                    bins[i] = default;
+                }
+                
+                // Init bins
+                float parentMinOnAxis = parent.AABB.Min[axis];
+                float parentMaxOnAxis = parent.AABB.Max[axis];
+                float binValueRange = (parentMaxOnAxis - parentMinOnAxis) / bins.Length;
+                
+                if(binValueRange <= 0f)
+                    continue;
+                
+                // Compute children counts and AABBs for bins
+                for (int nodeIndex = parent.ChildrenStartIndex; nodeIndex < parent.ChildrenStartIndex + parent.ChildrenLength; nodeIndex++)
+                {
+                    AABB childAABB = srcNodes[nodeIndex].AABB;
+                    float centerOnAxis = childAABB.GetCenter()[axis];
+                    int binIndex = (int)math.floor((centerOnAxis - parentMinOnAxis) / binValueRange);
+                    binIndex = math.clamp(binIndex, 0, bins.Length - 1);
+                    bins[binIndex].Count++;
+                    bins[binIndex].AABB.Include(childAABB);
+                }
+                
+                // Compute info about bins to the left of the end of each bin
+                AABBAndCount cummulativeAABBAndCount = new AABBAndCount
+                {
+                    Count = 0,
+                    AABB = AABB.GetEmpty(),
+                };
+                for (int i = 0; i < bins.Length - 2; i++)
+                {
+                    cummulativeAABBAndCount.Count += bins[i].Count;
+                    cummulativeAABBAndCount.AABB.Include(bins[i].AABB);
+                    leftBinSums[i] = cummulativeAABBAndCount;
+                }
+                
+                // Compute info about bins to the right of the end of each bin
+                cummulativeAABBAndCount = new AABBAndCount
+                {
+                    Count = 0,
+                    AABB = AABB.GetEmpty(),
+                };
+                for (int i = bins.Length - 2; i >= 0; i--)
+                {
+                    cummulativeAABBAndCount.Count += bins[i+1].Count;
+                    cummulativeAABBAndCount.AABB.Include(bins[i+1].AABB);
+                    rightBinSums[i] = cummulativeAABBAndCount;
+                }
+
+                // Find the best bin to split at
+                float parentSurfaceArea = parent.AABB.CalculateSurfaceArea();
+                for (int i = 0; i < bins.Length - 2; i++)
+                {
+                    AABBAndCount leftBinSum = leftBinSums[i];
+                    AABBAndCount rightBinSum = rightBinSums[i];
+                    
+                    if (leftBinSum.Count == 0 || rightBinSum.Count == 0)
+                        continue;
+                    
+                    // Calculate the cost of separating at that bin. Basically, the best split is the split that
+                    // generates the best ratio of surface area to node count of the left and right children AABBs.
+                    // In other words, a high cost would be if we have very few nodes in a very large AABB.
+                    float leftSurfaceArea = leftBinSum.AABB.CalculateSurfaceArea();
+                    float rightSurfaceArea = rightBinSum.AABB.CalculateSurfaceArea();
+                    float leftProbability = leftSurfaceArea / parentSurfaceArea;
+                    float rightProbability = rightSurfaceArea / parentSurfaceArea;
+                    float splitCost = TraversalCost +
+                           (leftProbability * leftBinSum.Count * IntersectCost) +
+                           (rightProbability * rightBinSum.Count * IntersectCost);
+
+                    // Remember split if best so far
+                    if (splitCost < bestSplit.Cost)
+                    {
+                        bestSplit = new SplitInfo
+                        {
+                            Axis = axis,
+                            Cost = splitCost,
+                            Position = parentMinOnAxis + ((i + 1) * binValueRange), // We split at bin's end
+                        };
+                    }
+                }
+            }
+        }
+    }
 }
