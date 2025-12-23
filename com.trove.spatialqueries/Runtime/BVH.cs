@@ -793,7 +793,7 @@ namespace Trove.SpatialQueries
                     //     // TODO: handle this better?
                     //     NodesPtr = Nodes.GetUnsafePtr();
                     // }
-                    //
+                    
                     continue;
                 }
 
@@ -890,23 +890,20 @@ namespace Trove.SpatialQueries
                 }
                 
                 int nextDepth = workingNode.depth + 1;
-                WorkingNode leftWorkingNode = new WorkingNode
+                nodesStack.PushLast(nodesStackPtr, new WorkingNode
                 {
                     Node = leftNode,
                     depth = nextDepth,
                     parentIndex = addedIndex,
                     isLeftChild = true,
-                };
-                WorkingNode rightWorkingNode = new WorkingNode
+                });
+                nodesStack.PushLast(nodesStackPtr, new WorkingNode
                 {
                     Node = rightNode,
                     depth = nextDepth,
                     parentIndex = addedIndex,
                     isLeftChild = false,
-                };
-
-                nodesStack.PushLast(nodesStackPtr, leftWorkingNode);
-                nodesStack.PushLast(nodesStackPtr, rightWorkingNode);
+                });
             }
         }
 
