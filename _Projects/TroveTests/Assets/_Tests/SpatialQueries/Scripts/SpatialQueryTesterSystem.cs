@@ -134,47 +134,22 @@ partial struct SpatialQueryTesterSystem : ISystem
                 _debugDrawGroup.Clear();
                 state.Dependency.Complete();
 
-                if (debugger.DebugMortonCurve)
-                {
-                    _bvh.GetNodes(out UnsafeList<BVHNode> nodes, 
-                        out UnsafeList<NodeLevelData> levelStartIndexesAndCounts);
-
-                    if (levelStartIndexesAndCounts.Length > 0)
-                    {
-                        NodeLevelData leafNodesData = levelStartIndexesAndCounts[0];
-
-                        for (int i = leafNodesData.StartIndex; 
-                             i < math.min(debugger.MortonCurveDebugIterations, leafNodesData.StartIndex + leafNodesData.Count - 1); 
-                             i++)
-                        {
-                            BVHNode node = nodes[i];
-                            BVHNode nextNode = nodes[i + 1];
-                            _debugDrawGroup.DrawLine(node.AABB.GetCenter(), nextNode.AABB.GetCenter(), UnityEngine.Color.yellow);
-                        }
-                    }
-                }
-
                 if (debugger.DebugBoundingBoxes)
                 {
-                    _bvh.GetNodes(out UnsafeList<BVHNode> nodes, 
-                        out UnsafeList<NodeLevelData> levelStartIndexesAndCounts);
+                    _bvh.GetNodes(out UnsafeList<BVHNode> nodes, out int leafNodesCount);
 
-                    if (debugger.BoundingBoxDebugLevel >= 0 && levelStartIndexesAndCounts.Length > debugger.BoundingBoxDebugLevel)
+                    
+                    for (int i = 0; i < debugger.BoundingBoxDebugLevel; i++)
                     {
-                        NodeLevelData levelNodesData = levelStartIndexesAndCounts[debugger.BoundingBoxDebugLevel];
-                        for (int i = levelNodesData.StartIndex; i < levelNodesData.StartIndex + levelNodesData.Count; i++)
-                        {
-                            BVHNode node = nodes[i];
-                            if (node.IsValid())
-                            {
-                                _debugDrawGroup.DrawWireBox(
-                                    node.AABB.GetCenter(),
-                                    quaternion.identity,
-                                    node.AABB.GetExtents(),
-                                    UnityEngine.Color.green);
-                            }
-                        }
+                        BVHNode node = nodes[leafNodesCount + i];
+                        _debugDrawGroup.DrawWireBox(
+                            node.AABB.GetCenter(),
+                            quaternion.identity,
+                            node.AABB.GetExtents(),
+                            UnityEngine.Color.green);
                     }
+                    
+                    
                 }
 
                 if (debugger.QueryEnabled)
@@ -193,10 +168,10 @@ partial struct SpatialQueryTesterSystem : ISystem
                     
                     _bvh.QueryAABB(aabb, ref collector);
                     allQueryResults.AddRange(collector.Results);
-                    _bvh.QuerySphere(spherePos, sphereRadius, ref collector);
-                    allQueryResults.AddRange(collector.Results);
-                    _bvh.QueryRay(debugger.QueryPosition, debugger.QueryDirection, debugger.QueryLength, ref collector);
-                    allQueryResults.AddRange(collector.Results);
+                    // _bvh.QuerySphere(spherePos, sphereRadius, ref collector);
+                    // allQueryResults.AddRange(collector.Results);
+                    // _bvh.QueryRay(debugger.QueryPosition, debugger.QueryDirection, debugger.QueryLength, ref collector);
+                    // allQueryResults.AddRange(collector.Results);
 
                     // Draw query ray
                     _debugDrawGroup.DrawRay(
@@ -235,52 +210,52 @@ partial struct SpatialQueryTesterSystem : ISystem
                     }
                 }
                 
-                if (debugger.DebugNearestNeighbours)
-                {
-                    ComponentLookup<LocalTransform> localTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
-                    ComponentLookup<BVHTestObject> bvhTestObjectLookup = SystemAPI.GetComponentLookup<BVHTestObject>(true);
-
-                    if (_bvh.CreateNearestNeighborsQuerier(debugger.QueryPosition,
-                            out NearestNeighborsQuerier<TestNodeData> nearestNeighborsQuerier))
-                    {
-                        NearestNeighborResultCollector<TestNodeData> collector = new NearestNeighborResultCollector<TestNodeData>(32, Allocator.Temp);
-                        
-                        int counter = 0;
-                        while (counter <= debugger.NearestNeighboursDebugLevel)
-                        {
-                            nearestNeighborsQuerier.NextResultsBatch(in _bvh, ref collector, true);
-                            counter++;
-
-                        }
-                    
-                        // Draw query results
-                        for (int i = 0; i < collector.Results.Length; i++)
-                        {
-                            Entity resultEntity = collector.Results[i].Data.Entity;
-                            if (localTransformLookup.TryGetComponent(resultEntity, out LocalTransform resultTransform) &&
-                                bvhTestObjectLookup.TryGetComponent(resultEntity, out BVHTestObject resultBVHTestObject))
-                            {
-                                _debugDrawGroup.DrawWireBox(
-                                    resultTransform.Position, 
-                                    quaternion.identity,
-                                    resultTransform.Scale * resultBVHTestObject.AABBExtents, 
-                                    UnityEngine.Color.red);
-                            }
-                        }
-                        
-                        // Draw actual closest
-                        if (collector.Results.Length > 0 &&
-                            localTransformLookup.TryGetComponent(collector.Results[0].Data.Entity, out LocalTransform closestTransform) &&
-                            bvhTestObjectLookup.TryGetComponent(collector.Results[0].Data.Entity, out BVHTestObject closestBVHTestObject))
-                        {
-                            _debugDrawGroup.DrawWireBox(
-                                closestTransform.Position, 
-                                quaternion.identity,
-                                closestTransform.Scale * closestBVHTestObject.AABBExtents, 
-                                UnityEngine.Color.yellow);
-                        }
-                    }
-                }
+                // if (debugger.DebugNearestNeighbours)
+                // {
+                //     ComponentLookup<LocalTransform> localTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
+                //     ComponentLookup<BVHTestObject> bvhTestObjectLookup = SystemAPI.GetComponentLookup<BVHTestObject>(true);
+                //
+                //     if (_bvh.CreateNearestNeighborsQuerier(debugger.QueryPosition,
+                //             out NearestNeighborsQuerier<TestNodeData> nearestNeighborsQuerier))
+                //     {
+                //         NearestNeighborResultCollector<TestNodeData> collector = new NearestNeighborResultCollector<TestNodeData>(32, Allocator.Temp);
+                //         
+                //         int counter = 0;
+                //         while (counter <= debugger.NearestNeighboursDebugLevel)
+                //         {
+                //             nearestNeighborsQuerier.NextResultsBatch(in _bvh, ref collector, true);
+                //             counter++;
+                //
+                //         }
+                //     
+                //         // Draw query results
+                //         for (int i = 0; i < collector.Results.Length; i++)
+                //         {
+                //             Entity resultEntity = collector.Results[i].Data.Entity;
+                //             if (localTransformLookup.TryGetComponent(resultEntity, out LocalTransform resultTransform) &&
+                //                 bvhTestObjectLookup.TryGetComponent(resultEntity, out BVHTestObject resultBVHTestObject))
+                //             {
+                //                 _debugDrawGroup.DrawWireBox(
+                //                     resultTransform.Position, 
+                //                     quaternion.identity,
+                //                     resultTransform.Scale * resultBVHTestObject.AABBExtents, 
+                //                     UnityEngine.Color.red);
+                //             }
+                //         }
+                //         
+                //         // Draw actual closest
+                //         if (collector.Results.Length > 0 &&
+                //             localTransformLookup.TryGetComponent(collector.Results[0].Data.Entity, out LocalTransform closestTransform) &&
+                //             bvhTestObjectLookup.TryGetComponent(collector.Results[0].Data.Entity, out BVHTestObject closestBVHTestObject))
+                //         {
+                //             _debugDrawGroup.DrawWireBox(
+                //                 closestTransform.Position, 
+                //                 quaternion.identity,
+                //                 closestTransform.Scale * closestBVHTestObject.AABBExtents, 
+                //                 UnityEngine.Color.yellow);
+                //         }
+                //     }
+                // }
             }
         }
     }

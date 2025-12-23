@@ -13,25 +13,39 @@ using UnityEngine;
 namespace Trove.SpatialQueries
 {
     [StructLayout(LayoutKind.Explicit)]
-    public struct BVHNode : IComparable<BVHNode>
+    public struct BVHNode 
     {
         [FieldOffset(0)]
-        public uint MortonCode;
+        public int ChildrenStartIndex; // Also serves as the nodeData's index for leaf nodes
         [FieldOffset(4)]
-        public int DataIndex; // For leaf nodes this is index of their data, but for parent nodes this is index of their first child
+        public int ChildrenLength;
         [FieldOffset(8)]
+        public int ContainsLeafNodes;
+        [FieldOffset(9)]
         public AABB AABB;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsValid()
+        public int LeafNodeDataIndex
         {
-            return DataIndex >= 0;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ChildrenStartIndex;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set => ChildrenStartIndex = value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int CompareTo(BVHNode other)
+        public int LeftIndex
         {
-            return MortonCode.CompareTo(other.MortonCode);
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ChildrenStartIndex;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set => ChildrenStartIndex = value;
+        }
+        
+        public int RightIndex
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ChildrenLength;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set => ChildrenLength = value;
         }
     }
 
@@ -88,124 +102,113 @@ namespace Trove.SpatialQueries
         }
     }
 
-    public struct NearestNeighborResultCollector<TNodeData> : IBVHQueryCollector<NearestNeighborResult<TNodeData>>
-        where TNodeData : unmanaged
-    {
-        public UnsafeList<NearestNeighborResult<TNodeData>> Results;
+    // public struct NearestNeighborResultCollector<TNodeData> : IBVHQueryCollector<NearestNeighborResult<TNodeData>>
+    //     where TNodeData : unmanaged
+    // {
+    //     public UnsafeList<NearestNeighborResult<TNodeData>> Results;
+    //
+    //     public bool IsCreated => Results.IsCreated;
+    //
+    //     public NearestNeighborResultCollector(int capacity, Allocator allocator)
+    //     {
+    //         Results = new UnsafeList<NearestNeighborResult<TNodeData>>(capacity, allocator);
+    //     }
+    //
+    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    //     public void OnBeginQuery()
+    //     {
+    //         Results.Clear();
+    //     }
+    //
+    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    //     public void AddNode(in NearestNeighborResult<TNodeData> node)
+    //     {
+    //         Results.AddWithGrowFactor(node);
+    //     }
+    //
+    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    //     public bool HasFoundResults()
+    //     {
+    //         return Results.Length > 0;
+    //     }
+    //
+    //     public void Dispose()
+    //     {
+    //         Results.Dispose();
+    //     }
+    // }
 
-        public bool IsCreated => Results.IsCreated;
-
-        public NearestNeighborResultCollector(int capacity, Allocator allocator)
-        {
-            Results = new UnsafeList<NearestNeighborResult<TNodeData>>(capacity, allocator);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void OnBeginQuery()
-        {
-            Results.Clear();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddNode(in NearestNeighborResult<TNodeData> node)
-        {
-            Results.AddWithGrowFactor(node);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool HasFoundResults()
-        {
-            return Results.Length > 0;
-        }
-
-        public void Dispose()
-        {
-            Results.Dispose();
-        }
-    }
-
-    public struct NearestNeighborsQuerier<TNodeData> where TNodeData : unmanaged
-    {
-        internal float3 Position;
-        internal int CurrentNodeIndexInLevel;
-        internal int CurrentLevel;
-        internal float MaxDistance;
-
-        private bool InvalidatedForNextBatches;
-
-        public bool NextResultsBatch(in BVH<TNodeData> bvh, ref NearestNeighborResultCollector<TNodeData> collector, bool sortResults = true)
-        {
-            collector.OnBeginQuery();
-                
-            if (CurrentLevel >= bvh.NodeLevelDatas.Length || InvalidatedForNextBatches)
-                return false;
-                
-            NodeLevelData levelData = bvh.NodeLevelDatas[CurrentLevel];
-                
-            // Do a query at the current distance
-            AABB currentNodeAABB = bvh.SortedNodes[levelData.StartIndex + CurrentNodeIndexInLevel].AABB;
-            float queryDistance = math.distance(currentNodeAABB.FarthestPoint(Position), Position);
-
-            if (queryDistance > MaxDistance)
-            {
-                InvalidatedForNextBatches = true;
-                queryDistance = math.min(queryDistance, MaxDistance);
-            }
-                
-            bvh.QueryNearestNeighborsInternal(Position, queryDistance, ref collector);
-
-            if (collector.Results.Length == 0)
-                return false;
-                
-            if (sortResults)
-            {
-                collector.Results.Sort();
-            }
-                
-            CurrentLevel++;
-            CurrentNodeIndexInLevel /= BVHUtils.NbLeavesPerNode; // parent node
-
-            return true;
-        }
-    }
+    // public struct NearestNeighborsQuerier<TNodeData> where TNodeData : unmanaged
+    // {
+    //     internal float3 Position;
+    //     internal int CurrentNodeIndexInLevel;
+    //     internal int CurrentLevel;
+    //     internal float MaxDistance;
+    //
+    //     private bool InvalidatedForNextBatches;
+    //
+    //     public bool NextResultsBatch(in BVH<TNodeData> bvh, ref NearestNeighborResultCollector<TNodeData> collector, bool sortResults = true)
+    //     {
+    //         collector.OnBeginQuery();
+    //             
+    //         if (CurrentLevel >= bvh.NodeLevelDatas.Length || InvalidatedForNextBatches)
+    //             return false;
+    //             
+    //         NodeLevelData levelData = bvh.NodeLevelDatas[CurrentLevel];
+    //             
+    //         // Do a query at the current distance
+    //         AABB currentNodeAABB = bvh.SortedNodes[levelData.StartIndex + CurrentNodeIndexInLevel].AABB;
+    //         float queryDistance = math.distance(currentNodeAABB.FarthestPoint(Position), Position);
+    //
+    //         if (queryDistance > MaxDistance)
+    //         {
+    //             InvalidatedForNextBatches = true;
+    //             queryDistance = math.min(queryDistance, MaxDistance);
+    //         }
+    //             
+    //         bvh.QueryNearestNeighborsInternal(Position, queryDistance, ref collector);
+    //
+    //         if (collector.Results.Length == 0)
+    //             return false;
+    //             
+    //         if (sortResults)
+    //         {
+    //             collector.Results.Sort();
+    //         }
+    //             
+    //         CurrentLevel++;
+    //         CurrentNodeIndexInLevel /= BVHUtils.NbLeavesPerNode; // parent node
+    //
+    //         return true;
+    //     }
+    // }
     
-    public struct NearestNeighborResult<TNodeData> : IComparable<NearestNeighborResult<TNodeData>>
-        where TNodeData : unmanaged
-    {
-        public TNodeData Data;
-        public float DistanceSq;
-
-        public int CompareTo(NearestNeighborResult<TNodeData> other)
-        {
-            return DistanceSq.CompareTo(other.DistanceSq);
-        }
-    }
+    // public struct NearestNeighborResult<TNodeData> : IComparable<NearestNeighborResult<TNodeData>>
+    //     where TNodeData : unmanaged
+    // {
+    //     public TNodeData Data;
+    //     public float DistanceSq;
+    //
+    //     public int CompareTo(NearestNeighborResult<TNodeData> other)
+    //     {
+    //         return DistanceSq.CompareTo(other.DistanceSq);
+    //     }
+    // }
 
     public struct BVH<TNodeData> where TNodeData : unmanaged
     {
         // Nodes A and B are used to ping pong between buffers during sorting.
         // After sorting, one of them becomes the "SortedNodes" and the other becomes the "ReorderedNodes"
         internal NativeList<BVHNode> NodesA;
-        internal NativeList<BVHNode> NodesB;
         internal NativeList<TNodeData> LeafNodeDatas;
-        internal NativeList<NodeLevelData> NodeLevelDatas;
         internal NativeReference<AABB> SceneAABB;
-        internal NativeList<int> RadixSortHistograms;
-
-        internal NativeList<BVHNode> SortedNodes => NodesA;
 
         public static BVH<TNodeData> Create(Allocator allocator, int initialElementsCapacity)
         {
             BVH<TNodeData> bvh = new BVH<TNodeData>();
-            bvh.NodesA = new NativeList<BVHNode>(
-                BVHUtils.ComputeTotalNodesCountForEntries(initialElementsCapacity),
-                allocator);
-            bvh.NodesB = new NativeList<BVHNode>(bvh.NodesA.Capacity, allocator);
+            bvh.NodesA = new NativeList<BVHNode>(initialElementsCapacity, allocator);
             bvh.LeafNodeDatas = new NativeList<TNodeData>(initialElementsCapacity, allocator);
-            bvh.NodeLevelDatas = new NativeList<NodeLevelData>(32, allocator);
             bvh.SceneAABB = new NativeReference<AABB>(allocator);
-            bvh.RadixSortHistograms = new NativeList<int>(BVHUtils.RadixSortBucketCount, allocator);
-            bvh.RadixSortHistograms.Resize(bvh.RadixSortHistograms.Capacity, NativeArrayOptions.ClearMemory);
 
             return bvh;
         }
@@ -217,29 +220,13 @@ namespace Trove.SpatialQueries
                 NodesA.Dispose(jobHandle);
             }
 
-            if (NodesB.IsCreated)
-            {
-                NodesB.Dispose(jobHandle);
-            }
-
             if (LeafNodeDatas.IsCreated)
             {
                 LeafNodeDatas.Dispose(jobHandle);
             }
-
-            if (NodeLevelDatas.IsCreated)
-            {
-                NodeLevelDatas.Dispose(jobHandle);
-            }
-
             if (SceneAABB.IsCreated)
             {
                 SceneAABB.Dispose(jobHandle);
-            }
-
-            if (RadixSortHistograms.IsCreated)
-            {
-                RadixSortHistograms.Dispose(jobHandle);
             }
         }
 
@@ -275,7 +262,7 @@ namespace Trove.SpatialQueries
 
         public unsafe void AddNodesUnsafe(TNodeData* nodeDatas, AABB* aabbs, int count, int atIndex)
         {
-            const int AABBsFieldOffset = 8;
+            const int AABBsFieldOffset = 9;
             
             BVHNode* dstNodes = NodesA.GetUnsafePtr() + (long)atIndex;
             AABB* dstAABB = (AABB*)((byte*)dstNodes + (long)AABBsFieldOffset); // AABBs are at fieldOffset 8
@@ -293,283 +280,289 @@ namespace Trove.SpatialQueries
         {
             collector.OnBeginQuery();
         
-            if (SortedNodes.Length < 1)
+            if (NodesA.Length < 1)
             {
                 return false;
             }
         
             Stack nodesStack = new Stack(256);
             int* nodesStackPtr = stackalloc int[nodesStack.Capacity];
-            BVHNode* nodesPtr = SortedNodes.GetUnsafeReadOnlyPtr();
+            BVHNode* nodesPtr = NodesA.GetUnsafeReadOnlyPtr();
             TNodeData* leafDataPtr = LeafNodeDatas.GetUnsafeReadOnlyPtr();
             int leafNodesCount = LeafNodeDatas.Length;
 
-            nodesStack.PushLast(nodesStackPtr, SortedNodes.Length - 1);  // start at root node;
+            nodesStack.PushLast(nodesStackPtr, leafNodesCount);  // start at root node;
             while (nodesStack.PopLast(nodesStackPtr, out int nodeIndex))
             {
                 BVHNode node = nodesPtr[nodeIndex];
 
-                if (!aabb.OverlapsAABB(node.AABB) || !node.IsValid())
+                if (!aabb.OverlapsAABB(node.AABB))
                     continue;
 
                 if (nodeIndex < leafNodesCount)
                 {
-                    collector.AddNode(leafDataPtr[node.DataIndex]);
+                    collector.AddNode(leafDataPtr[node.LeafNodeDataIndex]);
+                }
+                else if (node.ContainsLeafNodes == 1)
+                {
+                    // Add leaf nodes
+                    for (int i = node.ChildrenStartIndex; i < node.ChildrenStartIndex + node.ChildrenLength; i++)
+                    {
+                        nodesStack.PushLast(nodesStackPtr, i);
+                    }
                 }
                 else
                 {
-                    for (int i = 0; i < BVHUtils.NbLeavesPerNode; i++)
-                    {
-                        nodesStack.PushLast(nodesStackPtr, node.DataIndex + i);
-                    }
+                    nodesStack.PushLast(nodesStackPtr, node.LeftIndex);
+                    nodesStack.PushLast(nodesStackPtr, node.RightIndex);
                 }
             }
 
             return collector.HasFoundResults();
         }
 
-        public unsafe bool QuerySphere<TCollector>(in float3 position, float radius, ref TCollector collector)
-            where TCollector : unmanaged, IBVHQueryCollector<TNodeData>
-        {
-            collector.OnBeginQuery();
-        
-            if (SortedNodes.Length < 1)
-            {
-                return false;
-            }
-        
-            Stack nodesStack = new Stack(256);
-            int* nodesStackPtr = stackalloc int[nodesStack.Capacity];
-            BVHNode* nodesPtr = SortedNodes.GetUnsafeReadOnlyPtr();
-            TNodeData* leafDataPtr = LeafNodeDatas.GetUnsafeReadOnlyPtr();
-            int leafNodesCount = LeafNodeDatas.Length;
-            
-            float radiusSq = radius * radius;
-
-            nodesStack.PushLast(nodesStackPtr, SortedNodes.Length - 1);  // start at root node;
-            while (nodesStack.PopLast(nodesStackPtr, out int nodeIndex))
-            {
-                BVHNode node = nodesPtr[nodeIndex];
-
-                if (!node.AABB.OverlapsSphere(position, radiusSq) || !node.IsValid())
-                    continue;
-
-                if (nodeIndex < leafNodesCount)
-                {
-                    collector.AddNode(leafDataPtr[node.DataIndex]);
-                }
-                else
-                {
-                    for (int i = 0; i < BVHUtils.NbLeavesPerNode; i++)
-                    {
-                        nodesStack.PushLast(nodesStackPtr, node.DataIndex + i);
-                    }
-                }
-            }
-
-            return collector.HasFoundResults();
-        }
-
-        public unsafe bool QueryRay<TCollector>(float3 rayOrigin, float3 rayDirectionNormalized, float rayLength,
-            ref TCollector collector)
-            where TCollector : unmanaged, IBVHQueryCollector<TNodeData>
-        {
-            collector.OnBeginQuery();
-        
-            if (SortedNodes.Length < 1)
-            {
-                return false;
-            }
-        
-            Stack nodesStack = new Stack(256);
-            int* nodesStackPtr = stackalloc int[nodesStack.Capacity];
-            BVHNode* nodesPtr = SortedNodes.GetUnsafeReadOnlyPtr();
-            TNodeData* leafDataPtr = LeafNodeDatas.GetUnsafeReadOnlyPtr();
-            int leafNodesCount = LeafNodeDatas.Length;
-
-            nodesStack.PushLast(nodesStackPtr, SortedNodes.Length - 1);  // start at root node;
-            while (nodesStack.PopLast(nodesStackPtr, out int nodeIndex))
-            {
-                BVHNode node = nodesPtr[nodeIndex];
-
-                if (!node.AABB.IntersectsRay(rayOrigin, rayDirectionNormalized, rayLength) || !node.IsValid())
-                    continue;
-
-                if (nodeIndex < leafNodesCount)
-                {
-                    collector.AddNode(leafDataPtr[node.DataIndex]);
-                }
-                else
-                {
-                    for (int i = 0; i < BVHUtils.NbLeavesPerNode; i++)
-                    {
-                        nodesStack.PushLast(nodesStackPtr, node.DataIndex + i);
-                    }
-                }
-            }
-
-            return collector.HasFoundResults();
-        }
-
-        public bool QueryNearestNeighbor(float3 position, ref NearestNeighborResultCollector<TNodeData> collector, 
-            out NearestNeighborResult<TNodeData> nearestResult, float maxDistance = float.MaxValue)
-        {
-            if (CreateNearestNeighborsQuerier(position, out NearestNeighborsQuerier<TNodeData> querier, maxDistance))
-            {
-                if(querier.NextResultsBatch(in this, ref collector, false))
-                {
-                    UnsafeList<NearestNeighborResult<TNodeData>> results = collector.Results;
-                    nearestResult = results[0];
-                    for (int i = 1; i < results.Length; i++)
-                    {
-                        if (results[i].DistanceSq < nearestResult.DistanceSq)
-                        {
-                            nearestResult = results[i];
-                        }
-                    }
-                    return true;
-                }
-            }
-
-            nearestResult = default;
-            return false;
-        }
-
-        public unsafe bool CreateNearestNeighborsQuerier(float3 position, out NearestNeighborsQuerier<TNodeData> querier, float maxDistance = float.MaxValue)
-        {
-            // Project position onto Scene AABB if not inside it
-            if (!SceneAABB.Value.Contains(position))
-            {
-                float3 positionOnScene = SceneAABB.Value.ClosestPoint(position);
-                float3 positionToSceneNorm = math.normalize(positionOnScene - position);
-                position = positionOnScene + (positionToSceneNorm * 0.1f);
-            }
-
-            int deepestSmallestContainingNodeIndex = int.MaxValue;
-            float deepestSmallestContainingNodeVolume = float.MaxValue;
-            if (SortedNodes.Length >= 1)
-            {
-                // Calculate the morton code of the position
-                float3 sceneDimensions = SceneAABB.Value.Max - SceneAABB.Value.Min;
-                float3 normalizedPositionInScene = (position - SceneAABB.Value.Min) / sceneDimensions; 
-                uint queriedMortonCode = BVHUtils.ComputeMortonCode(normalizedPositionInScene);
-                
-                // Approximate the index of this morton code in sorted leaf nodes
-                float normMortonValue = (float)queriedMortonCode / (float)uint.MaxValue;
-                int queriedNodeIndex = (int)math.round(LeafNodeDatas.Length * normMortonValue);
-                
-                // Search for closest morton from that index
-                int indexOfClosestMorton = -1;
-                uint iteratedMorton = SortedNodes[queriedNodeIndex].MortonCode;
-                if (iteratedMorton == queriedMortonCode)
-                {
-                    indexOfClosestMorton = queriedNodeIndex;
-                }
-                else
-                {
-                    // binary search for match
-                    bool iteratedMortonIsGreater = iteratedMorton > queriedMortonCode;
-                    int minIndex = iteratedMortonIsGreater ? 0 : queriedNodeIndex;
-                    int maxIndex = iteratedMortonIsGreater ? queriedNodeIndex : LeafNodeDatas.Length ;
-                
-                    while (maxIndex - minIndex > 1)
-                    {
-                        queriedNodeIndex = minIndex + ((maxIndex - minIndex) / 2);
-                        iteratedMorton = SortedNodes[queriedNodeIndex].MortonCode;
-                        if (iteratedMorton == queriedMortonCode)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            // Update min and max
-                            iteratedMortonIsGreater = iteratedMorton > queriedMortonCode;
-                            minIndex = iteratedMortonIsGreater ? minIndex : queriedNodeIndex;
-                            maxIndex = iteratedMortonIsGreater ? queriedNodeIndex : maxIndex;
-                        }
-                    }
-                    
-                    indexOfClosestMorton = queriedNodeIndex;
-                }
-
-                if (indexOfClosestMorton >= 0)
-                {
-                    float3 iteratedNodePos = SortedNodes[queriedNodeIndex].AABB.GetCenter();
-                    float closestDistanceSqSoFar = math.distancesq(position, iteratedNodePos);
-                    
-                    // Find the closest in a range of X from that node
-                    // (this mitigates the impact of large jumps in decoded morton code positions)
-                    int halfRange = 9;
-                    int startIndex = math.max(0, indexOfClosestMorton - halfRange);
-                    int endIndex = math.min(LeafNodeDatas.Length, indexOfClosestMorton + halfRange);
-                    for (int i = startIndex; i <= endIndex; i++)
-                    {
-                        iteratedNodePos = SortedNodes[i].AABB.GetCenter();
-                        float distanceSq = math.distancesq(position, iteratedNodePos);
-                        if (distanceSq < closestDistanceSqSoFar)
-                        {
-                            indexOfClosestMorton = i;
-                            closestDistanceSqSoFar = distanceSq;
-                        }
-                    }
-                    
-                    querier = new NearestNeighborsQuerier<TNodeData>
-                    {
-                        Position = position,
-                        CurrentNodeIndexInLevel = indexOfClosestMorton,
-                        CurrentLevel = 0,
-                        MaxDistance = maxDistance,
-                    };
-                    return true;
-                }
-            }
-
-            querier = default;
-            return false;
-        }
-
-        internal unsafe void QueryNearestNeighborsInternal(in float3 position, float radius, ref NearestNeighborResultCollector<TNodeData> collector)
-        {
-            collector.OnBeginQuery();
-        
-            if (SortedNodes.Length < 1)
-            {
-                return;
-            }
-        
-            Stack nodesStack = new Stack(256);
-            int* nodesStackPtr = stackalloc int[nodesStack.Capacity];
-            BVHNode* nodesPtr = SortedNodes.GetUnsafeReadOnlyPtr();
-            TNodeData* leafDataPtr = LeafNodeDatas.GetUnsafeReadOnlyPtr();
-            int leafNodesCount = LeafNodeDatas.Length;
-
-            float radiusSq = radius * radius;
-            
-            nodesStack.PushLast(nodesStackPtr, SortedNodes.Length - 1);  // start at root node;
-            while (nodesStack.PopLast(nodesStackPtr, out int nodeIndex))
-            {
-                BVHNode node = nodesPtr[nodeIndex];
-
-                if (!node.AABB.OverlapsSphere(position, radiusSq) || !node.IsValid())
-                    continue;
-
-                if (nodeIndex < leafNodesCount)
-                {
-                    collector.AddNode(new NearestNeighborResult<TNodeData>
-                    {
-                        Data = leafDataPtr[node.DataIndex],
-                        DistanceSq = node.AABB.DistanceSq(position),
-                    });
-                }
-                else
-                {
-                    for (int i = 0; i < BVHUtils.NbLeavesPerNode; i++)
-                    {
-                        nodesStack.PushLast(nodesStackPtr, node.DataIndex + i);
-                    }
-                }
-            }
-        }
+        // public unsafe bool QuerySphere<TCollector>(in float3 position, float radius, ref TCollector collector)
+        //     where TCollector : unmanaged, IBVHQueryCollector<TNodeData>
+        // {
+        //     collector.OnBeginQuery();
+        //
+        //     if (SortedNodes.Length < 1)
+        //     {
+        //         return false;
+        //     }
+        //
+        //     Stack nodesStack = new Stack(256);
+        //     int* nodesStackPtr = stackalloc int[nodesStack.Capacity];
+        //     BVHNode* nodesPtr = SortedNodes.GetUnsafeReadOnlyPtr();
+        //     TNodeData* leafDataPtr = LeafNodeDatas.GetUnsafeReadOnlyPtr();
+        //     int leafNodesCount = LeafNodeDatas.Length;
+        //     
+        //     float radiusSq = radius * radius;
+        //
+        //     nodesStack.PushLast(nodesStackPtr, SortedNodes.Length - 1);  // start at root node;
+        //     while (nodesStack.PopLast(nodesStackPtr, out int nodeIndex))
+        //     {
+        //         BVHNode node = nodesPtr[nodeIndex];
+        //
+        //         if (!node.AABB.OverlapsSphere(position, radiusSq) || !node.IsValid())
+        //             continue;
+        //
+        //         if (nodeIndex < leafNodesCount)
+        //         {
+        //             collector.AddNode(leafDataPtr[node.DataIndex]);
+        //         }
+        //         else
+        //         {
+        //             for (int i = 0; i < BVHUtils.NbLeavesPerNode; i++)
+        //             {
+        //                 nodesStack.PushLast(nodesStackPtr, node.DataIndex + i);
+        //             }
+        //         }
+        //     }
+        //
+        //     return collector.HasFoundResults();
+        // }
+        //
+        // public unsafe bool QueryRay<TCollector>(float3 rayOrigin, float3 rayDirectionNormalized, float rayLength,
+        //     ref TCollector collector)
+        //     where TCollector : unmanaged, IBVHQueryCollector<TNodeData>
+        // {
+        //     collector.OnBeginQuery();
+        //
+        //     if (SortedNodes.Length < 1)
+        //     {
+        //         return false;
+        //     }
+        //
+        //     Stack nodesStack = new Stack(256);
+        //     int* nodesStackPtr = stackalloc int[nodesStack.Capacity];
+        //     BVHNode* nodesPtr = SortedNodes.GetUnsafeReadOnlyPtr();
+        //     TNodeData* leafDataPtr = LeafNodeDatas.GetUnsafeReadOnlyPtr();
+        //     int leafNodesCount = LeafNodeDatas.Length;
+        //
+        //     nodesStack.PushLast(nodesStackPtr, SortedNodes.Length - 1);  // start at root node;
+        //     while (nodesStack.PopLast(nodesStackPtr, out int nodeIndex))
+        //     {
+        //         BVHNode node = nodesPtr[nodeIndex];
+        //
+        //         if (!node.AABB.IntersectsRay(rayOrigin, rayDirectionNormalized, rayLength) || !node.IsValid())
+        //             continue;
+        //
+        //         if (nodeIndex < leafNodesCount)
+        //         {
+        //             collector.AddNode(leafDataPtr[node.DataIndex]);
+        //         }
+        //         else
+        //         {
+        //             for (int i = 0; i < BVHUtils.NbLeavesPerNode; i++)
+        //             {
+        //                 nodesStack.PushLast(nodesStackPtr, node.DataIndex + i);
+        //             }
+        //         }
+        //     }
+        //
+        //     return collector.HasFoundResults();
+        // }
+        //
+        // public bool QueryNearestNeighbor(float3 position, ref NearestNeighborResultCollector<TNodeData> collector, 
+        //     out NearestNeighborResult<TNodeData> nearestResult, float maxDistance = float.MaxValue)
+        // {
+        //     if (CreateNearestNeighborsQuerier(position, out NearestNeighborsQuerier<TNodeData> querier, maxDistance))
+        //     {
+        //         if(querier.NextResultsBatch(in this, ref collector, false))
+        //         {
+        //             UnsafeList<NearestNeighborResult<TNodeData>> results = collector.Results;
+        //             nearestResult = results[0];
+        //             for (int i = 1; i < results.Length; i++)
+        //             {
+        //                 if (results[i].DistanceSq < nearestResult.DistanceSq)
+        //                 {
+        //                     nearestResult = results[i];
+        //                 }
+        //             }
+        //             return true;
+        //         }
+        //     }
+        //
+        //     nearestResult = default;
+        //     return false;
+        // }
+        //
+        // public unsafe bool CreateNearestNeighborsQuerier(float3 position, out NearestNeighborsQuerier<TNodeData> querier, float maxDistance = float.MaxValue)
+        // {
+        //     // Project position onto Scene AABB if not inside it
+        //     if (!SceneAABB.Value.Contains(position))
+        //     {
+        //         float3 positionOnScene = SceneAABB.Value.ClosestPoint(position);
+        //         float3 positionToSceneNorm = math.normalize(positionOnScene - position);
+        //         position = positionOnScene + (positionToSceneNorm * 0.1f);
+        //     }
+        //
+        //     int deepestSmallestContainingNodeIndex = int.MaxValue;
+        //     float deepestSmallestContainingNodeVolume = float.MaxValue;
+        //     if (SortedNodes.Length >= 1)
+        //     {
+        //         // Calculate the morton code of the position
+        //         float3 sceneDimensions = SceneAABB.Value.Max - SceneAABB.Value.Min;
+        //         float3 normalizedPositionInScene = (position - SceneAABB.Value.Min) / sceneDimensions; 
+        //         uint queriedMortonCode = BVHUtils.ComputeMortonCode(normalizedPositionInScene);
+        //         
+        //         // Approximate the index of this morton code in sorted leaf nodes
+        //         float normMortonValue = (float)queriedMortonCode / (float)uint.MaxValue;
+        //         int queriedNodeIndex = (int)math.round(LeafNodeDatas.Length * normMortonValue);
+        //         
+        //         // Search for closest morton from that index
+        //         int indexOfClosestMorton = -1;
+        //         uint iteratedMorton = SortedNodes[queriedNodeIndex].MortonCode;
+        //         if (iteratedMorton == queriedMortonCode)
+        //         {
+        //             indexOfClosestMorton = queriedNodeIndex;
+        //         }
+        //         else
+        //         {
+        //             // binary search for match
+        //             bool iteratedMortonIsGreater = iteratedMorton > queriedMortonCode;
+        //             int minIndex = iteratedMortonIsGreater ? 0 : queriedNodeIndex;
+        //             int maxIndex = iteratedMortonIsGreater ? queriedNodeIndex : LeafNodeDatas.Length ;
+        //         
+        //             while (maxIndex - minIndex > 1)
+        //             {
+        //                 queriedNodeIndex = minIndex + ((maxIndex - minIndex) / 2);
+        //                 iteratedMorton = SortedNodes[queriedNodeIndex].MortonCode;
+        //                 if (iteratedMorton == queriedMortonCode)
+        //                 {
+        //                     break;
+        //                 }
+        //                 else
+        //                 {
+        //                     // Update min and max
+        //                     iteratedMortonIsGreater = iteratedMorton > queriedMortonCode;
+        //                     minIndex = iteratedMortonIsGreater ? minIndex : queriedNodeIndex;
+        //                     maxIndex = iteratedMortonIsGreater ? queriedNodeIndex : maxIndex;
+        //                 }
+        //             }
+        //             
+        //             indexOfClosestMorton = queriedNodeIndex;
+        //         }
+        //
+        //         if (indexOfClosestMorton >= 0)
+        //         {
+        //             float3 iteratedNodePos = SortedNodes[queriedNodeIndex].AABB.GetCenter();
+        //             float closestDistanceSqSoFar = math.distancesq(position, iteratedNodePos);
+        //             
+        //             // Find the closest in a range of X from that node
+        //             // (this mitigates the impact of large jumps in decoded morton code positions)
+        //             int halfRange = 9;
+        //             int startIndex = math.max(0, indexOfClosestMorton - halfRange);
+        //             int endIndex = math.min(LeafNodeDatas.Length, indexOfClosestMorton + halfRange);
+        //             for (int i = startIndex; i <= endIndex; i++)
+        //             {
+        //                 iteratedNodePos = SortedNodes[i].AABB.GetCenter();
+        //                 float distanceSq = math.distancesq(position, iteratedNodePos);
+        //                 if (distanceSq < closestDistanceSqSoFar)
+        //                 {
+        //                     indexOfClosestMorton = i;
+        //                     closestDistanceSqSoFar = distanceSq;
+        //                 }
+        //             }
+        //             
+        //             querier = new NearestNeighborsQuerier<TNodeData>
+        //             {
+        //                 Position = position,
+        //                 CurrentNodeIndexInLevel = indexOfClosestMorton,
+        //                 CurrentLevel = 0,
+        //                 MaxDistance = maxDistance,
+        //             };
+        //             return true;
+        //         }
+        //     }
+        //
+        //     querier = default;
+        //     return false;
+        // }
+        //
+        // internal unsafe void QueryNearestNeighborsInternal(in float3 position, float radius, ref NearestNeighborResultCollector<TNodeData> collector)
+        // {
+        //     collector.OnBeginQuery();
+        //
+        //     if (SortedNodes.Length < 1)
+        //     {
+        //         return;
+        //     }
+        //
+        //     Stack nodesStack = new Stack(256);
+        //     int* nodesStackPtr = stackalloc int[nodesStack.Capacity];
+        //     BVHNode* nodesPtr = SortedNodes.GetUnsafeReadOnlyPtr();
+        //     TNodeData* leafDataPtr = LeafNodeDatas.GetUnsafeReadOnlyPtr();
+        //     int leafNodesCount = LeafNodeDatas.Length;
+        //
+        //     float radiusSq = radius * radius;
+        //     
+        //     nodesStack.PushLast(nodesStackPtr, SortedNodes.Length - 1);  // start at root node;
+        //     while (nodesStack.PopLast(nodesStackPtr, out int nodeIndex))
+        //     {
+        //         BVHNode node = nodesPtr[nodeIndex];
+        //
+        //         if (!node.AABB.OverlapsSphere(position, radiusSq) || !node.IsValid())
+        //             continue;
+        //
+        //         if (nodeIndex < leafNodesCount)
+        //         {
+        //             collector.AddNode(new NearestNeighborResult<TNodeData>
+        //             {
+        //                 Data = leafDataPtr[node.DataIndex],
+        //                 DistanceSq = node.AABB.DistanceSq(position),
+        //             });
+        //         }
+        //         else
+        //         {
+        //             for (int i = 0; i < BVHUtils.NbLeavesPerNode; i++)
+        //             {
+        //                 nodesStack.PushLast(nodesStackPtr, node.DataIndex + i);
+        //             }
+        //         }
+        //     }
+        // }
         
         public JobHandle ScheduleClearJob(JobHandle dep)
         {
@@ -609,85 +602,19 @@ namespace Trove.SpatialQueries
         {
             int workerCount = parallel ? JobsUtility.JobWorkerCount : 1;
 
-            dep = new BVHComputeMortonCodesAndDataIndexesJob
+            dep = new BVHBuildHierarchyMidpointSplitJob()
             {
-                WorkerCount = workerCount,
                 SceneAABB = SceneAABB,
-                UnsortedNodes = NodesA,
-            }.ScheduleParallel(workerCount, 1, dep);
-
-            // Radix sort by bytes of the morton code (4 bytes = 4 passes)
-            for (int pass = 0; pass < BVHUtils.RadixSortPasses; pass++)
-            {
-                bool isEvenPass = pass % 2 == 0;
-                NativeList<BVHNode> inputNodes = isEvenPass ? NodesA : NodesB;
-                NativeList<BVHNode> outputNodes = isEvenPass ? NodesB : NodesA; // Final pass will be 3, which means output ends up in NodesA
-                
-                dep = new BVHRadixSortInitializePassJob
-                {
-                    WorkerCount = workerCount,
-                    InputNodes = inputNodes,
-                    OutputNodes = outputNodes,
-                    RadixSortHistograms = RadixSortHistograms,
-                }.Schedule(dep);
-
-                dep = new BVHRadixSortComputeBucketHistogramJob
-                {
-                    WorkerCount = workerCount,
-                    Pass = pass,
-                    Nodes = inputNodes,
-                    RadixSortHistograms = RadixSortHistograms,
-                }.ScheduleParallel(workerCount, 1, dep);
-
-                dep = new BVHRadixSortComputeBucketIndexRangesJob
-                {
-                    WorkerCount = workerCount,
-                    RadixSortHistograms = RadixSortHistograms,
-                }.Schedule(dep);
-
-                dep = new BVHRadixSortJob
-                {
-                    WorkerCount = workerCount,
-                    Pass = pass,
-                    InputNodes = inputNodes,
-                    OutputNodes = outputNodes,
-                    RadixHistograms = RadixSortHistograms,
-                }.ScheduleParallel(workerCount, 1, dep);
-            }
-
-            dep = new BVHPrecomputeHierarchyJob
-            {
-                SortedNodes = SortedNodes,
-                NodeLevelDatas = NodeLevelDatas,
+                Nodes = NodesA,
             }.Schedule(dep);
-
-            NativeReference<int> parallelWorkersLastWrittenLevel = new NativeReference<int>(Allocator.Domain);
-
-            dep = new BVHBuildHierarchyJob
-            {
-                WorkerCount = workerCount,
-                ParallelWorkersLastWrittenLevel = parallelWorkersLastWrittenLevel,
-                SortedNodes = SortedNodes,
-                NodeLevelDatas = NodeLevelDatas,
-            }.ScheduleParallel(workerCount, 1, dep);
-
-            dep = new BVHBuildHierarchyFinalizeJob
-            {
-                ParallelWorkersLastWrittenLevel = parallelWorkersLastWrittenLevel,
-                SortedNodes = SortedNodes,
-                NodeLevelDatas = NodeLevelDatas,
-            }.Schedule(dep);
-
-            parallelWorkersLastWrittenLevel.Dispose(dep);
 
             return dep;
         }
 
-        public unsafe void GetNodes(out UnsafeList<BVHNode> nodes,
-            out UnsafeList<NodeLevelData> nodeLevelStartIndexesAndCounts)
+        public unsafe void GetNodes(out UnsafeList<BVHNode> nodes, out int leafNodesCount)
         {
-            nodes = (*SortedNodes.GetUnsafeList());
-            nodeLevelStartIndexesAndCounts = (*NodeLevelDatas.GetUnsafeList());
+            nodes = (*NodesA.GetUnsafeList());
+            leafNodesCount = LeafNodeDatas.Length;
         }
 
         [BurstCompile]
@@ -698,9 +625,7 @@ namespace Trove.SpatialQueries
             public void Execute()
             {
                 BVH.NodesA.Clear();
-                BVH.NodesB.Clear();
                 BVH.LeafNodeDatas.Clear();
-                BVH.NodeLevelDatas.Clear();
                 BVH.SceneAABB.Value = AABB.GetEmpty();
             }
         }
@@ -708,30 +633,6 @@ namespace Trove.SpatialQueries
 
     internal static class BVHUtils
     {
-        internal const int NbLeavesPerNode = 4; 
-        
-        internal const int RadixBits = 8;
-        internal const int RadixSortBucketCount = 1 << RadixBits; // 256 values of a byte
-        internal const int RadixSortPasses = 4; // 4 bytes of the morton uint
-
-        internal static int ComputeTotalNodesCountForEntries(int entriesCount)
-        {
-            // Make entries count even
-            if (entriesCount % BVHUtils.NbLeavesPerNode != 0)
-            {
-                entriesCount += BVHUtils.NbLeavesPerNode - (entriesCount % BVHUtils.NbLeavesPerNode);
-            }
-
-            float entriesCountFloat = (float)entriesCount;
-            while (entriesCountFloat > 1f)
-            {
-                entriesCountFloat /= BVHUtils.NbLeavesPerNode;
-                entriesCount += (int)math.ceil(entriesCountFloat);
-            }
-
-            return entriesCount;
-        }
-
         /// <summary>
         /// https://developer.nvidia.com/blog/thinking-parallel-part-iii-tree-construction-gpu/
         ///
@@ -815,430 +716,170 @@ namespace Trove.SpatialQueries
             }
         }
     }
-
+    
     [BurstCompile]
-    public unsafe struct BVHComputeMortonCodesAndDataIndexesJob : IJobFor
+    public unsafe struct BVHBuildHierarchyMidpointSplitJob : IJob
     {
-        public int WorkerCount;
-        [ReadOnly]
         public NativeReference<AABB> SceneAABB;
-        [NativeDisableParallelForRestriction]
-        public NativeList<BVHNode> UnsortedNodes;
-
-        public void Execute(int index)
-        {
-            int nodesPerWorker = MathUtilities.DivideIntCeil(UnsortedNodes.Length, WorkerCount);
-            int startIndex = index * nodesPerWorker;
-            int endIndex = math.min(UnsortedNodes.Length, startIndex + nodesPerWorker);
-
-            // Compute morton codes (from normalized position relative to scene AABB)
-            AABB sceneAABB = SceneAABB.Value;
-            float3 sceneDimensions = sceneAABB.Max - sceneAABB.Min;
-            BVHNode* nodesPtr = UnsortedNodes.GetUnsafePtr();
-            for (int i = startIndex; i < endIndex; i++)
-            {
-                ref BVHNode nodeRef = ref UnsafeUtility.ArrayElementAsRef<BVHNode>(nodesPtr, i);
-                float3 normalizedPosition = (nodeRef.AABB.GetCenter() - sceneAABB.Min) / sceneDimensions; // Position from 0f to 1f in the scene
-                nodeRef.MortonCode = BVHUtils.ComputeMortonCode(normalizedPosition);
-                nodeRef.DataIndex = i; 
-            }
-        }
-    }
-
-    [BurstCompile]
-    internal struct BVHRadixSortInitializePassJob : IJob
-    {
-        public int WorkerCount;
-        public NativeList<BVHNode> InputNodes;
-        public NativeList<BVHNode> OutputNodes;
-        public NativeList<int> RadixSortHistograms;
-
-        public void Execute()
-        {
-            // Ensure output buffer length
-            if (OutputNodes.Length != InputNodes.Length)
-            {
-                OutputNodes.Resize(InputNodes.Length, NativeArrayOptions.UninitializedMemory);
-            }
-
-            // Clear histogram
-            RadixSortHistograms.Resize(BVHUtils.RadixSortBucketCount * WorkerCount, NativeArrayOptions.ClearMemory);
-            for (int i = 0; i < RadixSortHistograms.Length; i++)
-            {
-                RadixSortHistograms[i] = 0;
-            }
-        }
-    }
-
-    [BurstCompile]
-    internal unsafe struct BVHRadixSortComputeBucketHistogramJob : IJobFor
-    {
-        public int WorkerCount;
-        public int Pass;
-        [ReadOnly]
         public NativeList<BVHNode> Nodes;
-        [NativeDisableParallelForRestriction]
-        public NativeList<int> RadixSortHistograms;
 
-        public void Execute(int workerIndex)
-        {
-            if (Nodes.Length == 0)
-                return;
+        [NativeDisableUnsafePtrRestriction]
+        private BVHNode* NodesPtr;
 
-            int nodesPerWorker = MathUtilities.DivideIntCeil(Nodes.Length, WorkerCount);
-            int startIndex = workerIndex * nodesPerWorker;
-            int endIndex = math.min(Nodes.Length, startIndex + nodesPerWorker);
-
-            int* histogramPtrForWorker = RadixSortHistograms.GetUnsafePtr() + (long)(workerIndex * BVHUtils.RadixSortBucketCount);
-
-            // Calculate nb of occurrences for the value of each bucket (each worker responsible for a range of nodes)
-            int bitShiftForPass = Pass * BVHUtils.RadixBits;
-            for (int i = startIndex; i < endIndex; i++)
-            {
-                uint mortonCode = Nodes[i].MortonCode;
-                int bucketIndex = (int)((mortonCode >> bitShiftForPass) & (BVHUtils.RadixSortBucketCount - 1));
-                histogramPtrForWorker[bucketIndex]++;
-            }
-        }
-    }
-
-    [BurstCompile]
-    internal unsafe struct BVHRadixSortComputeBucketIndexRangesJob : IJob
-    {
-        public int WorkerCount;
-        public NativeList<int> RadixSortHistograms;
+        private const int LeavesPerNode = 4; 
+        private const int MaxDepth = 60;
 
         public void Execute()
         {
-            int* histogramsPtr = RadixSortHistograms.GetUnsafePtr();
-
-            int* bucketValueCounts = stackalloc int[BVHUtils.RadixSortBucketCount];
-            int* bucketNodeStartIndexes = stackalloc int[BVHUtils.RadixSortBucketCount];
-
-            // Compute histogram totals across all workers
-            for (int bucketIndex = 0; bucketIndex < BVHUtils.RadixSortBucketCount; bucketIndex++)
+            NodesPtr = Nodes.GetUnsafePtr();
+            
+            // TODO: put in a job
+            // Assign Data index of leaf nodes
+            for (int i = 0; i < Nodes.Length; i++)
             {
-                int total = 0;
-                for (int worker = 0; worker < WorkerCount; worker++)
-                {
-                    total += histogramsPtr[(worker * BVHUtils.RadixSortBucketCount) + bucketIndex];
-                }
-                bucketValueCounts[bucketIndex] = total;
+                ref BVHNode node = ref UnsafeUtility.ArrayElementAsRef<BVHNode>(NodesPtr, i);
+                node.LeafNodeDataIndex = i;
             }
-
-            // Compute the nodes start index for each bucket
-            int indexCounter = 0;
-            for (int bucketIndex = 0; bucketIndex < BVHUtils.RadixSortBucketCount; bucketIndex++)
+            
+            BVHNode root = new BVHNode
             {
-                bucketNodeStartIndexes[bucketIndex] = indexCounter;
-                indexCounter += bucketValueCounts[bucketIndex];
-            }
+                AABB = SceneAABB.Value,
+                ChildrenStartIndex = 0,
+                ChildrenLength = Nodes.Length,
+            };
 
-            // Store the nodes start index of each bucket for each worker in the histogram.
-            // This will allow each worker to sort their respective range of nodes and store elements in all buckets.
-            for (int bucketIndex = 0; bucketIndex < BVHUtils.RadixSortBucketCount; bucketIndex++)
-            {
-                int bucketNodesStartIndex = bucketNodeStartIndexes[bucketIndex];
-                for (int workerIndex = 0; workerIndex < WorkerCount; workerIndex++)
-                {
-                    int bucketElementsCountForWorker = histogramsPtr[(workerIndex * BVHUtils.RadixSortBucketCount) + bucketIndex];
-                    histogramsPtr[(workerIndex * BVHUtils.RadixSortBucketCount) + bucketIndex] = bucketNodesStartIndex;
-                    bucketNodesStartIndex += bucketElementsCountForWorker;
-                }
-            }
+            int depth = 0;
+            BuildRecursive(root, depth, -1, false);
         }
-    }
 
-    [BurstCompile]
-    internal unsafe struct BVHRadixSortJob : IJobFor
-    {
-        public int WorkerCount;
-        public int Pass;
-        [ReadOnly]
-        public NativeList<BVHNode> InputNodes;
-        [NativeDisableParallelForRestriction]
-        public NativeList<BVHNode> OutputNodes;
-        [NativeDisableParallelForRestriction]
-        public NativeList<int> RadixHistograms;
-
-        public void Execute(int workerIndex)
-        {
-            if (InputNodes.Length == 0)
-                return;
-
-            BVHNode* outputNodesPtr = OutputNodes.GetUnsafePtr();
-
-            int nodesPerWorker = MathUtilities.DivideIntCeil(InputNodes.Length, WorkerCount);
-            int startIndex = workerIndex * nodesPerWorker;
-            int endIndex = math.min(InputNodes.Length, startIndex + nodesPerWorker);
-
-            int bitShiftForPass = Pass * BVHUtils.RadixBits;
-            int* histogramPtrForWorker = RadixHistograms.GetUnsafePtr() + (workerIndex * BVHUtils.RadixSortBucketCount);
-
-            // Store a local copy of node start indexes for this worker
-            int* nodeStartIndexesForBucket = stackalloc int[BVHUtils.RadixSortBucketCount];
-            UnsafeUtility.MemCpy(nodeStartIndexesForBucket, histogramPtrForWorker, BVHUtils.RadixSortBucketCount * sizeof(int));
-
-            // For this worker's range of nodes, perform the radix sort pass
-            for (int i = startIndex; i < endIndex; i++)
+        private void BuildRecursive(BVHNode node, int depth, int parentIndex, bool isLeftChild)
+        { 
+            // Add to hierarchy if few enough children, or if exceed depth limit
+            if (node.ChildrenLength < LeavesPerNode || depth >= MaxDepth)
             {
-                BVHNode node = InputNodes[i];
-                uint mortonCode = node.MortonCode;
-                int bucketIndex = (int)((mortonCode >> bitShiftForPass) & (BVHUtils.RadixSortBucketCount - 1));
-                int writeIndex = nodeStartIndexesForBucket[bucketIndex]++;
-                outputNodesPtr[writeIndex] = node;
-            }
-        }
-    }
-
-    [BurstCompile]
-    public unsafe struct BVHPrecomputeHierarchyJob : IJob
-    {
-        public NativeList<BVHNode> SortedNodes;
-        public NativeList<NodeLevelData> NodeLevelDatas;
-
-        // Resize nodes to accomodate whole hierarchy and remember data of each level
-        public void Execute()
-        {
-            NodeLevelDatas.Clear();
-
-            if (SortedNodes.Length < BVHUtils.NbLeavesPerNode)
-            {
-                if (SortedNodes.Length > 0)
-                {
-                    NodeLevelDatas.Add(new NodeLevelData
-                    {
-                        StartIndex = 0,
-                        Count = SortedNodes.Length,
-                    });
-                }
-
+                AddNodeToHierarchy(ref node, parentIndex, isLeftChild, true, out _);
                 return;
             }
 
-            UnsafeList<int> paddingNodeIndices = new UnsafeList<int>(64, Allocator.Temp);
-
-            // If nodes count is not dividable by nbLeaves, add padding node
-            int paddingNodesNeeded = BVHUtils.NbLeavesPerNode - (SortedNodes.Length % BVHUtils.NbLeavesPerNode);
-            if (paddingNodesNeeded != BVHUtils.NbLeavesPerNode)
+            // FindSplit(in node, out SplitInfo split);
+            // Find the best split (longest AABB axis)
+            int splitAxis = 0;
+            float splitAxisExtent = node.AABB.GetExtents()[splitAxis];
+            for (int axis = 1; axis < 3; axis++)
             {
-                for (int i = 0; i < paddingNodesNeeded; i++)
+                float tmpExtent = node.AABB.GetExtents()[axis];
+                if (tmpExtent > splitAxisExtent)
                 {
-                    paddingNodeIndices.Add(SortedNodes.Length);
-                    SortedNodes.Add(new BVHNode
-                    {
-                        DataIndex = -1,
-                        AABB = AABB.GetEmpty(),
-                    });
+                    splitAxisExtent = tmpExtent;
+                    splitAxis = axis;
                 }
             }
+            float splitPosition = node.AABB.Min[splitAxis] + splitAxisExtent;
 
-            NodeLevelDatas.Add(new NodeLevelData
+            BVHNode leftNode = new BVHNode
             {
-                StartIndex = 0,
-                Count = SortedNodes.Length,
-            });
-
-            // Compute each other level
-            int startIndexCounter = SortedNodes.Length;
-            int workingLengthForLevel = SortedNodes.Length;
-            while (workingLengthForLevel > 1)
+                AABB = AABB.GetEmpty(),
+                ChildrenStartIndex = node.ChildrenStartIndex,
+                ChildrenLength = 0,
+            };
+            BVHNode rightNode = new BVHNode
             {
-                workingLengthForLevel /= BVHUtils.NbLeavesPerNode; // ok because we always ensure our workinglength is dividable by nbLeaves
+                AABB = AABB.GetEmpty(),
+                ChildrenStartIndex = -1, // we don't know yet
+                ChildrenLength = 0,
+            };
 
-                // Ensure our workinglength is dividable by nbLeaves
-                paddingNodesNeeded = BVHUtils.NbLeavesPerNode - (workingLengthForLevel % BVHUtils.NbLeavesPerNode);
-                if (workingLengthForLevel > 1 && paddingNodesNeeded != BVHUtils.NbLeavesPerNode)
+            // Reorder children in the buffer range so that it contains all left children, then all right children
+            {
+                for (int leftNodeIndex = node.ChildrenStartIndex;
+                     leftNodeIndex < node.ChildrenStartIndex + node.ChildrenLength;
+                     leftNodeIndex++)
                 {
-                    for (int i = 0; i < paddingNodesNeeded; i++)
+                    BVHNode childFromLeft = NodesPtr[leftNodeIndex];
+                    float centerOnAxisChlidFromLeft = childFromLeft.AABB.GetCenter()[splitAxis];
+
+                    if (centerOnAxisChlidFromLeft < splitPosition)
                     {
-                        paddingNodeIndices.AddWithGrowFactor(startIndexCounter + workingLengthForLevel);
-                        workingLengthForLevel++;
+                        leftNode.AABB.Include(childFromLeft.AABB);
+                        leftNode.ChildrenLength++;
                     }
-                }
-
-                NodeLevelDatas.Add(new NodeLevelData
-                {
-                    StartIndex = startIndexCounter,
-                    Count = workingLengthForLevel,
-                });
-
-                startIndexCounter += workingLengthForLevel;
-            }
-
-            // Resize nodes for full hierarchy
-            SortedNodes.Resize(startIndexCounter, NativeArrayOptions.UninitializedMemory);
-
-            // Set padding node data
-            for (int i = 0; i < paddingNodeIndices.Length; i++)
-            {
-                SortedNodes[paddingNodeIndices[i]] = new BVHNode
-                {
-                    DataIndex = -1,
-                    AABB = AABB.GetEmpty(),
-                };
-            }
-        }
-    }
-
-    [BurstCompile]
-    public unsafe struct BVHBuildHierarchyJob : IJobFor
-    {
-        public int WorkerCount;
-        [NativeDisableParallelForRestriction]
-        public NativeReference<int> ParallelWorkersLastWrittenLevel;
-        [NativeDisableParallelForRestriction]
-        public NativeList<BVHNode> SortedNodes;
-        [ReadOnly]
-        public NativeList<NodeLevelData> NodeLevelDatas;
-
-        public void Execute(int workerIndex)
-        {
-            if (SortedNodes.Length < BVHUtils.NbLeavesPerNode)
-                return;
-
-            int currentLevel = 0;
-            NodeLevelData nodeLevelData = NodeLevelDatas[currentLevel];
-            BVHNode* sortedNodesPtr = SortedNodes.GetUnsafePtr();
-
-            // We need each worker to start with a nodes count that is a power of NbLeaves, so that we'll have a guarantee
-            // that there's an even amount of nodes to process at each level of the hierarchy other than the last
-            int nodesLength = MathUtilities.DivideIntCeil(nodeLevelData.Count, WorkerCount);
-            int powOfNbLeaves = 1;
-            while (true)
-            {
-                powOfNbLeaves *= BVHUtils.NbLeavesPerNode;
-                if (powOfNbLeaves > nodesLength)
-                {
-                    nodesLength = powOfNbLeaves;
-                    break;
-                }
-            }
-
-            int nodesStart = nodeLevelData.StartIndex + (workerIndex * nodesLength);
-            if (nodesStart >= nodeLevelData.StartIndex + nodeLevelData.Count)
-                return;
-
-            int nodesEnd = math.min(nodeLevelData.StartIndex + nodeLevelData.Count, nodesStart + nodesLength);
-            int nextLevelAddIndex = NodeLevelDatas[currentLevel + 1].StartIndex + (workerIndex * nodesLength / BVHUtils.NbLeavesPerNode);
-
-            // For each level
-            while (nodesLength >= BVHUtils.NbLeavesPerNode)
-            {
-                // Process all nodes except last pair
-                for (int i = nodesStart; i < nodesEnd - BVHUtils.NbLeavesPerNode; i += BVHUtils.NbLeavesPerNode)
-                {
-                    AABB aabb = sortedNodesPtr[i].AABB;
-                    for (int j = 1; j < BVHUtils.NbLeavesPerNode; j++)
+                    else
                     {
-                        aabb.Include(sortedNodesPtr[i + j].AABB);
-                    }
-
-                    sortedNodesPtr[nextLevelAddIndex] = new BVHNode
-                    {
-                        AABB = aabb,
-                        DataIndex = i,
-                    };
-
-                    nextLevelAddIndex++;
-                }
-
-                // Process last pair which might have exceptions
-                {
-                    int lastPairIndex = nodesEnd - BVHUtils.NbLeavesPerNode;
-                    AABB aabb = sortedNodesPtr[lastPairIndex].AABB;
-                    for (int j = 1; j < BVHUtils.NbLeavesPerNode; j++)
-                    {
-                        if (sortedNodesPtr[lastPairIndex + j].IsValid())
+                        // If node goes on the right, iterate nodes from the right until we find one that goes left.
+                        // Then swap them
+                        for (int rightNodeIndex = node.ChildrenStartIndex + node.ChildrenLength - 1 - rightNode.ChildrenLength;
+                             rightNodeIndex >= leftNodeIndex; rightNodeIndex--)
                         {
-                            aabb.Include(sortedNodesPtr[lastPairIndex + j].AABB);
+                            BVHNode childFromRight = NodesPtr[rightNodeIndex];
+                            float centerOnAxisChlidFromRight = childFromRight.AABB.GetCenter()[splitAxis];
+
+                            if (centerOnAxisChlidFromRight >= splitPosition)
+                            {
+                                rightNode.AABB.Include(childFromRight.AABB);
+                                rightNode.ChildrenLength++;
+                            }
+                            else
+                            {
+                                // Swap
+                                BVHNode tmpNode = childFromRight;
+                                NodesPtr[rightNodeIndex] = childFromLeft;
+                                NodesPtr[leftNodeIndex] = tmpNode;
+
+                                leftNode.AABB.Include(childFromRight.AABB);
+                                leftNode.ChildrenLength++;
+
+                                rightNode.AABB.Include(childFromLeft.AABB);
+                                rightNode.ChildrenLength++;
+
+                                break;
+                            }
+
+                            if (rightNodeIndex == leftNodeIndex)
+                            {
+                                break;
+                            }
                         }
                     }
-
-                    sortedNodesPtr[nextLevelAddIndex] = new BVHNode
-                    {
-                        AABB = aabb,
-                        DataIndex = lastPairIndex,
-                    };
-                    nextLevelAddIndex++;
                 }
 
-                // Reached end of level
-                currentLevel++;
-                nodeLevelData = NodeLevelDatas[currentLevel];
-                nodesLength /= BVHUtils.NbLeavesPerNode;
-                nodesStart = nodeLevelData.StartIndex + (workerIndex * nodesLength);
-                nodesEnd = math.min(nodeLevelData.StartIndex + nodeLevelData.Count, nodesStart + nodesLength);
-                if (currentLevel + 1 < NodeLevelDatas.Length)
-                {
-                    nextLevelAddIndex = NodeLevelDatas[currentLevel + 1].StartIndex + (workerIndex * nodesLength / BVHUtils.NbLeavesPerNode);
-                }
+                // Patch right node start index
+                rightNode.ChildrenStartIndex = leftNode.ChildrenStartIndex + leftNode.ChildrenLength;
             }
 
-            if (workerIndex == 0)
-            {
-                ParallelWorkersLastWrittenLevel.Value = currentLevel;
-            }
+            // Add node to hierarchy
+            AddNodeToHierarchy(ref node, parentIndex, isLeftChild, false, out int addedIndex);
+
+            depth++;
+            BuildRecursive(leftNode, depth, addedIndex, true);
+            BuildRecursive(rightNode, depth, addedIndex, false);
         }
-    }
 
-    [BurstCompile]
-    public unsafe struct BVHBuildHierarchyFinalizeJob : IJob
-    {
-        public NativeReference<int> ParallelWorkersLastWrittenLevel;
-        public NativeList<BVHNode> SortedNodes;
-        public NativeList<NodeLevelData> NodeLevelDatas;
-
-        public void Execute()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AddNodeToHierarchy(ref BVHNode node, int parentIndex, bool isLeft, bool containsLeafNodes, out int addedIndex)
         {
-            if (SortedNodes.Length < BVHUtils.NbLeavesPerNode)
-                return;
-
-            // Process the last few levels after all parallel workers ended on their last two top-level nodes
-            int nextLevelAddIndex = 0;
-            for (int levelIndex = ParallelWorkersLastWrittenLevel.Value; levelIndex < NodeLevelDatas.Length - 1; levelIndex++)
+            addedIndex = Nodes.Length;
+            if (parentIndex >= 0)
             {
-                NodeLevelData nodeLevelData = NodeLevelDatas[levelIndex];
-                nextLevelAddIndex = NodeLevelDatas[levelIndex + 1].StartIndex;
-
-                int nodesEnd = nodeLevelData.StartIndex + nodeLevelData.Count;
-
-                for (int i = nodeLevelData.StartIndex; i < nodesEnd - BVHUtils.NbLeavesPerNode; i += BVHUtils.NbLeavesPerNode)
+                ref BVHNode parent =
+                    ref UnsafeUtility.ArrayElementAsRef<BVHNode>(NodesPtr, parentIndex);
+                if (isLeft)
                 {
-                    AABB aabb = SortedNodes[i].AABB;
-                    for (int j = 1; j < BVHUtils.NbLeavesPerNode; j++)
-                    {
-                        aabb.Include(SortedNodes[i + j].AABB);
-                    }
-                    
-                    SortedNodes[nextLevelAddIndex] = new BVHNode
-                    {
-                        AABB = aabb,
-                        DataIndex = i,
-                    };
-
-                    nextLevelAddIndex++;
+                    parent.LeftIndex = addedIndex;
                 }
-
-                // Process last pair which might have exceptions
+                else
                 {
-                    int lastPairIndex = nodesEnd - BVHUtils.NbLeavesPerNode;
-                    AABB aabb = SortedNodes[lastPairIndex].AABB;
-                    for (int j = 1; j < BVHUtils.NbLeavesPerNode; j++)
-                    {
-                        if (SortedNodes[lastPairIndex + j].IsValid())
-                        {
-                            aabb.Include(SortedNodes[lastPairIndex + j].AABB);
-                        }
-                    }
-
-                    SortedNodes[nextLevelAddIndex] = new BVHNode
-                    {
-                        AABB = aabb,
-                        DataIndex = lastPairIndex,
-                    };
-                    nextLevelAddIndex++;
+                    parent.RightIndex = addedIndex;
                 }
+            }
+            
+            node.ContainsLeafNodes = containsLeafNodes ? (byte)1 : (byte)0;
+
+            int prevCapacity = Nodes.Capacity;
+            Nodes.Add(node);
+            if (Nodes.Capacity != prevCapacity)
+            {
+                // TODO: handle this better?
+                NodesPtr = Nodes.GetUnsafePtr();
             }
         }
     }
