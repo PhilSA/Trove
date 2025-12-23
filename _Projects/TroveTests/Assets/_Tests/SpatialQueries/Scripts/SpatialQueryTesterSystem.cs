@@ -1,3 +1,4 @@
+using Trove;
 using Trove.DebugDraw;
 using Trove.SpatialQueries;
 using Unity.Burst;
@@ -40,7 +41,7 @@ partial struct SpatialQueryTesterSystem : ISystem
     }
 
     [BurstCompile]
-    public void OnUpdate(ref SystemState state)
+    public unsafe void OnUpdate(ref SystemState state)
     {
         // Allocate the DebugDrawGroup if not created
         if (!_debugDrawGroup.IsCreated)
@@ -136,20 +137,45 @@ partial struct SpatialQueryTesterSystem : ISystem
 
                 if (debugger.DebugBoundingBoxes)
                 {
-                    _bvh.GetNodes(out UnsafeList<BVHNode> nodes, out int leafNodesCount);
-
+                    _bvh.GetNodes(out UnsafeList<BVHNode> nodes, out int leafNodesCount, out AABB sceneAABB);
                     
-                    for (int i = 0; i < debugger.BoundingBoxDebugLevel; i++)
+                    Stack nodesStack = new Stack(256);
+                    int2* nodesStackPtr = stackalloc int2[nodesStack.Capacity];
+                    
+                    nodesStack.PushLast(nodesStackPtr, new int2(leafNodesCount, 0));  
+                    while (nodesStack.PopLast(nodesStackPtr, out int2 nodeIndexAndLevel))
                     {
-                        BVHNode node = nodes[leafNodesCount + i];
-                        _debugDrawGroup.DrawWireBox(
-                            node.AABB.GetCenter(),
-                            quaternion.identity,
-                            node.AABB.GetExtents(),
-                            UnityEngine.Color.green);
+                        BVHNode node = nodes[nodeIndexAndLevel.x];
+                        int nextLevel = nodeIndexAndLevel.y + 1;
+                        
+                        if (nodeIndexAndLevel.y == debugger.BoundingBoxDebugLevel)
+                        {
+                            _debugDrawGroup.DrawWireBox(
+                                node.AABB.GetCenter(),
+                                quaternion.identity,
+                                node.AABB.GetExtents(),
+                                UnityEngine.Color.green);
+                        }
+                        else if (node.ContainsLeafNodes == 1)
+                        {
+                            // Add leaf nodes
+                            for (int i = node.ChildrenStartIndex; i < node.ChildrenStartIndex + node.ChildrenLength; i++)
+                            {
+                                nodesStack.PushLast(nodesStackPtr, new int2(i, nextLevel));
+                            }
+                        }
+                        else
+                        {
+                            nodesStack.PushLast(nodesStackPtr, new int2(node.LeftIndex, nextLevel));
+                            nodesStack.PushLast(nodesStackPtr, new int2(node.RightIndex, nextLevel));
+                        }
                     }
-                    
-                    
+                
+                    _debugDrawGroup.DrawWireBox(
+                        sceneAABB.GetCenter(),
+                        quaternion.identity,
+                        sceneAABB.GetExtents(),
+                        UnityEngine.Color.white);
                 }
 
                 if (debugger.QueryEnabled)

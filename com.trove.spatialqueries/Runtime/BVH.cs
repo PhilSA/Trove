@@ -8,6 +8,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 using Unity.Mathematics;
+using UnityEditor.Graphs;
 using UnityEngine;
 
 namespace Trove.SpatialQueries
@@ -20,7 +21,7 @@ namespace Trove.SpatialQueries
         [FieldOffset(4)]
         public int ChildrenLength;
         [FieldOffset(8)]
-        public int ContainsLeafNodes;
+        public byte ContainsLeafNodes;
         [FieldOffset(9)]
         public AABB AABB;
 
@@ -199,14 +200,14 @@ namespace Trove.SpatialQueries
     {
         // Nodes A and B are used to ping pong between buffers during sorting.
         // After sorting, one of them becomes the "SortedNodes" and the other becomes the "ReorderedNodes"
-        internal NativeList<BVHNode> NodesA;
+        internal NativeList<BVHNode> Nodes;
         internal NativeList<TNodeData> LeafNodeDatas;
         internal NativeReference<AABB> SceneAABB;
 
         public static BVH<TNodeData> Create(Allocator allocator, int initialElementsCapacity)
         {
             BVH<TNodeData> bvh = new BVH<TNodeData>();
-            bvh.NodesA = new NativeList<BVHNode>(initialElementsCapacity, allocator);
+            bvh.Nodes = new NativeList<BVHNode>(initialElementsCapacity, allocator);
             bvh.LeafNodeDatas = new NativeList<TNodeData>(initialElementsCapacity, allocator);
             bvh.SceneAABB = new NativeReference<AABB>(allocator);
 
@@ -215,9 +216,9 @@ namespace Trove.SpatialQueries
 
         public void Dispose(JobHandle jobHandle)
         {
-            if (NodesA.IsCreated)
+            if (Nodes.IsCreated)
             {
-                NodesA.Dispose(jobHandle);
+                Nodes.Dispose(jobHandle);
             }
 
             if (LeafNodeDatas.IsCreated)
@@ -236,26 +237,28 @@ namespace Trove.SpatialQueries
             ref AABB sceneAABBRef = ref *SceneAABB.GetUnsafePtr();
             sceneAABBRef.Include(aabb);
 
-            NodesA.Add(new BVHNode
+            Nodes.Add(new BVHNode
             {
                 AABB = aabb,
+                LeafNodeDataIndex = LeafNodeDatas.Length,
             });
             LeafNodeDatas.Add(nodeData);
         }
 
         public void ReserveAddNodesUnsafe(int addNodesCount, out int startIndexOfReservedRange)
         {
-            startIndexOfReservedRange = NodesA.Length;
-            NodesA.Resize(NodesA.Length + addNodesCount, NativeArrayOptions.UninitializedMemory);
+            startIndexOfReservedRange = Nodes.Length;
+            Nodes.Resize(Nodes.Length + addNodesCount, NativeArrayOptions.UninitializedMemory);
             LeafNodeDatas.Resize(LeafNodeDatas.Length + addNodesCount, NativeArrayOptions.UninitializedMemory);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void AddNodeUnsafe(in TNodeData nodeData, in AABB aabb, int atIndex)
+        public void AddNodeUnsafe(in TNodeData nodeData, in AABB aabb, int atIndex)
         {
-            NodesA[atIndex] = new BVHNode
+            Nodes[atIndex] = new BVHNode
             {
                 AABB = aabb,
+                LeafNodeDataIndex = atIndex,
             };
             LeafNodeDatas[atIndex] = nodeData;
         }
@@ -263,13 +266,20 @@ namespace Trove.SpatialQueries
         public unsafe void AddNodesUnsafe(TNodeData* nodeDatas, AABB* aabbs, int count, int atIndex)
         {
             const int AABBsFieldOffset = 9;
-            
-            BVHNode* dstNodes = NodesA.GetUnsafePtr() + (long)atIndex;
+
+            BVHNode* nodesPtr = Nodes.GetUnsafePtr();
+            BVHNode* dstNodes = nodesPtr + (long)atIndex;
             AABB* dstAABB = (AABB*)((byte*)dstNodes + (long)AABBsFieldOffset); // AABBs are at fieldOffset 8
             UnsafeUtility.MemCpyStride(
                 dstAABB, AABBsFieldOffset, 
                 aabbs, 0, 
                 UnsafeUtility.SizeOf<AABB>(), count);
+
+            for (int i = atIndex; i < atIndex + count; i++)
+            {
+                ref BVHNode nodeRef = ref UnsafeUtility.ArrayElementAsRef<BVHNode>(nodesPtr, i);
+                nodeRef.LeafNodeDataIndex = i;
+            }
             
             TNodeData* dstNodeDatas = LeafNodeDatas.GetUnsafePtr() + (long)atIndex;
             UnsafeUtility.MemCpy(dstNodeDatas, nodeDatas, UnsafeUtility.SizeOf<TNodeData>() * count);
@@ -280,14 +290,14 @@ namespace Trove.SpatialQueries
         {
             collector.OnBeginQuery();
         
-            if (NodesA.Length < 1)
+            if (Nodes.Length < 1)
             {
                 return false;
             }
         
             Stack nodesStack = new Stack(256);
             int* nodesStackPtr = stackalloc int[nodesStack.Capacity];
-            BVHNode* nodesPtr = NodesA.GetUnsafeReadOnlyPtr();
+            BVHNode* nodesPtr = Nodes.GetUnsafeReadOnlyPtr();
             TNodeData* leafDataPtr = LeafNodeDatas.GetUnsafeReadOnlyPtr();
             int leafNodesCount = LeafNodeDatas.Length;
 
@@ -583,7 +593,7 @@ namespace Trove.SpatialQueries
             dep = new RecomputeSceneAABBsJob
             {
                 WorkerCount = workerCount,
-                UnsortedNodes = NodesA,
+                UnsortedNodes = Nodes,
                 AABBForWorker = aabbForWorker,
             }.ScheduleParallel(workerCount, 1, dep);
 
@@ -605,16 +615,17 @@ namespace Trove.SpatialQueries
             dep = new BVHBuildHierarchyMidpointSplitJob()
             {
                 SceneAABB = SceneAABB,
-                Nodes = NodesA,
+                Nodes = Nodes,
             }.Schedule(dep);
 
             return dep;
         }
 
-        public unsafe void GetNodes(out UnsafeList<BVHNode> nodes, out int leafNodesCount)
+        public unsafe void GetNodes(out UnsafeList<BVHNode> nodes, out int leafNodesCount, out AABB sceneAABB)
         {
-            nodes = (*NodesA.GetUnsafeList());
+            nodes = (*Nodes.GetUnsafeList());
             leafNodesCount = LeafNodeDatas.Length;
+            sceneAABB = SceneAABB.Value;
         }
 
         [BurstCompile]
@@ -624,7 +635,7 @@ namespace Trove.SpatialQueries
 
             public void Execute()
             {
-                BVH.NodesA.Clear();
+                BVH.Nodes.Clear();
                 BVH.LeafNodeDatas.Clear();
                 BVH.SceneAABB.Value = AABB.GetEmpty();
             }
@@ -720,149 +731,194 @@ namespace Trove.SpatialQueries
     [BurstCompile]
     public unsafe struct BVHBuildHierarchyMidpointSplitJob : IJob
     {
+        struct WorkingNode
+        {
+            public BVHNode Node;
+            public int depth;
+            public int parentIndex;
+            public bool isLeftChild;
+        }
+        
         public NativeReference<AABB> SceneAABB;
         public NativeList<BVHNode> Nodes;
 
         [NativeDisableUnsafePtrRestriction]
         private BVHNode* NodesPtr;
 
-        private const int LeavesPerNode = 4; 
+        private const int MaxLeavesPerNode = 4; 
         private const int MaxDepth = 60;
 
         public void Execute()
         {
             NodesPtr = Nodes.GetUnsafePtr();
             
-            // TODO: put in a job
-            // Assign Data index of leaf nodes
-            for (int i = 0; i < Nodes.Length; i++)
-            {
-                ref BVHNode node = ref UnsafeUtility.ArrayElementAsRef<BVHNode>(NodesPtr, i);
-                node.LeafNodeDataIndex = i;
-            }
+            Stack nodesStack = new Stack(256);
+            WorkingNode* nodesStackPtr = stackalloc WorkingNode[nodesStack.Capacity];
             
-            BVHNode root = new BVHNode
+            WorkingNode rootWorkingNode = new WorkingNode
             {
-                AABB = SceneAABB.Value,
-                ChildrenStartIndex = 0,
-                ChildrenLength = Nodes.Length,
-            };
-
-            int depth = 0;
-            BuildRecursive(root, depth, -1, false);
-        }
-
-        private void BuildRecursive(BVHNode node, int depth, int parentIndex, bool isLeftChild)
-        { 
-            // Add to hierarchy if few enough children, or if exceed depth limit
-            if (node.ChildrenLength < LeavesPerNode || depth >= MaxDepth)
-            {
-                AddNodeToHierarchy(ref node, parentIndex, isLeftChild, true, out _);
-                return;
-            }
-
-            // FindSplit(in node, out SplitInfo split);
-            // Find the best split (longest AABB axis)
-            int splitAxis = 0;
-            float splitAxisExtent = node.AABB.GetExtents()[splitAxis];
-            for (int axis = 1; axis < 3; axis++)
-            {
-                float tmpExtent = node.AABB.GetExtents()[axis];
-                if (tmpExtent > splitAxisExtent)
+                Node = new BVHNode
                 {
-                    splitAxisExtent = tmpExtent;
-                    splitAxis = axis;
+                    AABB = SceneAABB.Value,
+                    ChildrenStartIndex = 0,
+                    ChildrenLength = Nodes.Length,
+                },
+                depth = 0,
+                parentIndex = -1,
+                isLeftChild = false,
+            };
+            
+            nodesStack.PushLast(nodesStackPtr, rootWorkingNode);
+            while (nodesStack.PopLast(nodesStackPtr, out WorkingNode workingNode))
+            {
+                int addedIndex;
+                
+                // Add to hierarchy if few enough children, or if exceed depth limit
+                if (workingNode.Node.ChildrenLength < MaxLeavesPerNode || workingNode.depth >= MaxDepth)
+                {
+                    AddNodeToHierarchy(ref workingNode, true, out addedIndex);
+                    
+                    // Add each leaf at the end
+                    // int prevCapacity = Nodes.Capacity;
+                    // ref BVHNode addedNode =
+                    //     ref UnsafeUtility.ArrayElementAsRef<BVHNode>(NodesPtr, addedIndex);
+                    // int prevChildrenStartIndex = addedNode.ChildrenStartIndex;
+                    // addedNode.ChildrenStartIndex = Nodes.Length; // patch children start
+                    // for (int i = 0; i < addedNode.ChildrenLength; i++)
+                    // {
+                    //     Nodes.Add(Nodes[prevChildrenStartIndex + i]);
+                    // }
+                    // if (Nodes.Capacity != prevCapacity)
+                    // {
+                    //     // TODO: handle this better?
+                    //     NodesPtr = Nodes.GetUnsafePtr();
+                    // }
+                    //
+                    continue;
                 }
-            }
-            float splitPosition = node.AABB.Min[splitAxis] + splitAxisExtent;
 
-            BVHNode leftNode = new BVHNode
-            {
-                AABB = AABB.GetEmpty(),
-                ChildrenStartIndex = node.ChildrenStartIndex,
-                ChildrenLength = 0,
-            };
-            BVHNode rightNode = new BVHNode
-            {
-                AABB = AABB.GetEmpty(),
-                ChildrenStartIndex = -1, // we don't know yet
-                ChildrenLength = 0,
-            };
+                // Add node to hierarchy
+                AddNodeToHierarchy(ref workingNode, false, out addedIndex);
 
-            // Reorder children in the buffer range so that it contains all left children, then all right children
-            {
-                for (int leftNodeIndex = node.ChildrenStartIndex;
-                     leftNodeIndex < node.ChildrenStartIndex + node.ChildrenLength;
-                     leftNodeIndex++)
+                // Find the best split (longest AABB axis)
+                int splitAxis = 0;
+                float splitPosition = 0f;
                 {
-                    BVHNode childFromLeft = NodesPtr[leftNodeIndex];
-                    float centerOnAxisChlidFromLeft = childFromLeft.AABB.GetCenter()[splitAxis];
-
-                    if (centerOnAxisChlidFromLeft < splitPosition)
+                    float3 nodeExtents = workingNode.Node.AABB.GetExtents();
+                    float splitAxisExtent = nodeExtents[splitAxis];
+                    for (int axis = 1; axis < 3; axis++)
                     {
-                        leftNode.AABB.Include(childFromLeft.AABB);
-                        leftNode.ChildrenLength++;
-                    }
-                    else
-                    {
-                        // If node goes on the right, iterate nodes from the right until we find one that goes left.
-                        // Then swap them
-                        for (int rightNodeIndex = node.ChildrenStartIndex + node.ChildrenLength - 1 - rightNode.ChildrenLength;
-                             rightNodeIndex >= leftNodeIndex; rightNodeIndex--)
+                        float tmpExtent = nodeExtents[axis];
+                        if (tmpExtent > splitAxisExtent)
                         {
-                            BVHNode childFromRight = NodesPtr[rightNodeIndex];
-                            float centerOnAxisChlidFromRight = childFromRight.AABB.GetCenter()[splitAxis];
+                            splitAxisExtent = tmpExtent;
+                            splitAxis = axis;
+                        }
+                    }
 
-                            if (centerOnAxisChlidFromRight >= splitPosition)
+                    splitPosition = workingNode.Node.AABB.Min[splitAxis] + splitAxisExtent;
+                }
+
+                BVHNode leftNode = new BVHNode
+                {
+                    AABB = AABB.GetEmpty(),
+                    ChildrenStartIndex = workingNode.Node.ChildrenStartIndex,
+                    ChildrenLength = 0,
+                };
+                BVHNode rightNode = new BVHNode
+                {
+                    AABB = AABB.GetEmpty(),
+                    ChildrenStartIndex = -1, // we don't know yet
+                    ChildrenLength = 0,
+                };
+
+                // Reorder children in the buffer range so that it contains all left children, then all right children
+                {
+                    for (int leftNodeIndex = workingNode.Node.ChildrenStartIndex;
+                         leftNodeIndex < workingNode.Node.ChildrenStartIndex + workingNode.Node.ChildrenLength;
+                         leftNodeIndex++)
+                    {
+                        BVHNode childFromLeft = NodesPtr[leftNodeIndex];
+                        float centerOnAxisChlidFromLeft = childFromLeft.AABB.GetCenter()[splitAxis];
+
+                        if (centerOnAxisChlidFromLeft < splitPosition)
+                        {
+                            leftNode.AABB.Include(childFromLeft.AABB);
+                            leftNode.ChildrenLength++;
+                        }
+                        else
+                        {
+                            // If node goes on the right, iterate nodes from the right until we find one that goes left.
+                            // Then swap them
+                            for (int rightNodeIndex = workingNode.Node.ChildrenStartIndex + workingNode.Node.ChildrenLength - 1 - rightNode.ChildrenLength;
+                                 rightNodeIndex >= leftNodeIndex; rightNodeIndex--)
                             {
-                                rightNode.AABB.Include(childFromRight.AABB);
-                                rightNode.ChildrenLength++;
-                            }
-                            else
-                            {
-                                // Swap
-                                BVHNode tmpNode = childFromRight;
-                                NodesPtr[rightNodeIndex] = childFromLeft;
-                                NodesPtr[leftNodeIndex] = tmpNode;
+                                BVHNode childFromRight = NodesPtr[rightNodeIndex];
+                                float centerOnAxisChlidFromRight = childFromRight.AABB.GetCenter()[splitAxis];
 
-                                leftNode.AABB.Include(childFromRight.AABB);
-                                leftNode.ChildrenLength++;
+                                if (centerOnAxisChlidFromRight >= splitPosition)
+                                {
+                                    rightNode.AABB.Include(childFromRight.AABB);
+                                    rightNode.ChildrenLength++;
+                                }
+                                else
+                                {
+                                    // Swap
+                                    BVHNode tmpChildFromRight = childFromRight;
+                                    NodesPtr[rightNodeIndex] = childFromLeft;
+                                    NodesPtr[leftNodeIndex] = tmpChildFromRight;
 
-                                rightNode.AABB.Include(childFromLeft.AABB);
-                                rightNode.ChildrenLength++;
+                                    leftNode.AABB.Include(childFromRight.AABB);
+                                    leftNode.ChildrenLength++;
 
-                                break;
-                            }
+                                    rightNode.AABB.Include(childFromLeft.AABB);
+                                    rightNode.ChildrenLength++;
 
-                            if (rightNodeIndex == leftNodeIndex)
-                            {
-                                break;
+                                    break;
+                                }
+
+                                if (rightNodeIndex == leftNodeIndex)
+                                {
+                                    break;
+                                }
                             }
                         }
                     }
+
+                    // Patch right node start index
+                    rightNode.ChildrenStartIndex = leftNode.ChildrenStartIndex + leftNode.ChildrenLength;
                 }
+                
+                int nextDepth = workingNode.depth + 1;
+                WorkingNode leftWorkingNode = new WorkingNode
+                {
+                    Node = leftNode,
+                    depth = nextDepth,
+                    parentIndex = addedIndex,
+                    isLeftChild = true,
+                };
+                WorkingNode rightWorkingNode = new WorkingNode
+                {
+                    Node = rightNode,
+                    depth = nextDepth,
+                    parentIndex = addedIndex,
+                    isLeftChild = false,
+                };
 
-                // Patch right node start index
-                rightNode.ChildrenStartIndex = leftNode.ChildrenStartIndex + leftNode.ChildrenLength;
+                nodesStack.PushLast(nodesStackPtr, leftWorkingNode);
+                nodesStack.PushLast(nodesStackPtr, rightWorkingNode);
             }
-
-            // Add node to hierarchy
-            AddNodeToHierarchy(ref node, parentIndex, isLeftChild, false, out int addedIndex);
-
-            depth++;
-            BuildRecursive(leftNode, depth, addedIndex, true);
-            BuildRecursive(rightNode, depth, addedIndex, false);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AddNodeToHierarchy(ref BVHNode node, int parentIndex, bool isLeft, bool containsLeafNodes, out int addedIndex)
+        private void AddNodeToHierarchy(ref WorkingNode node, bool containsLeafNodes, out int addedIndex)
         {
             addedIndex = Nodes.Length;
-            if (parentIndex >= 0)
+            if (node.parentIndex >= 0)
             {
                 ref BVHNode parent =
-                    ref UnsafeUtility.ArrayElementAsRef<BVHNode>(NodesPtr, parentIndex);
-                if (isLeft)
+                    ref UnsafeUtility.ArrayElementAsRef<BVHNode>(NodesPtr, node.parentIndex);
+                if (node.isLeftChild)
                 {
                     parent.LeftIndex = addedIndex;
                 }
@@ -871,11 +927,11 @@ namespace Trove.SpatialQueries
                     parent.RightIndex = addedIndex;
                 }
             }
-            
-            node.ContainsLeafNodes = containsLeafNodes ? (byte)1 : (byte)0;
+             
+            node.Node.ContainsLeafNodes = containsLeafNodes ? (byte)1 : (byte)0;
 
             int prevCapacity = Nodes.Capacity;
-            Nodes.Add(node);
+            Nodes.Add(node.Node);
             if (Nodes.Capacity != prevCapacity)
             {
                 // TODO: handle this better?
