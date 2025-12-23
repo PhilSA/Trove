@@ -832,6 +832,10 @@ namespace Trove.SpatialQueries
                     ChildrenLength = 0,
                 };
 
+                // TODO: this is what's taking all the time right now.
+                // - Idea: radix sort all nodes by position on the SceneAABB longest axis. That way, when the splitAxis
+                //         is that axis, we can simply binary search for the split index. This means we need to iterate
+                //         left side from the end, and right side from the start, in order to preserve sorting.
                 // Reorder children in the buffer range so that it contains all left children, then all right children
                 {
                     for (int leftNodeIndex = workingNode.Node.ChildrenStartIndex;
@@ -851,7 +855,7 @@ namespace Trove.SpatialQueries
                             // If node goes on the right, iterate nodes from the right until we find one that goes left.
                             // Then swap them
                             for (int rightNodeIndex = workingNode.Node.ChildrenStartIndex + workingNode.Node.ChildrenLength - 1 - rightNode.ChildrenLength;
-                                 rightNodeIndex >= leftNodeIndex; rightNodeIndex--)
+                                 rightNodeIndex > leftNodeIndex; rightNodeIndex--)
                             {
                                 BVHNode childFromRight = NodesPtr[rightNodeIndex];
                                 float centerOnAxisChildFromRight = childFromRight.AABB.GetCenter()[splitAxis];
@@ -874,11 +878,6 @@ namespace Trove.SpatialQueries
                                     rightNode.AABB.Include(childFromLeft.AABB);
                                     rightNode.ChildrenLength++;
 
-                                    break;
-                                }
-
-                                if (rightNodeIndex == leftNodeIndex)
-                                {
                                     break;
                                 }
                             }
