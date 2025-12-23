@@ -839,9 +839,9 @@ namespace Trove.SpatialQueries
                          leftNodeIndex++)
                     {
                         BVHNode childFromLeft = NodesPtr[leftNodeIndex];
-                        float centerOnAxisChlidFromLeft = childFromLeft.AABB.GetCenter()[splitAxis];
+                        float centerOnAxisChildFromLeft = childFromLeft.AABB.GetCenter()[splitAxis];
 
-                        if (centerOnAxisChlidFromLeft < splitPosition)
+                        if (centerOnAxisChildFromLeft < splitPosition)
                         {
                             leftNode.AABB.Include(childFromLeft.AABB);
                             leftNode.ChildrenLength++;
@@ -854,9 +854,9 @@ namespace Trove.SpatialQueries
                                  rightNodeIndex >= leftNodeIndex; rightNodeIndex--)
                             {
                                 BVHNode childFromRight = NodesPtr[rightNodeIndex];
-                                float centerOnAxisChlidFromRight = childFromRight.AABB.GetCenter()[splitAxis];
+                                float centerOnAxisChildFromRight = childFromRight.AABB.GetCenter()[splitAxis];
 
-                                if (centerOnAxisChlidFromRight >= splitPosition)
+                                if (centerOnAxisChildFromRight >= splitPosition)
                                 {
                                     rightNode.AABB.Include(childFromRight.AABB);
                                     rightNode.ChildrenLength++;
