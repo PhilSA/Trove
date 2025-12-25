@@ -309,6 +309,7 @@ namespace Trove.SpatialQueries
             UnsafeUtility.MemCpy(dstNodeDatas, nodeDatas, UnsafeUtility.SizeOf<TNodeData>() * count);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe bool QueryAABB<TCollector>(in AABB aabb, ref TCollector collector) 
             where TCollector : unmanaged, IBVHQueryCollector<TNodeData>
         {
