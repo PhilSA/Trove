@@ -163,11 +163,11 @@ partial struct SpatialQueryTesterSystem : ISystem
                         }
                     }
                 
-                    _debugDrawGroup.DrawWireBox(
-                        sceneAABB.GetCenter(),
-                        quaternion.identity,
-                        sceneAABB.GetExtents(),
-                        UnityEngine.Color.white);
+                    // _debugDrawGroup.DrawWireBox(
+                    //     sceneAABB.GetCenter(),
+                    //     quaternion.identity,
+                    //     sceneAABB.GetExtents(),
+                    //     UnityEngine.Color.white);
                 }
 
                 if (debugger.QueryEnabled)

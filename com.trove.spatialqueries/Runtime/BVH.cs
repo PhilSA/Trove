@@ -200,6 +200,7 @@ namespace Trove.SpatialQueries
         internal NativeList<BVHLeafNode> UnsortedLeafNodes;
         internal NativeList<BVHLeafNode> SortedLeafNodes;
         internal NativeList<BVHSortingLeafNode> SortingLeafNodes;
+        internal NativeList<BVHSortingLeafNode> TmpSortingLeafNodes;
         internal NativeList<BVHHierarchyNode> HierarchyNodes;
         internal NativeList<TNodeData> LeafNodeDatas;
         internal NativeReference<AABB> SceneAABB;
@@ -210,6 +211,7 @@ namespace Trove.SpatialQueries
             bvh.UnsortedLeafNodes = new NativeList<BVHLeafNode>(initialElementsCapacity, allocator);
             bvh.SortedLeafNodes = new NativeList<BVHLeafNode>(initialElementsCapacity, allocator);
             bvh.SortingLeafNodes = new NativeList<BVHSortingLeafNode>(initialElementsCapacity, allocator);
+            bvh.TmpSortingLeafNodes = new NativeList<BVHSortingLeafNode>(initialElementsCapacity, allocator);
             bvh.HierarchyNodes = new NativeList<BVHHierarchyNode>(128, allocator);
             bvh.LeafNodeDatas = new NativeList<TNodeData>(initialElementsCapacity, allocator);
             bvh.SceneAABB = new NativeReference<AABB>(allocator);
@@ -232,6 +234,11 @@ namespace Trove.SpatialQueries
             if (SortingLeafNodes.IsCreated)
             {
                 SortingLeafNodes.Dispose(jobHandle);
+            }
+            
+            if (TmpSortingLeafNodes.IsCreated)
+            {
+                TmpSortingLeafNodes.Dispose(jobHandle);
             }
             
             if (HierarchyNodes.IsCreated)
@@ -341,8 +348,8 @@ namespace Trove.SpatialQueries
                 }
                 else
                 {
-                    nodesStack.PushLast(nodesStackPtr, hierarchyNode.LeftIndex);
                     nodesStack.PushLast(nodesStackPtr, hierarchyNode.RightIndex);
+                    nodesStack.PushLast(nodesStackPtr, hierarchyNode.LeftIndex);
                 }
             }
 
@@ -636,6 +643,7 @@ namespace Trove.SpatialQueries
                 UnsortedLeafNodes = UnsortedLeafNodes,
                 SortedLeafNodes = SortedLeafNodes,
                 SortingLeafNodes = SortingLeafNodes,
+                TmpSortingLeafNodes = TmpSortingLeafNodes,
                 HierarchyNodes = HierarchyNodes,
             }.Schedule(dep);
 
@@ -659,6 +667,7 @@ namespace Trove.SpatialQueries
                 BVH.UnsortedLeafNodes.Clear();
                 BVH.SortedLeafNodes.Clear();
                 BVH.SortingLeafNodes.Clear();
+                BVH.TmpSortingLeafNodes.Clear();
                 BVH.HierarchyNodes.Clear();
                 BVH.LeafNodeDatas.Clear();
                 BVH.SceneAABB.Value = AABB.GetEmpty();
@@ -668,6 +677,11 @@ namespace Trove.SpatialQueries
 
     internal static class BVHUtils
     {
+        internal const int BitsPerByte = 8;
+        internal const int ValuesPerByte = 1 << BitsPerByte; // 256 values of a byte
+        internal const int RadixSortPassesUInt = 4; 
+        internal const int RadixSortPassesUShort = 2;
+        
         /// <summary>
         /// https://developer.nvidia.com/blog/thinking-parallel-part-iii-tree-construction-gpu/
         ///
@@ -758,15 +772,16 @@ namespace Trove.SpatialQueries
         struct WorkingHierarchyNode
         {
             public BVHHierarchyNode Node;
-            public int depth;
-            public int parentIndex;
-            public bool isLeftChild;
+            public int Depth;
+            public int ParentIndex;
+            public bool IsLeftChild;
         }
         
         public NativeReference<AABB> SceneAABB;
         public NativeList<BVHLeafNode> UnsortedLeafNodes;
         public NativeList<BVHLeafNode> SortedLeafNodes;
         public NativeList<BVHSortingLeafNode> SortingLeafNodes;
+        public NativeList<BVHSortingLeafNode> TmpSortingLeafNodes;
         public NativeList<BVHHierarchyNode> HierarchyNodes;
 
         [NativeDisableUnsafePtrRestriction]
@@ -782,6 +797,8 @@ namespace Trove.SpatialQueries
             BVHLeafNode* unsortedLeafNodesPtr = UnsortedLeafNodes.GetUnsafePtr();
             SortingLeafNodes.Resize(UnsortedLeafNodes.Length, NativeArrayOptions.ClearMemory);
             BVHSortingLeafNode* sortingLeafNodesPtr = SortingLeafNodes.GetUnsafePtr();
+            TmpSortingLeafNodes.Resize(UnsortedLeafNodes.Length, NativeArrayOptions.ClearMemory);
+            BVHSortingLeafNode* tmpSortingLeafNodesPtr = TmpSortingLeafNodes.GetUnsafePtr();
             SortedLeafNodes.Resize(UnsortedLeafNodes.Length, NativeArrayOptions.ClearMemory);
             BVHLeafNode* sortedLeafNodesPtr = SortedLeafNodes.GetUnsafePtr();
             
@@ -809,10 +826,13 @@ namespace Trove.SpatialQueries
                     ChildrenStartIndex = 0,
                     ChildrenLength = UnsortedLeafNodes.Length,
                 },
-                depth = 0,
-                parentIndex = -1,
-                isLeftChild = false,
+                Depth = 0,
+                ParentIndex = -1,
+                IsLeftChild = false,
             };
+
+            int* radixSortHistogram = stackalloc int[BVHUtils.ValuesPerByte];
+            int* bucketNodeStartIndexes = stackalloc int[BVHUtils.ValuesPerByte];
             
             // Build hierarchy from the top-down, using midpoint split
             Stack nodesStack = new Stack(256);
@@ -822,26 +842,20 @@ namespace Trove.SpatialQueries
             {
                 int addedIndex;
                 
-                // Add to hierarchy if few enough children, or if exceed depth limit
-                if (workingHierarchyNode.Node.ChildrenLength < MaxLeavesPerNode || workingHierarchyNode.depth >= MaxDepth)
-                {
-                    AddNodeToHierarchy(ref workingHierarchyNode, true, out addedIndex);
-                    continue;
-                }
-
                 // Add node to hierarchy
                 AddNodeToHierarchy(ref workingHierarchyNode, false, out addedIndex);
+
+                int childrenLength = workingHierarchyNode.Node.ChildrenLength;
+                int childrenStart = workingHierarchyNode.Node.ChildrenStartIndex;
+                int childrenEnd = childrenStart + childrenLength;
                 
-                // Find the best split (middle of the longest axis)
+                // Find the best split axis (longest axis)
                 int splitAxis = 0;
-                ushort splitPosition = 0;
                 {
-                    // Find relative min/max pos on each axis
+                    // Find min/max pos on each axis
                     ushort3 minPos = new ushort3(ushort.MaxValue, ushort.MaxValue, ushort.MaxValue);
                     ushort3 maxPos = new ushort3(ushort.MinValue, ushort.MinValue, ushort.MinValue);
-                    for (int i = workingHierarchyNode.Node.ChildrenStartIndex; 
-                         i < workingHierarchyNode.Node.ChildrenStartIndex + workingHierarchyNode.Node.ChildrenLength; 
-                         i++)
+                    for (int i = childrenStart; i < childrenEnd; i++)
                     {
                         ushort3 pos = sortingLeafNodesPtr[i].Pos;
                         minPos = MathUtilities.min(minPos, pos);
@@ -861,76 +875,69 @@ namespace Trove.SpatialQueries
                         }
                     }
 
-                    splitPosition = (ushort)(minPos[splitAxis] + (splitAxisDimension / 2));
-                }
-
-                BVHHierarchyNode leftNode = new BVHHierarchyNode
-                {
-                    AABB = AABB.GetEmpty(),
-                    ChildrenStartIndex = workingHierarchyNode.Node.ChildrenStartIndex,
-                    ChildrenLength = 0,
-                };
-                BVHHierarchyNode rightNode = new BVHHierarchyNode
-                {
-                    AABB = AABB.GetEmpty(),
-                    ChildrenStartIndex = -1, // we don't know yet
-                    ChildrenLength = 0,
-                };
-
-                // Reorder children in the buffer range so that it contains all left children, then all right children
-                {
-                    int leftNodeIndex = workingHierarchyNode.Node.ChildrenStartIndex;
-                    int rightNodeIndex = workingHierarchyNode.Node.ChildrenStartIndex + workingHierarchyNode.Node.ChildrenLength - 1;
-                    while(leftNodeIndex < rightNodeIndex)
-                    {
-                        BVHSortingLeafNode childFromLeft = sortingLeafNodesPtr[leftNodeIndex];
-                        if (childFromLeft.Pos[splitAxis] > splitPosition)
-                        {
-                            // If node goes on the right, iterate nodes from the right until we find one that goes left.
-                            // Then swap them
-                            while (rightNodeIndex > leftNodeIndex)
-                            {
-                                BVHSortingLeafNode childFromRight = sortingLeafNodesPtr[rightNodeIndex];
-                                if (childFromRight.Pos[splitAxis] <= splitPosition)
-                                {
-                                    // Swap
-                                    BVHSortingLeafNode tmpChildFromRight = childFromRight;
-                                    sortingLeafNodesPtr[rightNodeIndex] = childFromLeft;
-                                    sortingLeafNodesPtr[leftNodeIndex] = tmpChildFromRight;
-                                    
-                                    rightNodeIndex--;
-                                    break;
-                                }
-
-                                rightNodeIndex--;
-                            }
-                        }
-
-                        leftNodeIndex++;
-                    }
-
-                    leftNode.ChildrenLength = leftNodeIndex - leftNode.ChildrenStartIndex;
-                    rightNode.ChildrenLength = workingHierarchyNode.Node.ChildrenLength - leftNode.ChildrenLength;
-                    rightNode.ChildrenStartIndex = leftNode.ChildrenStartIndex + leftNode.ChildrenLength;
+                    // if (workingHierarchyNode.depth < 4)
+                    // {
+                    //     Debug.Log($"node {addedIndex} at depth {workingHierarchyNode.depth} has dimensions {dimensions.x},{dimensions.y},{dimensions.z} and splitAxis {splitAxis}");
+                    // }
                 }
                 
-                int nextDepth = workingHierarchyNode.depth + 1;
-                nodesStack.PushLast(nodesStackPtr, new WorkingHierarchyNode
+                // Sort nodes on split axis
+                BVHSortingLeafNode* sortingLeafNodesRangePtr = sortingLeafNodesPtr + (long)childrenStart;
+                BVHSortingLeafNode* tmpSortingLeafNodesRangePtr = tmpSortingLeafNodesPtr + (long)childrenStart;
+                RadixSortLeavesRangeOnAxis(
+                    sortingLeafNodesRangePtr,
+                    tmpSortingLeafNodesRangePtr,
+                    childrenLength,
+                    radixSortHistogram,
+                    bucketNodeStartIndexes,
+                    splitAxis);
+
+                int nextDepth = workingHierarchyNode.Depth + 1;
+                WorkingHierarchyNode leftNode = new WorkingHierarchyNode
                 {
-                    Node = leftNode,
-                    depth = nextDepth,
-                    parentIndex = addedIndex,
-                    isLeftChild = true,
-                });
-                nodesStack.PushLast(nodesStackPtr, new WorkingHierarchyNode
+                    Node = new BVHHierarchyNode
+                    {
+                        AABB = AABB.GetEmpty(),
+                        ChildrenStartIndex = childrenStart,
+                        ChildrenLength = childrenLength / 2,
+                    },
+                    Depth = nextDepth,
+                    ParentIndex = addedIndex,
+                    IsLeftChild = true,
+                };
+                int rightNodeStart = leftNode.Node.ChildrenStartIndex + leftNode.Node.ChildrenLength;
+                WorkingHierarchyNode rightNode = new WorkingHierarchyNode
                 {
-                    Node = rightNode,
-                    depth = nextDepth,
-                    parentIndex = addedIndex,
-                    isLeftChild = false,
-                });
+                    Node = new BVHHierarchyNode
+                    {
+                        AABB = AABB.GetEmpty(),
+                        ChildrenStartIndex = rightNodeStart,
+                        ChildrenLength = childrenEnd - rightNodeStart,
+                    },
+                    Depth = nextDepth,
+                    ParentIndex = addedIndex,
+                    IsLeftChild = false,
+                };
+                
+                // Add to hierarchy as leaf if few enough children or if exceed depth limit. Otherwise, push to hierarchy stack
+                if (rightNode.Node.ChildrenLength < MaxLeavesPerNode || rightNode.Depth >= MaxDepth)
+                {
+                    AddNodeToHierarchy(ref rightNode, true, out addedIndex);
+                }
+                else
+                {
+                    nodesStack.PushLast(nodesStackPtr, rightNode);
+                }
+                if (leftNode.Node.ChildrenLength < MaxLeavesPerNode || leftNode.Depth >= MaxDepth)
+                {
+                    AddNodeToHierarchy(ref leftNode, true, out addedIndex);
+                }
+                else
+                {
+                    nodesStack.PushLast(nodesStackPtr, leftNode);
+                }
             }
-            
+
             // Reorder source leaf nodes
             for (int i = 0; i < SortingLeafNodes.Length; i++)
             {
@@ -956,15 +963,70 @@ namespace Trove.SpatialQueries
             }
         }
 
+        private static void RadixSortLeavesRangeOnAxis(
+            BVHSortingLeafNode* nodes, 
+            BVHSortingLeafNode* tmpSortingNodes, 
+            int nodesLength, 
+            int* histogram,
+            int* bucketNodeStartIndexes,
+            int axis)
+        {
+            if (nodesLength < 2)
+            {
+                return;
+            }
+            
+            for (int pass = 0; pass < BVHUtils.RadixSortPassesUShort; pass++)
+            {
+                bool isEvenPass = pass % 2 == 0;
+                BVHSortingLeafNode* inputNodes = isEvenPass ? nodes : tmpSortingNodes;
+                BVHSortingLeafNode* outputNodes = isEvenPass ? tmpSortingNodes : nodes; // Final pass will be non-even, which means output ends up in "nodes"
+                
+                int bitShiftForPass = pass * BVHUtils.BitsPerByte;
+                
+                // Clear histogram
+                for (int i = 0; i < BVHUtils.ValuesPerByte; i++)
+                {
+                    histogram[i] = 0;
+                }
+
+                // Compute histogram
+                for (int i = 0; i < nodesLength; i++)
+                {
+                    ushort sortedValue = inputNodes[i].Pos[axis];
+                    int bucketIndex = (int)((sortedValue >> bitShiftForPass) & (BVHUtils.ValuesPerByte - 1));
+                    histogram[bucketIndex]++;
+                }
+
+                // Compute the nodes start index for each bucket
+                int indexCounter = 0;
+                for (int bucketIndex = 0; bucketIndex < BVHUtils.ValuesPerByte; bucketIndex++)
+                {
+                    bucketNodeStartIndexes[bucketIndex] = indexCounter;
+                    indexCounter += histogram[bucketIndex];
+                }
+                
+                // Perform the radix sort pass
+                for (int i = 0; i < nodesLength; i++)
+                {
+                    BVHSortingLeafNode node = inputNodes[i];
+                    ushort sortedValue = inputNodes[i].Pos[axis];
+                    int bucketIndex = (int)((sortedValue >> bitShiftForPass) & (BVHUtils.ValuesPerByte - 1));
+                    int writeIndex = bucketNodeStartIndexes[bucketIndex]++;
+                    outputNodes[writeIndex] = node;
+                }
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AddNodeToHierarchy(ref WorkingHierarchyNode hierarchyNode, bool containsLeafNodes, out int addedIndex)
         {
             addedIndex = HierarchyNodes.Length;
-            if (hierarchyNode.parentIndex >= 0)
+            if (hierarchyNode.ParentIndex >= 0)
             {
                 ref BVHHierarchyNode parent =
-                    ref UnsafeUtility.ArrayElementAsRef<BVHHierarchyNode>(HierarchyNodesPtr, hierarchyNode.parentIndex);
-                if (hierarchyNode.isLeftChild)
+                    ref UnsafeUtility.ArrayElementAsRef<BVHHierarchyNode>(HierarchyNodesPtr, hierarchyNode.ParentIndex);
+                if (hierarchyNode.IsLeftChild)
                 {
                     parent.LeftIndex = addedIndex;
                 }

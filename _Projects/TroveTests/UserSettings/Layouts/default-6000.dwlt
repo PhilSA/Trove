@@ -2120,9 +2120,9 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: -1781.4575, y: 987.8467, z: -141.35553}
+    m_Target: {x: -1100.7234, y: 596.813, z: 778.8965}
     speed: 2
-    m_Value: {x: -1781.4575, y: 987.8467, z: -141.35553}
+    m_Value: {x: -1100.7234, y: 596.813, z: 778.8965}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -2168,9 +2168,9 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-    m_Target: {x: -0.1913464, y: -0.61355597, z: 0.15862113, w: -0.74989086}
+    m_Target: {x: -0.002699419, y: -0.8534349, z: 0.0071430895, w: -0.521685}
     speed: 2
-    m_Value: {x: 0.1913464, y: 0.6135559, z: -0.15862113, w: 0.74989086}
+    m_Value: {x: 0.002699419, y: 0.8534349, z: -0.00714309, w: 0.521685}
   m_Size:
     m_Target: 10.315285
     speed: 2
@@ -2495,21 +2495,21 @@ MonoBehaviour:
       m_Data: 0
     m_ExpandedIDs:
     - m_Data: 0
-    - m_Data: 64350
-    - m_Data: 64352
-    - m_Data: 64354
-    - m_Data: 64356
-    - m_Data: 64358
-    - m_Data: 64360
-    - m_Data: 64362
-    - m_Data: 64364
-    - m_Data: 64366
-    - m_Data: 64368
-    - m_Data: 64370
-    - m_Data: 64372
-    - m_Data: 64374
-    - m_Data: 64376
-    - m_Data: 64378
+    - m_Data: 46692
+    - m_Data: 46694
+    - m_Data: 46696
+    - m_Data: 46698
+    - m_Data: 46700
+    - m_Data: 46702
+    - m_Data: 46704
+    - m_Data: 46706
+    - m_Data: 46708
+    - m_Data: 46710
+    - m_Data: 46712
+    - m_Data: 46714
+    - m_Data: 46716
+    - m_Data: 46718
+    - m_Data: 46720
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -2543,21 +2543,21 @@ MonoBehaviour:
       m_Data: 46884
     m_ExpandedIDs:
     - m_Data: 0
-    - m_Data: 64350
-    - m_Data: 64352
-    - m_Data: 64354
-    - m_Data: 64356
-    - m_Data: 64358
-    - m_Data: 64360
-    - m_Data: 64362
-    - m_Data: 64364
-    - m_Data: 64366
-    - m_Data: 64368
-    - m_Data: 64370
-    - m_Data: 64372
-    - m_Data: 64374
-    - m_Data: 64376
-    - m_Data: 64378
+    - m_Data: 46692
+    - m_Data: 46694
+    - m_Data: 46696
+    - m_Data: 46698
+    - m_Data: 46700
+    - m_Data: 46702
+    - m_Data: 46704
+    - m_Data: 46706
+    - m_Data: 46708
+    - m_Data: 46710
+    - m_Data: 46712
+    - m_Data: 46714
+    - m_Data: 46716
+    - m_Data: 46718
+    - m_Data: 46720
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
