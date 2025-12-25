@@ -789,7 +789,7 @@ namespace Trove.SpatialQueries
         [NativeDisableUnsafePtrRestriction]
         private BVHHierarchyNode* HierarchyNodesPtr;
 
-        private const int MaxLeavesPerNode = 4; 
+        private const int MaxLeavesPerNode = 8; 
         private const int MaxDepth = 60;
 
         public void Execute()
