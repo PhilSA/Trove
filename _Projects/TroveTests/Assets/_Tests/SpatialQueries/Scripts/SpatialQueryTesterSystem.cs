@@ -151,15 +151,17 @@ partial struct SpatialQueryTesterSystem : ISystem
                         if (nodeIndexAndLevel.y == debugger.BoundingBoxDebugLevel)
                         {
                             _debugDrawGroup.DrawWireBox(
-                                node.AABB.GetCenter(),
+                                node.AABB.GetCenter(), 
                                 quaternion.identity,
                                 node.AABB.GetExtents(),
                                 UnityEngine.Color.green);
                         }
                         else if (node.ContainsLeafNodes == 0)
                         {
-                            nodesStack.PushLast(nodesStackPtr, new int2(node.LeftIndex, nextLevel));
-                            nodesStack.PushLast(nodesStackPtr, new int2(node.RightIndex, nextLevel));
+                            nodesStack.PushLast(nodesStackPtr, new int2(node.ChildIndex3, nextLevel));
+                            nodesStack.PushLast(nodesStackPtr, new int2(node.ChildIndex2, nextLevel));
+                            nodesStack.PushLast(nodesStackPtr, new int2(node.ChildIndex1, nextLevel));
+                            nodesStack.PushLast(nodesStackPtr, new int2(node.ChildIndex0, nextLevel));
                         }
                     }
                 
