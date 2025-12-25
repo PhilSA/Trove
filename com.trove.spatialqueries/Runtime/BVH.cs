@@ -879,44 +879,38 @@ namespace Trove.SpatialQueries
 
                 // Reorder children in the buffer range so that it contains all left children, then all right children
                 {
-                    for (int leftNodeIndex = workingHierarchyNode.Node.ChildrenStartIndex;
-                         leftNodeIndex < workingHierarchyNode.Node.ChildrenStartIndex + workingHierarchyNode.Node.ChildrenLength;
-                         leftNodeIndex++)
+                    int leftNodeIndex = workingHierarchyNode.Node.ChildrenStartIndex;
+                    int rightNodeIndex = workingHierarchyNode.Node.ChildrenStartIndex + workingHierarchyNode.Node.ChildrenLength - 1;
+                    while(leftNodeIndex < rightNodeIndex)
                     {
                         BVHSortingLeafNode childFromLeft = sortingLeafNodesPtr[leftNodeIndex];
-                        if (childFromLeft.Pos[splitAxis] < splitPosition)
-                        {
-                            leftNode.ChildrenLength++;
-                        }
-                        else
+                        if (childFromLeft.Pos[splitAxis] > splitPosition)
                         {
                             // If node goes on the right, iterate nodes from the right until we find one that goes left.
                             // Then swap them
-                            for (int rightNodeIndex = workingHierarchyNode.Node.ChildrenStartIndex + workingHierarchyNode.Node.ChildrenLength - 1 - rightNode.ChildrenLength;
-                                 rightNodeIndex > leftNodeIndex; rightNodeIndex--)
+                            while (rightNodeIndex > leftNodeIndex)
                             {
                                 BVHSortingLeafNode childFromRight = sortingLeafNodesPtr[rightNodeIndex];
-                                if (childFromRight.Pos[splitAxis] >= splitPosition)
-                                {
-                                    rightNode.ChildrenLength++;
-                                }
-                                else
+                                if (childFromRight.Pos[splitAxis] <= splitPosition)
                                 {
                                     // Swap
                                     BVHSortingLeafNode tmpChildFromRight = childFromRight;
                                     sortingLeafNodesPtr[rightNodeIndex] = childFromLeft;
                                     sortingLeafNodesPtr[leftNodeIndex] = tmpChildFromRight;
-
-                                    leftNode.ChildrenLength++;
-                                    rightNode.ChildrenLength++;
-
+                                    
+                                    rightNodeIndex--;
                                     break;
                                 }
+
+                                rightNodeIndex--;
                             }
                         }
+
+                        leftNodeIndex++;
                     }
 
-                    // Patch right node start index
+                    leftNode.ChildrenLength = leftNodeIndex - leftNode.ChildrenStartIndex;
+                    rightNode.ChildrenLength = workingHierarchyNode.Node.ChildrenLength - leftNode.ChildrenLength;
                     rightNode.ChildrenStartIndex = leftNode.ChildrenStartIndex + leftNode.ChildrenLength;
                 }
                 
