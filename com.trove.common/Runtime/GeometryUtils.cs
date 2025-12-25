@@ -140,6 +140,13 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float GetSurfaceArea()
+        {
+            float3 diff = Max - Min;
+            return 2 * math.dot(diff, diff.yzx);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3 ClosestPoint(float3 position)
         {
             return math.min(Max, math.max(Min, position));

@@ -331,7 +331,7 @@ namespace Trove.SpatialQueries
             {
                 BVHHierarchyNode hierarchyNode = hierarchyNodesPtr[nodeIndex];
 
-                if (!aabb.OverlapsAABB(hierarchyNode.AABB))
+                if (!aabb.OverlapsAABB(in hierarchyNode.AABB))
                     continue;
 
                 if (hierarchyNode.ContainsLeafNodes == 1)
@@ -340,7 +340,7 @@ namespace Trove.SpatialQueries
                     for (int i = hierarchyNode.ChildrenStartIndex; i < hierarchyNode.ChildrenStartIndex + hierarchyNode.ChildrenLength; i++)
                     {
                         BVHLeafNode leafNode = leafNodesPtr[i];
-                        if (aabb.OverlapsAABB(leafNode.AABB))
+                        if (aabb.OverlapsAABB(in leafNode.AABB))
                         {
                             collector.AddNode(leafDataPtr[leafNode.DataIndex]);
                         }
