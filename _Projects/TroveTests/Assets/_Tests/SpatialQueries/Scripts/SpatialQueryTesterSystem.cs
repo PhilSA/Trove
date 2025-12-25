@@ -158,10 +158,10 @@ partial struct SpatialQueryTesterSystem : ISystem
                         }
                         else if (node.ContainsLeafNodes == 0)
                         {
-                            nodesStack.PushLast(nodesStackPtr, new int2(node.ChildIndex3, nextLevel));
-                            nodesStack.PushLast(nodesStackPtr, new int2(node.ChildIndex2, nextLevel));
-                            nodesStack.PushLast(nodesStackPtr, new int2(node.ChildIndex1, nextLevel));
-                            nodesStack.PushLast(nodesStackPtr, new int2(node.ChildIndex0, nextLevel));
+                            nodesStack.PushLast(nodesStackPtr, new int2(node.ChildIndices[3], nextLevel));
+                            nodesStack.PushLast(nodesStackPtr, new int2(node.ChildIndices[2], nextLevel));
+                            nodesStack.PushLast(nodesStackPtr, new int2(node.ChildIndices[1], nextLevel));
+                            nodesStack.PushLast(nodesStackPtr, new int2(node.ChildIndices[0], nextLevel));
                         }
                     }
                 
