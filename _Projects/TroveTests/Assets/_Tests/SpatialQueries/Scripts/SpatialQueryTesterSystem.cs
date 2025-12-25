@@ -137,15 +137,15 @@ partial struct SpatialQueryTesterSystem : ISystem
 
                 if (debugger.DebugBoundingBoxes)
                 {
-                    _bvh.GetNodes(out UnsafeList<BVHNode> nodes, out int leafNodesCount, out AABB sceneAABB);
-                    
+                    _bvh.GetNodes(out UnsafeList<BVHLeafNode> leafNodes, out UnsafeList<BVHHierarchyNode> hierarchyNodes, out AABB sceneAABB);
+
                     Stack nodesStack = new Stack(256);
                     int2* nodesStackPtr = stackalloc int2[nodesStack.Capacity];
                     
-                    nodesStack.PushLast(nodesStackPtr, new int2(leafNodesCount, 0));  
+                    nodesStack.PushLast(nodesStackPtr, new int2(0, 0));  
                     while (nodesStack.PopLast(nodesStackPtr, out int2 nodeIndexAndLevel))
                     {
-                        BVHNode node = nodes[nodeIndexAndLevel.x];
+                        BVHHierarchyNode node = hierarchyNodes[nodeIndexAndLevel.x];
                         int nextLevel = nodeIndexAndLevel.y + 1;
                         
                         if (nodeIndexAndLevel.y == debugger.BoundingBoxDebugLevel)
@@ -156,15 +156,7 @@ partial struct SpatialQueryTesterSystem : ISystem
                                 node.AABB.GetExtents(),
                                 UnityEngine.Color.green);
                         }
-                        else if (node.ContainsLeafNodes == 1)
-                        {
-                            // Add leaf nodes
-                            for (int i = node.ChildrenStartIndex; i < node.ChildrenStartIndex + node.ChildrenLength; i++)
-                            {
-                                nodesStack.PushLast(nodesStackPtr, new int2(i, nextLevel));
-                            }
-                        }
-                        else
+                        else if (node.ContainsLeafNodes == 0)
                         {
                             nodesStack.PushLast(nodesStackPtr, new int2(node.LeftIndex, nextLevel));
                             nodesStack.PushLast(nodesStackPtr, new int2(node.RightIndex, nextLevel));

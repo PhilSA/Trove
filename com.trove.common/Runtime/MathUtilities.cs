@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -11,6 +12,43 @@ namespace Trove
     {
         public int Start;
         public int Length;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct ushort3
+    {
+        [FieldOffset(0)]
+        public ushort x;
+        [FieldOffset(2)]
+        public ushort y;
+        [FieldOffset(4)]
+        public ushort z;
+
+        public ushort3(ushort x, ushort y, ushort z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public ushort3(int x, int y, int z)
+        {
+            this.x = (ushort)x;
+            this.y = (ushort)y;
+            this.z = (ushort)z;
+        }
+        
+        unsafe public ushort this[int index]
+        {
+            get
+            {
+                fixed (ushort3* selfPtr = &this) { return ((ushort*)selfPtr)[index]; }
+            }
+            set
+            {
+                fixed (ushort* pos = &x) { pos[index] = value; }
+            }
+        }
     }
 
     public static class MathUtilities
@@ -362,6 +400,18 @@ namespace Trove
             return containedStart >= start && 
                    (containedStart + containedLength <= start + length);
         }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ushort min(ushort x, ushort y) { return x < y ? x : y; }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ushort max(ushort x, ushort y) { return x > y ? x : y; }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ushort3 min(ushort3 x, ushort3 y) { return new ushort3(min(x.x, y.x), min(x.y, y.y), min(x.z, y.z)); }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ushort3 max(ushort3 x, ushort3 y) { return new ushort3(max(x.x, y.x), max(x.y, y.y), max(x.z, y.z)); }
 
         // TODO: untested
         public static void AddFreeRange(int start, int length, ref DynamicBuffer<FreeIndexRange> freeIndexRanges)

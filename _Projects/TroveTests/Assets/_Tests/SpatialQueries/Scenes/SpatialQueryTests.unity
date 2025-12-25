@@ -293,7 +293,7 @@ MonoBehaviour:
   QueryLength: 10000
   DebugMortonCurve: 0
   MortonCurveDebugIterations: 95000
-  DebugBoundingBoxes: 1
+  DebugBoundingBoxes: 0
   BoundingBoxDebugLevel: 0
   DebugNearestNeighbours: 0
   NearestNeighboursDebugLevel: 0
