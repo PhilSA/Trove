@@ -41,3 +41,28 @@ sysinfo.txt
 !com.trove.polymorphicstructs/SourceGenerators~/PolymorphicStructsSourceGenerator/PolymorphicStructsSourceGenerator.csproj
 _Projects/TroveTests/.idea
 _Projects/TroveTests/.idea/.idea.TroveTests/.idea/workspace.xml
+
+
+# Ignore the whole FMOD plugin (because public repo)
+_Projects/TroveTests/Assets/Plugins/FMOD/*
+
+
+# FMOD -------------------------------------------------------------------------
+# Never ignore DLLs in the FMOD subfolder.
+!/[Aa]ssets/Plugins/FMOD/**/lib/*
+
+# Don't ignore images and gizmos used by FMOD in the Unity Editor.
+!/[Aa]ssets/Gizmos/FMOD/*
+!/[Aa]ssets/Editor Default Resources/FMOD/*
+
+# Ignore the Cache folder since it is updated locally.
+/[Aa]ssets/Plugins/FMOD/Cache/*
+
+# Ignore bank files in the StreamingAssets folder.
+/[Aa]ssets/StreamingAssets/**/*.bank
+/[Aa]ssets/StreamingAssets/**/*.bank.meta
+
+# If the source bank files are kept outside of the StreamingAssets folder then these can be ignored.
+# Log files can be ignored.
+fmod_editor.log
+# ------------------------------------------------------------------------------
