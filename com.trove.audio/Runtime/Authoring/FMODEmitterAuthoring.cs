@@ -15,6 +15,7 @@ namespace DOTSFMOD
         public struct FMODParameterEntry
         {
             public string EventPath;
+            
             public string Name;
             public float Value;
         }
@@ -37,6 +38,7 @@ namespace DOTSFMOD
         public bool AllowFadeout = true;
         public bool TriggerOnce = false;
 
+        [Header("Parameters")]
         public List<FMODParameterEntry> Parameters = new List<FMODParameterEntry>();
 
         [SerializeField]
@@ -108,7 +110,7 @@ namespace DOTSFMOD
                 FMODParameterEntry param = Parameters[i];
                 param.EventPath = EventReference.Path;
                 Parameters[i] = param;
-
+                
                 // Remove duplicates
                 if (param.Name != string.Empty)
                 {
@@ -120,25 +122,10 @@ namespace DOTSFMOD
                             otherParam.Name = string.Empty;
                             otherParam.Value = default;
                             Parameters[j] = otherParam;
-                            removedAny = true;
-                            Debug.Log($"removed at position {j}");
                         }
                     }
                 }
             }
-
-#if UNITY_EDITOR
-            UnityEditor.EditorUtility.SetDirty(this);
-            if (removedAny)
-            {
-                Editor[] activeEditors = UnityEditor.ActiveEditorTracker.sharedTracker.activeEditors;
-                for (int i = 0; i < activeEditors.Length; i++)
-                {
-                    activeEditors[i].Repaint();
-                    //Debug.Log($"repaint editor {activeEditors[i].}");
-                }
-            }
-#endif
 
             _prevEventReference = EventReference;
         }
