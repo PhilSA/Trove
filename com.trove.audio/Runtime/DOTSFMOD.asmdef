@@ -1,0 +1,30 @@
+{
+    "name": "DOTSFMOD",
+    "rootNamespace": "",
+    "references": [
+        "FMODUnity",
+        "Unity.Entities",
+        "Unity.Entities.Hybrid",
+        "Unity.Transforms",
+        "Unity.Mathematics",
+        "Unity.Collections",
+        "Unity.Burst",
+        "Unity.Physics",
+        "com.trove.eventsystems"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.physics",
+            "expression": "",
+            "define": "UNITY_PHYSICS_PRESENT"
+        }
+    ],
+    "noEngineReferences": false
+}
