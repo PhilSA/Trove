@@ -1,5 +1,9 @@
 using System.Runtime.CompilerServices;
 using FMOD;
+using FMODUnity;
+using FMOD.Studio;
+using Unity.Collections;
+using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
@@ -38,6 +42,52 @@ namespace Trove.Audio.FMOD
                 forward = ToFMODVector(math.mul(transform.Rotation, math.forward())),
                 up = ToFMODVector(math.mul(transform.Rotation, math.up()))
             };
+        }
+
+        public static global::FMOD.Studio.EventDescription LoadEventFromGUID(
+            ref FMODSingleton singleton,
+            in global::FMOD.GUID eventGUID,
+            ref DynamicBuffer<FMODEmitterParameterElement> parameters)
+        {
+            global::FMOD.Studio.EventDescription eventDescription = 
+                FMODDotsUtility.GetOrCreateEventDescription(ref singleton, in eventGUID);
+
+            if (eventDescription.isValid())
+            {
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    FMODEmitterParameterElement paremeterElement = parameters[i];
+                    eventDescription.getParameterDescriptionByName(paremeterElement.Name.ConvertToString(), out global::FMOD.Studio.PARAMETER_DESCRIPTION parameterDescription);
+                    paremeterElement.CachedID = parameterDescription.id;
+                    parameters[i] = paremeterElement;
+                }
+            }
+            
+            return eventDescription;
+        }
+
+        public static global::FMOD.Studio.EventDescription GetOrCreateEventDescription(ref FMODSingleton singleton, in global::FMOD.GUID eventGUID)
+        {
+            global::FMOD.Studio.EventDescription eventDesc;
+            if (singleton.CachedEventDescriptions.ContainsKey(eventGUID) && singleton.CachedEventDescriptions[eventGUID].isValid())
+            {
+                eventDesc = singleton.CachedEventDescriptions[eventGUID];
+            }
+            else
+            {
+                RESULT result = singleton.StudioSystem.getEventByID(eventGUID, out eventDesc);
+
+                if (result != RESULT.OK)
+                {
+                    throw new EventNotFoundException(eventGUID);
+                }
+
+                if (eventDesc.isValid())
+                {
+                    singleton.CachedEventDescriptions[eventGUID] = eventDesc;
+                }
+            }
+            return eventDesc;
         }
     }
 }

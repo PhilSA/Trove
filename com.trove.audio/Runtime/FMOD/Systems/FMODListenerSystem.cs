@@ -13,8 +13,8 @@ using FMODUnity;
 
 namespace Trove.Audio.FMOD
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(TransformSystemGroup))]
+    [UpdateInGroup(typeof(FMODUpdateSystemGroup))]
+    [UpdateAfter(typeof(FMODEventEmitterSystem))]
     public partial struct FMODListenerSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
@@ -28,7 +28,6 @@ namespace Trove.Audio.FMOD
         public void OnUpdate(ref SystemState state)
         {
             FMODSingleton singleton = SystemAPI.GetSingleton<FMODSingleton>();
-            
             if(!singleton.StudioSystem.isValid())
                 return;
             

@@ -18,10 +18,11 @@ namespace Trove.Audio.FMOD
             AddComponent(entity, new FMODListener
             {
                 ListenerIndex = -1,
-                AttenuationEntity = authoring.AttenuationObject != null ? GetEntity(authoring.AttenuationObject, TransformUsageFlags.None) : Entity.Null,
+                AttenuationEntity = authoring.AttenuationObject != null ? 
+                    GetEntity(authoring.AttenuationObject, TransformUsageFlags.Dynamic) : Entity.Null,
                 
-                AttenuationPosition = authoring.AttenuationObject != null ? authoring.AttenuationObject.transform.position : default,
-                PreviousPosition = authoring.transform.position,
+                AttenuationPosition = authoring.AttenuationObject != null ? 
+                    authoring.AttenuationObject.transform.position : default, PreviousPosition = authoring.transform.position,
             });
             
             AddComponent(entity, new FMODListenerUseNonRigidbodyVelocity());
