@@ -2,7 +2,7 @@ using Unity.Entities;
 using Unity.Collections;
 using UnityEngine;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     /// <summary>
     /// Authoring component for setting global FMOD Studio parameters.

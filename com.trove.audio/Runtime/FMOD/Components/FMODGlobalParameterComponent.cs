@@ -1,7 +1,8 @@
+using FMOD.Studio;
 using Unity.Entities;
 using Unity.Collections;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     /// <summary>
     /// Sets a global FMOD Studio parameter. The system applies the value each frame
@@ -11,7 +12,7 @@ namespace DOTSFMOD
     {
         public FixedString64Bytes ParameterName;
         public float Value;
-        public FMOD.Studio.PARAMETER_ID CachedID;
+        public PARAMETER_ID CachedID;
         public bool IDCached;
     }
 

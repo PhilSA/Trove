@@ -1,5 +1,5 @@
 {
-    "name": "DOTSFMOD.Editor",
+    "name": "trove.audio.fmod.Editor",
     "rootNamespace": "",
     "references": [
         "GUID:79304ff2a3e51954593371f6cc3d63f7",

@@ -1,9 +1,11 @@
+using FMOD;
+using FMOD.Studio;
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Collections;
 using Unity.Mathematics;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     /// <summary>
     /// Manages FMOD event instance lifecycle for emitter entities.
@@ -20,7 +22,7 @@ namespace DOTSFMOD
         protected override void OnCreate()
         {
             _previousPositions = new NativeHashMap<Entity, float3>(256, Allocator.Persistent);
-            _listenerPositions = new NativeList<float3>(FMOD.CONSTANTS.MAX_LISTENERS, Allocator.Persistent);
+            _listenerPositions = new NativeList<float3>(CONSTANTS.MAX_LISTENERS, Allocator.Persistent);
         }
 
         protected override void OnDestroy()
@@ -150,7 +152,7 @@ namespace DOTSFMOD
                     .WithEntityAccess())
             {
                 ref var emitterState = ref state.ValueRW;
-                var instance = new FMOD.Studio.EventInstance { handle = (System.IntPtr)(long)emitterState.InstanceHandle };
+                var instance = new EventInstance { handle = (System.IntPtr)(long)emitterState.InstanceHandle };
 
                 if (!instance.isValid())
                 {
@@ -167,8 +169,8 @@ namespace DOTSFMOD
                 }
 
                 // Check if instance is still playing
-                instance.getPlaybackState(out FMOD.Studio.PLAYBACK_STATE playbackState);
-                if (playbackState == FMOD.Studio.PLAYBACK_STATE.STOPPED)
+                instance.getPlaybackState(out PLAYBACK_STATE playbackState);
+                if (playbackState == PLAYBACK_STATE.STOPPED)
                 {
                     emitterState.InstanceHandle = 0;
                     continue;
@@ -258,7 +260,7 @@ namespace DOTSFMOD
         private void PlayInstance(ref FMODEmitterState state, FMODEmitterComponent emitter,
             LocalToWorld transform, Entity entity)
         {
-            var currentInstance = new FMOD.Studio.EventInstance { handle = (System.IntPtr)(long)state.InstanceHandle };
+            var currentInstance = new EventInstance { handle = (System.IntPtr)(long)state.InstanceHandle };
 
             // Release previous oneshot if still valid
             if (state.IsOneshot && currentInstance.isValid())
@@ -275,7 +277,7 @@ namespace DOTSFMOD
                 if (!desc.isValid())
                     return;
 
-                desc.createInstance(out FMOD.Studio.EventInstance newInstance);
+                desc.createInstance(out EventInstance newInstance);
                 state.InstanceHandle = (ulong)(long)newInstance.handle;
 
                 // Set 3D attributes
@@ -288,8 +290,8 @@ namespace DOTSFMOD
 
                     if (emitter.OverrideAttenuation)
                     {
-                        newInstance.setProperty(FMOD.Studio.EVENT_PROPERTY.MINIMUM_DISTANCE, emitter.OverrideMinDistance);
-                        newInstance.setProperty(FMOD.Studio.EVENT_PROPERTY.MAXIMUM_DISTANCE, emitter.OverrideMaxDistance);
+                        newInstance.setProperty(EVENT_PROPERTY.MINIMUM_DISTANCE, emitter.OverrideMinDistance);
+                        newInstance.setProperty(EVENT_PROPERTY.MAXIMUM_DISTANCE, emitter.OverrideMaxDistance);
                     }
                 }
 
@@ -302,7 +304,7 @@ namespace DOTSFMOD
                         var param = paramBuffer[i];
                         if (!param.IDCached)
                         {
-                            desc.getParameterDescriptionByName(param.Name.ToString(), out FMOD.Studio.PARAMETER_DESCRIPTION paramDesc);
+                            desc.getParameterDescriptionByName(param.Name.ToString(), out PARAMETER_DESCRIPTION paramDesc);
                             param.ID = paramDesc.id;
                             param.IDCached = true;
                             paramBuffer[i] = param;
@@ -318,12 +320,12 @@ namespace DOTSFMOD
 
         private void StopInstance(ref FMODEmitterState state, bool allowFadeout)
         {
-            var instance = new FMOD.Studio.EventInstance { handle = (System.IntPtr)(long)state.InstanceHandle };
+            var instance = new EventInstance { handle = (System.IntPtr)(long)state.InstanceHandle };
             if (instance.isValid())
             {
                 instance.stop(allowFadeout
-                    ? FMOD.Studio.STOP_MODE.ALLOWFADEOUT
-                    : FMOD.Studio.STOP_MODE.IMMEDIATE);
+                    ? STOP_MODE.ALLOWFADEOUT
+                    : STOP_MODE.IMMEDIATE);
                 instance.release();
                 if (!allowFadeout)
                 {

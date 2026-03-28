@@ -1,7 +1,8 @@
+using FMOD.Studio;
 using Unity.Entities;
 using Unity.Collections;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     /// <summary>
     /// Cleanup system that releases FMOD event instances when emitter entities are destroyed.
@@ -50,7 +51,7 @@ namespace DOTSFMOD
                     .WithNone<FMODEmitterComponent>()
                     .WithEntityAccess())
             {
-                var instance = new FMOD.Studio.EventInstance
+                var instance = new EventInstance
                 {
                     handle = (System.IntPtr)(long)cleanup.ValueRO.InstanceHandle
                 };
@@ -58,8 +59,8 @@ namespace DOTSFMOD
                 if (instance.isValid())
                 {
                     instance.stop(cleanup.ValueRO.AllowFadeout
-                        ? FMOD.Studio.STOP_MODE.ALLOWFADEOUT
-                        : FMOD.Studio.STOP_MODE.IMMEDIATE);
+                        ? STOP_MODE.ALLOWFADEOUT
+                        : STOP_MODE.IMMEDIATE);
                     instance.release();
                 }
 

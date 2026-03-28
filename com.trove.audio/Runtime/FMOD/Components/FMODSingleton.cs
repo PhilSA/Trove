@@ -3,11 +3,11 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     public struct FMODSingleton : IComponentData
     {
         [NativeDisableUnsafePtrRestriction]
-        public FMOD.Studio.System StudioSystem;
+        public global::FMOD.Studio.System StudioSystem;
     }
 }

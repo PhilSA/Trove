@@ -1,6 +1,7 @@
+using FMOD.Studio;
 using Unity.Entities;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     /// <summary>
     /// Applies parameter values from FMODEmitterParameterElement buffers to active FMOD event instances.
@@ -27,7 +28,7 @@ namespace DOTSFMOD
             {
                 DynamicBuffer<FMODEmitterParameterElement> buff = paramBuffer;
 
-                var instance = new FMOD.Studio.EventInstance
+                var instance = new EventInstance
                 {
                     handle = (System.IntPtr)(long)state.ValueRO.InstanceHandle
                 };
@@ -54,7 +55,7 @@ namespace DOTSFMOD
                             UnityEngine.Debug.Log($"SETTING uncached");
                             desc.getParameterDescriptionByName(
                                 param.Name.ToString(),
-                                out FMOD.Studio.PARAMETER_DESCRIPTION paramDesc);
+                                out PARAMETER_DESCRIPTION paramDesc);
                             param.ID = paramDesc.id;
                             param.IDCached = true;
                             buff[i] = param;

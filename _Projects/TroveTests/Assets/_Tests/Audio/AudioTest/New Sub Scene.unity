@@ -165,7 +165,9 @@ MonoBehaviour:
   Preload: 0
   AllowFadeout: 1
   TriggerOnce: 0
-  Parameters: []
+  Parameters:
+    EventPath: event:/Music/Level 01
+    List: []
   _prevEventReference:
     Guid:
       Data1: 1958460028
@@ -229,9 +231,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 2105758941}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d360026d0f89b3e41b05b64e309e7ff6, type: 3}
+  m_Script: {fileID: 11500000, guid: 86c6556701af9e04380698b89f691b6e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: DOTSFMOD::DOTSFMOD.FMODListenerAuthoring
+  m_EditorClassIdentifier: FMODUnity::FMODUnity.StudioListener
+  nonRigidbodyVelocity: 0
+  attenuationObject: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

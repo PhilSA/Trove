@@ -1,5 +1,5 @@
 {
-    "name": "DOTSFMOD",
+    "name": "trove.audio.fmod",
     "rootNamespace": "",
     "references": [
         "FMODUnity",

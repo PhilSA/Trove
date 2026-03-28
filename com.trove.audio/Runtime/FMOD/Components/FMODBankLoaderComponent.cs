@@ -1,7 +1,7 @@
 using Unity.Entities;
 using Unity.Collections;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     /// <summary>
     /// Buffer element storing a bank name to be loaded or unloaded.

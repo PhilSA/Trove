@@ -3,7 +3,7 @@ using Unity.Collections;
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     /// <summary>
     /// Authoring component for FMOD bank loaders.

@@ -1,8 +1,9 @@
 using System.Runtime.CompilerServices;
+using FMOD;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     /// <summary>
     /// Utility methods for converting ECS transform data to FMOD 3D attributes.
@@ -10,15 +11,15 @@ namespace DOTSFMOD
     public static class FMODDotsUtility
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FMOD.VECTOR ToFMODVector(float3 v)
+        public static VECTOR ToFMODVector(float3 v)
         {
-            return new FMOD.VECTOR { x = v.x, y = v.y, z = v.z };
+            return new VECTOR { x = v.x, y = v.y, z = v.z };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FMOD.ATTRIBUTES_3D To3DAttributes(in LocalToWorld ltw, float3 velocity)
+        public static ATTRIBUTES_3D To3DAttributes(in LocalToWorld ltw, float3 velocity)
         {
-            return new FMOD.ATTRIBUTES_3D
+            return new ATTRIBUTES_3D
             {
                 position = ToFMODVector(ltw.Position),
                 velocity = ToFMODVector(velocity),
@@ -28,9 +29,9 @@ namespace DOTSFMOD
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FMOD.ATTRIBUTES_3D To3DAttributes(in LocalTransform transform, float3 velocity)
+        public static ATTRIBUTES_3D To3DAttributes(in LocalTransform transform, float3 velocity)
         {
-            return new FMOD.ATTRIBUTES_3D
+            return new ATTRIBUTES_3D
             {
                 position = ToFMODVector(transform.Position),
                 velocity = ToFMODVector(velocity),

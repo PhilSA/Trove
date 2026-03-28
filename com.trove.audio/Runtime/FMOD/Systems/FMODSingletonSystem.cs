@@ -1,10 +1,10 @@
-using DOTSFMOD;
+using Trove.Audio.FMOD;
 using FMODUnity;
 using Unity.Burst;
 using Unity.Entities;
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
-partial struct FMODSystem : ISystem
+partial struct FMODSingletonSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
     {

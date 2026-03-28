@@ -1,7 +1,9 @@
+using FMOD;
+using FMOD.Studio;
 using Unity.Entities;
 using Unity.Collections;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     /// <summary>
     /// Core emitter component that defines which FMOD event to play and its configuration.
@@ -9,7 +11,7 @@ namespace DOTSFMOD
     /// </summary>
     public struct FMODEmitterComponent : IComponentData
     {
-        public FMOD.GUID EventGuid;
+        public GUID EventGuid;
         
         public bool PlayOnEnabled;
         public bool StopOnDestroyed;
@@ -60,7 +62,7 @@ namespace DOTSFMOD
     {
         public FixedString128Bytes Name;
         public float Value;
-        public FMOD.Studio.PARAMETER_ID ID;
+        public PARAMETER_ID ID;
         public bool IDCached;
     }
 }

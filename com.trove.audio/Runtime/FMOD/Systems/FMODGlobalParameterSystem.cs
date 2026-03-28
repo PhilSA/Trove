@@ -1,6 +1,8 @@
+using FMOD;
+using FMOD.Studio;
 using Unity.Entities;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     /// <summary>
     /// Applies global FMOD Studio parameter values from FMODGlobalParameterComponent entities.
@@ -38,9 +40,9 @@ namespace DOTSFMOD
                 {
                     var result = studioSystem.getParameterDescriptionByName(
                         globalParam.ParameterName.ToString(),
-                        out FMOD.Studio.PARAMETER_DESCRIPTION desc);
+                        out PARAMETER_DESCRIPTION desc);
 
-                    if (result != FMOD.RESULT.OK)
+                    if (result != RESULT.OK)
                     {
                         UnityEngine.Debug.LogError(
                             $"[DOTSFMOD] Failed to lookup global parameter '{globalParam.ParameterName}': {result}");

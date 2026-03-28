@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     [AddComponentMenu("DOTSFMOD/FMODDOTSEmitter")]
     public class FMODEmitterAuthoring : MonoBehaviour
@@ -14,10 +14,15 @@ namespace DOTSFMOD
         [System.Serializable]
         public struct FMODParameterEntry
         {
-            public string EventPath;
-            
             public string Name;
             public float Value;
+        }
+        
+        [System.Serializable]
+        public struct FMODParameterEntries
+        {
+            public string EventPath;
+            public List<FMODParameterEntry> List;
         }
         
         public FMODUnity.EventReference EventReference;
@@ -39,7 +44,8 @@ namespace DOTSFMOD
         public bool TriggerOnce = false;
 
         [Header("Parameters")]
-        public List<FMODParameterEntry> Parameters = new List<FMODParameterEntry>();
+        public FMODParameterEntries Parameters = 
+            new FMODParameterEntries { EventPath = "",  List = new List<FMODParameterEntry>() };
 
         [SerializeField]
         [HideInInspector]
@@ -78,16 +84,16 @@ namespace DOTSFMOD
 
                 // Add parameter buffer
                 DynamicBuffer<FMODEmitterParameterElement> paramBuffer = AddBuffer<FMODEmitterParameterElement>(entity);
-                if (authoring.Parameters != null)
+                if (authoring.Parameters.List != null)
                 {
-                    for (int i = 0; i < authoring.Parameters.Count; i++)
+                    for (int i = 0; i < authoring.Parameters.List.Count; i++)
                     {
-                        if (authoring.Parameters[i].Name != String.Empty)
+                        if (authoring.Parameters.List[i].Name != String.Empty)
                         {
                             paramBuffer.Add(new FMODEmitterParameterElement
                             {
-                                Name = new FixedString128Bytes(authoring.Parameters[i].Name),
-                                Value = authoring.Parameters[i].Value,
+                                Name = new FixedString128Bytes(authoring.Parameters.List[i].Name),
+                                Value = authoring.Parameters.List[i].Value,
                                 IDCached = false,
                             });
                         }
@@ -100,32 +106,33 @@ namespace DOTSFMOD
         {
             if (EventReference.Guid != _prevEventReference.Guid)
             {
-                Parameters.Clear();
+                Parameters.List.Clear();
             }
-
-            bool removedAny = false;
-            for (int i = 0; i < Parameters.Count; i++)
-            {
-                // Update event paths
-                FMODParameterEntry param = Parameters[i];
-                param.EventPath = EventReference.Path;
-                Parameters[i] = param;
-                
-                // Remove duplicates
-                if (param.Name != string.Empty)
-                {
-                    for (int j = Parameters.Count - 1; j > i; j--)
-                    {
-                        FMODParameterEntry otherParam = Parameters[j];
-                        if (otherParam.Name == param.Name)
-                        {
-                            otherParam.Name = string.Empty;
-                            otherParam.Value = default;
-                            Parameters[j] = otherParam;
-                        }
-                    }
-                }
-            }
+            Parameters.EventPath = EventReference.Path;
+            //
+            // bool removedAny = false;
+            // for (int i = 0; i < Parameters.Count; i++)
+            // {
+            //     // Update event paths
+            //     FMODParameterEntry param = Parameters[i];
+            //     param.EventPath = EventReference.Path;
+            //     Parameters[i] = param;
+            //     
+            //     // Remove duplicates
+            //     if (param.Name != string.Empty)
+            //     {
+            //         for (int j = Parameters.Count - 1; j > i; j--)
+            //         {
+            //             FMODParameterEntry otherParam = Parameters[j];
+            //             if (otherParam.Name == param.Name)
+            //             {
+            //                 otherParam.Name = string.Empty;
+            //                 otherParam.Value = default;
+            //                 Parameters[j] = otherParam;
+            //             }
+            //         }
+            //     }
+            // }
 
             _prevEventReference = EventReference;
         }

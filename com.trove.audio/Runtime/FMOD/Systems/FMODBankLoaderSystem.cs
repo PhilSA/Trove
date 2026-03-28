@@ -1,7 +1,7 @@
 using Unity.Entities;
 using Unity.Collections;
 
-namespace DOTSFMOD
+namespace Trove.Audio.FMOD
 {
     /// <summary>
     /// Loads and unloads FMOD banks in response to FMODBankLoadRequest/FMODBankUnloadRequest tags.
