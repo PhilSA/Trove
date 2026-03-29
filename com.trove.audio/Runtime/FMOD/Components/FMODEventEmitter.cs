@@ -43,10 +43,8 @@ namespace Trove.Audio.FMOD
     {
     }
 
-    public struct FMODEmitterPlayStateControl : IComponentData, IEnableableComponent
-    {
-        public EmitterControlEventType EventType;
-    }
+    public struct FMODEmitterPlayStateUpdate : IComponentData, IEnableableComponent
+    { }
 
     public struct FMODEventParameter : IBufferElementData
     {
@@ -57,6 +55,8 @@ namespace Trove.Audio.FMOD
 
     public struct FMODEventEmitterState : ICleanupComponentData
     { 
+        internal EmitterControlEventType PlayStateEventType;
+        
         internal bool Preload;
         internal bool StopOnDestroyed;
         internal bool TriggerOnce;

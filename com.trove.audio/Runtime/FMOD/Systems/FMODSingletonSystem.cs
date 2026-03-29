@@ -13,6 +13,7 @@ namespace Trove.Audio.FMOD
     public unsafe partial struct FMODSingletonSystem : ISystem
     {
         private NativeReference<UnsafeHashMap<global::FMOD.GUID, global::FMOD.Studio.EventDescription>> _cachedEventDescriptions;
+        private NativeReference<UnsafeList<FMODSingleton.ListenerData>> _activeListenerDatas;
 
         public void OnCreate(ref SystemState state)
         {
@@ -21,6 +22,9 @@ namespace Trove.Audio.FMOD
             _cachedEventDescriptions = new NativeReference<UnsafeHashMap<GUID, EventDescription>>(
                 new UnsafeHashMap<GUID, EventDescription>(32, Allocator.Persistent), 
                 Allocator.Persistent);
+            _activeListenerDatas = new NativeReference<UnsafeList<FMODSingleton.ListenerData>>(
+                new UnsafeList<FMODSingleton.ListenerData>(8, Allocator.Persistent), 
+                Allocator.Persistent);
 
             // Create singleton
             Entity singletonEntity = state.EntityManager.CreateEntity();
@@ -28,6 +32,7 @@ namespace Trove.Audio.FMOD
             {
                 StudioSystem = FMODUnity.RuntimeManager.StudioSystem,
                 CachedEventDescriptions = _cachedEventDescriptions.GetUnsafePtr(),
+                ActiveListenerDatas = _activeListenerDatas.GetUnsafePtr(),
             });
 
             state.RequireForUpdate<FMODSingleton>();
@@ -43,11 +48,23 @@ namespace Trove.Audio.FMOD
                 }
                 _cachedEventDescriptions.Dispose();
             }
+            
+            if (_activeListenerDatas.IsCreated)
+            {
+                if (_activeListenerDatas.Value.IsCreated)
+                {
+                    _activeListenerDatas.Value.Dispose();
+                }
+                _activeListenerDatas.Dispose();
+            }
         }
 
         public void OnUpdate(ref SystemState state)
         {
             RuntimeUtils.EnforceLibraryOrder();
+
+            EntityQuery singletonQuery = SystemAPI.QueryBuilder().WithAll<FMODSingleton>().Build();
+            singletonQuery.CompleteDependency();
 
             Settings settings = Settings.Instance;
             
@@ -55,16 +72,6 @@ namespace Trove.Audio.FMOD
             ref FMODSingleton singletonRef = ref SystemAPI.GetSingletonRW<FMODSingleton>().ValueRW;
             singletonRef.StudioSystem = FMODUnity.RuntimeManager.StudioSystem;
             singletonRef.StopEventsOutsideMaxDistance = settings.StopEventsOutsideMaxDistance;
-            
-            if(!singletonRef.StudioSystem.isValid())
-                return;
-
-            EntityQuery singletonQuery = SystemAPI.QueryBuilder().WithAll<FMODSingleton>().Build();
-            singletonQuery.CompleteDependency();
-            
-            ComponentLookup<FMODEventEmitterState> eventEmitterCleanupLookup = 
-                SystemAPI.GetComponentLookup<FMODEventEmitterState>(false);
-            
         }
     }
 }

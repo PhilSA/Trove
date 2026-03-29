@@ -10,11 +10,13 @@ using Unity.Physics.Systems;
 using UnityEngine;
 using FMOD;
 using FMODUnity;
+using Unity.Burst.Intrinsics;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 
 namespace Trove.Audio.FMOD
 {
     [UpdateInGroup(typeof(FMODUpdateSystemGroup))]
-    [UpdateAfter(typeof(FMODEventEmitterSystem))]
     public partial struct FMODListenerSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
@@ -27,12 +29,18 @@ namespace Trove.Audio.FMOD
 
         public void OnUpdate(ref SystemState state)
         {
-            FMODSingleton singleton = SystemAPI.GetSingleton<FMODSingleton>();
+            EntityQuery singletonQuery = SystemAPI.QueryBuilder().WithAll<FMODSingleton>().Build();
+            singletonQuery.CompleteDependency();
+            
+            FMODSingleton singleton = SystemAPI.GetSingletonRW<FMODSingleton>().ValueRW;
             if(!singleton.StudioSystem.isValid())
                 return;
             
             EntityQuery listenersQuery = SystemAPI.QueryBuilder().WithAll<FMODListener>().Build();
             singleton.StudioSystem.setNumListeners(Mathf.Clamp(listenersQuery.CalculateEntityCount(), 0, CONSTANTS.MAX_LISTENERS));
+            
+            Entity singletonEntity = SystemAPI.GetSingletonEntity<FMODSingleton>();
+            ComponentLookup<FMODSingleton> singletonLookup = SystemAPI.GetComponentLookup<FMODSingleton>(false);
 
             state.Dependency = new FMODAssignListenerNumberJob
             {
@@ -59,6 +67,18 @@ namespace Trove.Audio.FMOD
             
             state.Dependency = new FMODListenerPreviousPositionsJob
             {
+            }.Schedule(state.Dependency);
+            
+            state.Dependency = new ClearActiveListenerDatasJob
+            {
+                SingletonEntity = singletonEntity,
+                SingletonLookup = singletonLookup,
+            }.Schedule(state.Dependency);
+            
+            state.Dependency = new UpdateActiveListenerDatasJob
+            {
+                SingletonEntity = singletonEntity,
+                SingletonLookup = singletonLookup,
             }.Schedule(state.Dependency);
         }
 
@@ -165,6 +185,63 @@ namespace Trove.Audio.FMOD
             public void Execute(ref FMODListener listener, in LocalToWorld ltw)
             {
                 listener.PreviousPosition = ltw.Position;
+            }
+        }
+
+        [BurstCompile]
+        public unsafe struct ClearActiveListenerDatasJob : IJob
+        {
+            public Entity SingletonEntity;
+            public ComponentLookup<FMODSingleton> SingletonLookup;
+
+            public void Execute()
+            {
+                if (SingletonLookup.TryGetComponent(SingletonEntity, out FMODSingleton _singleton))
+                {
+                    _singleton.ActiveListenerDatas->Clear();
+                }
+            }
+        }
+
+        [BurstCompile]
+        public unsafe partial struct UpdateActiveListenerDatasJob : IJobEntity, IJobEntityChunkBeginEnd
+        {
+            public Entity SingletonEntity;
+            public ComponentLookup<FMODSingleton> SingletonLookup;
+
+            [NativeDisableContainerSafetyRestriction]
+            private FMODSingleton _singleton;
+
+            public void Execute(
+                Entity entity,
+                in FMODListener listener,
+                in LocalToWorld ltw)
+            {
+                _singleton.ActiveListenerDatas->Add(new FMODSingleton.ListenerData
+                {
+                    Entity = entity,
+                    Position = ltw.Position,
+                    
+                    AttenuationEntity = listener.AttenuationEntity,
+                    AttenuationPosition = listener.AttenuationPosition,
+                });
+            }
+
+            public bool OnChunkBegin(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask,
+                in v128 chunkEnabledMask)
+            {
+                if (!_singleton.StudioSystem.isValid())
+                {
+                    SingletonLookup.TryGetComponent(SingletonEntity, out _singleton);
+                }
+
+                return true;
+            }
+
+            public void OnChunkEnd(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask,
+                in v128 chunkEnabledMask,
+                bool chunkWasExecuted)
+            {
             }
         }
     }

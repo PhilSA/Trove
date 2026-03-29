@@ -3,6 +3,7 @@ using FMOD;
 using FMODUnity;
 using FMOD.Studio;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -27,56 +28,64 @@ namespace Trove.Audio.FMOD
         
         public static void Play(Entity entity, EntityManager entityManager)
         {
-            if (entityManager.HasComponent<FMODEmitterPlayStateControl>(entity))
+            if (entityManager.HasComponent<FMODEmitterPlayStateUpdate>(entity) &&
+                entityManager.HasComponent<FMODEventEmitterState>(entity))
             {
-                FMODEmitterPlayStateControl emitterPlayStateControl = entityManager.GetComponentData<FMODEmitterPlayStateControl>(entity);
-                emitterPlayStateControl.EventType = EmitterControlEventType.Play;
-                entityManager.SetComponentData(entity, emitterPlayStateControl);
+                FMODEventEmitterState emitterState = entityManager.GetComponentData<FMODEventEmitterState>(entity);
+                emitterState.PlayStateEventType = EmitterControlEventType.Play;
+                entityManager.SetComponentData(entity, emitterState);
                 
-                entityManager.SetComponentEnabled<FMODEmitterPlayStateControl>(entity, true);
+                entityManager.SetComponentEnabled<FMODEmitterPlayStateUpdate>(entity, true);
             }
         }
         
-        public static void Play(Entity entity, ref ComponentLookup<FMODEmitterPlayStateControl> emitterControlLookup)
+        public static void Play(Entity entity, 
+            ref ComponentLookup<FMODEventEmitterState> emitterStateLookup, 
+            ref ComponentLookup<FMODEmitterPlayStateUpdate> playStateUpdateLookup)
         {
-            if (emitterControlLookup.TryGetRefRW(entity, out RefRW<FMODEmitterPlayStateControl> emitterControl))
+            if (playStateUpdateLookup.HasComponent(entity) &&
+                emitterStateLookup.TryGetRefRW(entity, out RefRW<FMODEventEmitterState> emitterState))
             {
-                emitterControl.ValueRW.EventType = EmitterControlEventType.Play;
-                emitterControlLookup.SetComponentEnabled(entity, true);   
+                emitterState.ValueRW.PlayStateEventType = EmitterControlEventType.Play;
+                playStateUpdateLookup.SetComponentEnabled(entity, true);   
             }
         }
         
-        public static void Play(ref FMODEmitterPlayStateControl emitterPlayStateControl, EnabledRefRW<FMODEmitterPlayStateControl> emitterControlEnabled)
+        public static void Play(ref FMODEventEmitterState emitterState, EnabledRefRW<FMODEmitterPlayStateUpdate> playStateUpdate)
         {
-            emitterPlayStateControl.EventType = EmitterControlEventType.Play;
-            emitterControlEnabled.ValueRW = true;
+            emitterState.PlayStateEventType = EmitterControlEventType.Play;
+            playStateUpdate.ValueRW = true;
         }
         
         public static void Stop(Entity entity, EntityManager entityManager)
         {
-            if (entityManager.HasComponent<FMODEmitterPlayStateControl>(entity))
+            if (entityManager.HasComponent<FMODEmitterPlayStateUpdate>(entity) &&
+                entityManager.HasComponent<FMODEventEmitterState>(entity))
             {
-                FMODEmitterPlayStateControl emitterPlayStateControl = entityManager.GetComponentData<FMODEmitterPlayStateControl>(entity);
-                emitterPlayStateControl.EventType = EmitterControlEventType.Stop;
-                entityManager.SetComponentData(entity, emitterPlayStateControl);
+                FMODEventEmitterState emitterState = entityManager.GetComponentData<FMODEventEmitterState>(entity);
+                emitterState.PlayStateEventType = EmitterControlEventType.Stop;
+                entityManager.SetComponentData(entity, emitterState);
                 
-                entityManager.SetComponentEnabled<FMODEmitterPlayStateControl>(entity, true);
+                entityManager.SetComponentEnabled<FMODEmitterPlayStateUpdate>(entity, true);
             }
         }
         
-        public static void Stop(Entity entity, ref ComponentLookup<FMODEmitterPlayStateControl> emitterControlLookup)
+        public static void Stop(Entity entity, 
+            ref ComponentLookup<FMODEventEmitterState> emitterStateLookup, 
+            ref ComponentLookup<FMODEmitterPlayStateUpdate> playStateUpdateLookup)
         {
-            if (emitterControlLookup.TryGetRefRW(entity, out RefRW<FMODEmitterPlayStateControl> emitterControl))
+            if (playStateUpdateLookup.HasComponent(entity) &&
+                emitterStateLookup.TryGetRefRW(entity, out RefRW<FMODEventEmitterState> emitterState))
             {
-                emitterControl.ValueRW.EventType = EmitterControlEventType.Stop;
-                emitterControlLookup.SetComponentEnabled(entity, true);   
+                emitterState.ValueRW.PlayStateEventType = EmitterControlEventType.Stop;
+                playStateUpdateLookup.SetComponentEnabled(entity, true);   
             }
         }
         
-        public static void Stop(ref FMODEmitterPlayStateControl emitterPlayStateControl, EnabledRefRW<FMODEmitterPlayStateControl> emitterControlEnabled)
+        public static void Stop(ref FMODEventEmitterState emitterState, EnabledRefRW<FMODEmitterPlayStateUpdate> playStateUpdate)
         {
-            emitterPlayStateControl.EventType = EmitterControlEventType.Stop;
-            emitterControlEnabled.ValueRW = true;
+            emitterState.PlayStateEventType = EmitterControlEventType.Stop;
+            playStateUpdate.ValueRW = true;
         }
 
         public static void SetParameter(
@@ -198,7 +207,7 @@ namespace Trove.Audio.FMOD
 
                 if (eventDescription.isValid())
                 {
-                    (*singleton.CachedEventDescriptions)[eventGUID] = eventDescription;
+                    singleton.CachedEventDescriptions->TryAdd(eventGUID, eventDescription);
                 }
             }
             return eventDescription;
@@ -224,6 +233,7 @@ namespace Trove.Audio.FMOD
         }
 
         internal static void UpdatePlayingStatus(
+            in FMODSingleton singleton,
             ref FMODEventEmitterState eventEmitterState, 
             EnabledRefRW<LoadEventDescriptionRequest> loadEventDescriptionRequest,
             ref DynamicBuffer<FMODEventParameter> parameters, 
@@ -233,7 +243,8 @@ namespace Trove.Audio.FMOD
         {
             // If at least one listener is within the max distance, ensure an event instance is playing
             float maxDistance = GetMaxDistance(in eventEmitterState, loadEventDescriptionRequest);
-            bool playInstance = StudioListener.DistanceSquaredToNearestListener(ltw.Position) <= (maxDistance * maxDistance);
+            bool playInstance = DistanceSquaredToNearestListener(in singleton, in ltw) <= (maxDistance * maxDistance);
+            
             
             if (force || playInstance != IsPlaying(in eventEmitterState))
             {
@@ -249,6 +260,26 @@ namespace Trove.Audio.FMOD
                     StopInstance(in eventEmitterState);
                 }
             }
+        }
+
+        internal unsafe static float DistanceSquaredToNearestListener(
+            in FMODSingleton singleton,
+            in LocalToWorld ltw)
+        {
+            float result = float.MaxValue;
+            UnsafeList<FMODSingleton.ListenerData> listenerDatas = *singleton.ActiveListenerDatas;
+            for (int i = 0; i < singleton.ActiveListenerDatas->Length; i++)
+            {
+                if (listenerDatas[i].AttenuationEntity == Entity.Null)
+                {
+                    result = math.min(result, math.lengthsq(ltw.Position - listenerDatas[i].Position));
+                }
+                else
+                {
+                    result = math.min(result, math.lengthsq(ltw.Position - listenerDatas[i].AttenuationPosition));
+                }
+            }
+            return result;
         }
 
         internal static void PlayInstance(
