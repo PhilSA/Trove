@@ -50,22 +50,19 @@ namespace Trove.Audio.FMOD
                 Preload = authoring.Preload,
                 AllowFadeout = authoring.AllowFadeout,
                 TriggerOnce = authoring.TriggerOnce,
+                NonRigidbodyVelocity = authoring.NonRigidbodyVelocity,
             });
 
-            AddComponent(entity, new FMODEmitterState());
+            AddComponent(entity, new IsActiveEmitter());
             AddComponent(entity, new LoadEventDescriptionRequest());
-            AddComponent(entity, new FMODPlayRequest());
-            AddComponent(entity, new FMODStopRequest());
+            AddComponent(entity, new FMODEmitterPlayStateControl());
             
-            SetComponentEnabled<FMODPlayRequest>(entity, false);
-
-            // Enable play request if PlayOnStart
-            SetComponentEnabled<FMODPlayRequest>(entity, false);
-            SetComponentEnabled<FMODStopRequest>(entity, false);
+            SetComponentEnabled<IsActiveEmitter>(entity, false);
+            SetComponentEnabled<LoadEventDescriptionRequest>(entity, false);
+            SetComponentEnabled<FMODEmitterPlayStateControl>(entity, false);
 
             // Add parameter buffer
-            
-            DynamicBuffer<FMODEmitterParameterElement> paramBuffer = AddBuffer<FMODEmitterParameterElement>(entity);
+            DynamicBuffer<FMODEventParameter> paramBuffer = AddBuffer<FMODEventParameter>(entity);
             if (authoring.Params != null)
             {
                 for (int i = 0; i < authoring.Params.Length; i++)
@@ -73,12 +70,11 @@ namespace Trove.Audio.FMOD
                     ParamRef paramRef = authoring.Params[i];
                     if (paramRef.Name != String.Empty)
                     {
-                        Debug.Log($"Adding param with ID {paramRef.ID.data1} - {paramRef.ID.data2}");
-                        paramBuffer.Add(new FMODEmitterParameterElement
+                        paramBuffer.Add(new FMODEventParameter
                         {
+                            Name = paramRef.Name,
                             Value = paramRef.Value,
-                            IDCached = false,
-                            CachedID = default,
+                            ID = default,
                         });
                     }
                 }

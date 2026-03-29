@@ -50,12 +50,7 @@ namespace Trove.Audio.FMOD
             }.Schedule(state.Dependency);
             
 #if UNITY_PHYSICS_PRESENT
-            state.Dependency = new FMODListenerPhysicsWithRigidbodyVelocityJob
-            {
-                FMODSingleton = singleton
-            }.Schedule(state.Dependency);
-            
-            state.Dependency = new FMODListenerPhysicsWithNonRigidbodyVelocityJob()
+            state.Dependency = new FMODListenerPhysicsJob
             {
                 DeltaTime =  SystemAPI.Time.DeltaTime,
                 FMODSingleton = singleton
@@ -115,7 +110,7 @@ namespace Trove.Audio.FMOD
                     if (DeltaTime != 0f)
                     {
                         velocity = (ltw.Position - listener.PreviousPosition) / DeltaTime;
-                        velocity = Vector3.ClampMagnitude(velocity, 20.0f);
+                        velocity = FMODDotsUtility.ClampToMaxLength(velocity, 20f);
                     }
                     
                     FMODSingleton.StudioSystem.setListenerAttributes(
@@ -128,27 +123,7 @@ namespace Trove.Audio.FMOD
 
 #if UNITY_PHYSICS_PRESENT
         [BurstCompile]
-        [WithDisabled(typeof(FMODListenerUseNonRigidbodyVelocity))]
-        public partial struct FMODListenerPhysicsWithRigidbodyVelocityJob : IJobEntity
-        {
-            public FMODSingleton FMODSingleton;
-
-            public void Execute(ref FMODListener listener, in LocalToWorld ltw, in PhysicsVelocity physicsVelocity)
-            {
-                if (listener.ListenerIndex >= 0 &&
-                    listener.ListenerIndex < CONSTANTS.MAX_LISTENERS)
-                {
-                    FMODSingleton.StudioSystem.setListenerAttributes(
-                        listener.ListenerIndex, 
-                        FMODDotsUtility.To3DAttributes(ltw, physicsVelocity.Linear), 
-                        FMODDotsUtility.ToFMODVector(listener.AttenuationPosition));
-                }
-            }
-        }
-        
-        [BurstCompile]
-        [WithAll(typeof(FMODListenerUseNonRigidbodyVelocity))]
-        public partial struct FMODListenerPhysicsWithNonRigidbodyVelocityJob : IJobEntity
+        public partial struct FMODListenerPhysicsJob : IJobEntity
         {
             public float DeltaTime;
             public FMODSingleton FMODSingleton;
@@ -158,17 +133,27 @@ namespace Trove.Audio.FMOD
                 if (listener.ListenerIndex >= 0 &&
                     listener.ListenerIndex < CONSTANTS.MAX_LISTENERS)
                 {
-                    float3 velocity = float3.zero;
-                    if (DeltaTime != 0f)
+                    if (listener.NonRigidbodyVelocity)
                     {
-                        velocity = (ltw.Position - listener.PreviousPosition) / DeltaTime;
-                        velocity = Vector3.ClampMagnitude(velocity, 20.0f);
-                    }
+                        float3 velocity = float3.zero;
+                        if (DeltaTime != 0f)
+                        {
+                            velocity = (ltw.Position - listener.PreviousPosition) / DeltaTime;
+                            velocity = FMODDotsUtility.ClampToMaxLength(velocity, 20f);
+                        }
 
-                    FMODSingleton.StudioSystem.setListenerAttributes(
-                        listener.ListenerIndex, 
-                        FMODDotsUtility.To3DAttributes(ltw, velocity), 
-                        FMODDotsUtility.ToFMODVector(listener.AttenuationPosition));
+                        FMODSingleton.StudioSystem.setListenerAttributes(
+                            listener.ListenerIndex, 
+                            FMODDotsUtility.To3DAttributes(ltw, velocity), 
+                            FMODDotsUtility.ToFMODVector(listener.AttenuationPosition));
+                    }
+                    else
+                    {
+                        FMODSingleton.StudioSystem.setListenerAttributes(
+                            listener.ListenerIndex, 
+                            FMODDotsUtility.To3DAttributes(ltw, physicsVelocity.Linear), 
+                            FMODDotsUtility.ToFMODVector(listener.AttenuationPosition));
+                    }
                 }
             }
         }

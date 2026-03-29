@@ -13,7 +13,10 @@ namespace Trove.Audio.FMOD
     {
         [NativeDisableUnsafePtrRestriction]
         public global::FMOD.Studio.System StudioSystem;
-        
-        internal NativeHashMap<global::FMOD.GUID, global::FMOD.Studio.EventDescription> CachedEventDescriptions;
+        [NativeDisableUnsafePtrRestriction]
+        internal UnsafeHashMap<global::FMOD.GUID, global::FMOD.Studio.EventDescription>* CachedEventDescriptions;
+
+        // Settings
+        public bool StopEventsOutsideMaxDistance;
     }
 }

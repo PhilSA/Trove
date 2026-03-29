@@ -3,9 +3,19 @@ using FMODUnity;
 using FMOD.Studio;
 using Unity.Entities;
 using Unity.Collections;
+using Unity.Mathematics;
+using Unity.Transforms;
 
 namespace Trove.Audio.FMOD
 {
+    public enum EmitterControlEventType
+    {
+        Play,
+        Stop,
+        Pause,
+        Resume,
+    }
+    
     public struct FMODEventEmitter : IComponentData
     {
         public global::FMOD.GUID EventGUID;
@@ -19,48 +29,65 @@ namespace Trove.Audio.FMOD
         public float OverrideMinDistance;
         public float OverrideMaxDistance;
         
-        public bool Preload;
-        public bool AllowFadeout;
-        public bool TriggerOnce;
+        internal bool Preload;
+        internal bool AllowFadeout;
+        internal bool TriggerOnce;
+        internal bool NonRigidbodyVelocity;
     }
 
-    public struct FMODEmitterState : IComponentData
+    public struct IsActiveEmitter : IComponentData, IEnableableComponent
     {
-        public ulong InstanceHandle;
-        public bool HasTriggered;
-        public bool IsOneshot;
-        public bool IsActive;
-        public bool DescriptionCached;
-        public float MaxDistance;
     }
 
     public struct LoadEventDescriptionRequest : IComponentData, IEnableableComponent
     {
     }
 
-    public struct FMODPlayRequest : IComponentData, IEnableableComponent
+    public struct FMODEmitterPlayStateControl : IComponentData, IEnableableComponent
     {
+        public EmitterControlEventType EventType;
     }
 
-    public struct FMODStopRequest : IComponentData, IEnableableComponent
-    {
-    }
-
-    public struct FMODEmitterParameterElement : IBufferElementData
+    public struct FMODEventParameter : IBufferElementData
     {
         public FixedString128Bytes Name;
         public float Value;
-        
-        public bool IDCached;
-        public PARAMETER_ID CachedID;
+        public PARAMETER_ID ID;
     }
 
-    public struct FMODEventEmitterCleanup : ICleanupComponentData
+    public struct FMODEventEmitterState : ICleanupComponentData
     { 
-        public bool StopOnDestroyed;
-        public bool AllowFadeout;
+        internal bool Preload;
+        internal bool StopOnDestroyed;
+        internal bool TriggerOnce;
+        internal bool AllowFadeout;
         
-        public EventInstance EventInstance;
-        public EventDescription EventDescription;
+        internal bool OverrideAttenuation;
+        internal float OverrideMinDistance;
+        internal float OverrideMaxDistance;
+        
+        internal bool IsOneShot;
+        internal bool HasTriggered;
+        internal float3 PreviousPosition;
+        internal float3 Velocity;
+        
+        internal EventInstance _eventInstance;
+        internal EventDescription _eventDescription;
+
+        public EventInstance EventInstance => _eventInstance;
+        public EventDescription EventDescription => _eventDescription;
+
+        internal void UpdateFrom(in FMODEventEmitter emitter, in LocalToWorld ltw)
+        {
+            Preload = emitter.Preload;
+            StopOnDestroyed = emitter.StopOnDestroyed;
+            AllowFadeout = emitter.AllowFadeout;
+            TriggerOnce = emitter.TriggerOnce;
+            PreviousPosition = ltw.Position;
+            
+            OverrideAttenuation = emitter.OverrideAttenuation;
+            OverrideMinDistance = emitter.OverrideMinDistance;
+            OverrideMaxDistance = emitter.OverrideMaxDistance;
+        }
     }
 }

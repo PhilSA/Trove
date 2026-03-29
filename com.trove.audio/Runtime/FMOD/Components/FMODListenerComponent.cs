@@ -7,11 +7,9 @@ namespace Trove.Audio.FMOD
     {
         public int ListenerIndex;
         public Entity AttenuationEntity;
+        public bool NonRigidbodyVelocity;
 
         public float3 AttenuationPosition;
         public float3 PreviousPosition;
     }
-    
-    public struct FMODListenerUseNonRigidbodyVelocity : IComponentData, IEnableableComponent
-    { }
 }

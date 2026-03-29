@@ -4,13 +4,14 @@ using Unity.Transforms;
 
 namespace Trove.Audio.FMOD
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
-    [UpdateAfter(typeof(BeginSimulationEntityCommandBufferSystem))]
+    [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor, WorldSystemFilterFlags.Default)]
+    [UpdateInGroup(typeof(PresentationSystemGroup), OrderFirst = true)]
+    [UpdateAfter(typeof(BeginPresentationEntityCommandBufferSystem))]
     public partial class FMODBeginSystemGroup : ComponentSystemGroup
     { }
     
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(TransformSystemGroup))]
+    [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor, WorldSystemFilterFlags.Default)]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class FMODUpdateSystemGroup : ComponentSystemGroup
     { }
 }

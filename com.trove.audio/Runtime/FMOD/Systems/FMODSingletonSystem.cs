@@ -10,22 +10,24 @@ using Unity.Entities;
 namespace Trove.Audio.FMOD
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
-    partial struct FMODSingletonSystem : ISystem
+    public unsafe partial struct FMODSingletonSystem : ISystem
     {
-        private NativeHashMap<global::FMOD.GUID, global::FMOD.Studio.EventDescription> _cachedEventDescriptions;
+        private NativeReference<UnsafeHashMap<global::FMOD.GUID, global::FMOD.Studio.EventDescription>> _cachedEventDescriptions;
 
         public void OnCreate(ref SystemState state)
         {
             RuntimeUtils.EnforceLibraryOrder();
 
-            _cachedEventDescriptions = new NativeHashMap<GUID, EventDescription>(32, Allocator.Persistent);
+            _cachedEventDescriptions = new NativeReference<UnsafeHashMap<GUID, EventDescription>>(
+                new UnsafeHashMap<GUID, EventDescription>(32, Allocator.Persistent), 
+                Allocator.Persistent);
 
             // Create singleton
             Entity singletonEntity = state.EntityManager.CreateEntity();
             state.EntityManager.AddComponentData(singletonEntity, new FMODSingleton
             {
                 StudioSystem = FMODUnity.RuntimeManager.StudioSystem,
-                CachedEventDescriptions = _cachedEventDescriptions,
+                CachedEventDescriptions = _cachedEventDescriptions.GetUnsafePtr(),
             });
 
             state.RequireForUpdate<FMODSingleton>();
@@ -35,6 +37,10 @@ namespace Trove.Audio.FMOD
         {
             if (_cachedEventDescriptions.IsCreated)
             {
+                if (_cachedEventDescriptions.Value.IsCreated)
+                {
+                    _cachedEventDescriptions.Value.Dispose();
+                }
                 _cachedEventDescriptions.Dispose();
             }
         }
@@ -43,10 +49,12 @@ namespace Trove.Audio.FMOD
         {
             RuntimeUtils.EnforceLibraryOrder();
 
-            // Update singleton, in case that's needed
-            // TODO: is it ever needed? Ex: can a new StudioSystem be created sometimes? Can the whole RuntimeManager re-initialize sometimes?
+            Settings settings = Settings.Instance;
+            
+            // Update singleton
             ref FMODSingleton singletonRef = ref SystemAPI.GetSingletonRW<FMODSingleton>().ValueRW;
             singletonRef.StudioSystem = FMODUnity.RuntimeManager.StudioSystem;
+            singletonRef.StopEventsOutsideMaxDistance = settings.StopEventsOutsideMaxDistance;
             
             if(!singletonRef.StudioSystem.isValid())
                 return;
@@ -54,8 +62,8 @@ namespace Trove.Audio.FMOD
             EntityQuery singletonQuery = SystemAPI.QueryBuilder().WithAll<FMODSingleton>().Build();
             singletonQuery.CompleteDependency();
             
-            ComponentLookup<FMODEventEmitterCleanup> eventEmitterCleanupLookup = 
-                SystemAPI.GetComponentLookup<FMODEventEmitterCleanup>(false);
+            ComponentLookup<FMODEventEmitterState> eventEmitterCleanupLookup = 
+                SystemAPI.GetComponentLookup<FMODEventEmitterState>(false);
             
         }
     }
