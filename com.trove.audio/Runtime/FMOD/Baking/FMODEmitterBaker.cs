@@ -61,9 +61,11 @@ namespace Trove.Audio.FMOD
                 NonRigidbodyVelocity = authoring.NonRigidbodyVelocity,
             });
 
+            AddComponent(entity, new IsEnabledEmitter());
             AddComponent(entity, new IsActiveEmitter());
             AddComponent(entity, new FMODEmitterPlayStateUpdate());
             
+            SetComponentEnabled<IsEnabledEmitter>(entity, true);
             SetComponentEnabled<IsActiveEmitter>(entity, false);
             SetComponentEnabled<FMODEmitterPlayStateUpdate>(entity, false);
 

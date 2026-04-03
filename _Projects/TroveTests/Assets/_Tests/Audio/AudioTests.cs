@@ -1,4 +1,5 @@
 using Trove;
+using Trove.Audio.FMOD;
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -26,6 +27,9 @@ public struct AudioTestsSpeed : IComponentData
 
 partial struct AudioTestsSystem : ISystem
 {
+    public bool DidThing;
+    public float DidThingCounter;
+    
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
@@ -88,5 +92,26 @@ partial struct AudioTestsSystem : ISystem
             localTransform.ValueRW.Position = speed.ValueRO.StartPos + 
                                               (math.sin(elapsedTime * speed.ValueRO.Speed.x) * speed.ValueRO.Speed.y);
         }
+        
+        // Disable
+        // DidThingCounter += SystemAPI.Time.DeltaTime;
+        // if (DidThingCounter > 3f)
+        // {
+        //     if (DidThing)
+        //     {
+        //         EntityQuery emittersQuery = SystemAPI.QueryBuilder().WithAll<FMODEventEmitter, Disabled>().Build();
+        //         DidThing = false;
+        //         Debug.Log($"Removed disabled on {emittersQuery.CalculateEntityCount()}");
+        //         state.EntityManager.RemoveComponent<Disabled>(emittersQuery);
+        //     }
+        //     else
+        //     {
+        //         EntityQuery emittersQuery = SystemAPI.QueryBuilder().WithAll<FMODEventEmitter>().Build();
+        //         DidThing = true;
+        //         Debug.Log($"Added disabled on {emittersQuery.CalculateEntityCount()}");
+        //         state.EntityManager.AddComponent<Disabled>(emittersQuery);
+        //     }
+        //     DidThingCounter = 0f;
+        // }
     }
 }

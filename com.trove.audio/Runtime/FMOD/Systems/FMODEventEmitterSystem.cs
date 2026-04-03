@@ -35,6 +35,7 @@ namespace Trove.Audio.FMOD
             Entity singletonEntity = SystemAPI.GetSingletonEntity<FMODSingleton>();
             ComponentLookup<FMODSingleton> singletonLookup = SystemAPI.GetComponentLookup<FMODSingleton>(false);
             ComponentLookup<FMODEmitterPlayStateUpdate> playStateUpdateLookup = SystemAPI.GetComponentLookup<FMODEmitterPlayStateUpdate>(false);
+            ComponentLookup<IsEnabledEmitter> isEnabledEmitterLookup = SystemAPI.GetComponentLookup<IsEnabledEmitter>(false);
             ComponentLookup<IsActiveEmitter> isActiveEmitterLookup = SystemAPI.GetComponentLookup<IsActiveEmitter>(false);
 
             state.Dependency = new EventEmittersStartJob
@@ -43,7 +44,7 @@ namespace Trove.Audio.FMOD
                     .CreateCommandBuffer(state.WorldUnmanaged),
                 SingletonEntity = singletonEntity,
                 SingletonLookup = singletonLookup,
-                PlayStateUpdateLookup = SystemAPI.GetComponentLookup<FMODEmitterPlayStateUpdate>(false),
+                PlayStateUpdateLookup = playStateUpdateLookup,
             }.Schedule(state.Dependency);
 
             state.Dependency = new EventEmittersDestroyJob
@@ -51,6 +52,19 @@ namespace Trove.Audio.FMOD
                 ECB = SystemAPI.GetSingletonRW<BeginPresentationEntityCommandBufferSystem.Singleton>().ValueRW
                     .CreateCommandBuffer(state.WorldUnmanaged),
                 PlayStateUpdateLookup = playStateUpdateLookup,
+            }.Schedule(state.Dependency);
+
+            state.Dependency = new EventEmittersEnableJob
+            {
+                SingletonEntity = singletonEntity,
+                SingletonLookup = singletonLookup,
+                IsActiveLookup = isActiveEmitterLookup,
+                IsEnabledEmitterLookup = isEnabledEmitterLookup,
+            }.Schedule(state.Dependency);
+
+            state.Dependency = new EventEmittersDisableJob
+            {
+                IsActiveLookup = isActiveEmitterLookup,
             }.Schedule(state.Dependency);
             
             state.Dependency = new CalculateEventEmittersVelocityJob
@@ -173,6 +187,77 @@ namespace Trove.Audio.FMOD
         }
 
         [BurstCompile]
+        [WithNone(typeof(Disabled))]
+        [WithDisabled(typeof(IsEnabledEmitter))]
+        [WithPresent(typeof(FMODEmitterPlayStateUpdate))]
+        internal partial struct EventEmittersEnableJob : IJobEntity, IJobEntityChunkBeginEnd
+        {
+            public Entity SingletonEntity;
+            public ComponentLookup<FMODSingleton> SingletonLookup;
+            public ComponentLookup<IsActiveEmitter> IsActiveLookup;
+            public ComponentLookup<IsEnabledEmitter> IsEnabledEmitterLookup;
+
+            [NativeDisableContainerSafetyRestriction]
+            private FMODSingleton _singleton;
+            
+            internal void Execute(
+                Entity entity,
+                in FMODEventEmitter emitter,
+                ref FMODEventEmitterState eventEmitterState,
+                ref DynamicBuffer<FMODEventParameter> eventEmitterParameters,
+                in LocalToWorld ltw)
+            {
+                IsEnabledEmitterLookup.SetComponentEnabled(entity, true);
+
+                if (emitter.PlayOnEnabled)
+                {
+                    FMODDotsUtility.HandlePlay(entity, ref _singleton, in emitter, ref eventEmitterState,
+                        ref eventEmitterParameters, in ltw, ref IsActiveLookup);
+                }
+            }
+
+            public bool OnChunkBegin(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask,
+                in v128 chunkEnabledMask)
+            {
+                if (!_singleton.StudioSystem.isValid())
+                {
+                    SingletonLookup.TryGetComponent(SingletonEntity, out _singleton);
+                }
+
+                return true;
+            }
+
+            public void OnChunkEnd(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask,
+                in v128 chunkEnabledMask,
+                bool chunkWasExecuted)
+            {
+            }
+        }
+
+        [BurstCompile]
+        [WithAll(typeof(Disabled))]
+        [WithAll(typeof(IsEnabledEmitter))]
+        [WithPresent(typeof(FMODEmitterPlayStateUpdate))]
+        internal partial struct EventEmittersDisableJob : IJobEntity
+        {
+            public ComponentLookup<IsActiveEmitter> IsActiveLookup;
+            
+            internal void Execute(
+                Entity entity,
+                in FMODEventEmitter emitter,
+                ref FMODEventEmitterState eventEmitterState,
+                EnabledRefRW<IsEnabledEmitter> emitterIsEnabled)
+            {
+                emitterIsEnabled.ValueRW = false;
+
+                if (emitter.StopOnDisabled)
+                {
+                    FMODDotsUtility.HandleStop(entity, ref eventEmitterState, ref IsActiveLookup);
+                }
+            }
+        }
+
+        [BurstCompile]
         [WithAll(typeof(IsActiveEmitter))]
 #if UNITY_PHYSICS_PRESENT
         [WithNone(typeof(PhysicsVelocity))]
@@ -247,21 +332,22 @@ namespace Trove.Audio.FMOD
                 ref DynamicBuffer<FMODEventParameter> eventEmitterParameters,
                 in LocalToWorld ltw)
             {
+                PlayStateUpdateLookup.SetComponentEnabled(entity, false);
+                
                 switch (eventEmitterState.PlayStateEventType)
                 {
                     case EmitterControlEventType.Play:
-                        HandlePlay(entity, in emitter, ref eventEmitterState, ref eventEmitterParameters, in ltw);
+                        FMODDotsUtility.HandlePlay(entity, ref _singleton, in emitter, ref eventEmitterState,
+                            ref eventEmitterParameters, in ltw, ref IsActiveLookup);
                         break;
                     case EmitterControlEventType.Stop:
-                        HandleStop(entity, ref eventEmitterState);
+                        FMODDotsUtility.HandleStop(entity, ref eventEmitterState, ref IsActiveLookup);
                         break;
                     case EmitterControlEventType.Pause:
                         eventEmitterState.EventInstance.setPaused(true);
-                        PlayStateUpdateLookup.SetComponentEnabled(entity, false);
                         break;
                     case EmitterControlEventType.Resume:
                         eventEmitterState.EventInstance.setPaused(false);
-                        PlayStateUpdateLookup.SetComponentEnabled(entity, false);
                         break;
                 }
             }
@@ -281,65 +367,6 @@ namespace Trove.Audio.FMOD
                 in v128 chunkEnabledMask,
                 bool chunkWasExecuted)
             {
-            }
-
-            private void HandlePlay(
-                Entity entity, 
-                in FMODEventEmitter emitter,
-                ref FMODEventEmitterState eventEmitterState,
-                ref DynamicBuffer<FMODEventParameter> eventEmitterParameters,
-                in LocalToWorld ltw)
-            {
-                if (eventEmitterState.TriggerOnce && eventEmitterState.HasTriggered)
-                    return;
-
-                if (!eventEmitterState.EventDescription.isValid())
-                {
-                    eventEmitterState._eventDescription =
-                        FMODDotsUtility.LoadEventFromGUID(ref _singleton, in emitter.EventGUID, ref eventEmitterParameters);
-                    eventEmitterState.EventDescription.loadSampleData();
-                    return;
-                }
-
-                PlayStateUpdateLookup.SetComponentEnabled(entity, false);
-
-                eventEmitterState.EventDescription.isSnapshot(out bool isSnapshot);
-
-                if (!isSnapshot)
-                {
-                    eventEmitterState.EventDescription.isOneshot(out eventEmitterState.IsOneShot);
-                }
-
-                eventEmitterState.EventDescription.is3D(out bool is3D);
-
-                IsActiveLookup.SetComponentEnabled(entity, true);
-
-                if (is3D && _singleton.StopEventsOutsideMaxDistance)
-                {
-                    FMODDotsUtility.UpdatePlayingStatus(
-                        ref _singleton,
-                        in emitter.EventGUID,
-                        ref eventEmitterState, 
-                        ref eventEmitterParameters,
-                        in ltw,
-                        eventEmitterState.Velocity,
-                        true);
-                }
-                else
-                {
-                    FMODDotsUtility.PlayInstance(
-                        ref eventEmitterState,
-                        ref eventEmitterParameters,
-                        in ltw,
-                        eventEmitterState.Velocity);
-                }
-            }
-
-            private void HandleStop(Entity entity, ref FMODEventEmitterState eventEmitterState)
-            {
-                IsActiveLookup.SetComponentEnabled(entity, false);
-                FMODDotsUtility.StopInstance(in eventEmitterState);
-                PlayStateUpdateLookup.SetComponentEnabled(entity, false);
             }
         }
 
@@ -362,8 +389,12 @@ namespace Trove.Audio.FMOD
                 in LocalToWorld ltw,
                 ref FMODEventEmitterState eventEmitterState)
             {
-                eventEmitterState.EventInstance.set3DAttributes(FMODDotsUtility.To3DAttributes(ltw, eventEmitterState.Velocity));
-                
+                if (!ltw.Position.Equals(eventEmitterState.PreviousPosition))
+                {
+                    eventEmitterState.EventInstance.set3DAttributes(
+                        FMODDotsUtility.To3DAttributes(ltw, eventEmitterState.Velocity));
+                }
+
                 FMODDotsUtility.UpdatePlayingStatus(
                     ref _singleton,
                     in eventEmitter.EventGUID,

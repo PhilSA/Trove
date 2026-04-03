@@ -35,6 +35,10 @@ namespace Trove.Audio.FMOD
         internal bool NonRigidbodyVelocity;
     }
 
+    internal struct IsEnabledEmitter : IComponentData, IEnableableComponent
+    {
+    }
+
     public struct IsActiveEmitter : IComponentData, IEnableableComponent
     {
     }
@@ -45,8 +49,8 @@ namespace Trove.Audio.FMOD
     public struct FMODEventParameter : IBufferElementData
     {
         public FixedString128Bytes Name;
-        public float Value;
         public PARAMETER_ID ID;
+        public float Value;
     }
 
     public struct FMODEventEmitterState : ICleanupComponentData

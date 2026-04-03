@@ -17,12 +17,12 @@ namespace Trove.Audio.FMOD
     /// </summary>
     public static class FMODDotsUtility
     {
-        public static bool IsPlaying(in FMODEventEmitterState eventEmitterState)
+        public static bool IsPlaying(EventInstance eventInstance)
         {
-            if (eventEmitterState.EventInstance.isValid())
+            if (eventInstance.isValid())
             {
                 global::FMOD.Studio.PLAYBACK_STATE playbackState;
-                eventEmitterState.EventInstance.getPlaybackState(out playbackState);
+                eventInstance.getPlaybackState(out playbackState);
                 return (playbackState != global::FMOD.Studio.PLAYBACK_STATE.STOPPED);
             }
             return false;
@@ -91,27 +91,6 @@ namespace Trove.Audio.FMOD
         }
 
         public static bool GetParameter(
-            global::FMOD.Studio.PARAMETER_ID id, 
-            ref DynamicBuffer<FMODEventParameter> parameters,
-            out FMODEventParameter parameter,
-            out int parameterIndex)
-        {
-            for (int i = 0; i < parameters.Length; ++i)
-            {
-                parameter = parameters[i];
-                if (parameter.ID.data1 == id.data1 && parameter.ID.data2 == id.data2)
-                {
-                    parameterIndex = i;
-                    return true;
-                }
-            }
-
-            parameter = default;
-            parameterIndex = -1;
-            return false;
-        }
-
-        public static bool GetParameter(
             FixedString128Bytes name, 
             ref DynamicBuffer<FMODEventParameter> parameters,
             out FMODEventParameter parameter,
@@ -131,29 +110,191 @@ namespace Trove.Audio.FMOD
             parameterIndex = -1;
             return false;
         }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe static void SetParameter(EventInstance eventInstance, PARAMETER_ID id, float value, bool ignoreSeekSpeed)
+
+        public static bool GetParameter(
+            Entity emitterEntity,
+            FixedString128Bytes name, 
+            ref BufferLookup<FMODEventParameter> parametersBufferLookup,
+            out FMODEventParameter parameter,
+            out int parameterIndex)
         {
-            FMODExternalMethods.FMOD_Studio_EventInstance_SetParametersByIDs(
-                eventInstance.handle,
-                (IntPtr)(&id), 
-                (IntPtr)(&value), 
-                1, 
-                ignoreSeekSpeed);
+            if (parametersBufferLookup.TryGetBuffer(emitterEntity,
+                    out DynamicBuffer<FMODEventParameter> parametersBuffer))
+            {
+                for (int i = 0; i < parametersBuffer.Length; ++i)
+                {
+                    parameter = parametersBuffer[i];
+                    if (parameter.Name == name)
+                    {
+                        parameterIndex = i;
+                        return true;
+                    }
+                }
+            }
+
+            parameter = default;
+            parameterIndex = -1;
+            return false;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe static void SetParameters(EventInstance eventInstance, in UnsafeList<PARAMETER_ID> ids, in UnsafeList<float> values, bool ignoreSeekSpeed)
+        public unsafe static void SetParameter(
+            int parameterIndex,
+            float value,
+            bool ignoreSeekSpeed,
+            EventInstance eventInstance, 
+            ref DynamicBuffer<FMODEventParameter> parametersBuffer)
         {
-            Assert.AreEqual(ids.Length, values.Length);
+            if (parameterIndex >= 0 && parametersBuffer.Length > parameterIndex)
+            {
+                FMODEventParameter parameter = parametersBuffer[parameterIndex];
+                parameter.Value = value;
+                parametersBuffer[parameterIndex] = parameter;
             
-            FMODExternalMethods.FMOD_Studio_EventInstance_SetParametersByIDs(
-                eventInstance.handle,
-                (IntPtr)ids.Ptr, 
-                (IntPtr)values.Ptr, 
-                ids.Length, 
-                ignoreSeekSpeed);
+                FMODExternalMethods.FMOD_Studio_EventInstance_SetParametersByIDs(
+                    eventInstance.handle,
+                    (IntPtr)(&parameter.ID), 
+                    (IntPtr)(&parameter.Value), 
+                    1, 
+                    ignoreSeekSpeed);
+            }
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe static void SetParameter(
+            FixedString128Bytes name, 
+            float value,
+            bool ignoreSeekSpeed,
+            EventInstance eventInstance, 
+            ref DynamicBuffer<FMODEventParameter> parametersBuffer)
+        {
+            if (GetParameter(name, ref parametersBuffer, out FMODEventParameter parameter, out int parameterIndex))
+            {
+                parameter.Value = value;
+                parametersBuffer[parameterIndex] = parameter;
+            
+                FMODExternalMethods.FMOD_Studio_EventInstance_SetParametersByIDs(
+                    eventInstance.handle,
+                    (IntPtr)(&parameter.ID), 
+                    (IntPtr)(&parameter.Value), 
+                    1, 
+                    ignoreSeekSpeed);
+            }
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe static void SetParameter(
+            int parameterIndex,
+            float value,
+            bool ignoreSeekSpeed,
+            Entity emitterEntity, 
+            in ComponentLookup<FMODEventEmitterState> emitterStateLookup,
+            ref BufferLookup<FMODEventParameter> parametersBufferLookup)
+        {
+            if (emitterStateLookup.TryGetComponent(emitterEntity, out FMODEventEmitterState emitterState) &&
+                parametersBufferLookup.TryGetBuffer(emitterEntity, out DynamicBuffer<FMODEventParameter> parametersBuffer))
+            {
+                if (parameterIndex >= 0 && parametersBuffer.Length > parameterIndex)
+                {
+                    FMODEventParameter parameter = parametersBuffer[parameterIndex];
+                    parameter.Value = value;
+                    parametersBuffer[parameterIndex] = parameter;
+
+                    FMODExternalMethods.FMOD_Studio_EventInstance_SetParametersByIDs(
+                        emitterState.EventInstance.handle,
+                        (IntPtr)(&parameter.ID),
+                        (IntPtr)(&parameter.Value),
+                        1,
+                        ignoreSeekSpeed);
+                }
+            }
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe static void SetParameter(
+            FixedString128Bytes name, 
+            float value,
+            bool ignoreSeekSpeed,
+            Entity emitterEntity, 
+            in ComponentLookup<FMODEventEmitterState> emitterStateLookup,
+            ref BufferLookup<FMODEventParameter> parametersBufferLookup)
+        {
+            if (emitterStateLookup.TryGetComponent(emitterEntity, out FMODEventEmitterState emitterState) &&
+                parametersBufferLookup.TryGetBuffer(emitterEntity, out DynamicBuffer<FMODEventParameter> parametersBuffer))
+            {
+                if (GetParameter(name, ref parametersBuffer, out FMODEventParameter parameter, out int parameterIndex))
+                {
+                    parameter.Value = value;
+                    parametersBuffer[parameterIndex] = parameter;
+
+                    FMODExternalMethods.FMOD_Studio_EventInstance_SetParametersByIDs(
+                        emitterState.EventInstance.handle,
+                        (IntPtr)(&parameter.ID),
+                        (IntPtr)(&parameter.Value),
+                        1,
+                        ignoreSeekSpeed);
+                }
+            }
+        }
+
+        internal static void HandlePlay(
+            Entity entity, 
+            ref FMODSingleton singleton,
+            in FMODEventEmitter emitter,
+            ref FMODEventEmitterState eventEmitterState,
+            ref DynamicBuffer<FMODEventParameter> eventEmitterParameters,
+            in LocalToWorld ltw,
+            ref ComponentLookup<IsActiveEmitter> isActiveEmitterLookup)
+        {
+            if (eventEmitterState.TriggerOnce && eventEmitterState.HasTriggered)
+                return;
+
+            if (!eventEmitterState.EventDescription.isValid())
+            {
+                eventEmitterState._eventDescription =
+                    FMODDotsUtility.LoadEventFromGUID(ref singleton, in emitter.EventGUID, ref eventEmitterParameters);
+                eventEmitterState.EventDescription.loadSampleData();
+            }
+
+            eventEmitterState.EventDescription.isSnapshot(out bool isSnapshot);
+
+            if (!isSnapshot)
+            {
+                eventEmitterState.EventDescription.isOneshot(out eventEmitterState.IsOneShot);
+            }
+
+            eventEmitterState.EventDescription.is3D(out bool is3D);
+
+            isActiveEmitterLookup.SetComponentEnabled(entity, true);
+
+            if (is3D && singleton.StopEventsOutsideMaxDistance)
+            {
+                FMODDotsUtility.UpdatePlayingStatus(
+                    ref singleton,
+                    in emitter.EventGUID,
+                    ref eventEmitterState, 
+                    ref eventEmitterParameters,
+                    in ltw,
+                    eventEmitterState.Velocity,
+                    true);
+            }
+            else
+            {
+                FMODDotsUtility.PlayInstance(
+                    ref eventEmitterState,
+                    ref eventEmitterParameters,
+                    in ltw,
+                    eventEmitterState.Velocity);
+            }
+        }
+
+        internal static void HandleStop(
+            Entity entity, 
+            ref FMODEventEmitterState eventEmitterState,
+            ref ComponentLookup<IsActiveEmitter> isActiveEmitterLookup)
+        {
+            isActiveEmitterLookup.SetComponentEnabled(entity, false);
+            FMODDotsUtility.StopInstance(in eventEmitterState);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -270,8 +411,7 @@ namespace Trove.Audio.FMOD
             float maxDistance = GetMaxDistance(ref singleton, in eventGUID, ref eventEmitterState, ref parameters);
             bool playInstance = DistanceSquaredToNearestListener(in singleton, in ltw) <= (maxDistance * maxDistance);
             
-            
-            if (force || playInstance != IsPlaying(in eventEmitterState))
+            if (force || playInstance != IsPlaying(eventEmitterState._eventInstance))
             {
                 if (playInstance)
                 {
@@ -307,7 +447,7 @@ namespace Trove.Audio.FMOD
             return result;
         }
 
-        internal static void PlayInstance(
+        internal unsafe static void PlayInstance(
             ref FMODEventEmitterState eventEmitterState,
             ref DynamicBuffer<FMODEventParameter> parameters, 
             in LocalToWorld ltw, 
@@ -343,7 +483,12 @@ namespace Trove.Audio.FMOD
             for (int i = 0; i < parameters.Length; i++)
             {
                 FMODEventParameter param = parameters[i];
-                SetParameter(eventEmitterState._eventInstance, param.ID, param.Value, false);
+                FMODExternalMethods.FMOD_Studio_EventInstance_SetParametersByIDs(
+                    eventEmitterState._eventInstance.handle,
+                    (IntPtr)(&param.ID), 
+                    (IntPtr)(&param.Value), 
+                    1, 
+                    false);
             }
 
             if (is3D && eventEmitterState.OverrideAttenuation)
