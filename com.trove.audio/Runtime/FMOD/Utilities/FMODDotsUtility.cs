@@ -1,7 +1,9 @@
+using System;
 using System.Runtime.CompilerServices;
 using FMOD;
 using FMODUnity;
 using FMOD.Studio;
+using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -88,14 +90,15 @@ namespace Trove.Audio.FMOD
             playStateUpdate.ValueRW = true;
         }
 
-        public static bool GetParameterIndex(
+        public static bool GetParameter(
             global::FMOD.Studio.PARAMETER_ID id, 
             ref DynamicBuffer<FMODEventParameter> parameters,
+            out FMODEventParameter parameter,
             out int parameterIndex)
         {
             for (int i = 0; i < parameters.Length; ++i)
             {
-                FMODEventParameter parameter = parameters[i];
+                parameter = parameters[i];
                 if (parameter.ID.data1 == id.data1 && parameter.ID.data2 == id.data2)
                 {
                     parameterIndex = i;
@@ -103,58 +106,54 @@ namespace Trove.Audio.FMOD
                 }
             }
 
+            parameter = default;
             parameterIndex = -1;
             return false;
         }
 
-        public static void SetParameter(
-            global::FMOD.Studio.PARAMETER_ID id, 
-            float value,
-            in FMODEventEmitterState eventEmitterState, 
-            ref DynamicBuffer<FMODEventParameter> parameters,
-            bool ignoreSeekSpeed = false)
-        {
-            for (int i = 0; i < parameters.Length; ++i)
-            {
-                FMODEventParameter parameter = parameters[i];
-                if (parameter.ID.data1 == id.data1 && parameter.ID.data2 == id.data2)
-                {
-                    parameter.Value = value;
-                    parameters[i] = parameter;
-
-                    if (eventEmitterState.EventInstance.isValid())
-                    {
-                        eventEmitterState.EventInstance.setParameterByID(parameter.ID, value, ignoreSeekSpeed);
-                    }
-
-                    return;
-                }
-            }
-        }
-
-        public static void SetParameter(
+        public static bool GetParameter(
             FixedString128Bytes name, 
-            float value,
-            in FMODEventEmitterState eventEmitterState, 
             ref DynamicBuffer<FMODEventParameter> parameters,
-            bool ignoreSeekSpeed = false)
+            out FMODEventParameter parameter,
+            out int parameterIndex)
         {
             for (int i = 0; i < parameters.Length; ++i)
             {
-                FMODEventParameter parameter = parameters[i];
+                parameter = parameters[i];
                 if (parameter.Name == name)
                 {
-                    parameter.Value = value;
-                    parameters[i] = parameter;
-
-                    if (eventEmitterState.EventInstance.isValid())
-                    {
-                        eventEmitterState.EventInstance.setParameterByID(parameter.ID, value, ignoreSeekSpeed);
-                    }
-
-                    return;
+                    parameterIndex = i;
+                    return true;
                 }
             }
+
+            parameter = default;
+            parameterIndex = -1;
+            return false;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe static void SetParameter(EventInstance eventInstance, PARAMETER_ID id, float value, bool ignoreSeekSpeed)
+        {
+            FMODExternalMethods.FMOD_Studio_EventInstance_SetParametersByIDs(
+                eventInstance.handle,
+                (IntPtr)(&id), 
+                (IntPtr)(&value), 
+                1, 
+                ignoreSeekSpeed);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe static void SetParameters(EventInstance eventInstance, in UnsafeList<PARAMETER_ID> ids, in UnsafeList<float> values, bool ignoreSeekSpeed)
+        {
+            Assert.AreEqual(ids.Length, values.Length);
+            
+            FMODExternalMethods.FMOD_Studio_EventInstance_SetParametersByIDs(
+                eventInstance.handle,
+                (IntPtr)ids.Ptr, 
+                (IntPtr)values.Ptr, 
+                ids.Length, 
+                ignoreSeekSpeed);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -187,7 +186,7 @@ namespace Trove.Audio.FMOD
             };
         }
 
-        internal static global::FMOD.Studio.EventDescription LoadEventFromGUID(
+        internal unsafe static global::FMOD.Studio.EventDescription LoadEventFromGUID(
             ref FMODSingleton singleton,
             in global::FMOD.GUID eventGUID,
             ref DynamicBuffer<FMODEventParameter> parameters)
@@ -199,10 +198,13 @@ namespace Trove.Audio.FMOD
             {
                 for (int i = 0; i < parameters.Length; i++)
                 {
-                    FMODEventParameter paremeter = parameters[i];
-                    eventDescription.getParameterDescriptionByName(paremeter.Name.ConvertToString(), out global::FMOD.Studio.PARAMETER_DESCRIPTION parameterDescription);
-                    paremeter.ID = parameterDescription.id;
-                    parameters[i] = paremeter;
+                    FMODEventParameter parameter = parameters[i];
+                    FMODExternalMethods.FMOD_Studio_EventDescription_GetParameterDescriptionByName(
+                        eventDescription.handle, 
+                        (IntPtr)parameter.Name.GetUnsafePtr(),
+                        out global::FMOD.Studio.PARAMETER_DESCRIPTION parameterDescription);
+                    parameter.ID = parameterDescription.id;
+                    parameters[i] = parameter;
                 }
             }
             
@@ -233,8 +235,10 @@ namespace Trove.Audio.FMOD
         }
 
         internal static float GetMaxDistance(
-            in FMODEventEmitterState eventEmitterState, 
-            EnabledRefRW<LoadEventDescriptionRequest> loadEventDescriptionRequest)
+            ref FMODSingleton singleton,
+            in global::FMOD.GUID eventGUID,
+            ref FMODEventEmitterState eventEmitterState,
+            ref DynamicBuffer<FMODEventParameter> parameters)
         {
             if (eventEmitterState.OverrideAttenuation)
             {
@@ -243,7 +247,9 @@ namespace Trove.Audio.FMOD
 
             if (!eventEmitterState.EventDescription.isValid())
             {
-                loadEventDescriptionRequest.ValueRW = true;
+                eventEmitterState._eventDescription =
+                    FMODDotsUtility.LoadEventFromGUID(ref singleton, in eventGUID, ref parameters);
+                eventEmitterState.EventDescription.loadSampleData();
             }
 
             float minDistance, maxDistance;
@@ -252,16 +258,16 @@ namespace Trove.Audio.FMOD
         }
 
         internal static void UpdatePlayingStatus(
-            in FMODSingleton singleton,
+            ref FMODSingleton singleton,
+            in global::FMOD.GUID eventGUID,
             ref FMODEventEmitterState eventEmitterState, 
-            EnabledRefRW<LoadEventDescriptionRequest> loadEventDescriptionRequest,
             ref DynamicBuffer<FMODEventParameter> parameters, 
             in LocalToWorld ltw, 
             float3 velocity,
             bool force = false)
         {
             // If at least one listener is within the max distance, ensure an event instance is playing
-            float maxDistance = GetMaxDistance(in eventEmitterState, loadEventDescriptionRequest);
+            float maxDistance = GetMaxDistance(ref singleton, in eventGUID, ref eventEmitterState, ref parameters);
             bool playInstance = DistanceSquaredToNearestListener(in singleton, in ltw) <= (maxDistance * maxDistance);
             
             
@@ -333,10 +339,11 @@ namespace Trove.Audio.FMOD
                 }
             }
 
+            // Set parameters
             for (int i = 0; i < parameters.Length; i++)
             {
                 FMODEventParameter param = parameters[i];
-                eventEmitterState.EventInstance.setParameterByID(param.ID, param.Value);
+                SetParameter(eventEmitterState._eventInstance, param.ID, param.Value, false);
             }
 
             if (is3D && eventEmitterState.OverrideAttenuation)

@@ -62,11 +62,9 @@ namespace Trove.Audio.FMOD
             });
 
             AddComponent(entity, new IsActiveEmitter());
-            AddComponent(entity, new LoadEventDescriptionRequest());
             AddComponent(entity, new FMODEmitterPlayStateUpdate());
             
             SetComponentEnabled<IsActiveEmitter>(entity, false);
-            SetComponentEnabled<LoadEventDescriptionRequest>(entity, false);
             SetComponentEnabled<FMODEmitterPlayStateUpdate>(entity, false);
 
             // Add parameter buffer

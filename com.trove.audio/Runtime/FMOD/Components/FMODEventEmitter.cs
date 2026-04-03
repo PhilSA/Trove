@@ -39,10 +39,6 @@ namespace Trove.Audio.FMOD
     {
     }
 
-    public struct LoadEventDescriptionRequest : IComponentData, IEnableableComponent
-    {
-    }
-
     public struct FMODEmitterPlayStateUpdate : IComponentData, IEnableableComponent
     { }
 
