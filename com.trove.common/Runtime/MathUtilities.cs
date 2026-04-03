@@ -382,7 +382,14 @@ namespace Trove
         public static void GetGrid3DParams(int count, float spacing, out float3 extents, out int resolution)
         {
             resolution = (int)math.ceil(math.pow(count, 1f / 3f));
-            extents = (resolution * 0.5f) * spacing;
+            if (resolution <= 1)
+            {
+                extents = float3.zero;
+            }
+            else
+            {
+                extents = (resolution * 0.5f) * spacing;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -8,6 +8,12 @@ namespace Trove.Audio.FMOD
     {
         public override void Bake(StudioListener authoring)
         {
+            if (authoring.gameObject.GetComponents<StudioListener>().Length > 1)
+            {
+                UnityEngine.Debug.LogError("Cannot have more than one StudioListener component on the same GameObject");
+                return;
+            }
+            
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
             
             // Get private authoring field(s) by reflection :(

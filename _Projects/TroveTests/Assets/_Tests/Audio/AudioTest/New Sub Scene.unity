@@ -167,14 +167,14 @@ MonoBehaviour:
     type: 3}
   ListenerSpeed:
     x: 1
-    y: 0
+    y: 12
   EmitterPrefab: {fileID: 6377938929892088937, guid: 1844a6547c035a440abcb47275a718b9,
     type: 3}
   EmitterSpawnCount: 1
   EmitterSpacing: 2
   EmitterSpeed:
     x: 1
-    y: 12
+    y: 0
 --- !u!1 &1557025301
 GameObject:
   m_ObjectHideFlags: 0

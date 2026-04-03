@@ -13,6 +13,7 @@ using FMODUnity;
 using Unity.Burst.Intrinsics;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
+using Debug = UnityEngine.Debug;
 
 namespace Trove.Audio.FMOD
 {
@@ -98,10 +99,16 @@ namespace Trove.Audio.FMOD
             [ReadOnly]
             public ComponentLookup<LocalToWorld> LocalToWorldLookup;
             
-            public void Execute(ref FMODListener listener)
+            public void Execute(Entity entity, ref FMODListener listener)
             {
-                if (listener.AttenuationEntity != Entity.Null &&
-                    LocalToWorldLookup.TryGetComponent(listener.AttenuationEntity, out LocalToWorld attenuationLtW))
+                if (listener.AttenuationEntity == Entity.Null)
+                {
+                    if (LocalToWorldLookup.TryGetComponent(entity, out LocalToWorld attenuationLtW))
+                    {
+                        listener.AttenuationPosition = attenuationLtW.Position;
+                    }
+                }
+                else if (LocalToWorldLookup.TryGetComponent(listener.AttenuationEntity, out LocalToWorld attenuationLtW))
                 {
                     listener.AttenuationPosition = attenuationLtW.Position;
                 }

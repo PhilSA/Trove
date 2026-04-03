@@ -11,6 +11,12 @@ namespace Trove.Audio.FMOD
     {
         public override void Bake(StudioEventEmitter authoring)
         {
+            if (authoring.gameObject.GetComponents<StudioEventEmitter>().Length > 1)
+            {
+                UnityEngine.Debug.LogError("Cannot have more than one StudioEventEmitter component on the same GameObject");
+                return;
+            }
+            
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
 
             bool playOnCreated = false;

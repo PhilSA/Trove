@@ -53,6 +53,7 @@ partial struct AudioTestsSystem : ISystem
             if (audioTests.ListenerPrefab != Entity.Null)
             {
                 Entity listenerEntity = state.EntityManager.Instantiate(audioTests.ListenerPrefab);
+                state.EntityManager.SetComponentData(listenerEntity, LocalTransform.FromPosition(float3.zero));
                 state.EntityManager.AddComponentData(listenerEntity, new AudioTestsSpeed
                 {
                     Speed = audioTests.ListenerSpeed,
@@ -84,7 +85,8 @@ partial struct AudioTestsSystem : ISystem
         foreach (var (localTransform, speed) in 
                  SystemAPI.Query<RefRW<LocalTransform>, RefRO<AudioTestsSpeed>>())
         {
-            localTransform.ValueRW.Position = speed.ValueRO.StartPos + math.sin(elapsedTime * speed.ValueRO.Speed.x) * speed.ValueRO.Speed.y;
+            localTransform.ValueRW.Position = speed.ValueRO.StartPos + 
+                                              (math.sin(elapsedTime * speed.ValueRO.Speed.x) * speed.ValueRO.Speed.y);
         }
     }
 }
