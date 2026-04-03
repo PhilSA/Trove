@@ -88,6 +88,25 @@ namespace Trove.Audio.FMOD
             playStateUpdate.ValueRW = true;
         }
 
+        public static bool GetParameterIndex(
+            global::FMOD.Studio.PARAMETER_ID id, 
+            ref DynamicBuffer<FMODEventParameter> parameters,
+            out int parameterIndex)
+        {
+            for (int i = 0; i < parameters.Length; ++i)
+            {
+                FMODEventParameter parameter = parameters[i];
+                if (parameter.ID.data1 == id.data1 && parameter.ID.data2 == id.data2)
+                {
+                    parameterIndex = i;
+                    return true;
+                }
+            }
+
+            parameterIndex = -1;
+            return false;
+        }
+
         public static void SetParameter(
             global::FMOD.Studio.PARAMETER_ID id, 
             float value,

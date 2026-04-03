@@ -17,21 +17,23 @@ namespace Trove.Audio.FMOD
             bool playOnEnabled = false;
             bool stopOnDestroyed = false;
             bool stopOnDisabled = false;
-            if (authoring.EventPlayTrigger == EmitterGameEvent.ObjectStart)
+            switch (authoring.EventPlayTrigger)
             {
-                playOnCreated = true;
-            }
-            if (authoring.EventPlayTrigger == EmitterGameEvent.ObjectEnable)
-            {
-                playOnEnabled = true;
-            }
-            if (authoring.EventPlayTrigger == EmitterGameEvent.ObjectDestroy)
-            {
-                stopOnDestroyed = true;
-            }
-            if (authoring.EventPlayTrigger == EmitterGameEvent.ObjectDisable)
-            {
-                stopOnDisabled = true;
+                case EmitterGameEvent.ObjectStart:
+                    playOnCreated = true;
+                    break;
+                case EmitterGameEvent.ObjectEnable:
+                    playOnEnabled = true;
+                    break;
+                case EmitterGameEvent.ObjectDestroy:
+                    stopOnDestroyed = true;
+                    break;
+                case EmitterGameEvent.ObjectDisable:
+                    stopOnDisabled = true;
+                    break;
+                default:
+                    UnityEngine.Debug.LogError($"Event Play Trigger {authoring.EventPlayTrigger} is not supported in ECS");
+                    break;
             }
             
             AddComponent(entity, new FMODEventEmitter

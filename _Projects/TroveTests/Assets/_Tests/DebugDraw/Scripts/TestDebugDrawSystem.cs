@@ -1,4 +1,5 @@
 using System;
+using Trove;
 using Trove.DebugDraw;
 using Unity.Burst;
 using Unity.Entities;
@@ -72,14 +73,11 @@ partial struct TestDebugDrawSystem : ISystem
         _debugDrawGroup.Clear();
 
         float spacing = 2f;
-        int elementResolution = (int)math.ceil(math.pow(testDebugDraw.DrawCount, 1f / 3f));
+        MathUtilities.GetGrid3DParams(testDebugDraw.DrawCount, spacing, out float3 gridExtents, out int elementResolution);
         
         for (int i = 0; i < testDebugDraw.DrawCount; i++)
         {
-            float xStart = (i % elementResolution) * spacing;
-            float zStart = ((i / elementResolution) % elementResolution) * spacing;
-            float yStart = (i / (elementResolution * elementResolution)) * spacing;
-            float3 start = new float3(xStart, yStart, zStart) + elapsedTime;
+            float3 start = MathUtilities.GetGrid3DPosition(i, spacing, elementResolution) - gridExtents + elapsedTime;
 
             UnityEngine.Color tmpColorMesh = UnityEngine.Color.HSVToRGB((((i % 20f) / 20f) + elapsedTime) % 1f, 1f, 1f);
             UnityEngine.Color tmpColorLine = tmpColorMesh;
