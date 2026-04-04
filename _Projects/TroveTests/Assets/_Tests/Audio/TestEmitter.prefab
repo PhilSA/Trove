@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4889483921878305470}
   - component: {fileID: 3185307184253783563}
   - component: {fileID: 7332379861281321246}
+  - component: {fileID: -370558047687595720}
   m_Layer: 0
   m_Name: TestEmitter
   m_TagString: Untagged
@@ -106,14 +107,14 @@ MonoBehaviour:
   CollisionTag: 
   EventReference:
     Guid:
-      Data1: 63462863
-      Data2: 1083491563
-      Data3: 964216707
-      Data4: -396832587
-    Path: event:/Weapons/Pistol
+      Data1: -373839110
+      Data2: 1100164592
+      Data3: 1319579315
+      Data4: -1597025449
+    Path: event:/Weapons/Machine Gun
   Event: 
-  EventPlayTrigger: 1
-  EventStopTrigger: 2
+  EventPlayTrigger: 0
+  EventStopTrigger: 0
   AllowFadeout: 1
   TriggerOnce: 0
   Preload: 1
@@ -122,3 +123,19 @@ MonoBehaviour:
   OverrideAttenuation: 0
   OverrideMinDistance: 1
   OverrideMaxDistance: 20
+--- !u!114 &-370558047687595720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6377938929892088937}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f90cbbfeb0806e544bd6f02396894740, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: trove.audio.fmod::Trove.Audio.FMOD.FMODEmitterPlayPropertiesAuthoring
+  PlayOnCreated: 1
+  StopOnDestroyed: 1
+  PlayOnEnabled: 0
+  StopOnDisabled: 0

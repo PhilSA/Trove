@@ -37,6 +37,7 @@ namespace Trove.Audio.FMOD
             ComponentLookup<FMODEmitterPlayStateUpdate> playStateUpdateLookup = SystemAPI.GetComponentLookup<FMODEmitterPlayStateUpdate>(false);
             ComponentLookup<IsEnabledEmitter> isEnabledEmitterLookup = SystemAPI.GetComponentLookup<IsEnabledEmitter>(false);
             ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> isActiveEnitterToStopOutsideOfMaxDistanceLookup = SystemAPI.GetComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance>(false);
+            ComponentLookup<FMODEmitterPlayProperties> emitterPlayPropertiesLookup = SystemAPI.GetComponentLookup<FMODEmitterPlayProperties>(false);
 
             state.Dependency = new EventEmittersStartJob
             {
@@ -45,13 +46,14 @@ namespace Trove.Audio.FMOD
                 SingletonEntity = singletonEntity,
                 SingletonLookup = singletonLookup,
                 PlayStateUpdateLookup = playStateUpdateLookup,
+                EmitterPlayPropertiesLookup = emitterPlayPropertiesLookup,
             }.Schedule(state.Dependency);
 
             state.Dependency = new EventEmittersDestroyJob
             {
                 ECB = SystemAPI.GetSingletonRW<BeginPresentationEntityCommandBufferSystem.Singleton>().ValueRW
                     .CreateCommandBuffer(state.WorldUnmanaged),
-                PlayStateUpdateLookup = playStateUpdateLookup,
+                IsActiveEmitterToStopOutsideOfMaxDistanceLookup = isActiveEnitterToStopOutsideOfMaxDistanceLookup,
             }.Schedule(state.Dependency);
 
             state.Dependency = new EventEmittersEnableJob
@@ -60,11 +62,13 @@ namespace Trove.Audio.FMOD
                 SingletonLookup = singletonLookup,
                 IsActiveEmitterToStopOutsideOfMaxDistanceLookup = isActiveEnitterToStopOutsideOfMaxDistanceLookup,
                 IsEnabledEmitterLookup = isEnabledEmitterLookup,
+                EmitterPlayPropertiesLookup = emitterPlayPropertiesLookup,
             }.Schedule(state.Dependency);
 
             state.Dependency = new EventEmittersDisableJob
             {
                 IsActiveEmitterToStopOutsideOfMaxDistanceLookup = isActiveEnitterToStopOutsideOfMaxDistanceLookup,
+                EmitterPlayPropertiesLookup = emitterPlayPropertiesLookup,
             }.Schedule(state.Dependency);
 
             state.Dependency = new PlayEventEmittersJob
@@ -104,6 +108,7 @@ namespace Trove.Audio.FMOD
             public Entity SingletonEntity;
             public ComponentLookup<FMODSingleton> SingletonLookup;
             public ComponentLookup<FMODEmitterPlayStateUpdate> PlayStateUpdateLookup;
+            public ComponentLookup<FMODEmitterPlayProperties> EmitterPlayPropertiesLookup;
 
             [NativeDisableContainerSafetyRestriction]
             private FMODSingleton _singleton;
@@ -115,7 +120,6 @@ namespace Trove.Audio.FMOD
                 in LocalToWorld ltw)
             {
                 FMODEventEmitterState state = new FMODEventEmitterState();
-                state.UpdateFrom(eventEmitter, in ltw);
 
                 if (eventEmitter.Preload)
                 {
@@ -124,11 +128,14 @@ namespace Trove.Audio.FMOD
                     state.EventDescription.loadSampleData();
                 }
 
-                if (eventEmitter.PlayOnCreated)
+                if(EmitterPlayPropertiesLookup.TryGetComponent(entity, out FMODEmitterPlayProperties playProperties) &&
+                   playProperties.PlayOnCreated)
                 {
                     state.PlayStateEventType = EmitterControlEventType.Play;
                     PlayStateUpdateLookup.SetComponentEnabled(entity, true);
                 }
+                
+                state.UpdateFrom(eventEmitter, in playProperties, in ltw);
 
                 ECB.AddComponent(entity, state);
             }
@@ -153,11 +160,10 @@ namespace Trove.Audio.FMOD
 
         [BurstCompile]
         [WithNone(typeof(FMODEventEmitter))]
-        [WithPresent(typeof(FMODEmitterPlayStateUpdate))]
         public partial struct EventEmittersDestroyJob : IJobEntity
         {
             public EntityCommandBuffer ECB;
-            public ComponentLookup<FMODEmitterPlayStateUpdate> PlayStateUpdateLookup;
+            public ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> IsActiveEmitterToStopOutsideOfMaxDistanceLookup;
 
             public void Execute(Entity entity,
                 ref FMODEventEmitterState eventEmitterState)
@@ -177,10 +183,9 @@ namespace Trove.Audio.FMOD
                     eventEmitterState.EventDescription.unloadSampleData();
                 }
 
-                if (eventEmitterState.StopOnDestroyed)
+                if(eventEmitterState.StopOnDestroyed)
                 {
-                    EnabledRefRW<FMODEmitterPlayStateUpdate> playStateUpdate = PlayStateUpdateLookup.GetEnabledRefRW<FMODEmitterPlayStateUpdate>(entity);
-                    FMODDotsUtility.Stop(ref eventEmitterState, playStateUpdate);
+                    FMODDotsUtility.HandleStop(entity, ref eventEmitterState, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
                 }
 
                 ECB.RemoveComponent<FMODEventEmitterState>(entity);
@@ -197,6 +202,7 @@ namespace Trove.Audio.FMOD
             public ComponentLookup<FMODSingleton> SingletonLookup;
             public ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> IsActiveEmitterToStopOutsideOfMaxDistanceLookup;
             public ComponentLookup<IsEnabledEmitter> IsEnabledEmitterLookup;
+            public ComponentLookup<FMODEmitterPlayProperties> EmitterPlayPropertiesLookup;
 
             [NativeDisableContainerSafetyRestriction]
             private FMODSingleton _singleton;
@@ -210,7 +216,8 @@ namespace Trove.Audio.FMOD
             {
                 IsEnabledEmitterLookup.SetComponentEnabled(entity, true);
 
-                if (emitter.PlayOnEnabled)
+                if(EmitterPlayPropertiesLookup.TryGetComponent(entity, out FMODEmitterPlayProperties playProperties) &&
+                   playProperties.PlayOnEnabled)
                 {
                     FMODDotsUtility.HandlePlay(entity, ref _singleton, in emitter, ref eventEmitterState,
                         ref eventEmitterParameters, in ltw, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
@@ -242,6 +249,7 @@ namespace Trove.Audio.FMOD
         internal partial struct EventEmittersDisableJob : IJobEntity
         {
             public ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> IsActiveEmitterToStopOutsideOfMaxDistanceLookup;
+            public ComponentLookup<FMODEmitterPlayProperties> EmitterPlayPropertiesLookup;
             
             internal void Execute(
                 Entity entity,
@@ -251,7 +259,8 @@ namespace Trove.Audio.FMOD
             {
                 emitterIsEnabled.ValueRW = false;
 
-                if (emitter.StopOnDisabled)
+                if(EmitterPlayPropertiesLookup.TryGetComponent(entity, out FMODEmitterPlayProperties playProperties) &&
+                   playProperties.StopOnDisabled)
                 {
                     FMODDotsUtility.HandleStop(entity, ref eventEmitterState, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
                 }

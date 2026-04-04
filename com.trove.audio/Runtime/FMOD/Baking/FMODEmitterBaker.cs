@@ -19,37 +19,18 @@ namespace Trove.Audio.FMOD
             
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
 
-            bool playOnCreated = false;
-            bool playOnEnabled = false;
-            bool stopOnDestroyed = false;
-            bool stopOnDisabled = false;
-            switch (authoring.EventPlayTrigger)
+            if(authoring.EventPlayTrigger != EmitterGameEvent.None)
             {
-                case EmitterGameEvent.ObjectStart:
-                    playOnCreated = true;
-                    break;
-                case EmitterGameEvent.ObjectEnable:
-                    playOnEnabled = true;
-                    break;
-                case EmitterGameEvent.ObjectDestroy:
-                    stopOnDestroyed = true;
-                    break;
-                case EmitterGameEvent.ObjectDisable:
-                    stopOnDisabled = true;
-                    break;
-                default:
-                    UnityEngine.Debug.LogError($"Event Play Trigger {authoring.EventPlayTrigger} is not supported in ECS");
-                    break;
+                UnityEngine.Debug.LogError($"Play trigger events are not supported in ECS. Use the FMODEmitterPlayPropertiesAuthoring component instead");
+            }
+            if(authoring.EventStopTrigger != EmitterGameEvent.None)
+            {
+                UnityEngine.Debug.LogError($"Stop trigger events are not supported in ECS. Use the FMODEmitterPlayPropertiesAuthoring component instead");
             }
             
             AddComponent(entity, new FMODEventEmitter
             {
                 EventGUID = authoring.EventReference.Guid,
-
-                PlayOnCreated = playOnCreated,
-                PlayOnEnabled = playOnEnabled,
-                StopOnDestroyed = stopOnDestroyed,
-                StopOnDisabled = stopOnDisabled,
 
                 OverrideAttenuation = authoring.OverrideAttenuation,
                 OverrideMinDistance = authoring.OverrideMinDistance,

@@ -87,7 +87,10 @@ namespace Trove.Audio.FMOD
         public static void Stop(ref FMODEventEmitterState emitterState, EnabledRefRW<FMODEmitterPlayStateUpdate> playStateUpdate)
         {
             emitterState.PlayStateEventType = EmitterControlEventType.Stop;
-            playStateUpdate.ValueRW = true;
+            if(playStateUpdate.IsValid)
+            {
+                playStateUpdate.ValueRW = true;
+            }
         }
 
         public static bool GetParameter(
@@ -298,7 +301,11 @@ namespace Trove.Audio.FMOD
             ref FMODEventEmitterState eventEmitterState,
             ref ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> isActiveEmitterLookupToStopOutsideOfMaxDistance)
         {
-            isActiveEmitterLookupToStopOutsideOfMaxDistance.SetComponentEnabled(entity, false);
+            if (isActiveEmitterLookupToStopOutsideOfMaxDistance.HasComponent(entity))
+            {
+                isActiveEmitterLookupToStopOutsideOfMaxDistance.SetComponentEnabled(entity, false);
+            }
+
             FMODDotsUtility.StopInstance(entity, in eventEmitterState, ref isActiveEmitterLookupToStopOutsideOfMaxDistance);
         }
         
@@ -421,14 +428,12 @@ namespace Trove.Audio.FMOD
             {
                 if (playInstance)
                 {
-                    UnityEngine.Debug.Log("UpdatePlayingStatus: PlayInstance");
                     PlayInstance(ref eventEmitterState,
                         ref parameters,
                         in ltw);
                 }
                 else
                 {
-                    UnityEngine.Debug.Log("UpdatePlayingStatus: StopInstance");
                     StopInstance(entity, in eventEmitterState, ref isActiveEmitterToStopOutsideOfMaxDistanceLookup);
                 }
             }
@@ -476,6 +481,11 @@ namespace Trove.Audio.FMOD
             if (!eventEmitterState._eventInstance.isValid())
             {
                 eventEmitterState.EventDescription.createInstance(out eventEmitterState._eventInstance);
+
+                if (is3D)
+                {
+                    eventEmitterState._eventInstance.set3DAttributes(FMODDotsUtility.To3DAttributes(ltw, default));
+                }
             }
 
             // Set parameters

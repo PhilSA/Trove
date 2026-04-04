@@ -93,24 +93,27 @@ partial struct AudioTestsSystem : ISystem
         }
         
         // Disable
-        // DidThingCounter += SystemAPI.Time.DeltaTime;
-        // if (DidThingCounter > 3f)
-        // {
-        //     if (DidThing)
-        //     {
-        //         EntityQuery emittersQuery = SystemAPI.QueryBuilder().WithAll<FMODEventEmitter, Disabled>().Build();
-        //         DidThing = false;
-        //         Debug.Log($"Removed disabled on {emittersQuery.CalculateEntityCount()}");
-        //         state.EntityManager.RemoveComponent<Disabled>(emittersQuery);
-        //     }
-        //     else
-        //     {
-        //         EntityQuery emittersQuery = SystemAPI.QueryBuilder().WithAll<FMODEventEmitter>().Build();
-        //         DidThing = true;
-        //         Debug.Log($"Added disabled on {emittersQuery.CalculateEntityCount()}");
-        //         state.EntityManager.AddComponent<Disabled>(emittersQuery);
-        //     }
-        //     DidThingCounter = 0f;
-        // }
+        DidThingCounter += SystemAPI.Time.DeltaTime;
+        if (DidThingCounter > 3f)
+        {
+            if (DidThing)
+            {
+                EntityQuery emittersQuery = SystemAPI.QueryBuilder().WithAll<FMODEventEmitter, Disabled>().Build();
+                DidThing = false;
+                Debug.Log($"Removed disabled on {emittersQuery.CalculateEntityCount()}");
+                state.EntityManager.RemoveComponent<Disabled>(emittersQuery);
+            }
+            else
+            {
+                 EntityQuery emittersQuery = SystemAPI.QueryBuilder().WithAll<FMODEventEmitter>().Build();
+                // DidThing = true;
+                // Debug.Log($"Added disabled on {emittersQuery.CalculateEntityCount()}");
+                // state.EntityManager.AddComponent<Disabled>(emittersQuery);
+                
+                
+                state.EntityManager.DestroyEntity(emittersQuery);
+            }
+            DidThingCounter = 0f;
+        }
     }
 }

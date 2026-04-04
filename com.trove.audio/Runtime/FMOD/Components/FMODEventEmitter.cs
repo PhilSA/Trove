@@ -20,11 +20,6 @@ namespace Trove.Audio.FMOD
     {
         public global::FMOD.GUID EventGUID;
         
-        public bool PlayOnCreated;
-        public bool PlayOnEnabled;
-        public bool StopOnDestroyed;
-        public bool StopOnDisabled;
-        
         public bool OverrideAttenuation;
         public float OverrideMinDistance;
         public float OverrideMaxDistance;
@@ -33,6 +28,14 @@ namespace Trove.Audio.FMOD
         internal bool AllowFadeout;
         internal bool TriggerOnce;
         internal bool NonRigidbodyVelocity;
+    }
+
+    public struct FMODEmitterPlayProperties : IComponentData
+    {
+        public bool PlayOnCreated;
+        public bool StopOnDestroyed;
+        public bool PlayOnEnabled;
+        public bool StopOnDisabled;
     }
 
     internal struct IsEnabledEmitter : IComponentData, IEnableableComponent
@@ -58,7 +61,6 @@ namespace Trove.Audio.FMOD
         internal EmitterControlEventType PlayStateEventType;
         
         internal bool Preload;
-        internal bool StopOnDestroyed;
         internal bool TriggerOnce;
         internal bool AllowFadeout;
         
@@ -70,19 +72,22 @@ namespace Trove.Audio.FMOD
         internal bool HasTriggered;
         internal float3 PreviousPosition;
         
+        internal bool StopOnDestroyed;
+        
         internal EventInstance _eventInstance;
         internal EventDescription _eventDescription;
 
         public EventInstance EventInstance => _eventInstance;
         public EventDescription EventDescription => _eventDescription;
 
-        internal void UpdateFrom(in FMODEventEmitter emitter, in LocalToWorld ltw)
+        internal void UpdateFrom(in FMODEventEmitter emitter, in FMODEmitterPlayProperties playProperties, in LocalToWorld ltw)
         {
             Preload = emitter.Preload;
-            StopOnDestroyed = emitter.StopOnDestroyed;
             AllowFadeout = emitter.AllowFadeout;
             TriggerOnce = emitter.TriggerOnce;
             PreviousPosition = ltw.Position;
+
+            StopOnDestroyed = playProperties.StopOnDestroyed;
             
             OverrideAttenuation = emitter.OverrideAttenuation;
             OverrideMinDistance = emitter.OverrideMinDistance;
