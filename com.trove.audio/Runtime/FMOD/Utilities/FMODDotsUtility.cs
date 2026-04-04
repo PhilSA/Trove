@@ -247,7 +247,9 @@ namespace Trove.Audio.FMOD
             ref ComponentLookup<IsActiveEmitter> isActiveEmitterLookup)
         {
             if (eventEmitterState.TriggerOnce && eventEmitterState.HasTriggered)
+            {
                 return;
+            }
 
             if (!eventEmitterState.EventDescription.isValid())
             {
@@ -265,11 +267,16 @@ namespace Trove.Audio.FMOD
 
             eventEmitterState.EventDescription.is3D(out bool is3D);
 
-            isActiveEmitterLookup.SetComponentEnabled(entity, true);
-
             if (is3D && singleton.StopEventsOutsideMaxDistance)
             {
+                if (!eventEmitterState.IsOneShot)
+                {
+                    isActiveEmitterLookup.SetComponentEnabled(entity, true);
+                }
+                
                 FMODDotsUtility.UpdatePlayingStatus(
+                    entity,
+                    ref isActiveEmitterLookup,
                     ref singleton,
                     in emitter.EventGUID,
                     ref eventEmitterState, 
@@ -294,7 +301,7 @@ namespace Trove.Audio.FMOD
             ref ComponentLookup<IsActiveEmitter> isActiveEmitterLookup)
         {
             isActiveEmitterLookup.SetComponentEnabled(entity, false);
-            FMODDotsUtility.StopInstance(in eventEmitterState);
+            FMODDotsUtility.StopInstance(entity, in eventEmitterState, ref isActiveEmitterLookup);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -399,6 +406,8 @@ namespace Trove.Audio.FMOD
         }
 
         internal static void UpdatePlayingStatus(
+            Entity entity,
+            ref ComponentLookup<IsActiveEmitter> isActiveEmitterLookup,
             ref FMODSingleton singleton,
             in global::FMOD.GUID eventGUID,
             ref FMODEventEmitterState eventEmitterState, 
@@ -415,6 +424,7 @@ namespace Trove.Audio.FMOD
             {
                 if (playInstance)
                 {
+                    UnityEngine.Debug.Log("UpdatePlayingStatus: PlayInstance");
                     PlayInstance(ref eventEmitterState,
                         ref parameters,
                         in ltw,
@@ -422,7 +432,8 @@ namespace Trove.Audio.FMOD
                 }
                 else
                 {
-                    StopInstance(in eventEmitterState);
+                    UnityEngine.Debug.Log("UpdatePlayingStatus: StopInstance");
+                    StopInstance(entity, in eventEmitterState, ref isActiveEmitterLookup);
                 }
             }
         }
@@ -453,29 +464,28 @@ namespace Trove.Audio.FMOD
             in LocalToWorld ltw, 
             float3 velocity)
         {
-            if (!eventEmitterState.EventInstance.isValid())
+            if (!eventEmitterState._eventInstance.isValid())
             {
-                eventEmitterState.EventInstance.clearHandle();
+                eventEmitterState._eventInstance.clearHandle();
             }
 
             // Let previous oneshot instances play out
-            if (eventEmitterState.IsOneShot && eventEmitterState.EventInstance.isValid())
+            if (eventEmitterState.IsOneShot && eventEmitterState._eventInstance.isValid())
             {
-                eventEmitterState.EventInstance.release();
-                eventEmitterState.EventInstance.clearHandle();
+                eventEmitterState._eventInstance.release();
+                eventEmitterState._eventInstance.clearHandle();
             }
 
             eventEmitterState.EventDescription.is3D(out bool is3D);
 
-            if (!eventEmitterState.EventInstance.isValid())
+            if (!eventEmitterState._eventInstance.isValid())
             {
                 eventEmitterState.EventDescription.createInstance(out eventEmitterState._eventInstance);
 
                 // Only want to update if we need to set 3D attributes
                 if (is3D)
                 {
-                    eventEmitterState.EventInstance.set3DAttributes(FMODDotsUtility.To3DAttributes(ltw, velocity));
-                    
+                    eventEmitterState._eventInstance.set3DAttributes(FMODDotsUtility.To3DAttributes(ltw, velocity));
                 }
             }
 
@@ -493,26 +503,34 @@ namespace Trove.Audio.FMOD
 
             if (is3D && eventEmitterState.OverrideAttenuation)
             {
-                eventEmitterState.EventInstance.setProperty(global::FMOD.Studio.EVENT_PROPERTY.MINIMUM_DISTANCE, eventEmitterState.OverrideMinDistance);
-                eventEmitterState.EventInstance.setProperty(global::FMOD.Studio.EVENT_PROPERTY.MAXIMUM_DISTANCE, eventEmitterState.OverrideMaxDistance);
+                eventEmitterState._eventInstance.setProperty(global::FMOD.Studio.EVENT_PROPERTY.MINIMUM_DISTANCE, eventEmitterState.OverrideMinDistance);
+                eventEmitterState._eventInstance.setProperty(global::FMOD.Studio.EVENT_PROPERTY.MAXIMUM_DISTANCE, eventEmitterState.OverrideMaxDistance);
             }
 
-            eventEmitterState.EventInstance.start();
+            eventEmitterState._eventInstance.start();
 
             eventEmitterState.HasTriggered = true;
         }
 
-        internal static void StopInstance(in FMODEventEmitterState eventEmitterState)
+        internal static void StopInstance(
+            Entity entity,
+            in FMODEventEmitterState eventEmitterState,
+            ref ComponentLookup<IsActiveEmitter> isActiveEmitterLookup)
         {
-            if (eventEmitterState.EventInstance.isValid())
+            if (eventEmitterState.TriggerOnce && eventEmitterState.HasTriggered)
             {
-                eventEmitterState.EventInstance.stop(eventEmitterState.AllowFadeout
+                isActiveEmitterLookup.SetComponentEnabled(entity, false);
+            }
+
+            if (eventEmitterState._eventInstance.isValid())
+            {
+                eventEmitterState._eventInstance.stop(eventEmitterState.AllowFadeout
                     ? global::FMOD.Studio.STOP_MODE.ALLOWFADEOUT
                     : global::FMOD.Studio.STOP_MODE.IMMEDIATE);
-                eventEmitterState.EventInstance.release();
+                eventEmitterState._eventInstance.release();
                 if (!eventEmitterState.AllowFadeout)
                 {
-                    eventEmitterState.EventInstance.clearHandle();
+                    eventEmitterState._eventInstance.clearHandle();
                 }
             }
         }

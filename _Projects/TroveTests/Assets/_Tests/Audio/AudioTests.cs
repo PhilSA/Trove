@@ -70,8 +70,7 @@ partial struct AudioTestsSystem : ISystem
                 for (int i = 0; i < audioTests.EmitterSpawnCount; i++)
                 {
                     Entity emitterEntity = state.EntityManager.Instantiate(audioTests.EmitterPrefab);
-                    float3 pos = MathUtilities.GetGrid3DPosition(i, audioTests.EmitterSpacing, elementResolution) -
-                                 gridExtents;
+                    float3 pos = MathUtilities.GetGrid3DPosition(i, audioTests.EmitterSpacing, elementResolution) - gridExtents;
                     state.EntityManager.SetComponentData(emitterEntity, LocalTransform.FromPosition(pos));
                     state.EntityManager.AddComponentData(emitterEntity, new AudioTestsSpeed
                     {

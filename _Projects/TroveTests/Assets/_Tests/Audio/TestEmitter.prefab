@@ -106,21 +106,19 @@ MonoBehaviour:
   CollisionTag: 
   EventReference:
     Guid:
-      Data1: 209937332
-      Data2: 1335632815
-      Data3: 1359563695
-      Data4: -2072128577
-    Path: event:/Vehicles/Car Engine
+      Data1: 63462863
+      Data2: 1083491563
+      Data3: 964216707
+      Data4: -396832587
+    Path: event:/Weapons/Pistol
   Event: 
   EventPlayTrigger: 1
   EventStopTrigger: 2
   AllowFadeout: 1
   TriggerOnce: 0
-  Preload: 1
+  Preload: 0
   NonRigidbodyVelocity: 0
-  Params:
-  - Name: RPM
-    Value: 1000
+  Params: []
   OverrideAttenuation: 0
   OverrideMinDistance: 1
   OverrideMaxDistance: 20

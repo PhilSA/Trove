@@ -161,13 +161,13 @@ namespace Trove.Audio.FMOD
             public void Execute(Entity entity,
                 ref FMODEventEmitterState eventEmitterState)
             {
-                if (eventEmitterState.EventInstance.isValid())
+                if (eventEmitterState._eventInstance.isValid())
                 {
                     eventEmitterState.EventDescription.isOneshot(out eventEmitterState.IsOneShot);
                     if (eventEmitterState.EventDescription.isValid() && eventEmitterState.IsOneShot)
                     {
-                        eventEmitterState.EventInstance.release();
-                        eventEmitterState.EventInstance.clearHandle();
+                        eventEmitterState._eventInstance.release();
+                        eventEmitterState._eventInstance.clearHandle();
                     }
                 }
 
@@ -344,10 +344,10 @@ namespace Trove.Audio.FMOD
                         FMODDotsUtility.HandleStop(entity, ref eventEmitterState, ref IsActiveLookup);
                         break;
                     case EmitterControlEventType.Pause:
-                        eventEmitterState.EventInstance.setPaused(true);
+                        eventEmitterState._eventInstance.setPaused(true);
                         break;
                     case EmitterControlEventType.Resume:
-                        eventEmitterState.EventInstance.setPaused(false);
+                        eventEmitterState._eventInstance.setPaused(false);
                         break;
                 }
             }
@@ -383,7 +383,6 @@ namespace Trove.Audio.FMOD
             private FMODSingleton _singleton;
             
             public void Execute(
-                Entity entity,
                 ref FMODEventEmitter eventEmitter,
                 ref DynamicBuffer<FMODEventParameter> eventEmitterParameters,
                 in LocalToWorld ltw,
@@ -391,18 +390,18 @@ namespace Trove.Audio.FMOD
             {
                 if (!ltw.Position.Equals(eventEmitterState.PreviousPosition))
                 {
-                    eventEmitterState.EventInstance.set3DAttributes(
+                    eventEmitterState._eventInstance.set3DAttributes(
                         FMODDotsUtility.To3DAttributes(ltw, eventEmitterState.Velocity));
                 }
 
-                FMODDotsUtility.UpdatePlayingStatus(
-                    ref _singleton,
-                    in eventEmitter.EventGUID,
-                    ref eventEmitterState, 
-                    ref eventEmitterParameters,
-                    in ltw,
-                    eventEmitterState.Velocity,
-                    false);
+                // FMODDotsUtility.UpdatePlayingStatus(
+                //     ref _singleton,
+                //     in eventEmitter.EventGUID,
+                //     ref eventEmitterState, 
+                //     ref eventEmitterParameters,
+                //     in ltw,
+                //     eventEmitterState.Velocity,
+                //     false);
                 
                 eventEmitterState.PreviousPosition = ltw.Position;
             }
