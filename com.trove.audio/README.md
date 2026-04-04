@@ -1,4 +1,4 @@
 
 # Trove Audio
 
-Trove Audio provides Wwise and FMOD integrations that are compatible with DOTS workflows
+Trove Audio provides an ECS+Jobs+Burst FMOD integration built on top of the [FMOD For Unity]() package

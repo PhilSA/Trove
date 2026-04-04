@@ -43,10 +43,6 @@ _Projects/TroveTests/.idea
 _Projects/TroveTests/.idea/.idea.TroveTests/.idea/workspace.xml
 
 
-# Ignore the whole FMOD plugin (because public repo)
-_Projects/TroveTests/Assets/Plugins/FMOD/*
-
-
 # FMOD -------------------------------------------------------------------------
 # Never ignore DLLs in the FMOD subfolder.
 !/[Aa]ssets/Plugins/FMOD/**/lib/*
