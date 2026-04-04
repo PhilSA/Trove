@@ -4,7 +4,7 @@ using FMODUnity;
 
 namespace Trove.Audio.FMOD
 {
-    public class StudioListenerBaker : Baker<StudioListener>
+    public class FMODListenerBaker : Baker<StudioListener>
     {
         public override void Bake(StudioListener authoring)
         {

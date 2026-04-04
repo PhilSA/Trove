@@ -15,7 +15,7 @@ namespace Trove.Audio.FMOD
     /// <summary>
     /// Utility methods for converting ECS transform data to FMOD 3D attributes.
     /// </summary>
-    public static class FMODDotsUtility
+    public static class FMODUtilities
     {
         public static bool IsPlaying(EventInstance eventInstance)
         {
@@ -257,7 +257,7 @@ namespace Trove.Audio.FMOD
             if (!eventEmitterState.EventDescription.isValid())
             {
                 eventEmitterState._eventDescription =
-                    FMODDotsUtility.LoadEventFromGUID(ref singleton, in emitter.EventGUID, ref eventEmitterParameters);
+                    FMODUtilities.LoadEventFromGUID(ref singleton, in emitter.EventGUID, ref eventEmitterParameters);
                 eventEmitterState.EventDescription.loadSampleData();
             }
 
@@ -277,7 +277,7 @@ namespace Trove.Audio.FMOD
                     isActiveEmitterToStopOutsideOfMaxDistanceLookup.SetComponentEnabled(entity, true);
                 }
                 
-                FMODDotsUtility.UpdatePlayingStatus(
+                FMODUtilities.UpdatePlayingStatus(
                     entity,
                     ref isActiveEmitterToStopOutsideOfMaxDistanceLookup,
                     ref singleton,
@@ -289,7 +289,7 @@ namespace Trove.Audio.FMOD
             }
             else
             {
-                FMODDotsUtility.PlayInstance(
+                FMODUtilities.PlayInstance(
                     ref eventEmitterState,
                     ref eventEmitterParameters,
                     in ltw);
@@ -306,7 +306,7 @@ namespace Trove.Audio.FMOD
                 isActiveEmitterLookupToStopOutsideOfMaxDistance.SetComponentEnabled(entity, false);
             }
 
-            FMODDotsUtility.StopInstance(entity, in eventEmitterState, ref isActiveEmitterLookupToStopOutsideOfMaxDistance);
+            FMODUtilities.StopInstance(entity, in eventEmitterState, ref isActiveEmitterLookupToStopOutsideOfMaxDistance);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -345,7 +345,7 @@ namespace Trove.Audio.FMOD
             ref DynamicBuffer<FMODEventParameter> parameters)
         {
             global::FMOD.Studio.EventDescription eventDescription = 
-                FMODDotsUtility.GetOrCreateEventDescription(ref singleton, in eventGUID);
+                FMODUtilities.GetOrCreateEventDescription(ref singleton, in eventGUID);
 
             if (eventDescription.isValid())
             {
@@ -401,7 +401,7 @@ namespace Trove.Audio.FMOD
             if (!eventEmitterState.EventDescription.isValid())
             {
                 eventEmitterState._eventDescription =
-                    FMODDotsUtility.LoadEventFromGUID(ref singleton, in eventGUID, ref parameters);
+                    FMODUtilities.LoadEventFromGUID(ref singleton, in eventGUID, ref parameters);
                 eventEmitterState.EventDescription.loadSampleData();
             }
 
@@ -484,7 +484,7 @@ namespace Trove.Audio.FMOD
 
                 if (is3D)
                 {
-                    eventEmitterState._eventInstance.set3DAttributes(FMODDotsUtility.To3DAttributes(ltw, default));
+                    eventEmitterState._eventInstance.set3DAttributes(FMODUtilities.To3DAttributes(ltw, default));
                 }
             }
 

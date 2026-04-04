@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Trove
 {
@@ -366,7 +367,7 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void GetGrid2DParams(int count, float spacing, out float2 extents, out int resolution)
         {
-            resolution = (int)(math.sqrt(count));
+            resolution = (int)math.ceil(math.sqrt(count) - math.EPSILON);
             extents = ((resolution - 1) * 0.5f) * spacing;
         }
 
@@ -381,7 +382,7 @@ namespace Trove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void GetGrid3DParams(int count, float spacing, out float3 extents, out int resolution)
         {
-            resolution = (int)(math.pow(count, 1f / 3f));
+            resolution = (int)math.ceil(math.pow(count, 1f / 3f) - math.EPSILON);
             extents = ((resolution - 1) * spacing) * 0.5f;
         }
 

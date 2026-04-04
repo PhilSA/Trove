@@ -124,7 +124,7 @@ namespace Trove.Audio.FMOD
                 if (eventEmitter.Preload)
                 {
                     state._eventDescription =
-                        FMODDotsUtility.LoadEventFromGUID(ref _singleton, in eventEmitter.EventGUID, ref eventEmitterParameters);
+                        FMODUtilities.LoadEventFromGUID(ref _singleton, in eventEmitter.EventGUID, ref eventEmitterParameters);
                     state.EventDescription.loadSampleData();
                 }
 
@@ -185,7 +185,7 @@ namespace Trove.Audio.FMOD
 
                 if(eventEmitterState.StopOnDestroyed)
                 {
-                    FMODDotsUtility.HandleStop(entity, ref eventEmitterState, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
+                    FMODUtilities.HandleStop(entity, ref eventEmitterState, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
                 }
 
                 ECB.RemoveComponent<FMODEventEmitterState>(entity);
@@ -219,7 +219,7 @@ namespace Trove.Audio.FMOD
                 if(EmitterPlayPropertiesLookup.TryGetComponent(entity, out FMODEmitterPlayProperties playProperties) &&
                    playProperties.PlayOnEnabled)
                 {
-                    FMODDotsUtility.HandlePlay(entity, ref _singleton, in emitter, ref eventEmitterState,
+                    FMODUtilities.HandlePlay(entity, ref _singleton, in emitter, ref eventEmitterState,
                         ref eventEmitterParameters, in ltw, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
                 }
             }
@@ -262,7 +262,7 @@ namespace Trove.Audio.FMOD
                 if(EmitterPlayPropertiesLookup.TryGetComponent(entity, out FMODEmitterPlayProperties playProperties) &&
                    playProperties.StopOnDisabled)
                 {
-                    FMODDotsUtility.HandleStop(entity, ref eventEmitterState, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
+                    FMODUtilities.HandleStop(entity, ref eventEmitterState, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
                 }
             }
         }
@@ -291,11 +291,11 @@ namespace Trove.Audio.FMOD
                 switch (eventEmitterState.PlayStateEventType)
                 {
                     case EmitterControlEventType.Play:
-                        FMODDotsUtility.HandlePlay(entity, ref _singleton, in emitter, ref eventEmitterState,
+                        FMODUtilities.HandlePlay(entity, ref _singleton, in emitter, ref eventEmitterState,
                             ref eventEmitterParameters, in ltw, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
                         break;
                     case EmitterControlEventType.Stop:
-                        FMODDotsUtility.HandleStop(entity, ref eventEmitterState, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
+                        FMODUtilities.HandleStop(entity, ref eventEmitterState, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
                         break;
                     case EmitterControlEventType.Pause:
                         eventEmitterState._eventInstance.setPaused(true);
@@ -346,7 +346,7 @@ namespace Trove.Audio.FMOD
                 ref FMODEventEmitterState eventEmitterState)
             {
                 UnityEngine.Debug.Log($"UpdateActiveEventEmittersToStopOutsideOfMaxDistanceJob {entity}");
-                FMODDotsUtility.UpdatePlayingStatus(
+                FMODUtilities.UpdatePlayingStatus(
                     entity,
                     ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup,
                     ref _singleton,
@@ -393,12 +393,12 @@ namespace Trove.Audio.FMOD
                 if (DeltaTime != 0f)
                 {
                     velocity = (ltw.Position - eventEmitterState.PreviousPosition) / DeltaTime;
-                    velocity = FMODDotsUtility.ClampToMaxLength(velocity, 20f);
+                    velocity = FMODUtilities.ClampToMaxLength(velocity, 20f);
                 }
                 
                 if (!ltw.Position.Equals(eventEmitterState.PreviousPosition))
                 {
-                    eventEmitterState._eventInstance.set3DAttributes(FMODDotsUtility.To3DAttributes(ltw, velocity));
+                    eventEmitterState._eventInstance.set3DAttributes(FMODUtilities.To3DAttributes(ltw, velocity));
                 }
                 
                 eventEmitterState.PreviousPosition = ltw.Position;
@@ -424,7 +424,7 @@ namespace Trove.Audio.FMOD
                     if (DeltaTime != 0f)
                     {
                         velocity = (ltw.Position - eventEmitterState.PreviousPosition) / DeltaTime;
-                        velocity = FMODDotsUtility.ClampToMaxLength(velocity, 20f);
+                        velocity = FMODUtilities.ClampToMaxLength(velocity, 20f);
                     }
                 }
                 else
@@ -434,7 +434,7 @@ namespace Trove.Audio.FMOD
                 
                 if (!ltw.Position.Equals(eventEmitterState.PreviousPosition))
                 {
-                    eventEmitterState._eventInstance.set3DAttributes(FMODDotsUtility.To3DAttributes(ltw, velocity));
+                    eventEmitterState._eventInstance.set3DAttributes(FMODUtilities.To3DAttributes(ltw, velocity));
                 }
                 
                 eventEmitterState.PreviousPosition = ltw.Position;

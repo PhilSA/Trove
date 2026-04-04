@@ -1,17 +1,16 @@
+using FMODUnity;
 using Unity.Entities;
 using Unity.Collections;
 
 namespace Trove.Audio.FMOD
 {
-    /// <summary>
-    /// Loads and unloads FMOD banks in response to FMODBankLoadRequest/FMODBankUnloadRequest tags.
-    /// Replaces StudioBankLoader MonoBehaviour.
-    /// </summary>
     [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateAfter(typeof(FMODSingletonSystem))]
     public partial class FMODBankLoaderSystem : SystemBase
     {
         protected override void OnCreate()
         {
+            RuntimeUtils.EnforceLibraryOrder();
             RequireForUpdate<FMODBankLoaderComponent>();
         }
 
@@ -20,76 +19,49 @@ namespace Trove.Audio.FMOD
             if (!FMODUnity.RuntimeManager.IsInitialized)
                 return;
 
-            ProcessLoadRequests();
-            ProcessUnloadRequests();
-        }
-
-        private void ProcessLoadRequests()
-        {
-            var ecb = new EntityCommandBuffer(Allocator.Temp);
-
-            foreach (var (loader, bankBuffer, entity)
-                in SystemAPI.Query<RefRW<FMODBankLoaderComponent>, DynamicBuffer<FMODBankReferenceElement>>()
-                    .WithAll<FMODBankLoadRequest>()
-                    .WithEntityAccess())
+            // Load
+            foreach (var (loader, bankBuffer, bankLoadRequest)
+                     in SystemAPI
+                         .Query<RefRW<FMODBankLoaderComponent>, DynamicBuffer<FMODBankElement>,
+                             EnabledRefRW<FMODBankLoadRequest>>()
+                         .WithAll<FMODBankLoadRequest>())
             {
-                ecb.SetComponentEnabled<FMODBankLoadRequest>(entity, false);
-
-                ref var loaderData = ref loader.ValueRW;
-                if (loaderData.IsLoaded)
-                    continue;
+                bankLoadRequest.ValueRW = false;
 
                 for (int i = 0; i < bankBuffer.Length; i++)
                 {
-                    string bankName = bankBuffer[i].BankName.ToString();
+                    FMODBankElement bank = bankBuffer[i];
+
                     try
                     {
-                        FMODUnity.RuntimeManager.LoadBank(bankName, loaderData.PreloadSamples);
+                        RuntimeManager.LoadBank(bank.BankName.ConvertToString(), loader.ValueRO.PreloadSamples);
                     }
-                    catch (FMODUnity.BankLoadException e)
+                    catch (BankLoadException e)
                     {
-                        UnityEngine.Debug.LogException(e);
+                        RuntimeUtils.DebugLogException(e);
                     }
                 }
 
-                if (loaderData.PreloadSamples)
+                if (loader.ValueRO.PreloadSamples)
                 {
-                    FMODUnity.RuntimeManager.WaitForAllSampleLoading();
+                    RuntimeManager.WaitForAllSampleLoading();
                 }
-
-                loaderData.IsLoaded = true;
             }
-
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
-        }
-
-        private void ProcessUnloadRequests()
-        {
-            var ecb = new EntityCommandBuffer(Allocator.Temp);
-
-            foreach (var (loader, bankBuffer, entity)
-                in SystemAPI.Query<RefRW<FMODBankLoaderComponent>, DynamicBuffer<FMODBankReferenceElement>>()
-                    .WithAll<FMODBankUnloadRequest>()
-                    .WithEntityAccess())
+            
+            // Unload
+            foreach (var (loader, bankBuffer, unloadRequest)
+                     in SystemAPI.Query<RefRW<FMODBankLoaderComponent>, DynamicBuffer<FMODBankElement>,
+                    EnabledRefRW<FMODBankLoadRequest>>()
+                         .WithAll<FMODBankUnloadRequest>())
             {
-                ecb.SetComponentEnabled<FMODBankUnloadRequest>(entity, false);
-
-                ref var loaderData = ref loader.ValueRW;
-                if (!loaderData.IsLoaded)
-                    continue;
+                unloadRequest.ValueRW = false;
 
                 for (int i = 0; i < bankBuffer.Length; i++)
                 {
-                    string bankName = bankBuffer[i].BankName.ToString();
-                    FMODUnity.RuntimeManager.UnloadBank(bankName);
+                    FMODBankElement bank = bankBuffer[i];
+                    RuntimeManager.UnloadBank(bank.BankName.ConvertToString());
                 }
-
-                loaderData.IsLoaded = false;
             }
-
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
         }
     }
 }

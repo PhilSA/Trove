@@ -66,10 +66,6 @@ namespace Trove.Audio.FMOD
             }.Schedule(state.Dependency);
 #endif
             
-            state.Dependency = new FMODListenerPreviousPositionsJob
-            {
-            }.Schedule(state.Dependency);
-            
             state.Dependency = new ClearActiveListenerDatasJob
             {
                 SingletonEntity = singletonEntity,
@@ -137,14 +133,16 @@ namespace Trove.Audio.FMOD
                     if (DeltaTime != 0f)
                     {
                         velocity = (ltw.Position - listener.PreviousPosition) / DeltaTime;
-                        velocity = FMODDotsUtility.ClampToMaxLength(velocity, 20f);
+                        velocity = FMODUtilities.ClampToMaxLength(velocity, 20f);
                     }
                     
                     FMODSingleton.StudioSystem.setListenerAttributes(
                         listener.ListenerIndex, 
-                        FMODDotsUtility.To3DAttributes(ltw, velocity), 
-                        FMODDotsUtility.ToFMODVector(listener.AttenuationPosition));
+                        FMODUtilities.To3DAttributes(ltw, velocity), 
+                        FMODUtilities.ToFMODVector(listener.AttenuationPosition));
                 }
+                
+                listener.PreviousPosition = ltw.Position;
             }
         }
 
@@ -166,34 +164,27 @@ namespace Trove.Audio.FMOD
                         if (DeltaTime != 0f)
                         {
                             velocity = (ltw.Position - listener.PreviousPosition) / DeltaTime;
-                            velocity = FMODDotsUtility.ClampToMaxLength(velocity, 20f);
+                            velocity = FMODUtilities.ClampToMaxLength(velocity, 20f);
                         }
 
                         FMODSingleton.StudioSystem.setListenerAttributes(
                             listener.ListenerIndex, 
-                            FMODDotsUtility.To3DAttributes(ltw, velocity), 
-                            FMODDotsUtility.ToFMODVector(listener.AttenuationPosition));
+                            FMODUtilities.To3DAttributes(ltw, velocity), 
+                            FMODUtilities.ToFMODVector(listener.AttenuationPosition));
                     }
                     else
                     {
                         FMODSingleton.StudioSystem.setListenerAttributes(
                             listener.ListenerIndex, 
-                            FMODDotsUtility.To3DAttributes(ltw, physicsVelocity.Linear), 
-                            FMODDotsUtility.ToFMODVector(listener.AttenuationPosition));
+                            FMODUtilities.To3DAttributes(ltw, physicsVelocity.Linear), 
+                            FMODUtilities.ToFMODVector(listener.AttenuationPosition));
                     }
                 }
-            }
-        }
-#endif
-
-        [BurstCompile]
-        public partial struct FMODListenerPreviousPositionsJob : IJobEntity
-        {
-            public void Execute(ref FMODListener listener, in LocalToWorld ltw)
-            {
+                
                 listener.PreviousPosition = ltw.Position;
             }
         }
+#endif
 
         [BurstCompile]
         public unsafe struct ClearActiveListenerDatasJob : IJob
