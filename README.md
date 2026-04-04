@@ -39,6 +39,7 @@ The packages are hosted on [OpenUPM](https://openupm.com/). You can install them
 | **Spatial Queries** | [com.trove.spatialqueries](https://openupm.com/packages/com.trove.spatialqueries/) | Trove Spatial Queries provides tools for querying objects in the scene. | [Documentation](./com.trove.spatialqueries/README.md) |
 | **Utility AI** | [com.trove.utilityai](https://openupm.com/packages/com.trove.utilityai/) | Trove Utility AI provides a flexible and efficient decision-making system for ECS. | [Documentation](./com.trove.utilityai/README.md) |
 | **Tweens** | [com.trove.tweens](https://openupm.com/packages/com.trove.tweens/) | Trove Tweens is a simple tweening tool that allows you to create your own highly-efficient custom tweens. | [Documentation](./com.trove.tweens/README.md) |
+| **Audio** | [com.trove.audio](https://openupm.com/packages/com.trove.audio/) | Trove Audio is a simple ECS interface for FMOD. | [Documentation](./com.trove.audio/README.md) |
 | **Debug Draw** | [com.trove.debugdraw](https://openupm.com/packages/com.trove.debugdraw/) | Trove Debug Draw is a GPU-persistent burst-compatible debug line/mesh drawer. | [Documentation](./com.trove.debugdraw/README.md) |
 
 

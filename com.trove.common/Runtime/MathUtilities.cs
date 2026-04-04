@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Trove
 {
@@ -361,6 +362,37 @@ namespace Trove
         {
             return containedStart >= start && 
                    (containedStart + containedLength <= start + length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void GetGrid2DParams(int count, float spacing, out float2 extents, out int resolution)
+        {
+            resolution = (int)math.ceil(math.sqrt(count) - math.EPSILON);
+            extents = ((resolution - 1) * 0.5f) * spacing;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float2 GetGrid2DPosition(int index, float spacing, int resolution)
+        {
+            return new float2(
+                (index % resolution) * spacing,
+                ((index / resolution) % resolution) * spacing);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void GetGrid3DParams(int count, float spacing, out float3 extents, out int resolution)
+        {
+            resolution = (int)math.ceil(math.pow(count, 1f / 3f) - math.EPSILON);
+            extents = ((resolution - 1) * spacing) * 0.5f;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float3 GetGrid3DPosition(int index, float spacing, int resolution)
+        {
+            return new float3(
+                (index % resolution) * spacing,
+                (index / (resolution * resolution)) * spacing,
+                ((index / resolution) % resolution) * spacing);
         }
 
         // TODO: untested

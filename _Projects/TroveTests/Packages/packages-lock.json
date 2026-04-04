@@ -1,5 +1,21 @@
 {
   "dependencies": {
+    "com.fmod.fmod-for-unity-2-03": {
+      "version": "2.3.12",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.trove.audio": {
+      "version": "file:C:/Projects/Trove/com.trove.audio",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.unity.entities": "1.3.2",
+        "com.fmod.fmod-for-unity-2-03": "2.3.12"
+      }
+    },
     "com.trove.common": {
       "version": "file:../../../com.trove.common",
       "depth": 0,

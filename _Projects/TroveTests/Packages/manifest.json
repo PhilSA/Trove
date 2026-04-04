@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.trove.audio": "file:C:/Projects/Trove/com.trove.audio",
     "com.trove.common": "file:../../../com.trove.common",
     "com.trove.debugdraw": "file:../../../com.trove.debugdraw",
     "com.trove.eventsystems": "file:../../../com.trove.eventsystems",
