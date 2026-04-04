@@ -374,14 +374,12 @@ namespace Trove.Audio.FMOD
             {
                 RESULT result = singleton.StudioSystem.getEventByID(eventGUID, out eventDescription);
 
-                if (result != RESULT.OK)
+                if (result == RESULT.OK)
                 {
-                    throw new EventNotFoundException(eventGUID);
-                }
-
-                if (eventDescription.isValid())
-                {
-                    singleton.CachedEventDescriptions->TryAdd(eventGUID, eventDescription);
+                    if (eventDescription.isValid())
+                    {
+                        singleton.CachedEventDescriptions->TryAdd(eventGUID, eventDescription);
+                    }
                 }
             }
             return eventDescription;

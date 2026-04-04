@@ -171,7 +171,7 @@ MonoBehaviour:
   EmitterPrefab: {fileID: 6377938929892088937, guid: 1844a6547c035a440abcb47275a718b9,
     type: 3}
   EmitterSpawnCount: 25
-  EmitterSpacing: 2.92
+  EmitterSpacing: 3
   EmitterSpeed:
     x: 1
     y: 0
@@ -200,7 +200,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1557025301}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9a6610d2e704f1648819acc8d7460285, type: 3}
   m_Name: 
