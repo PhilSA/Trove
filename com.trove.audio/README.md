@@ -3,6 +3,10 @@
 
 Trove Audio provides an ECS+Jobs+Burst FMOD integration built on top of the "*FMOD For Unity*" (com.fmod.fmod-for-unity-2-03) package. All audio emitter and listener logic happens fully in burst jobs.
 
+## Installation
+
+Refer to [Trove Readme](https://github.com/PhilSA/Trove/blob/main/README.md#installing-the-packages) for installation instructions.
+
 ## Project Setup
 
 Importing Trove Audio will automatically import the "FMOD For Unity" package. You should see an FMOD setup wizard when opening your Unity project, and it'll take you through the steps for setting up FMOD in your project.
