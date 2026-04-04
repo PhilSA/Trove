@@ -116,7 +116,7 @@ MonoBehaviour:
   EventStopTrigger: 2
   AllowFadeout: 1
   TriggerOnce: 0
-  Preload: 0
+  Preload: 1
   NonRigidbodyVelocity: 0
   Params: []
   OverrideAttenuation: 0

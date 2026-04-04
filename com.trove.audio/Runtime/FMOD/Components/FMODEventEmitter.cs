@@ -39,7 +39,7 @@ namespace Trove.Audio.FMOD
     {
     }
 
-    public struct IsActiveEmitter : IComponentData, IEnableableComponent
+    public struct IsActiveEmitterToStopOutsideOfMaxDistance : IComponentData, IEnableableComponent
     {
     }
 
@@ -69,7 +69,6 @@ namespace Trove.Audio.FMOD
         internal bool IsOneShot;
         internal bool HasTriggered;
         internal float3 PreviousPosition;
-        internal float3 Velocity;
         
         internal EventInstance _eventInstance;
         internal EventDescription _eventDescription;

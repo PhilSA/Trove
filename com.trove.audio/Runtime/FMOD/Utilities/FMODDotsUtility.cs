@@ -244,7 +244,7 @@ namespace Trove.Audio.FMOD
             ref FMODEventEmitterState eventEmitterState,
             ref DynamicBuffer<FMODEventParameter> eventEmitterParameters,
             in LocalToWorld ltw,
-            ref ComponentLookup<IsActiveEmitter> isActiveEmitterLookup)
+            ref ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> isActiveEmitterToStopOutsideOfMaxDistanceLookup)
         {
             if (eventEmitterState.TriggerOnce && eventEmitterState.HasTriggered)
             {
@@ -271,18 +271,17 @@ namespace Trove.Audio.FMOD
             {
                 if (!eventEmitterState.IsOneShot)
                 {
-                    isActiveEmitterLookup.SetComponentEnabled(entity, true);
+                    isActiveEmitterToStopOutsideOfMaxDistanceLookup.SetComponentEnabled(entity, true);
                 }
                 
                 FMODDotsUtility.UpdatePlayingStatus(
                     entity,
-                    ref isActiveEmitterLookup,
+                    ref isActiveEmitterToStopOutsideOfMaxDistanceLookup,
                     ref singleton,
                     in emitter.EventGUID,
                     ref eventEmitterState, 
                     ref eventEmitterParameters,
                     in ltw,
-                    eventEmitterState.Velocity,
                     true);
             }
             else
@@ -290,18 +289,17 @@ namespace Trove.Audio.FMOD
                 FMODDotsUtility.PlayInstance(
                     ref eventEmitterState,
                     ref eventEmitterParameters,
-                    in ltw,
-                    eventEmitterState.Velocity);
+                    in ltw);
             }
         }
 
         internal static void HandleStop(
             Entity entity, 
             ref FMODEventEmitterState eventEmitterState,
-            ref ComponentLookup<IsActiveEmitter> isActiveEmitterLookup)
+            ref ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> isActiveEmitterLookupToStopOutsideOfMaxDistance)
         {
-            isActiveEmitterLookup.SetComponentEnabled(entity, false);
-            FMODDotsUtility.StopInstance(entity, in eventEmitterState, ref isActiveEmitterLookup);
+            isActiveEmitterLookupToStopOutsideOfMaxDistance.SetComponentEnabled(entity, false);
+            FMODDotsUtility.StopInstance(entity, in eventEmitterState, ref isActiveEmitterLookupToStopOutsideOfMaxDistance);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -407,13 +405,12 @@ namespace Trove.Audio.FMOD
 
         internal static void UpdatePlayingStatus(
             Entity entity,
-            ref ComponentLookup<IsActiveEmitter> isActiveEmitterLookup,
+            ref ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> isActiveEmitterToStopOutsideOfMaxDistanceLookup,
             ref FMODSingleton singleton,
             in global::FMOD.GUID eventGUID,
             ref FMODEventEmitterState eventEmitterState, 
             ref DynamicBuffer<FMODEventParameter> parameters, 
             in LocalToWorld ltw, 
-            float3 velocity,
             bool force = false)
         {
             // If at least one listener is within the max distance, ensure an event instance is playing
@@ -427,13 +424,12 @@ namespace Trove.Audio.FMOD
                     UnityEngine.Debug.Log("UpdatePlayingStatus: PlayInstance");
                     PlayInstance(ref eventEmitterState,
                         ref parameters,
-                        in ltw,
-                        velocity);
+                        in ltw);
                 }
                 else
                 {
                     UnityEngine.Debug.Log("UpdatePlayingStatus: StopInstance");
-                    StopInstance(entity, in eventEmitterState, ref isActiveEmitterLookup);
+                    StopInstance(entity, in eventEmitterState, ref isActiveEmitterToStopOutsideOfMaxDistanceLookup);
                 }
             }
         }
@@ -461,8 +457,7 @@ namespace Trove.Audio.FMOD
         internal unsafe static void PlayInstance(
             ref FMODEventEmitterState eventEmitterState,
             ref DynamicBuffer<FMODEventParameter> parameters, 
-            in LocalToWorld ltw, 
-            float3 velocity)
+            in LocalToWorld ltw)
         {
             if (!eventEmitterState._eventInstance.isValid())
             {
@@ -481,12 +476,6 @@ namespace Trove.Audio.FMOD
             if (!eventEmitterState._eventInstance.isValid())
             {
                 eventEmitterState.EventDescription.createInstance(out eventEmitterState._eventInstance);
-
-                // Only want to update if we need to set 3D attributes
-                if (is3D)
-                {
-                    eventEmitterState._eventInstance.set3DAttributes(FMODDotsUtility.To3DAttributes(ltw, velocity));
-                }
             }
 
             // Set parameters
@@ -515,11 +504,11 @@ namespace Trove.Audio.FMOD
         internal static void StopInstance(
             Entity entity,
             in FMODEventEmitterState eventEmitterState,
-            ref ComponentLookup<IsActiveEmitter> isActiveEmitterLookup)
+            ref ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> isActiveEmitterToStopOutsideOfMaxDistanceLookup)
         {
             if (eventEmitterState.TriggerOnce && eventEmitterState.HasTriggered)
             {
-                isActiveEmitterLookup.SetComponentEnabled(entity, false);
+                isActiveEmitterToStopOutsideOfMaxDistanceLookup.SetComponentEnabled(entity, false);
             }
 
             if (eventEmitterState._eventInstance.isValid())

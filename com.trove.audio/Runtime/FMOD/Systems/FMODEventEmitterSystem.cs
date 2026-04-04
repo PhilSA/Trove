@@ -36,7 +36,7 @@ namespace Trove.Audio.FMOD
             ComponentLookup<FMODSingleton> singletonLookup = SystemAPI.GetComponentLookup<FMODSingleton>(false);
             ComponentLookup<FMODEmitterPlayStateUpdate> playStateUpdateLookup = SystemAPI.GetComponentLookup<FMODEmitterPlayStateUpdate>(false);
             ComponentLookup<IsEnabledEmitter> isEnabledEmitterLookup = SystemAPI.GetComponentLookup<IsEnabledEmitter>(false);
-            ComponentLookup<IsActiveEmitter> isActiveEmitterLookup = SystemAPI.GetComponentLookup<IsActiveEmitter>(false);
+            ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> isActiveEnitterToStopOutsideOfMaxDistanceLookup = SystemAPI.GetComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance>(false);
 
             state.Dependency = new EventEmittersStartJob
             {
@@ -58,40 +58,41 @@ namespace Trove.Audio.FMOD
             {
                 SingletonEntity = singletonEntity,
                 SingletonLookup = singletonLookup,
-                IsActiveLookup = isActiveEmitterLookup,
+                IsActiveEmitterToStopOutsideOfMaxDistanceLookup = isActiveEnitterToStopOutsideOfMaxDistanceLookup,
                 IsEnabledEmitterLookup = isEnabledEmitterLookup,
             }.Schedule(state.Dependency);
 
             state.Dependency = new EventEmittersDisableJob
             {
-                IsActiveLookup = isActiveEmitterLookup,
+                IsActiveEmitterToStopOutsideOfMaxDistanceLookup = isActiveEnitterToStopOutsideOfMaxDistanceLookup,
             }.Schedule(state.Dependency);
-            
-            state.Dependency = new CalculateEventEmittersVelocityJob
-            {
-                DeltaTime = SystemAPI.Time.DeltaTime,
-            }.ScheduleParallel(state.Dependency); 
-
-#if UNITY_PHYSICS_PRESENT
-            state.Dependency = new CalculateEventEmittersVelocityPhysicsJob
-            {
-                DeltaTime = SystemAPI.Time.DeltaTime,
-            }.ScheduleParallel(state.Dependency);
-#endif
 
             state.Dependency = new PlayEventEmittersJob
             {
                 SingletonEntity = singletonEntity,
                 SingletonLookup = singletonLookup,
                 PlayStateUpdateLookup = playStateUpdateLookup,
-                IsActiveLookup = isActiveEmitterLookup,
+                IsActiveEmitterToStopOutsideOfMaxDistanceLookup = isActiveEnitterToStopOutsideOfMaxDistanceLookup,
             }.Schedule(state.Dependency);
 
-            state.Dependency = new UpdateEventEmittersJob
+            state.Dependency = new UpdateActiveEventEmittersToStopOutsideOfMaxDistanceJob
             {
                 SingletonEntity = singletonEntity,
                 SingletonLookup = singletonLookup,
+                IsActiveEmitterToStopOutsideOfMaxDistanceLookup = isActiveEnitterToStopOutsideOfMaxDistanceLookup,
             }.ScheduleParallel(state.Dependency); 
+            
+            state.Dependency = new UpdateEventEmitters3DAttributesJob
+            {
+                DeltaTime = SystemAPI.Time.DeltaTime,
+            }.ScheduleParallel(state.Dependency); 
+
+#if UNITY_PHYSICS_PRESENT
+            state.Dependency = new UpdatePhysicsEventEmitters3DAttributesJob
+            {
+                DeltaTime = SystemAPI.Time.DeltaTime,
+            }.ScheduleParallel(state.Dependency);
+#endif
         }
 
         [BurstCompile]
@@ -194,7 +195,7 @@ namespace Trove.Audio.FMOD
         {
             public Entity SingletonEntity;
             public ComponentLookup<FMODSingleton> SingletonLookup;
-            public ComponentLookup<IsActiveEmitter> IsActiveLookup;
+            public ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> IsActiveEmitterToStopOutsideOfMaxDistanceLookup;
             public ComponentLookup<IsEnabledEmitter> IsEnabledEmitterLookup;
 
             [NativeDisableContainerSafetyRestriction]
@@ -212,7 +213,7 @@ namespace Trove.Audio.FMOD
                 if (emitter.PlayOnEnabled)
                 {
                     FMODDotsUtility.HandlePlay(entity, ref _singleton, in emitter, ref eventEmitterState,
-                        ref eventEmitterParameters, in ltw, ref IsActiveLookup);
+                        ref eventEmitterParameters, in ltw, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
                 }
             }
 
@@ -240,7 +241,7 @@ namespace Trove.Audio.FMOD
         [WithPresent(typeof(FMODEmitterPlayStateUpdate))]
         internal partial struct EventEmittersDisableJob : IJobEntity
         {
-            public ComponentLookup<IsActiveEmitter> IsActiveLookup;
+            public ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> IsActiveEmitterToStopOutsideOfMaxDistanceLookup;
             
             internal void Execute(
                 Entity entity,
@@ -252,75 +253,19 @@ namespace Trove.Audio.FMOD
 
                 if (emitter.StopOnDisabled)
                 {
-                    FMODDotsUtility.HandleStop(entity, ref eventEmitterState, ref IsActiveLookup);
+                    FMODDotsUtility.HandleStop(entity, ref eventEmitterState, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
                 }
             }
         }
-
-        [BurstCompile]
-        [WithAll(typeof(IsActiveEmitter))]
-#if UNITY_PHYSICS_PRESENT
-        [WithNone(typeof(PhysicsVelocity))]
-#endif
-        public partial struct CalculateEventEmittersVelocityJob : IJobEntity
-        {
-            public float DeltaTime;
-            
-            public void Execute(
-                ref FMODEventEmitter eventEmitter,
-                ref DynamicBuffer<FMODEventParameter> eventEmitterParameters,
-                in LocalToWorld ltw,
-                ref FMODEventEmitterState eventEmitterState)
-            {
-                eventEmitterState.Velocity = float3.zero;
-                if (DeltaTime != 0f)
-                {
-                    eventEmitterState.Velocity = (ltw.Position - eventEmitterState.PreviousPosition) / DeltaTime;
-                    eventEmitterState.Velocity = FMODDotsUtility.ClampToMaxLength(eventEmitterState.Velocity, 20f);
-                }
-            }
-        }
-
-#if UNITY_PHYSICS_PRESENT
-        [BurstCompile]
-        [WithAll(typeof(IsActiveEmitter))]
-        public partial struct CalculateEventEmittersVelocityPhysicsJob : IJobEntity
-        {
-            public float DeltaTime;
-            
-            public void Execute(
-                ref FMODEventEmitter eventEmitter,
-                ref DynamicBuffer<FMODEventParameter> eventEmitterParameters,
-                in LocalToWorld ltw,
-                in PhysicsVelocity physicsVelocity,
-                ref FMODEventEmitterState eventEmitterState)
-            {
-                eventEmitterState.Velocity = float3.zero;
-                if (eventEmitter.NonRigidbodyVelocity)
-                {
-                    if (DeltaTime != 0f)
-                    {
-                        eventEmitterState.Velocity = (ltw.Position - eventEmitterState.PreviousPosition) / DeltaTime;
-                        eventEmitterState.Velocity = FMODDotsUtility.ClampToMaxLength(eventEmitterState.Velocity, 20f);
-                    }
-                }
-                else
-                {
-                    eventEmitterState.Velocity = physicsVelocity.Linear;
-                }
-            }
-        }
-#endif
 
         [BurstCompile]
         [WithAll(typeof(FMODEmitterPlayStateUpdate))]
-        [WithPresent(typeof(IsActiveEmitter))]
         public partial struct PlayEventEmittersJob : IJobEntity, IJobEntityChunkBeginEnd
         {
             public Entity SingletonEntity;
             public ComponentLookup<FMODSingleton> SingletonLookup;
             public ComponentLookup<FMODEmitterPlayStateUpdate> PlayStateUpdateLookup;
-            public ComponentLookup<IsActiveEmitter> IsActiveLookup;
+            public ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> IsActiveEmitterToStopOutsideOfMaxDistanceLookup;
 
             [NativeDisableContainerSafetyRestriction]
             private FMODSingleton _singleton;
@@ -338,10 +283,10 @@ namespace Trove.Audio.FMOD
                 {
                     case EmitterControlEventType.Play:
                         FMODDotsUtility.HandlePlay(entity, ref _singleton, in emitter, ref eventEmitterState,
-                            ref eventEmitterParameters, in ltw, ref IsActiveLookup);
+                            ref eventEmitterParameters, in ltw, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
                         break;
                     case EmitterControlEventType.Stop:
-                        FMODDotsUtility.HandleStop(entity, ref eventEmitterState, ref IsActiveLookup);
+                        FMODDotsUtility.HandleStop(entity, ref eventEmitterState, ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup);
                         break;
                     case EmitterControlEventType.Pause:
                         eventEmitterState._eventInstance.setPaused(true);
@@ -371,39 +316,36 @@ namespace Trove.Audio.FMOD
         }
 
         [BurstCompile]
-        [WithAll(typeof(IsActiveEmitter))]
-        public partial struct UpdateEventEmittersJob : IJobEntity, IJobEntityChunkBeginEnd
+        [WithAll(typeof(IsActiveEmitterToStopOutsideOfMaxDistance))]
+        public partial struct UpdateActiveEventEmittersToStopOutsideOfMaxDistanceJob : IJobEntity, IJobEntityChunkBeginEnd
         {
             public Entity SingletonEntity;
             [NativeDisableParallelForRestriction]
             public ComponentLookup<FMODSingleton> SingletonLookup;
+            [NativeDisableParallelForRestriction]
+            public ComponentLookup<IsActiveEmitterToStopOutsideOfMaxDistance> IsActiveEmitterToStopOutsideOfMaxDistanceLookup;
 
             [NativeDisableParallelForRestriction]
             [NativeDisableContainerSafetyRestriction]
             private FMODSingleton _singleton;
             
             public void Execute(
+                Entity entity,
                 ref FMODEventEmitter eventEmitter,
                 ref DynamicBuffer<FMODEventParameter> eventEmitterParameters,
                 in LocalToWorld ltw,
                 ref FMODEventEmitterState eventEmitterState)
             {
-                if (!ltw.Position.Equals(eventEmitterState.PreviousPosition))
-                {
-                    eventEmitterState._eventInstance.set3DAttributes(
-                        FMODDotsUtility.To3DAttributes(ltw, eventEmitterState.Velocity));
-                }
-
-                // FMODDotsUtility.UpdatePlayingStatus(
-                //     ref _singleton,
-                //     in eventEmitter.EventGUID,
-                //     ref eventEmitterState, 
-                //     ref eventEmitterParameters,
-                //     in ltw,
-                //     eventEmitterState.Velocity,
-                //     false);
-                
-                eventEmitterState.PreviousPosition = ltw.Position;
+                UnityEngine.Debug.Log($"UpdateActiveEventEmittersToStopOutsideOfMaxDistanceJob {entity}");
+                FMODDotsUtility.UpdatePlayingStatus(
+                    entity,
+                    ref IsActiveEmitterToStopOutsideOfMaxDistanceLookup,
+                    ref _singleton,
+                    in eventEmitter.EventGUID,
+                    ref eventEmitterState, 
+                    ref eventEmitterParameters,
+                    in ltw,
+                    false);
             }
 
             public bool OnChunkBegin(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask,
@@ -423,5 +365,72 @@ namespace Trove.Audio.FMOD
             {
             }
         }
+
+        [BurstCompile]
+#if UNITY_PHYSICS_PRESENT
+        [WithNone(typeof(PhysicsVelocity))]
+#endif
+        public partial struct UpdateEventEmitters3DAttributesJob : IJobEntity
+        {
+            public float DeltaTime;
+            
+            public void Execute(
+                ref FMODEventEmitter eventEmitter,
+                ref DynamicBuffer<FMODEventParameter> eventEmitterParameters,
+                in LocalToWorld ltw,
+                ref FMODEventEmitterState eventEmitterState)
+            {
+                float3 velocity = float3.zero;
+                if (DeltaTime != 0f)
+                {
+                    velocity = (ltw.Position - eventEmitterState.PreviousPosition) / DeltaTime;
+                    velocity = FMODDotsUtility.ClampToMaxLength(velocity, 20f);
+                }
+                
+                if (!ltw.Position.Equals(eventEmitterState.PreviousPosition))
+                {
+                    eventEmitterState._eventInstance.set3DAttributes(FMODDotsUtility.To3DAttributes(ltw, velocity));
+                }
+                
+                eventEmitterState.PreviousPosition = ltw.Position;
+            }
+        }
+
+#if UNITY_PHYSICS_PRESENT
+        [BurstCompile]
+        public partial struct UpdatePhysicsEventEmitters3DAttributesJob : IJobEntity
+        {
+            public float DeltaTime;
+            
+            public void Execute(
+                ref FMODEventEmitter eventEmitter,
+                ref DynamicBuffer<FMODEventParameter> eventEmitterParameters,
+                in LocalToWorld ltw,
+                in PhysicsVelocity physicsVelocity,
+                ref FMODEventEmitterState eventEmitterState)
+            {
+                float3 velocity = float3.zero;
+                if (eventEmitter.NonRigidbodyVelocity)
+                {
+                    if (DeltaTime != 0f)
+                    {
+                        velocity = (ltw.Position - eventEmitterState.PreviousPosition) / DeltaTime;
+                        velocity = FMODDotsUtility.ClampToMaxLength(velocity, 20f);
+                    }
+                }
+                else
+                {
+                    velocity = physicsVelocity.Linear;
+                }
+                
+                if (!ltw.Position.Equals(eventEmitterState.PreviousPosition))
+                {
+                    eventEmitterState._eventInstance.set3DAttributes(FMODDotsUtility.To3DAttributes(ltw, velocity));
+                }
+                
+                eventEmitterState.PreviousPosition = ltw.Position;
+            }
+        }
+#endif
     }
 }
