@@ -23,6 +23,8 @@ At runtime, these become Entity components:
 * `FMODBankLoaderComponent`
 * etc...
 
+Note: Play/Stop events for emitters aren't supported in ECS. You should use the `FMODEmitterPlayPropertiesAuthoring` component for this instead.
+
 ## Controlling emitters
 
 All emitter control actions (play, stop, setting parameters, etc...) can be done with the various static methods in `FMODUtilities`. These actions can all be done in bursted jobs.
