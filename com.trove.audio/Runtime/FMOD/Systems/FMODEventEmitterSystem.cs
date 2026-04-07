@@ -10,7 +10,9 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
+#if UNITY_PHYSICS_PRESENT
 using Unity.Physics;
+#endif
 
 namespace Trove.Audio.FMOD
 {

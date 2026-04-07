@@ -11,7 +11,7 @@ Refer to [Trove Readme](https://github.com/PhilSA/Trove/blob/main/README.md#inst
 
 Importing Trove Audio will automatically import the "FMOD For Unity" package. You should see an FMOD setup wizard when opening your Unity project, and it'll take you through the steps for setting up FMOD in your project.
 
-You should take a look at the official ["FMOD for Unity" user guide](https://fmod.com/docs/2.03/unity/user-guide.html) in order to understand how to setup your FMOD Studio project, and understand the FMOD plugin in general.
+You should take a look at the official ["FMOD for Unity" user guide](https://fmod.com/docs/2.03/unity/user-guide.html) and [Tutorial](https://fmod.com/docs/2.03/unity/integration-tutorial.html) in order to understand how to setup your FMOD Studio project, and understand the FMOD plugin in general.
 
 ## Authoring components
 

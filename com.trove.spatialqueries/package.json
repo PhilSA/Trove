@@ -3,7 +3,7 @@
   "description": "Trove Spatial Queries provides tools for efficient spatial queries.",
   "dependencies": {
     "com.unity.entities": "1.4.2",
-    "com.trove.common": "0.3.4"
+    "com.trove.common": "0.3.5"
   },
   "name": "com.trove.spatialqueries",
   "author": {
