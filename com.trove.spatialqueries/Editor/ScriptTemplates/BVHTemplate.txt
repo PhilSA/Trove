@@ -49,8 +49,6 @@ partial struct #SCRIPTNAME#BuildSystem : ISystem
         {
             BVH = _bvh
         });
-
-        state.RequireForUpdate<SpatialQueryTester>();
     }
 
     [BurstCompile]

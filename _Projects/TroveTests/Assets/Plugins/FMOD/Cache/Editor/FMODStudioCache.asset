@@ -94,7 +94,7 @@ MonoBehaviour:
   Path: ../../../_FMOD/Examples/Build/Desktop/Dialogue_JP.bank
   Name: Dialogue_JP
   StudioPath: bank:/Dialogue_JP
-  lastModified: 639100403117949397
+  lastModified: 639109356843674873
   FileSizes:
   - Name: Desktop
     Value: 66560
@@ -142,7 +142,7 @@ MonoBehaviour:
   Path: ../../../_FMOD/Examples/Build/Desktop/Dialogue_EN.bank
   Name: Dialogue_EN
   StudioPath: bank:/Dialogue_EN
-  lastModified: 639100403117668750
+  lastModified: 639109356843528631
   FileSizes:
   - Name: Desktop
     Value: 61120
@@ -619,6 +619,33 @@ MonoBehaviour:
   IsGlobal: 0
   Labels: []
   Exists: 1
+--- !u!114 &-2942775855577596027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Character/Dialogue
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Character/Dialogue
+  Guid:
+    Data1: -1700598587
+    Data2: 1321134667
+    Data3: 1258668933
+    Data4: -853691887
+  Banks:
+  - {fileID: -2031264333354849965}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 1000
 --- !u!114 &-2453763721578434681
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -713,10 +740,10 @@ MonoBehaviour:
   Path: ../../../_FMOD/Examples/Build/Desktop/SFX.bank
   Name: SFX
   StudioPath: bank:/SFX
-  lastModified: 639100403119733488
+  lastModified: 639109356845429539
   FileSizes:
   - Name: Desktop
-    Value: 21487520
+    Value: 21578944
   Exists: 1
 --- !u!114 &-1786444317761648527
 MonoBehaviour:
@@ -930,13 +957,14 @@ MonoBehaviour:
   - {fileID: -6539348369874903567}
   - {fileID: -8817204611668678664}
   - {fileID: -215676777657769294}
+  - {fileID: -2942775855577596027}
   EditorParameters: []
   MasterBanks:
   - {fileID: 2834253554388854343}
   StringsBanks:
   - {fileID: 1845104313979793608}
   cacheVersion: 131858
-  cacheTime: 639100403119733488
+  cacheTime: 639109364458200829
   SerializableEventsDict:
   - key: snapshot:/Slow-Motion
     index: 0
@@ -996,6 +1024,8 @@ MonoBehaviour:
     index: 27
   - key: event:/VO/Welcome
     index: 28
+  - key: event:/Character/Dialogue
+    index: 29
 --- !u!114 &401493662146802383
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1038,12 +1068,10 @@ MonoBehaviour:
   Path: ../../../_FMOD/Examples/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639100403118115572
+  lastModified: 639109356843802612
   FileSizes:
   - Name: Desktop
-    Value: 4014
-  - Name: HTML5
-    Value: 4014
+    Value: 4064
   Exists: 1
 --- !u!114 &2160162072166590296
 MonoBehaviour:
@@ -1089,7 +1117,7 @@ MonoBehaviour:
   Path: ../../../_FMOD/Examples/Build/Desktop/VO.bank
   Name: VO
   StudioPath: bank:/VO
-  lastModified: 639100392835643222
+  lastModified: 639109356845862235
   FileSizes:
   - Name: Desktop
     Value: 38592
@@ -1137,10 +1165,10 @@ MonoBehaviour:
   Path: ../../../_FMOD/Examples/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639100403118105633
+  lastModified: 639109356843782601
   FileSizes:
   - Name: Desktop
-    Value: 15922
+    Value: 15938
   Exists: 1
 --- !u!114 &3765626020479705365
 MonoBehaviour:
@@ -1339,7 +1367,7 @@ MonoBehaviour:
   Path: ../../../_FMOD/Examples/Build/Desktop/Haptics.bank
   Name: Haptics
   StudioPath: bank:/Haptics
-  lastModified: 639100403117986171
+  lastModified: 639109356843695399
   FileSizes:
   - Name: Desktop
     Value: 506
@@ -1359,7 +1387,7 @@ MonoBehaviour:
   Path: ../../../_FMOD/Examples/Build/Desktop/Vehicles.bank
   Name: Vehicles
   StudioPath: bank:/Vehicles
-  lastModified: 639100392835091698
+  lastModified: 639109364458200829
   FileSizes:
   - Name: Desktop
     Value: 222624
@@ -1379,7 +1407,7 @@ MonoBehaviour:
   Path: ../../../_FMOD/Examples/Build/Desktop/Dialogue_CN.bank
   Name: Dialogue_CN
   StudioPath: bank:/Dialogue_CN
-  lastModified: 639100403117496908
+  lastModified: 639109356843390369
   FileSizes:
   - Name: Desktop
     Value: 52416
@@ -1426,7 +1454,7 @@ MonoBehaviour:
   Path: ../../../_FMOD/Examples/Build/Desktop/Music.bank
   Name: Music
   StudioPath: bank:/Music
-  lastModified: 639100392782504995
+  lastModified: 639109356844326504
   FileSizes:
   - Name: Desktop
     Value: 10454752

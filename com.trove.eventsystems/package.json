@@ -3,7 +3,7 @@
   "description": "Trove Event Systems provides various types of event systems to facilitate deferred logic.",
   "dependencies": {
     "com.unity.entities": "1.4.2",
-    "com.trove.common": "0.3.4"
+    "com.trove.common": "0.3.6"
   },
   "name": "com.trove.eventsystems",
   "author": {
@@ -11,5 +11,5 @@
   },
   "unity": "6000.0",
   "unityRelease": "0f1",
-  "version": "0.4.4"
+  "version": "0.4.5"
 }

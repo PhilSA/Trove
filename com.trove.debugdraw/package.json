@@ -3,7 +3,7 @@
   "description": "Trove Debug Draw is a GPU-persistent burst-compatible debug line/triangle drawer, making it suitable for drawing millions of lines/triangles.",
   "dependencies": {
     "com.unity.entities": "1.4.2",
-    "com.trove.common": "0.3.3"
+    "com.trove.common": "0.3.6"
   },
   "name": "com.trove.debugdraw",
   "author": {
@@ -11,5 +11,5 @@
   },
   "unity": "6000.0",
   "unityRelease": "0f1",
-  "version": "0.1.2"
+  "version": "0.1.3"
 }
