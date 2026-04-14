@@ -60,6 +60,8 @@ partial struct #SCRIPTNAME#BuildSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        SystemAPI.GetSingletonRW<#SCRIPTNAME#Singleton>();
+
         // This controls whether to build the BVH in parallel or not
         bool buildParallel = true;
         
