@@ -1002,7 +1002,8 @@ namespace Trove.SpatialQueries
         {
             NodeLevelDatas.Clear();
 
-            if (SortedNodes.Length < BVHUtils.NbLeavesPerNode)
+            // Special case for length 1 and 0
+            if (SortedNodes.Length <= 1)
             {
                 if (SortedNodes.Length > 0)
                 {
