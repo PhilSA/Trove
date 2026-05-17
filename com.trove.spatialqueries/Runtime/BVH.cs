@@ -375,16 +375,120 @@ namespace Trove.SpatialQueries
             where TCollector : unmanaged, IBVHQueryCollector<TNodeData>
         {
             collector.OnBeginQuery();
-        
-            if (SortedNodes.Length < 1)
-            {
+
+            if (SortedNodes.Length < 1) {
                 return false;
             }
-        
+
             Stack nodesStack = new Stack(256);
             int* nodesStackPtr = stackalloc int[nodesStack.Capacity];
             BVHNode* nodesPtr = SortedNodes.GetUnsafeReadOnlyPtr();
             TNodeData* leafDataPtr = LeafNodeDatas.GetUnsafeReadOnlyPtr();
+            int leafNodesCount = LeafNodeDatas.Length;
+
+            nodesStack.PushLast(nodesStackPtr, SortedNodes.Length - 1);  // start at root node;
+            while (nodesStack.PopLast(nodesStackPtr, out int nodeIndex)) {
+                BVHNode node = nodesPtr[nodeIndex];
+
+                if (!node.AABB.IntersectsRay(rayOrigin, rayDirectionNormalized, rayLength) || !node.IsValid())
+                    continue;
+
+                if (nodeIndex < leafNodesCount) {
+                    collector.AddNode(leafDataPtr[node.DataIndex]);
+                } else {
+                    for (int i = 0; i < BVHUtils.NbLeavesPerNode; i++) {
+                        nodesStack.PushLast(nodesStackPtr, node.DataIndex + i);
+                    }
+                }
+            }
+
+            return collector.HasFoundResults();
+        }
+
+        // Perform a raycast and fetch only the closest entity (no collector required)
+        // This version also gives the closest distance.
+        public unsafe bool QueryRayClosest(float3 rayOrigin, float3 rayDirectionNormalized, float rayLength,
+            out TNodeData closestHit, out float closestDistance)
+        {
+            closestHit = default;
+            closestDistance = float.MaxValue;
+
+            if (SortedNodes.Length < 1) {
+                return false;
+            }
+
+            Stack nodesStack = new Stack(256);
+            int* nodesStackPtr = stackalloc int[nodesStack.Capacity];
+            BVHNode* nodesPtr = SortedNodes.GetUnsafeReadOnlyPtr();
+            TNodeData* leafDataPtr = LeafNodeDatas.GetUnsafeReadOnlyPtr();
+            int leafNodesCount = LeafNodeDatas.Length;
+
+            float currentMaxT = rayLength;
+            bool found = false;
+
+            nodesStack.PushLast(nodesStackPtr, SortedNodes.Length - 1);
+            while (nodesStack.PopLast(nodesStackPtr, out int nodeIndex)) {
+                BVHNode node = nodesPtr[nodeIndex];
+                if (!node.IsValid())
+                    continue;
+                if (!node.AABB.IntersectsRay(rayOrigin, rayDirectionNormalized, currentMaxT, out float tEntry))
+                    continue;
+                if (tEntry >= currentMaxT)
+                    continue;
+
+                if (nodeIndex < leafNodesCount) {
+                    currentMaxT = tEntry;
+                    closestDistance = tEntry;
+                    closestHit = leafDataPtr[node.DataIndex];
+                    found = true;
+                } else {
+                    // Ordered child traversal: push children in descending tEntry order so closest pops first
+                    int childBase = node.DataIndex;
+                    float4 ts = new float4(float.MaxValue);
+                    int4 idxs = new int4(-1);
+                    for (int i = 0; i < BVHUtils.NbLeavesPerNode; i++)
+                    {
+                        int ci = childBase + i;
+                        BVHNode child = nodesPtr[ci];
+                        if (!child.IsValid())
+                            continue;
+                        if (child.AABB.IntersectsRay(rayOrigin, rayDirectionNormalized, currentMaxT, out float t))
+                        {
+                            ts[i] = t;
+                            idxs[i] = ci;
+                        }
+                    }
+                    // Insertion sort, descending by t — smallest t ends up on top of stack
+                    for (int a = 0; a < 4; a++)
+                    {
+                        for (int b = a + 1; b < 4; b++)
+                        {
+                            if (ts[b] > ts[a])
+                            {
+                                (ts[a], ts[b]) = (ts[b], ts[a]);
+                                (idxs[a], idxs[b]) = (idxs[b], idxs[a]);
+                            }
+                        }
+                    }
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (idxs[i] >= 0) { nodesStack.PushLast(nodesStackPtr, idxs[i]); }
+                    }
+                }
+            }
+
+            return found;
+        }
+
+        // Returns true if any node was hit (useful for line-of-sight tests).
+        public unsafe bool QueryRayAny(float3 rayOrigin, float3 rayDirectionNormalized, float rayLength)
+        {
+            if (SortedNodes.Length < 1)
+                return false;
+
+            Stack nodesStack = new Stack(256);
+            int* nodesStackPtr = stackalloc int[nodesStack.Capacity];
+            BVHNode* nodesPtr = SortedNodes.GetUnsafeReadOnlyPtr();
             int leafNodesCount = LeafNodeDatas.Length;
 
             nodesStack.PushLast(nodesStackPtr, SortedNodes.Length - 1);  // start at root node;
@@ -397,7 +501,7 @@ namespace Trove.SpatialQueries
 
                 if (nodeIndex < leafNodesCount)
                 {
-                    collector.AddNode(leafDataPtr[node.DataIndex]);
+                    return true;
                 }
                 else
                 {
@@ -408,7 +512,15 @@ namespace Trove.SpatialQueries
                 }
             }
 
-            return collector.HasFoundResults();
+            return false;
+        }
+
+
+        // Perform a raycast and fetch only the closest entity (no collector required)
+        // Use this version if you don't care about the distance.
+        public bool QueryRayClosest(float3 rayOrigin, float3 rayDirectionNormalized, float rayLength, out TNodeData closestHit)
+        {
+            return QueryRayClosest(rayOrigin, rayDirectionNormalized, rayLength, out closestHit, out _);
         }
 
         public bool QueryNearestNeighbor(float3 position, ref NearestNeighborResultCollector<TNodeData> collector, 
