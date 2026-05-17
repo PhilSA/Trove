@@ -173,7 +173,7 @@ namespace Trove
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IntersectsRay(float3 rayOrigin, float3 rayDirectionNormalized, float rayLength)
+        public bool IntersectsRay(float3 rayOrigin, float3 rayDirectionNormalized, float rayLength, out float tEntry)
         {
             float tMin = 0.0f;
             float tMax = float.MaxValue;
@@ -195,22 +195,25 @@ namespace Trove
 
                 if (tMin > tMax)
                 {
+                    tEntry = 0f;
                     return false;
                 }
             }
 
             if (tMax < 0.0f)
             {
+                tEntry = 0f;
                 return false;
             }
 
-            float distance = tMin;
-            if (distance <= rayLength)
-            {
-                return true;
-            }
+            tEntry = tMin;
+            return tMin <= rayLength;
+        }
 
-            return false;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IntersectsRay(float3 rayOrigin, float3 rayDirectionNormalized, float rayLength)
+        {
+            return IntersectsRay(rayOrigin, rayDirectionNormalized, rayLength, out _);
         }
     }
 
